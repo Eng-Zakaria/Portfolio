@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mohammed Zakaria — Data Engineer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --bg:       #080b0f;
+      --surface:  #0e1318;
+      --card:     #111820;
+      --border:   #1e2a36;
+      --text:     #e8f4ff;
+      --muted:    #6b8299;
+      --bright:   #ffffff;
+      --accent:   #00d4ff;
+      --accent2:  #0af0a0;
+
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body:    'Syne', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    .cursor {
+      position: fixed;
+      width: 20px; height: 20px;
+      background: linear-gradient(45deg, var(--accent), var(--accent2));
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%,-50%);
+      mix-blend-mode: screen;
+      transition: width .1s, height .1s;
+      box-shadow: 0 0 20px rgba(0,212,255,0.6);
+    }
+    .cursor-ring {
+      position: fixed;
+      width: 40px; height: 40px;
+      border: 2px solid rgba(0,212,255,0.8);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: left .06s ease, top .06s ease;
+      box-shadow: 0 0 15px rgba(0,212,255,0.4);
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 2.5rem; position: relative; z-index: 1; }
+    section { padding: 7rem 0; }
+    a { color: inherit; text-decoration: none; }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      padding: 1.2rem 2.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+      background: rgba(8,11,15,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); letter-spacing: 0.1em; }
+    .nav-logo span { color: var(--muted); }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; transition: color .2s; }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-dot { color: var(--accent); margin-right: 3px; }
+
+    /* HERO */
+    #hero {
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding-top: 6rem;
+      position: relative; overflow: hidden;
+    }
+    .hero-glow {
+      position: absolute; top: 5%; left: -10%;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(0,212,255,0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-glow2 {
+      position: absolute; bottom: 0; right: -10%;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(10,240,160,0.05) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-tag {
+      font-family: var(--font-mono); font-size: 0.75rem;
+      color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 0.75rem;
+      animation: fadeUp .6s ease both;
+    }
+    .hero-tag::before { content: ''; display: block; width: 40px; height: 1px; background: var(--accent); }
+    .blink { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(5rem, 12vw, 10rem);
+      line-height: 0.9;
+      letter-spacing: 0.02em;
+      color: var(--bright);
+      margin-bottom: 1.5rem;
+      animation: fadeUp .7s .1s ease both;
+    }
+    h1 .accent-line { color: var(--accent); display: block; }
+
+    .hero-desc {
+      font-size: 1.05rem; color: var(--muted);
+      max-width: 520px; line-height: 1.85; margin-bottom: 2.5rem;
+      animation: fadeUp .7s .2s ease both;
+    }
+    .hero-stats {
+      display: flex; gap: 3rem; margin-bottom: 3rem;
+      animation: fadeUp .7s .3s ease both;
+    }
+    .stat-num { font-family: var(--font-display); font-size: 2.8rem; color: var(--accent); line-height: 1; }
+    .stat-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 0.3rem; }
+    .hero-btns { display: flex; gap: 1rem; flex-wrap: wrap; animation: fadeUp .7s .4s ease both; }
+
+    .btn {
+      font-family: var(--font-mono); font-size: 0.78rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 0.9rem 2rem; border-radius: 2px;
+      cursor: none; transition: all .2s; display: inline-block;
+    }
+    .btn-primary { background: var(--accent); color: var(--bg); border: 1px solid var(--accent); font-weight: 600; }
+    .btn-primary:hover { background: transparent; color: var(--accent); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(40px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* SECTION HEADERS */
+    .sec-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--accent); letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1rem; }
+    h2 { font-family: var(--font-display); font-size: clamp(3rem, 6vw, 5rem); color: var(--bright); line-height: 0.95; letter-spacing: 0.02em; margin-bottom: 3rem; }
+
+    /* ABOUT */
+    #about { border-top: 1px solid var(--border); }
+    .about-content { max-width: 800px; margin: 0 auto; text-align: center; }
+    .profile-pic {
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      object-fit: contain;
+      background-color: white;
+      border: 3px solid var(--accent);
+      box-shadow: 0 0 30px rgba(0,212,255,0.3);
+      margin: 0 auto 2rem;
+      display: block;
+      transition: transform .3s ease, box-shadow .3s ease;
+      padding: 10px;
+    }
+    .profile-pic:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(0,212,255,0.5);
+    }
+    .about-text p { color: var(--muted); line-height: 1.9; margin-bottom: 1.2rem; font-size: 1rem; }
+    .about-links { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; justify-content: center; }
+    .about-link {
+      font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 0.55rem 1.1rem;
+      border: 1px solid var(--border); color: var(--muted); border-radius: 2px; transition: all .2s;
+    }
+    .about-link:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.06); }
+
+    /* SKILLS */
+    #skills { border-top: 1px solid var(--border); }
+    .skills-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1.5rem; max-width: 1000px; margin: 0 auto; }
+    .skill-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .skill-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .3s ease;
+    }
+    .skill-item:hover::before { transform: scaleX(1); }
+    .skill-item:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 10px 30px rgba(0,212,255,0.2);
+    }
+    .skill-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.8rem;
+      display: block;
+      color: var(--accent);
+      transition: color .3s ease;
+    }
+    .skill-item:hover .skill-icon {
+      color: var(--accent2);
+    }
+    .skill-name {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* PROJECTS */
+    #projects { border-top: 1px solid var(--border); }
+    .projects-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5px; background: var(--border); border: 1px solid var(--border); }
+    .project-card {
+      background: var(--card); padding: 2.2rem;
+      transition: background .2s; position: relative; overflow: hidden;
+    }
+    .project-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transform: scaleX(0); transform-origin: left; transition: transform .3s ease;
+    }
+    .project-card:hover::before { transform: scaleX(1); }
+    .project-card:hover { background: var(--surface); }
+    .project-card.wide { grid-column: span 2; }
+
+    .project-num { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 1rem; }
+    .project-name { font-family: var(--font-body); font-size: 1.1rem; font-weight: 700; color: var(--bright); margin-bottom: 0.75rem; line-height: 1.3; }
+    .project-desc { font-size: 0.88rem; color: var(--muted); line-height: 1.75; margin-bottom: 1.5rem; }
+    .project-stack { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.5rem; }
+    .stack-tag { font-family: var(--font-mono); font-size: 0.65rem; padding: 0.2rem 0.6rem; color: var(--accent); border: 1px solid rgba(0,212,255,0.25); border-radius: 2px; }
+    .project-links { display: flex; gap: 1rem; }
+    .proj-link { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid transparent; padding-bottom: 1px; transition: all .2s; }
+    .proj-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* EXPERIENCE */
+    #experience { border-top: 1px solid var(--border); }
+    .exp-item { display: grid; grid-template-columns: 180px 1fr; gap: 3rem; padding: 2.5rem 0; border-bottom: 1px solid var(--border); }
+    .exp-item:last-child { border-bottom: none; }
+    .exp-date { font-family: var(--font-mono); font-size: 0.72rem; color: var(--accent); letter-spacing: 0.08em; margin-bottom: 0.4rem; }
+    .exp-location { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); letter-spacing: 0.06em; }
+    .exp-role { font-family: var(--font-body); font-size: 1.15rem; font-weight: 700; color: var(--bright); margin-bottom: 0.3rem; }
+    .exp-company { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent2); letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .exp-bullets { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .exp-bullets li { font-size: 0.9rem; color: var(--muted); line-height: 1.7; padding-left: 1.2rem; position: relative; }
+    .exp-bullets li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); font-size: 0.7rem; top: 0.25rem; }
+    .exp-bullets li strong { color: var(--text); font-weight: 600; }
+
+    /* CONTACT */
+    #contact { border-top: 1px solid var(--border); text-align: center; position: relative; overflow: hidden; }
+    #contact::before {
+      content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 800px; height: 400px;
+      background: radial-gradient(ellipse, rgba(0,212,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    #contact h2 { margin-bottom: 1rem; }
+    .contact-sub { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); letter-spacing: 0.08em; margin-bottom: 3rem; }
+    .contact-grid { display: flex; justify-content: center; flex-wrap: wrap; gap: 1rem; position: relative; z-index: 1; }
+    .contact-btn {
+      font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase;
+      padding: 0.85rem 1.8rem; border: 1px solid var(--border); color: var(--muted);
+      border-radius: 2px; transition: all .2s; display: inline-flex; align-items: center; gap: 0.5rem;
+    }
+    .contact-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,212,255,0.06); }
+    .contact-btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .contact-btn.primary:hover { background: transparent; color: var(--accent); }
+
+    /* FOOTER */
+    footer { padding: 2rem 2.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .footer-left { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+    .footer-right { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); }
+    .footer-right span { color: var(--accent); }
+
+    /* REVEAL */
+    .reveal { opacity: 0; transform: translateY(30px); transition: opacity .7s ease, transform .7s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .reveal-d1 { transition-delay: .1s; }
+    .reveal-d2 { transition-delay: .2s; }
+    .reveal-d3 { transition-delay: .3s; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .about-grid { grid-template-columns: 1fr; gap: 3rem; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .project-card.wide { grid-column: span 1; }
+      .exp-item { grid-template-columns: 1fr; gap: 0.5rem; }
+      .hero-stats { gap: 2rem; }
+      .nav-links { display: none; }
+      h1 { font-size: 4.5rem; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo"><span>~/</span>mzakaria</div>
+    <ul class="nav-links">
+      <li><a href="#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="#experience"><span class="nav-dot">.</span>experience</a></li>
+      <li><a href="#contact"><span class="nav-dot">.</span>contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow2"></div>
+    <div class="container">
+      <div class="hero-tag">Data Engineer &nbsp;<span class="blink">_</span></div>
+      <h1>Mohammed<span class="accent-line">Zakaria</span></h1>
+      <p class="hero-desc">
+        Building data infrastructure that turns raw noise into insight.
+        ETL pipelines, distributed systems, and analytical assets for
+        Fintech &amp; Web3 — from Cairo to Zurich.
+      </p>
+      <div class="hero-stats">
+        <div>
+          <div class="stat-num">40%</div>
+          <div class="stat-label">Faster Reporting</div>
+        </div>
+        <div>
+          <div class="stat-num">30%</div>
+          <div class="stat-label">Query Latency Cut</div>
+        </div>
+        <div>
+          <div class="stat-num">10+</div>
+          <div class="stat-label">Sources Integrated</div>
+        </div>
+      </div>
+      <div class="hero-btns">
+        <a href="#projects" class="btn btn-primary">View Projects</a>
+        <a href="mailto:mohamedzakaria.cs@gmail.com" class="btn btn-ghost">Get In Touch</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="container">
+      <div class="about-content">
+        <img src="assests/Profile.png" alt="Mohammed Zakaria" class="profile-pic">
+        <div class="sec-label">// about me</div>
+        <h2>Who<br>I Am</h2>
+        <div class="about-text">
+          <p>Data Engineer with hands-on experience in startup environments, delivering production-grade pipelines for Fintech and Web3 domains. I specialize in transforming raw, messy data into reliable analytical assets that teams can actually trust.</p>
+          <p>Graduate of Helwan University (GPA 3.3, Graduation Project A+). Previously researched on-chain data at the University of Zurich and taught Machine Learning to 100+ students as an AI Instructor.</p>
+          <p>Currently a Big Data Engineering Intern at NTI, deepening expertise in distributed systems — Hadoop, Kafka, Spark, and cloud infrastructure on AWS.</p>
+        </div>
+        <div class="about-links">
+          <a href="https://linkedin.com/in/eng-zakaria" class="about-link" target="_blank">↗ LinkedIn</a>
+          <a href="https://github.com/Eng-Zakaria" class="about-link" target="_blank">↗ GitHub</a>
+          <a href="https://eng-zakaria.medium.com" class="about-link" target="_blank">↗ Medium</a>
+          <a href="mailto:mohamedzakaria.cs@gmail.com" class="about-link">✉ Email</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="container">
+      <div class="sec-label">// tech stack</div>
+      <h2>Skills</h2>
+      <div class="skills-grid">
+        <div class="skill-item reveal">
+          <i class="fab fa-python skill-icon"></i>
+          <span class="skill-name">Python</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-database skill-icon"></i>
+          <span class="skill-name">SQL</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-fire skill-icon"></i>
+          <span class="skill-name">Apache Spark</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-stream skill-icon"></i>
+          <span class="skill-name">Kafka</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fab fa-docker skill-icon"></i>
+          <span class="skill-name">Docker</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-wind skill-icon"></i>
+          <span class="skill-name">Airflow</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-database skill-icon"></i>
+          <span class="skill-name">PostgreSQL</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fab fa-aws skill-icon"></i>
+          <span class="skill-name">AWS</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-chart-bar skill-icon"></i>
+          <span class="skill-name">Power BI</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-cogs skill-icon"></i>
+          <span class="skill-name">CI/CD</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-chart-line skill-icon"></i>
+          <span class="skill-name">Prometheus</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-server skill-icon"></i>
+          <span class="skill-name">Hadoop</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-bolt skill-icon"></i>
+          <span class="skill-name">Flink</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-project-diagram skill-icon"></i>
+          <span class="skill-name">Neo4j</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-chart-pie skill-icon"></i>
+          <span class="skill-name">Tableau</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fab fa-r-project skill-icon"></i>
+          <span class="skill-name">R</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fab fa-aws skill-icon"></i>
+          <span class="skill-name">AWS S3</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fab fa-scala skill-icon"></i>
+          <span class="skill-name">Scala</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-filter skill-icon"></i>
+          <span class="skill-name">NiFi</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fab fa-linux skill-icon"></i>
+          <span class="skill-name">Linux</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-code-branch skill-icon"></i>
+          <span class="skill-name">Git</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-cube skill-icon"></i>
+          <span class="skill-name">HBase</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-hdd skill-icon"></i>
+          <span class="skill-name">Hive</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-exchange-alt skill-icon"></i>
+          <span class="skill-name">Sqoop</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-flask skill-icon"></i>
+          <span class="skill-name">Flume</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-tachometer-alt skill-icon"></i>
+          <span class="skill-name">Grafana</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-chart-area skill-icon"></i>
+          <span class="skill-name">Datadog</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-vial skill-icon"></i>
+          <span class="skill-name">dbt</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-terminal skill-icon"></i>
+          <span class="skill-name">Bash</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-leaf skill-icon"></i>
+          <span class="skill-name">MongoDB</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-database skill-icon"></i>
+          <span class="skill-name">SQL Server</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-database skill-icon"></i>
+          <span class="skill-name">MySQL</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-search skill-icon"></i>
+          <span class="skill-name">Elasticsearch</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-lock skill-icon"></i>
+          <span class="skill-name">Zookeeper</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-project-diagram skill-icon"></i>
+          <span class="skill-name">YARN</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-layer-group skill-icon"></i>
+          <span class="skill-name">DWS</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-cloud skill-icon"></i>
+          <span class="skill-name">CloudFormation</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-shield-alt skill-icon"></i>
+          <span class="skill-name">IAM</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-network-wired skill-icon"></i>
+          <span class="skill-name">VPC</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-robot skill-icon"></i>
+          <span class="skill-name">Machine Learning</span>
+        </div>
+        <div class="skill-item reveal">
+          <i class="fas fa-brain skill-icon"></i>
+          <span class="skill-name">Neural Networks</span>
+        </div>
+        <div class="skill-item reveal reveal-d1">
+          <i class="fas fa-chart-scatter skill-icon"></i>
+          <span class="skill-name">Data Mining</span>
+        </div>
+        <div class="skill-item reveal reveal-d2">
+          <i class="fas fa-magic skill-icon"></i>
+          <span class="skill-name">R Markdown</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="container">
+      <div class="sec-label">// selected work</div>
+      <h2>Projects</h2>
+      <div class="projects-grid">
+
+        <div class="project-card reveal">
+          <div class="project-num">01 — Graduation Project</div>
+          <div class="project-name">Hadith Chat App — Arabic RAG Chatbot</div>
+          <div class="project-desc">Arabic NLP chatbot on a Retrieval-Augmented Generation architecture. Reduced AI hallucinations by 70% through data refinement and model tuning, backed by a Qdrant vector database and Django backend.</div>
+          <div class="project-stack">
+            <span class="stack-tag">Python</span><span class="stack-tag">Django</span>
+            <span class="stack-tag">Qdrant</span><span class="stack-tag">NLP</span><span class="stack-tag">RAG</span>
+          </div>
+          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Hadith_Chat_App" class="proj-link" target="_blank">GitHub ↗</a></div>
+        </div>
+
+        <div class="project-card reveal reveal-d1">
+          <div class="project-num">02 — Fintech</div>
+          <div class="project-name">E-Finance Platform — End-to-End ETL</div>
+          <div class="project-desc">Repeatable transaction ETL system with Airflow DAGs and automated data quality checks. Integrated Web3/Blockchain crypto wallet layer, a BNPL engine, and Spark-driven real-time credit scoring.</div>
+          <div class="project-stack">
+            <span class="stack-tag">Airflow</span><span class="stack-tag">PostgreSQL</span>
+            <span class="stack-tag">PySpark</span><span class="stack-tag">Prometheus</span><span class="stack-tag">Web3</span>
+          </div>
+          <div class="project-links"><a href="https://github.com/Eng-Zakaria/E-Finance" class="proj-link" target="_blank">GitHub ↗</a></div>
+        </div>
+
+        <div class="project-card reveal reveal-d2">
+          <div class="project-num">03 — Web3</div>
+          <div class="project-name">Blockchain Analyzer — Ethereum Pipeline</div>
+          <div class="project-desc">Data ingestion engine via Etherscan/Infura organizing raw Ethereum activity into Bronze/Silver/Gold Medallion layers. Applied Spark to identify wallet behavior patterns, visualized through Neo4j graph databases.</div>
+          <div class="project-stack">
+            <span class="stack-tag">Python</span><span class="stack-tag">Web3.py</span>
+            <span class="stack-tag">Spark</span><span class="stack-tag">Docker</span><span class="stack-tag">Neo4j</span>
+          </div>
+          <div class="project-links"><a href="https://github.com/Eng-Zakaria/blockchain-analyzer" class="proj-link" target="_blank">GitHub ↗</a></div>
+        </div>
+
+        <div class="project-card reveal reveal-d1">
+          <div class="project-num">04 — MLOps</div>
+          <div class="project-name">Credit Risk Analysis — ML Pipeline</div>
+          <div class="project-desc">Automated end-to-end ML lifecycle with Airflow DAGs and MLflow experiment tracking. Deployed a fraud-scoring microservice via FastAPI and Scikit-learn with Redis for high-performance data lookups.</div>
+          <div class="project-stack">
+            <span class="stack-tag">Streamlit</span><span class="stack-tag">Plotly</span>
+            <span class="stack-tag">Docker</span><span class="stack-tag">Airflow</span><span class="stack-tag">MLflow</span>
+          </div>
+          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Risk_Analysis" class="proj-link" target="_blank">GitHub ↗</a></div>
+        </div>
+
+        <div class="project-card wide reveal">
+          <div class="project-num">05 — Streaming</div>
+          <div class="project-name">Fraud Detection — Real-Time Streaming Architecture</div>
+          <div class="project-desc">Real-time streaming pipeline using Kafka and Airflow to ingest, clean, and extract features from high-volume transaction data with sub-second latency. Containerized a full-stack monitoring ecosystem with Docker, integrating a Plotly/Dash dashboard and multi-channel alerting (Slack/Email) to track model drift and system health.</div>
+          <div class="project-stack">
+            <span class="stack-tag">Python</span><span class="stack-tag">Kafka</span>
+            <span class="stack-tag">Docker</span><span class="stack-tag">Airflow</span><span class="stack-tag">Plotly/Dash</span>
+          </div>
+          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Fraud_Detection" class="proj-link" target="_blank">GitHub ↗</a></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPERIENCE -->
+  <section id="experience">
+    <div class="container">
+      <div class="sec-label">// career</div>
+      <h2>Experience</h2>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">04/2026 – 09/2026</div>
+          <div class="exp-location">Smart Village, Giza</div>
+        </div>
+        <div>
+          <div class="exp-role">Big Data Engineering Intern</div>
+          <div class="exp-company">National Telecommunication Institute (NTI)</div>
+          <ul class="exp-bullets">
+            <li>Processed datasets using distributed systems: <strong>Apache Hadoop</strong> (HDFS, MapReduce, YARN)</li>
+            <li>Worked with <strong>HBase</strong> and <strong>Hive</strong> for NoSQL and data warehousing workflows</li>
+            <li>Implemented data ingestion and streaming with <strong>Kafka, Flume, and Sqoop</strong></li>
+            <li>Orchestrated ETL pipelines using <strong>Apache Airflow</strong> and NiFi</li>
+            <li>Hands-on with <strong>AWS</strong> (EC2, S3, IAM, VPC) for cloud-based data solutions</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">01/2025 – 04/2026</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">Data Engineer</div>
+          <div class="exp-company">Nexlify</div>
+          <ul class="exp-bullets">
+            <li>Integrated <strong>10+ disparate sources</strong> into a PostgreSQL warehouse, accelerating executive reporting by <strong>40%</strong></li>
+            <li>Refactored legacy SQL pipelines with CTEs and optimized JOINs — <strong>30% reduction in query latency</strong>, zero dashboard timeouts</li>
+            <li>Built rule-based validation scripts that improved downstream ML model accuracy by <strong>20%</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">06/2024 – 11/2024</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">AI Instructor</div>
+          <div class="exp-company">iSchool</div>
+          <ul class="exp-bullets">
+            <li>Taught Machine Learning to <strong>100+ students</strong>; achieved a <strong>90% project completion rate</strong></li>
+            <li>Customized Jupyter notebooks for diverse skill levels; boosted engagement scores <strong>by 25%</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">05/2023 – 10/2023</div>
+          <div class="exp-location">Zurich, Switzerland</div>
+        </div>
+        <div>
+          <div class="exp-role">Blockchain Analysis Intern</div>
+          <div class="exp-company">University of Zurich (UZH)</div>
+          <ul class="exp-bullets">
+            <li>Extracted large-scale Web3 datasets from the <strong>Ethereum blockchain</strong> using Python for internal research</li>
+            <li>Developed automated validation scripts to sanitize raw node data (blocks/transactions)</li>
+            <li>Generated on-chain data summaries providing stakeholders visibility into emerging blockchain trends</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">06/2021 – 09/2021</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">Full Stack Intern</div>
+          <div class="exp-company">Information Technology Institute (ITI)</div>
+          <ul class="exp-bullets">
+            <li>Architected and deployed end-to-end <strong>.NET web applications</strong>, managing full dev lifecycle</li>
+            <li>Delivered <strong>3 production-ready demos</strong> ahead of schedule with all technical requirements met</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="sec-label">// let's connect</div>
+      <h2>Get In Touch</h2>
+      <p class="contact-sub">Open to data engineering roles, collaborations, and interesting data problems.</p>
+      <div class="contact-grid">
+        <a href="mailto:mohamedzakaria.cs@gmail.com" class="contact-btn primary">✉ mohamedzakaria.cs@gmail.com</a>
+        <a href="https://linkedin.com/in/eng-zakaria" class="contact-btn" target="_blank">↗ LinkedIn</a>
+        <a href="https://github.com/Eng-Zakaria" class="contact-btn" target="_blank">↗ GitHub</a>
+        <a href="https://eng-zakaria.medium.com" class="contact-btn" target="_blank">↗ Medium</a>
+        <a href="tel:+201501015701" class="contact-btn">📞 +20 150 101 5701</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right">Let's Do Business Together</div>
+  </footer>
+
+  <script>
+    document.getElementById('yr').textContent = new Date().getFullYear();
+
+    // Custom cursor
+    const cursor = document.getElementById('cursor');
+    const ring   = document.getElementById('cursorRing');
+    let rx = 0, ry = 0, mx = 0, my = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      cursor.style.left = mx + 'px';
+      cursor.style.top  = my + 'px';
+    });
+
+    function animateRing() {
+      rx += (mx - rx) * 0.25;
+      ry += (my - ry) * 0.25;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(animateRing);
+    }
+    animateRing();
+
+    // Scroll reveal
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.08 }
+    );
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+  </script>
+</body>
+</html>
