@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
   <style>
     .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
     .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
@@ -32,6 +33,7 @@
     @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } }
   </style>
   <script defer src="../js/main.js"></script>
+  <script defer src="../js/arch-diagrams.js"></script>
 </head>
 <body>
   <nav>
@@ -102,38 +104,41 @@
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <div class="arch-full">
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
+      </p>
+      <div class="arch-diagram-interactive">
 <pre>
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                       Data Sources                                  │</span>
-<span class="highlight">│  • App Store  • Google Play  • Reddit  • Google News  • Web Search  │</span>
-<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
-                           │
-                           ▼
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                  Connector Registry Architecture                    │</span>
-<span class="highlight">│  • Each source = one connector file                                 │</span>
-<span class="highlight">│  • Adding new source: one file, no changes to ingestion/analysis    │</span>
-<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
-                           │
-                           ▼
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                     Processing Layer                                │</span>
-<span class="highlight">│                                                                     │</span>
-<span class="highlight">│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐            │</span>
-<span class="highlight">│  │ Language    │    │ Sentiment   │    │ Topic       │            │</span>
-<span class="highlight">│  │ Detection   │ →  │ Analysis    │ →  │ Tagging     │            │</span>
-<span class="highlight">│  │             │    │             │    │             │            │</span>
-<span class="highlight">│  │ AraBERT     │    │ RoBERTa     │    │ Rule-based  │            │</span>
-<span class="highlight">│  │ (Arabic)    │    │ (English)   │    │ Tagger      │            │</span>
-<span class="highlight">│  └─────────────┘    └─────────────┘    └─────────────┘            │</span>
-<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
-                           │
-                           ▼
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                      Streamlit Dashboard                            │</span>
-<span class="highlight">│  • Sentiment trends  • Topic breakdown  • Negative mention triage   │</span>
-<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+┌──────────────────────────────────┐
+│ <span class="arch-node" data-node-id="sources" data-detail="App Store, Google Play, Reddit, Google News, and web search" data-tech="Multiple sources">Sources</span>          │
+└───────────────┬──────────────────┘
+                │
+                ▼
+<span class="arch-flow">──────────────────</span>
+                │
+┌───────────────▼──────────────────┐
+│ <span class="arch-node" data-node-id="connectors" data-detail="Connector registry: each source has one file, adding new sources requires no changes to core logic" data-tech="Connector Registry">Connectors</span>   │
+└───────────────┬──────────────────┘
+                │
+                ▼
+┌───────────────▼──────────────────┐
+│ <span class="arch-node" data-node-id="lang" data-detail="Language detection routing Arabic to AraBERT and English to RoBERTa" data-tech="AraBERT, RoBERTa">Lang Detect</span>  │
+└───────────────┬──────────────────┘
+                │
+                ▼
+┌───────────────▼──────────────────┐
+│ <span class="arch-node" data-node-id="sentiment" data-detail="Sentiment analysis with multilingual model support" data-tech="Transformers">Sentiment</span>    │
+└───────────────┬──────────────────┘
+                │
+                ▼
+┌───────────────▼──────────────────┐
+│ <span class="arch-node" data-node-id="topics" data-detail="Topic tagging across 6 business categories: app bugs, customer service, pricing, security, offers, delivery" data-tech="Rule-based">Topics</span>       │
+└───────────────┬──────────────────┘
+                │
+                ▼
+┌───────────────▼──────────────────┐
+│ <span class="arch-node" data-node-id="dashboard" data-detail="Streamlit dashboard with sentiment trends, topic breakdown, and negative mention triage" data-tech="Streamlit">Dashboard</span>    │
+└──────────────────────────────────┘
 </pre>
       </div>
     </section>
