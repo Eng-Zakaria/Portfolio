@@ -1,0 +1,173 @@
+/* ── INTERACTIVE ARCHITECTURE DIAGRAMS ─────────────────────── */
+
+.arch-diagram-interactive {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  position: relative;
+}
+
+.arch-diagram-interactive pre {
+  white-space: pre;
+  color: var(--text-secondary);
+  min-width: max-content;
+}
+
+.arch-diagram-interactive .highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Diagram nodes */
+.arch-node {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  margin: 0.25rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  white-space: nowrap;
+}
+
+.arch-node:hover,
+.arch-node:focus {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent-dark);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+  transform: translateY(-2px);
+}
+
+.arch-node:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Animated data flow arrows */
+.arch-flow {
+  position: relative;
+  display: inline-block;
+  margin: 0 0.5rem;
+  color: var(--muted);
+  font-size: 1.2rem;
+  animation: flowPulse 2s ease-in-out infinite;
+}
+
+@keyframes flowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; color: var(--accent); }
+}
+
+/* Tooltip */
+.arch-tooltip {
+  position: fixed;
+  background: var(--card);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 1rem;
+  max-width: 320px;
+  min-width: 200px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+}
+
+.arch-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.arch-tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.arch-tooltip-title {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.arch-tooltip-detail {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.arch-tooltip-tech {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.arch-tooltip-tech span {
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .arch-diagram-interactive {
+    font-size: 0.75rem;
+    padding: 1rem;
+  }
+
+  .arch-node {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .arch-flow {
+    font-size: 1rem;
+    margin: 0 0.25rem;
+  }
+}
+
+/* Small screens */
+@media (max-width: 400px) {
+  .arch-diagram-interactive {
+    font-size: 0.7rem;
+    padding: 0.75rem;
+  }
+
+  .arch-node {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .arch-diagram-interactive {
+    page-break-inside: avoid;
+  }
+
+  .arch-node {
+    border: 1px solid #000;
+    background: #fff;
+  }
+}

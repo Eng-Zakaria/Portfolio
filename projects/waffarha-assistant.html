@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
   <style>
     .project-header {
       padding: 8rem 0 4rem;
@@ -175,6 +176,7 @@
     }
   </style>
   <script defer src="../js/main.js"></script>
+  <script defer src="../js/arch-diagrams.js"></script>
 </head>
 <body>
   <!-- NAV -->
@@ -282,39 +284,33 @@
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <div class="arch-full">
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
+      </p>
+      <div class="arch-diagram-interactive">
 <pre>
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                     Static Chat Widget (vanilla JS)                  │</span>
-<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
-                           │ POST /api/chat
-                           ▼
-<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
-<span class="highlight">│                        FastAPI Application                           │</span>
-<span class="highlight">│  • CORS, static file serving                                        │</span>
-<span class="highlight">│  • Request/response shaping                                         │</span>
-<span class="highlight">│  • Identity resolution (auth proxy → user_id)                       │</span>
-<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
-                           │
-             ┌─────────────┼─────────────┐
-             ▼             ▼             ▼
-<span class="highlight">┌─────────────────┐ ┌─────────────┐ ┌───────────────┐</span>
-<span class="highlight">│   RagEngine     │ │  Identity   │ │   Memory      │</span>
-<span class="highlight">│  (rag_engine.py)│ │  Resolver   │ │  (memory.py)  │</span>
-<span class="highlight">│                 │ │ (identity.py)│ │               │</span>
-<span class="highlight">│ • Vector search │ │             │ │ • Redis/local │</span>
-<span class="highlight">│ • Intent class  │ │ • Static    │ │ • Session-scoped│</span>
-<span class="highlight">│ • Direct answer │ │ • Header    │ │ • Shown items │</span>
-<span class="highlight">│ • Fact-check    │ │ • Session   │ │ • 1hr TTL     │</span>
-<span class="highlight">│ • LLM fallback  │ │             │ │               │</span>
-<span class="highlight">└────────┬────────┘ └─────────────┘ └───────────────┘</span>
-         │
-    ┌────┴────┐
-    ▼         ▼
-<span class="highlight">┌───────┐ ┌──────────┐</span>
-<span class="highlight">│Vector │ │  ClickHouse│</span>
-<span class="highlight">│Store  │ │ (personal) │</span>
-<span class="highlight">└───────┘ └──────────┘</span>
+                    ┌──────────────────┐
+                    │  <span class="arch-node" data-node-id="widget" data-detail="Vanilla JS chat widget with bilingual RTL support" data-tech="Vanilla JS, HTML, CSS">Static Widget</span>  │
+                    └────────┬─────────┘
+                             │
+                             ▼
+              <span class="arch-flow">────────────────</span>
+                             │
+                    ┌────────▼─────────┐
+                    │   <span class="arch-node" data-node-id="fastapi" data-detail="FastAPI server handling requests, CORS, static file serving, and request/response shaping" data-tech="FastAPI, Uvicorn">FastAPI</span>   │
+                    └────────┬─────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+    ┌──────────────┐ ┌──────────┐ ┌──────────────┐
+    │ <span class="arch-node" data-node-id="rag" data-detail="Core RAG engine: vector search, intent classification, direct answers, fact-checking, LLM fallback" data-tech="rag_engine.py">RagEngine</span>   │ │<span class="arch-node" data-node-id="identity" data-detail="Identity resolver for user authentication from auth proxy headers or session" data-tech="identity.py">Identity</span>│ │<span class="arch-node" data-node-id="memory" data-detail="Session-scoped memory for tracking shown offers/FAQs with Redis or local backend, 1hr TTL" data-tech="memory.py, Redis">Memory</span>   │
+    └──────┬───────┘ └──────────┘ └──────────────┘
+           │
+     ┌─────┴─────┐
+     ▼           ▼
+┌────────┐ ┌──────────┐
+│<span class="arch-node" data-node-id="vector" data-detail="Vector store for semantic search. Tested 5 backends: FAISS (0.62ms), Chroma, Qdrant, LanceDB, pgvector. Selected FAISS for production." data-tech="FAISS, multilingual-E5">Vector Store</span>││<span class="arch-node" data-node-id="clickhouse" data-detail="Live ClickHouse queries for personal user data: coupons, orders, spending. Routed away from vector index to keep PII out." data-tech="ClickHouse">ClickHouse</span>│
+└────────┘ └──────────┘
 </pre>
       </div>
     </section>
