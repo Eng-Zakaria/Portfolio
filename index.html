@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -24,11 +24,11 @@
   <meta name="twitter:description" content="Data Engineer specializing in ETL pipelines, distributed systems, and cloud infrastructure.">
 
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
-  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script defer src="js/main.js"></script>
 </head>
@@ -36,48 +36,64 @@
 
   <!-- NAV -->
   <nav>
-    <div class="nav-logo"><span>~/</span>mzakaria</div>
-    <button class="hamburger" aria-label="Toggle navigation menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="nav-logo">~/mzakaria</div>
     <ul class="nav-links">
+      <li><a href="#hero" class="active"><span class="nav-dot">.</span>home</a></li>
       <li><a href="#about"><span class="nav-dot">.</span>about</a></li>
       <li><a href="#skills"><span class="nav-dot">.</span>skills</a></li>
       <li><a href="#projects"><span class="nav-dot">.</span>projects</a></li>
       <li><a href="#experience"><span class="nav-dot">.</span>experience</a></li>
       <li><a href="#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
     </ul>
+    <button class="hamburger" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <!-- HERO -->
   <section id="hero">
     <div class="hero-glow"></div>
-    <div class="hero-glow2"></div>
     <div class="container">
-      <div class="hero-tag">Data Engineer &nbsp;<span class="blink">_</span></div>
-      <h1>Mohammed<span class="accent-line">Zakaria</span></h1>
-      <p class="hero-desc">
-        Building data infrastructure that turns raw noise into insight.
-        ETL pipelines, distributed systems, and streaming architectures
-        for Fintech, Web3, and healthcare — from Cairo to Zurich.
-      </p>
-      <div class="hero-stats">
-        <div>
-          <div class="stat-num">1.5+</div>
-          <div class="stat-label">Years Experience</div>
+      <div class="hero-split">
+        <div class="hero-content">
+          <div class="hero-eyebrow">Hello, My Name Is</div>
+          <h1 class="hero-name">Mohammed<span>Zakaria</span></h1>
+          <p class="hero-role">Data Engineer</p>
+          <p class="hero-desc">
+            Building data infrastructure that turns raw noise into insight.
+            ETL pipelines, distributed systems, and streaming architectures
+            for Fintech, Web3, and healthcare — from Cairo to Zurich.
+          </p>
+          <div class="hero-contact">
+            <div class="contact-item">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              mohamedzakaria.cs@gmail.com
+            </div>
+            <div class="contact-item">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+              </svg>
+              +20 150 101 5701
+            </div>
+          </div>
+          <div class="hero-btns">
+            <a href="#projects" class="btn btn-primary">View Projects</a>
+            <a href="#contact" class="btn btn-ghost">Get In Touch</a>
+          </div>
         </div>
-        <div>
-          <div class="stat-num">40%</div>
-          <div class="stat-label">Faster Reporting</div>
+        <div class="hero-image">
+          <div class="image-wrapper">
+            <div class="image-blob"></div>
+            <img src="assets/Profile.png" alt="Mohammed Zakaria" class="profile-photo" loading="eager">
+          </div>
         </div>
-        <div>
-          <div class="stat-num">10+</div>
-          <div class="stat-label">Data Sources Integrated</div>
-        </div>
-      </div>
-      <div class="hero-btns">
-        <a href="#projects" class="btn btn-primary">View Projects</a>
-        <a href="mailto:mohamedzakaria.cs@gmail.com" class="btn btn-ghost">Get In Touch</a>
       </div>
     </div>
   </section>
@@ -86,9 +102,8 @@
   <section id="about">
     <div class="container">
       <div class="about-content">
-        <img src="assets/Profile.png" alt="Mohammed Zakaria" class="profile-pic" loading="lazy">
         <div class="sec-label">// about me</div>
-        <h2>Who<br>I Am</h2>
+        <h2>Who I Am</h2>
         <div class="about-text">
           <p>Data Engineer with 1.5+ years of hands-on experience building and automating end-to-end data pipelines across batch and real-time systems. I specialize in dimensional modeling, ETL/ELT pipeline development, and scalable analytics platforms including data warehouses, star schemas, and Spark/Airflow orchestration.</p>
           <p>Production experience on AWS (EC2, S3, IAM, VPC) with exposure to Azure. Currently building production RAG pipelines at Waffarha and deepening distributed systems expertise at the National Telecommunication Institute.</p>
@@ -208,92 +223,215 @@
       <div class="projects-grid">
 
         <div class="project-card reveal">
-          <div class="project-num">01 — Graduation Project</div>
-          <div class="project-name">Hadith Chat App — Arabic RAG Chatbot</div>
-          <div class="project-desc">Arabic NLP chatbot using a Retrieval-Augmented Generation architecture. Built with Django and Qdrant vector database, achieving 70% chatbot accuracy through data refinement and retrieval optimization.</div>
-          <div class="project-stack">
-            <span class="stack-tag">Python</span><span class="stack-tag">Django</span>
-            <span class="stack-tag">Qdrant</span><span class="stack-tag">NLP</span><span class="stack-tag">RAG</span>
+          <div class="project-num">01 — PRODUCTION RAG</div>
+          <div class="project-name">Waffarha Assistant — Bilingual RAG Chatbot</div>
+          <div class="project-desc">
+            Production RAG system for Egypt's leading deals platform. Supports 18k+ indexed documents with 94.9% recall and 0.62ms query latency. Hybrid intent routing resolves 75% of queries via direct answers. CI harness with 110+ test cases.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Hadith_Chat_App" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">FastAPI</span>
+            <span class="stack-tag">FAISS</span>
+            <span class="stack-tag">ClickHouse</span>
+            <span class="stack-tag">Redis</span>
+            <span class="stack-tag">Ollama</span>
+            <span class="stack-tag">Docker</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Widget</span> → FastAPI → <span class="highlight">RagEngine</span> → Vector Store + ClickHouse
+          </div>
+          <div class="project-links">
+            <a href="projects/waffarha-assistant.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/waffarha-chatbot" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
         <div class="project-card reveal reveal-d1">
-          <div class="project-num">02 — Fintech</div>
-          <div class="project-name">E-Finance Platform — End-to-End ETL</div>
-          <div class="project-desc">Digital banking platform with Web3 integration, fraud detection, and advanced financial algorithms. Features Account Management, multi-currency support, crypto wallets, DeFi lending, and BNPL credit scoring with ML-based fraud detection.</div>
-          <div class="project-stack">
-            <span class="stack-tag">Python</span><span class="stack-tag">FastAPI</span>
-            <span class="stack-tag">Java</span><span class="stack-tag">Spring Boot</span>
-            <span class="stack-tag">Airflow</span><span class="stack-tag">PostgreSQL</span>
-            <span class="stack-tag">PySpark</span><span class="stack-tag">Docker</span>
-            <span class="stack-tag">Kubernetes</span><span class="stack-tag">AWS</span>
+          <div class="project-num">02 — DATA WAREHOUSE</div>
+          <div class="project-name">Nexlify Centralized Data Warehouse</div>
+          <div class="project-desc">
+            Built from scratch: integrated 10+ clinic sources into a PostgreSQL warehouse using dimensional modeling. Processed 50+ daily customers, 200+ appointments, 1,000+ revenue records. Accelerated reporting by 40%, eliminated 100% of dashboard timeouts.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/E-Finance" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">Airflow</span>
+            <span class="stack-tag">PostgreSQL</span>
+            <span class="stack-tag">Star Schema</span>
+            <span class="stack-tag">Power BI</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">10+ Sources</span> → Airflow → <span class="highlight">DW</span> → Power BI
+          </div>
+          <div class="project-links">
+            <a href="projects/nexlify-dw.html" class="proj-link">Case Study ↗</a>
+          </div>
         </div>
 
         <div class="project-card reveal reveal-d2">
-          <div class="project-num">03 — Blockchain Forensics</div>
+          <div class="project-num">03 — BLOCKCHAIN FORENSICS</div>
           <div class="project-name">Blockchain Analyzer — Ethereum Pipeline</div>
-          <div class="project-desc">Blockchain forensics platform comparing Neo4j vs. PySpark for Ethereum transaction analysis. Bronze→Silver→Gold ETL pipeline with threat detection for chain hopping, smurfing, and peel chain patterns. Neo4j benchmarked 73x faster on multi-hop traversal.</div>
+          <div class="project-desc">
+            Forensics platform comparing Neo4j vs. PySpark for Ethereum analysis. Bronze→Silver→Gold ETL with threat detection. Neo4j benchmarked 73x faster on multi-hop traversal. Kibana dashboards for pattern visualization.
+          </div>
           <div class="project-stack">
-            <span class="stack-tag">Python</span><span class="stack-tag">Web3.py</span>
-            <span class="stack-tag">Spark</span><span class="stack-tag">Neo4j</span>
-            <span class="stack-tag">Elasticsearch</span><span class="stack-tag">Kibana</span>
+            <span class="stack-tag">PySpark</span>
+            <span class="stack-tag">Neo4j</span>
+            <span class="stack-tag">Elasticsearch</span>
+            <span class="stack-tag">Kibana</span>
             <span class="stack-tag">Docker</span>
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/blockchain-analyzer" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="arch-diagram">
+            <span class="highlight">Etherscan</span> → Spark → <span class="highlight">Medallion</span> → Neo4j/ES → Kibana
+          </div>
+          <div class="project-links">
+            <a href="projects/blockchain-analyzer.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/blockchain-analyzer" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
         <div class="project-card reveal">
           <div class="project-num">04 — MLOps</div>
           <div class="project-name">Credit Risk Analysis — ML Pipeline</div>
-          <div class="project-desc">End-to-end ML platform with automated lifecycle orchestration via Airflow DAGs and MLflow tracking. Best model (Hybrid Ensemble) achieved 0.88 AUC-ROC, 0.76 Gini, and 0.60 KS statistic. FastAPI serving with Redis for low-latency lookups.</div>
-          <div class="project-stack">
-            <span class="stack-tag">Python</span><span class="stack-tag">XGBoost</span>
-            <span class="stack-tag">LightGBM</span><span class="stack-tag">CatBoost</span>
-            <span class="stack-tag">PyTorch</span><span class="stack-tag">MLflow</span>
-            <span class="stack-tag">Airflow</span><span class="stack-tag">FastAPI</span>
-            <span class="stack-tag">Docker</span><span class="stack-tag">BigQuery</span>
+          <div class="project-desc">
+            End-to-end ML platform with 0.88 AUC-ROC (Hybrid Ensemble). Airflow orchestration, MLflow tracking, FastAPI serving with Redis lookups. Synthetic data generation with BigQuery-compatible SQL marts.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Risk_Analysis" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">XGBoost</span>
+            <span class="stack-tag">LightGBM</span>
+            <span class="stack-tag">MLflow</span>
+            <span class="stack-tag">FastAPI</span>
+            <span class="stack-tag">BigQuery</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Synthetic Data</span> → Airflow → <span class="highlight">Training</span> → MLflow → FastAPI
+          </div>
+          <div class="project-links">
+            <a href="projects/credit-risk.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/Risk_Analysis" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
         <div class="project-card wide reveal">
-          <div class="project-num">05 — Streaming</div>
-          <div class="project-name">Fraud Detection — Real-Time Streaming Architecture</div>
-          <div class="project-desc">Real-time streaming pipeline using Kafka and Airflow to ingest, clean, and extract features from high-volume transaction data with sub-second latency. Containerized full monitoring stack with Docker, Plotly/Dash dashboard, and multi-channel alerting (Slack/Email) for model drift and system health tracking.</div>
-          <div class="project-stack">
-            <span class="stack-tag">Python</span><span class="stack-tag">Kafka</span>
-            <span class="stack-tag">Airflow</span><span class="stack-tag">FastAPI</span>
-            <span class="stack-tag">MLflow</span><span class="stack-tag">Redis</span>
-            <span class="stack-tag">Plotly/Dash</span><span class="stack-tag">Docker</span>
+          <div class="project-num">05 — REAL-TIME STREAMING</div>
+          <div class="project-name">Fraud Detection — Streaming Architecture</div>
+          <div class="project-desc">
+            Real-time Kafka pipeline with sub-second latency for transaction scoring. Docker containerization with Plotly/Dash monitoring and multi-channel alerting (Slack/Email) for model drift and system health.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/Fraud_Detection" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">Kafka</span>
+            <span class="stack-tag">Airflow</span>
+            <span class="stack-tag">FastAPI</span>
+            <span class="stack-tag">MLflow</span>
+            <span class="stack-tag">Redis</span>
+            <span class="stack-tag">Plotly/Dash</span>
+            <span class="stack-tag">Docker</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Transaction Stream</span> → Kafka → <span class="highlight">Feature Eng</span> → Model → Alerting
+          </div>
+          <div class="project-links">
+            <a href="projects/fraud-detection.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/Fraud_Detection" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">06 — Streaming Pipeline</div>
+          <div class="project-num">06 — STREAMING PIPELINE</div>
           <div class="project-name">Aircraft Tracking Pipeline</div>
-          <div class="project-desc">Real-time streaming pipeline ingesting live aircraft state vectors from the adsb.lol ADS-B API. Dual Flume agents (HTTP→Kafka, Kafka→HDFS) with Spark Structured Streaming into InfluxDB. Live Grafana dashboards with geomap and per-aircraft analytics, raw stream archival to HDFS.</div>
-          <div class="project-stack">
-            <span class="stack-tag">Spark Streaming</span><span class="stack-tag">Kafka</span>
-            <span class="stack-tag">Flume</span><span class="stack-tag">InfluxDB</span>
-            <span class="stack-tag">Grafana</span><span class="stack-tag">HDFS</span>
-            <span class="stack-tag">Docker</span>
+          <div class="project-desc">
+            Real-time ADS-B aircraft tracking. Dual Flume agents (HTTP→Kafka→HDFS), Spark Structured Streaming to InfluxDB. Live Grafana dashboards with geomap and per-aircraft analytics.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">Spark Streaming</span>
+            <span class="stack-tag">Kafka</span>
+            <span class="stack-tag">InfluxDB</span>
+            <span class="stack-tag">Grafana</span>
+            <span class="stack-tag">HDFS</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">adsb.lol</span> → Flume → Kafka → <span class="highlight">Spark</span> → InfluxDB → Grafana
+          </div>
+          <div class="project-links">
+            <a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
         <div class="project-card reveal reveal-d1">
-          <div class="project-num">07 — Batch ETL</div>
+          <div class="project-num">07 — BATCH ETL</div>
           <div class="project-name">Reddit Spark Pipeline</div>
-          <div class="project-desc">7-stage PySpark batch ETL pipeline (Bronze/Silver/Gold medallion architecture) ingesting posts from 10 subreddits via the Reddit public API. Data quality filtering, engagement scoring, topic-tagging UDFs, window functions for ranking, broadcast joins, and partitioned Parquet output.</div>
-          <div class="project-stack">
-            <span class="stack-tag">PySpark</span><span class="stack-tag">Parquet</span>
-            <span class="stack-tag">UDFs</span><span class="stack-tag">Window Functions</span>
+          <div class="project-desc">
+            7-stage PySpark ETL with medallion architecture. Engagement scoring UDFs, window functions for ranking, broadcast joins for enrichment, partitioned Parquet output.
           </div>
-          <div class="project-links"><a href="https://github.com/Eng-Zakaria/reddit-spark-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+          <div class="project-stack">
+            <span class="stack-tag">PySpark</span>
+            <span class="stack-tag">Parquet</span>
+            <span class="stack-tag">UDFs</span>
+            <span class="stack-tag">Window Functions</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Reddit API</span> → Bronze → Silver → <span class="highlight">Gold</span> → Parquet
+          </div>
+          <div class="project-links">
+            <a href="https://github.com/Eng-Zakaria/reddit-spark-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-num">08 — PRICE INTELLIGENCE</div>
+          <div class="project-name">Waffarha Partner Price Integrity</div>
+          <div class="project-desc">
+            Automated 7-stage Airflow pipeline detecting partner price violations. Tiered matching (code → override → fuzzy), dual scraping engine (BeautifulSoup + Playwright), HTML/Excel/MD reports.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag">Airflow</span>
+            <span class="stack-tag">Playwright</span>
+            <span class="stack-tag">ClickHouse</span>
+            <span class="stack-tag">rapidfuzz</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Weekly Audit</span> → Daily Ingest → Scrape → Match → <span class="highlight">Report</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/partner-price-integrity.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal reveal-d1">
+          <div class="project-num">09 — MARKET INTELLIGENCE</div>
+          <div class="project-name">Waffarha Market Sentiment</div>
+          <div class="project-desc">
+            Monitor public mentions across App Store, Google Play, Reddit, Google News. Multilingual sentiment (AraBERT for Arabic, RoBERTa for English), Streamlit dashboard with trend visualization.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag">Streamlit</span>
+            <span class="stack-tag">AraBERT</span>
+            <span class="stack-tag">RoBERTa</span>
+            <span class="stack-tag">Connector Registry</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Sources</span> → Connectors → <span class="highlight">Sentiment</span> → Streamlit
+          </div>
+          <div class="project-links">
+            <a href="projects/market-intelligence.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal">
+          <div class="project-num">10 — GRADUATION PROJECT</div>
+          <div class="project-name">Hadith Chat App — Arabic RAG</div>
+          <div class="project-desc">
+            Arabic NLP chatbot using RAG architecture. Django backend with Qdrant vector database. Achieved 70% chatbot accuracy through data refinement and retrieval optimization.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag">Django</span>
+            <span class="stack-tag">Qdrant</span>
+            <span class="stack-tag">NLP</span>
+            <span class="stack-tag">RAG</span>
+          </div>
+          <div class="arch-diagram">
+            <span class="highlight">Hadith Corpus</span> → Embeddings → Qdrant → <span class="highlight">RAG</span> → Django
+          </div>
+          <div class="project-links">
+            <a href="https://github.com/Eng-Zakaria/Hadith_Chat_App" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
         </div>
 
       </div>
@@ -429,7 +567,7 @@
 
   <footer>
     <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
-    <div class="footer-right">Let's Do Business Together</div>
+    <div class="footer-right">Built with <span>♥</span> and data</div>
   </footer>
 
 </body>
