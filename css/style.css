@@ -315,15 +315,42 @@ h2 { font-family: var(--font-display); font-size: clamp(2.5rem, 5vw, 4rem); colo
   border-bottom: 1px solid var(--border);
   font-weight: 600;
 }
-.skill-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.skill-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .skill-tag {
   font-family: var(--font-mono); font-size: 0.72rem;
-  color: var(--text); padding: 0.3rem 0.7rem;
+  color: var(--text); padding: 0.4rem 0.7rem 0.4rem 0.5rem;
   background: var(--bg); border: 1px solid var(--border);
   border-radius: 4px;
   transition: all .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
+.skill-tag i {
+  color: var(--accent);
+  font-size: 0.85rem;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.skill-tag span { white-space: nowrap; }
 .skill-tag:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+.skill-tag:hover i { color: var(--accent); }
+
+.skill-cat-label {
+  font-family: var(--font-mono); font-size: 0.65rem;
+  color: var(--accent); letter-spacing: 0.2em; text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.skill-cat-label i {
+  font-size: 0.9rem;
+}
 
 /* ── PROJECTS ────────────────────────────────────────────── */
 #projects { border-top: 1px solid var(--border); }
