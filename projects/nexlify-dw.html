@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Nexlify Data Warehouse — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Centralized data warehouse built from scratch for a healthcare startup. 10+ clinic sources, 40% faster reporting, dimensional modeling with star schemas.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .challenge-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .challenge-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .challenge-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+    .solution-card { background: var(--accent-light); border: 1px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .solution-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-dark); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .solution-card p { font-size: 0.9rem; color: var(--text); line-height: 1.7; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Nexlify Data Warehouse</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Centralized data warehouse built from scratch for a healthcare startup, integrating 10+ clinic sources.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">Jan 2025 – Jan 2026</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Company</span>
+          <span class="meta-value">Nexlify</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Production System</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">Airflow</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">MySQL</span>
+        <span class="text-tag">SQL Server</span>
+        <span class="tech-tag">Power BI</span>
+        <span class="tech-tag">Python</span>
+        <span class="tech-tag">Star Schema</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>Key Metrics</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">40%</div>
+          <div class="metric-label">Faster Reporting</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">30%</div>
+          <div class="metric-label">Query Latency Cut</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">10+</div>
+          <div class="metric-label">Data Sources</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">100%</div>
+          <div class="metric-label">Timeout Elimination</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Nexlify, a healthcare technology startup, operated 10+ clinics with disparate data systems—
+        Excel sheets, clinic management APIs, and various database engines. Each clinic maintained
+        its own data silos, making company-wide reporting impossible and executive decision-making
+        slow and fragmented.
+      </p>
+      <p>
+        The existing reporting infrastructure couldn't handle the growing data volume or provide
+        unified views across clinics. Dashboard timeouts were frequent, and data quality issues
+        were rampant due to inconsistent formats across sources.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                        Source Systems (10+ Clinics)                  │</span>
+<span class="highlight">│  • Clinic Management APIs  • Excel Sheets  • CSV Files              │</span>
+<span class="highlight">│  • MySQL  • PostgreSQL  • SQL Server  • SQLite                      │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                      Airflow Orchestration                           │</span>
+<span class="highlight">│  • Ingestion DAGs  • Transformation DAGs  • Quality Checks          │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                   Centralized Data Warehouse                         │</span>
+<span class="highlight">│                     (PostgreSQL)                                     │</span>
+<span class="highlight">│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │</span>
+<span class="highlight">│  │   Facts     │  │  Dimensions │  │   Bridges   │                │</span>
+<span class="highlight">│  │  Tables     │  │   Tables    │  │  (M:N)      │                │</span>
+<span class="highlight">│  └─────────────┘  └─────────────┘  └─────────────┘                │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                      Power BI Reports                               │</span>
+<span class="highlight">│  • Clinic-wise switcher  • Company-wide views  • KPI dashboards     │</span>
+<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Implementation</h3>
+      <ul>
+        <li><strong>Data Warehouse Design:</strong> Built a centralized warehouse from scratch using dimensional modeling with star schemas, fact tables, dimension tables, and bridge tables to resolve many-to-many relationships between staff and roles.</li>
+        <li><strong>ETL Pipeline:</strong> Engineered an Airflow-based pipeline to ingest data from heterogeneous sources—Excel sheets, CSV files, and clinic system APIs—covering customers, staff, revenue, orders, schedules, and appointments.</li>
+        <li><strong>Schema Evolution:</strong> Adapted the star/snowflake schema design as requirements evolved across Medical, IoT, and Fintech domains within the clinic network.</li>
+        <li><strong>Data Quality:</strong> Cleaned and standardized millions of historical records using custom Python scripts, handling mixed Arabic/English text and numeric formats, enforcing data quality checks before loading.</li>
+        <li><strong>SQL Optimization:</strong> Refactored legacy pipelines using CTEs and optimized JOIN logic across PostgreSQL, SQL Server, MySQL, and SQLite.</li>
+        <li><strong>Analytics Layer:</strong> Built Power BI reports with a clinic-wise switcher so a single report model served every clinic and company-wide views.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Challenges & Solutions</h3>
+
+      <div class="challenge-card">
+        <h4>Challenge: Heterogeneous Data Formats</h4>
+        <p>Each clinic used different database systems and data formats, with inconsistent column names and structures.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Standardized Staging Layer</h4>
+        <p>Created a staging layer with unified schema definitions and mapping rules. Built custom Python transformation scripts to normalize data types, handle mixed Arabic/English text, and enforce consistent naming conventions.</p>
+      </div>
+
+      <div class="challenge-card">
+        <h4>Challenge: Many-to-Many Staff Relationships</h4>
+        <p>Staff members could hold multiple roles across different clinics, creating complex relationship mapping challenges.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Bridge Tables</h4>
+        <p>Implemented junction (bridge) tables to properly model the many-to-many relationships between staff, roles, and clinics, ensuring accurate attribution in downstream reporting.</p>
+      </div>
+
+      <div class="challenge-card">
+        <h4>Challenge: Dashboard Timeouts</h4>
+        <p>Legacy SQL queries were timing out under increased data volume, blocking executive reporting.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Query Optimization</h4>
+        <p>Refactored legacy SQL using CTEs, optimized JOIN logic, and added proper indexing. Achieved 30% reduction in query latency and eliminated 100% of dashboard timeouts.</p>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The centralized data warehouse transformed Nexlify's reporting capabilities.
+        Executive reporting cycles accelerated by 40%, and the unified view across
+        10+ clinics enabled data-driven decisions at the company level for the first time.
+      </p>
+      <p>
+        The modular architecture allows seamless addition of new clinic sources, and
+        the Power BI reporting layer provides flexible analytics for stakeholders.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

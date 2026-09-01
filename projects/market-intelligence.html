@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Market Intelligence — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Multilingual sentiment analysis and market monitoring pipeline for Waffarha. AraBERT, RoBERTa, connector registry architecture.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Market Intelligence</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Multilingual sentiment analysis and brand monitoring pipeline for Waffarha.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer Intern</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">Jul 2026 – Present</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Company</span>
+          <span class="meta-value">Waffarha</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Analytics Pipeline</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">Streamlit</span>
+        <span class="tech-tag">AraBERT</span>
+        <span class="tech-tag">RoBERTa</span>
+        <span class="tech-tag">Connector Registry</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Waffarha needed visibility into public sentiment across multiple platforms—App Store,
+        Google Play, Reddit, Google News, and web search. Manual monitoring was impossible
+        at scale, and existing solutions didn't handle Arabic text well. The team needed a
+        systematic way to track brand perception, identify emerging issues, and understand
+        customer pain points across different markets.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                       Data Sources                                  │</span>
+<span class="highlight">│  • App Store  • Google Play  • Reddit  • Google News  • Web Search  │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                  Connector Registry Architecture                    │</span>
+<span class="highlight">│  • Each source = one connector file                                 │</span>
+<span class="highlight">│  • Adding new source: one file, no changes to ingestion/analysis    │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                     Processing Layer                                │</span>
+<span class="highlight">│                                                                     │</span>
+<span class="highlight">│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐            │</span>
+<span class="highlight">│  │ Language    │    │ Sentiment   │    │ Topic       │            │</span>
+<span class="highlight">│  │ Detection   │ →  │ Analysis    │ →  │ Tagging     │            │</span>
+<span class="highlight">│  │             │    │             │    │             │            │</span>
+<span class="highlight">│  │ AraBERT     │    │ RoBERTa     │    │ Rule-based  │            │</span>
+<span class="highlight">│  │ (Arabic)    │    │ (English)   │    │ Tagger      │            │</span>
+<span class="highlight">│  └─────────────┘    └─────────────┘    └─────────────┘            │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                      Streamlit Dashboard                            │</span>
+<span class="highlight">│  • Sentiment trends  • Topic breakdown  • Negative mention triage   │</span>
+<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Implementation</h3>
+      <ul>
+        <li><strong>Connector Registry:</strong> Designed a modular architecture where each data source requires only one connector file. No changes needed to ingestion, analysis, storage, or dashboard layers when adding new sources.</li>
+        <li><strong>Multilingual Processing:</strong> Routed Arabic mentions to AraBERT and English mentions to RoBERTa for sentiment analysis, handling Arabizi (Arabic in Latin script) with rule-based detection.</li>
+        <li><strong>Topic Tagging:</strong> Implemented a rule-based tagger across 6 business categories: app bugs, customer service, pricing, wallet security, offer accuracy, and delivery.</li>
+        <li><strong>Negative Triage:</strong> Built a feed that surfaces negative mentions for immediate attention, prioritized by sentiment score and recency.</li>
+        <li><strong>Visualization:</strong> Created Streamlit dashboards with sentiment trends over time, topic breakdowns, and interactive filters.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Business Categories Tracked</h3>
+      <ul>
+        <li><strong>App Bugs:</strong> Technical issues, crashes, performance problems</li>
+        <li><strong>Customer Service:</strong> Support quality, response times, agent behavior</li>
+        <li><strong>Pricing:</strong> Price changes, discounts, perceived value</li>
+        <li><strong>Wallet Security:</strong> Payment issues, fraud concerns, transaction problems</li>
+        <li><strong>Offer Accuracy:</strong> Coupon validity, deal terms, partner compliance</li>
+        <li><strong>Delivery:</strong> Shipping issues, partner fulfillment, tracking problems</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The pipeline provides Waffarha with continuous visibility into brand perception
+        across markets. The modular architecture allows easy expansion to new sources,
+        and the multilingual support ensures comprehensive coverage of Arabic and English
+        conversations. The negative mention triage feed enables rapid response to emerging
+        issues.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

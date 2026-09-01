@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Partner Price Integrity — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Automated pipeline detecting partner price violations for Waffarha. 7-stage Airflow pipeline with dual scraping engine.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .stage-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: var(--font-mono); font-size: 0.85rem; }
+    .stage-table th, .stage-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .stage-table th { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.1em; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Partner Price Integrity</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Automated pipeline detecting price violations by Waffarha's commercial partners.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer Intern</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">Jul 2026 – Present</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Company</span>
+          <span class="meta-value">Waffarha</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Production Pipeline</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">Airflow</span>
+        <span class="tech-tag">Playwright</span>
+        <span class="tech-tag">ClickHouse</span>
+        <span class="tech-tag">rapidfuzz</span>
+        <span class="tech-tag">BeautifulSoup</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>Pipeline Stages</h3>
+      <table class="stage-table">
+        <thead>
+          <tr>
+            <th>Stage</th>
+            <th>Description</th>
+            <th>Frequency</th>
+            <th>Output</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>0</strong></td>
+            <td>Partner reachability audit - classifies all partners into 5 buckets</td>
+            <td>Weekly</td>
+            <td>triage_report.json/csv</td>
+          </tr>
+          <tr>
+            <td><strong>1</strong></td>
+            <td>Ingestion - fetch active offers with type_price tiers + coupon volumes</td>
+            <td>Daily</td>
+            <td>ingested_offers.json</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td>URL normalization & catalog scoping</td>
+            <td>Daily</td>
+            <td>Integrated with Stage 4</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td>Tiered product matching (code → override → fuzzy)</td>
+            <td>Daily</td>
+            <td>Match confidence scores</td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td>Scraping engine (requests+BS4 / Playwright)</td>
+            <td>Daily</td>
+            <td>scraped_data/partner_*.json</td>
+          </tr>
+          <tr>
+            <td><strong>5</strong></td>
+            <td>Price comparison & violation classification</td>
+            <td>Daily</td>
+            <td>comparisons.json</td>
+          </tr>
+          <tr>
+            <td><strong>6</strong></td>
+            <td>Report generation (HTML, Excel, Markdown)</td>
+            <td>Daily</td>
+            <td>reports/*.{html,xlsx,md}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="content-section">
+      <h3>Violation Detection Logic</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">is_violation = actual_value >= partner_site_price * (1 - tolerance_pct / 100)</span>
+
+Classification tiers:
+  • <span class="highlight">Violation</span>: is_violation == True
+  • <span class="highlight">Watch</span>: Near-miss just outside tolerance band
+  • <span class="highlight">Clear</span>: Voucher meaningfully cheaper
+  • <span class="highlight">Unverifiable</span>: Partner has no online catalog
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Waffarha's commercial partners sometimes undercut their own voucher prices on their
+        websites, undermining the value proposition for customers and damaging trust.
+        Manually monitoring hundreds of partners across thousands of products is infeasible,
+        requiring an automated solution that can detect violations at scale.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│              Stage 0: Weekly Partner Audit                          │</span>
+<span class="highlight">│  • Classify partners into 5 buckets (reachable, limited, etc.)      │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│              Daily Pipeline (Stages 1-6)                            │</span>
+<span class="highlight">│                                                                     │</span>
+<span class="highlight">│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐            │</span>
+<span class="highlight">│  │ Ingest  │ → │ Normalize│ → │ Scrape  │ → │ Match   │            │</span>
+<span class="highlight">│  │ Offers  │   │ URLs    │   │ Partner │   │ Products│            │</span>
+<span class="highlight">│  └─────────┘   └─────────┘   └─────────┘   └────┬────┘            │</span>
+<span class="highlight">│                                                ▼                  │</span>
+<span class="highlight">│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐            │</span>
+<span class="highlight">│  │Compare  │ → │ Report  │ → │ Alert   │ → │ Store   │            │</span>
+<span class="highlight">│  │ Prices  │   │ Gen     │   │ (if any)│   │ (CH)    │            │</span>
+<span class="highlight">│  └─────────┘   └─────────┘   └─────────┘   └─────────┘            │</span>
+<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Implementation</h3>
+      <ul>
+        <li><strong>Tiered Product Matching:</strong> Implemented a three-tier matching system: exact product code match → manual override → fuzzy text matching via rapidfuzz for cases without standardized codes</li>
+        <li><strong>Dual Scraping Engine:</strong> Built a scraping system with two backends: BeautifulSoup for static HTML pages and Playwright for JavaScript-rendered sites, with automatic fallback</li>
+        <li><strong>Resumable Checkpoints:</strong> Implemented per-partner JSON checkpoints to enable resumable scraping, preventing redundant work on failures</li>
+        <li><strong>Canonical Reporting:</strong> Generated reports in HTML, Excel, and Markdown formats with configurable tolerance bands (default 2%) and watch-list filtering</li>
+        <li><strong>Automated Scheduling:</strong> Orchestrated as two Airflow DAGs: weekly partner audit and daily ingest-compare-report cycle</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Challenges</h3>
+      <ul>
+        <li><strong>Product Standardization:</strong> Partners use different naming conventions and product codes. Solved with fuzzy matching and confidence scoring.</li>
+        <li><strong>Dynamic Content:</strong> Many partner sites use JavaScript for pricing. Solved with Playwright integration for headless browser rendering.</li>
+        <li><strong>Scale:</strong> Hundreds of partners with thousands of products. Solved with parallel processing and checkpoint-based resume.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The pipeline automatically detects partner price violations on a daily basis,
+        enabling Waffarha to maintain price integrity across its partner network.
+        The modular design allows easy addition of new partners and scraping strategies.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

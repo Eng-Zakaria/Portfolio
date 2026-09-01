@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blockchain Analyzer — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Blockchain forensics platform comparing Neo4j vs PySpark for Ethereum analysis. 73x faster graph traversal with Neo4j. Bronze/Silver/Gold ETL pipeline.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .challenge-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .challenge-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .challenge-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+    .solution-card { background: var(--accent-light); border: 1px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .solution-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-dark); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .solution-card p { font-size: 0.9rem; color: var(--text); line-height: 1.7; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Blockchain Analyzer</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Blockchain forensics platform comparing Neo4j (graph) vs PySpark (batch) for Ethereum transaction analysis.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Blockchain Analysis Intern</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">Jun 2023 – Aug 2023</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Organization</span>
+          <span class="meta-value">University of Zurich</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Research Project</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">Python</span>
+        <span class="tech-tag">Web3.py</span>
+        <span class="tech-tag">PySpark</span>
+        <span class="tech-tag">Neo4j</span>
+        <span class="tech-tag">Elasticsearch</span>
+        <span class="tech-tag">Kibana</span>
+        <span class="tech-tag">Docker</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+      <a href="https://github.com/Eng-Zakaria/blockchain-analyzer" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+    </div>
+
+    <section class="content-section">
+      <h3>Key Metrics</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">73.4x</div>
+          <div class="metric-label">Faster Multi-hop (Neo4j)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">18.9x</div>
+          <div class="metric-label">Faster Suspicious Detection</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">3</div>
+          <div class="metric-label">Threat Patterns Detected</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Blockchain forensic analysis requires processing large volumes of Ethereum transaction
+        data to identify suspicious patterns like chain hopping, smurfing, and peel chains.
+        The research question was whether graph databases (Neo4j) or batch processing engines
+        (PySpark) were better suited for real-time threat detection and pattern analysis.
+      </p>
+      <p>
+        Traditional batch processing struggles with relationship-heavy queries that require
+        traversing multiple transaction hops, while graph databases excel at these operations
+        but may not scale as efficiently for simple aggregations.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                    Blockchain Data Sources                          │</span>
+<span class="highlight">│  • Etherscan API  • Infura API  • Sample Data Generator             │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                   Bronze → Silver → Gold ETL Pipeline               │</span>
+<span class="highlight">│  • Raw ingestion  • Cleansing & validation  • Enrichment            │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+<span class="highlight">┌──────────────┐  ┌──────────────┐  ┌──────────────┐</span>
+<span class="highlight">│   Neo4j      │  │   PySpark    │  │ Elasticsearch│</span>
+<span class="highlight">│  (Graph DB)  │  │  (Batch)     │  │   (Search)   │</span>
+<span class="highlight">│              │  │              │  │              │</span>
+<span class="highlight">│ • Multi-hop  │  │ • Aggreg-    │  │ • Full-text  │</span>
+<span class="highlight">│   traversal  │  │   ations     │  │   search     │</span>
+<span class="highlight">│ • Pattern    │  │ • Simple     │  │ • Log storage│</span>
+<span class="highlight">│   detection  │  │   joins      │  │              │</span>
+<span class="highlight">└──────────────┘  └──────────────┘  └──────────────┘</span>
+              │            │            │
+              └────────────┼────────────┘
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                      Kibana Dashboards                              │</span>
+<span class="highlight">│  • Transaction visualization  • Pattern analysis  • Risk scoring    │</span>
+<span class="highlight">└─────────────────────────────────────────────────────────────────────┘</span>
+</pre>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Benchmarking Results</h3>
+      <p>
+        The platform includes a comprehensive benchmarking module that compares Neo4j and
+        PySpark across three key operations using 1,000 transactions:
+      </p>
+      <ul>
+        <li><strong>Multi-hop Traversal:</strong> Neo4j was 73.42x faster than PySpark, demonstrating superior performance for relationship-heavy queries</li>
+        <li><strong>Suspicious Pattern Detection:</strong> Neo4j was 18.88x faster for identifying chain hopping, smurfing, and peel chain patterns</li>
+        <li><strong>Wallet Degree Queries:</strong> PySpark showed a slight advantage (0.02x speedup) for simple aggregation operations</li>
+      </ul>
+      <p>
+        <strong>Key Insight:</strong> Neo4j excels at graph traversal and relationship queries,
+        while PySpark is better suited for simple aggregations and batch processing. A hybrid
+        approach is recommended: Neo4j for real-time queries, PySpark for batch analytics.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Implementation</h3>
+      <ul>
+        <li><strong>Data Ingestion:</strong> Built automated pipelines using Web3.py to fetch Ethereum transaction data from Etherscan and Infura APIs</li>
+        <li><strong>Medallion Architecture:</strong> Implemented Bronze/Silver/Gold layering for data quality progression—raw ingestion, cleansing/validation, and enriched analytics</li>
+        <li><strong>Threat Detection:</strong> Developed pattern detection algorithms for chain hopping, smurfing, and peel chain techniques used in money laundering</li>
+        <li><strong>Graph Modeling:</strong> Designed Neo4j schema with wallets as nodes and transactions as relationships for efficient traversal queries</li>
+        <li><strong>Visualization:</strong> Created Kibana dashboards for transaction flow visualization and pattern analysis</li>
+        <li><strong>Docker Deployment:</strong> Containerized the entire stack with one-command deployment</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Use Cases</h3>
+      <ul>
+        <li>AML/CFT compliance monitoring for financial institutions</li>
+        <li>Forensic transaction tracing for law enforcement</li>
+        <li>DeFi protocol analysis and risk assessment</li>
+        <li>Wallet behavior profiling and anomaly detection</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The platform provides actionable intelligence for blockchain forensics, with clear
+        guidance on when to use graph databases vs. batch processing. The benchmarking
+        results informed architectural decisions for production deployments, and the
+        hybrid approach maximizes both query performance and processing scalability.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

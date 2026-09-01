@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Waffarha Assistant — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Production RAG chatbot for Egypt's leading deals platform. 94.9% recall, 0.62ms latency, bilingual Arabic/English support.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .project-header {
+      padding: 8rem 0 4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin: 2rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .project-nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: color 0.2s;
+    }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+    }
+    .content-section p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+    .content-section ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+    .content-section li {
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+      position: relative;
+      line-height: 1.7;
+    }
+    .content-section li::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+    }
+    .arch-full {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2rem;
+      margin: 2rem 0;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .metric-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .metric-value {
+      font-family: var(--font-display);
+      font-size: 2.5rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .metric-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+    }
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 1.5rem 0;
+    }
+    .tech-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.4rem 0.8rem;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 4px;
+      border: 1px solid var(--accent);
+    }
+    .challenge-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .challenge-card h4 {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .challenge-card p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+    .solution-card {
+      background: var(--accent-light);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+    .solution-card h4 {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--accent-dark);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .solution-card p {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.7;
+    }
+    @media (max-width: 768px) {
+      .project-meta { flex-direction: column; gap: 1rem; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- PROJECT HEADER -->
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Waffarha Assistant</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Production RAG-powered customer support chatbot serving Egypt's leading deals platform.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer Intern</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">Jul 2026 – Present</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Platform</span>
+          <span class="meta-value">Waffarha.com</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Production System</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag">FastAPI</span>
+        <span class="tech-tag">FAISS</span>
+        <span class="tech-tag">ClickHouse</span>
+        <span class="tech-tag">Redis</span>
+        <span class="tech-tag">Ollama</span>
+        <span class="tech-tag">Docker</span>
+        <span class="tech-tag">Airflow</span>
+        <span class="tech-tag">Streamlit</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- NAV -->
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+      <a href="https://github.com/Eng-Zakaria/waffarha-chatbot" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+    </div>
+
+    <!-- METRICS -->
+    <section class="content-section">
+      <h3>Key Metrics</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">94.9%</div>
+          <div class="metric-label">Recall</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">0.62ms</div>
+          <div class="metric-label">Avg Latency</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">18k+</div>
+          <div class="metric-label">Indexed Docs</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">110+</div>
+          <div class="metric-label">Test Cases</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM -->
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Waffarha, Egypt's leading deals and coupon platform, needed a customer support solution
+        that could handle the volume and complexity of bilingual (Arabic/English) queries while
+        maintaining accuracy and reducing response times. Traditional FAQ systems couldn't handle
+        the nuance of customer questions, and manual support was scaling poorly.
+      </p>
+      <p>
+        The challenge was threefold: support both languages effectively, provide personalized
+        responses based on user data (coupons, orders, spending), and ensure answers were
+        factually grounded in the knowledge base to prevent hallucinations.
+      </p>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+<pre>
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                     Static Chat Widget (vanilla JS)                  │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │ POST /api/chat
+                           ▼
+<span class="highlight">┌─────────────────────────────────────────────────────────────────────┐</span>
+<span class="highlight">│                        FastAPI Application                           │</span>
+<span class="highlight">│  • CORS, static file serving                                        │</span>
+<span class="highlight">│  • Request/response shaping                                         │</span>
+<span class="highlight">│  • Identity resolution (auth proxy → user_id)                       │</span>
+<span class="highlight">└──────────────────────────┬──────────────────────────────────────────┘</span>
+                           │
+             ┌─────────────┼─────────────┐
+             ▼             ▼             ▼
+<span class="highlight">┌─────────────────┐ ┌─────────────┐ ┌───────────────┐</span>
+<span class="highlight">│   RagEngine     │ │  Identity   │ │   Memory      │</span>
+<span class="highlight">│  (rag_engine.py)│ │  Resolver   │ │  (memory.py)  │</span>
+<span class="highlight">│                 │ │ (identity.py)│ │               │</span>
+<span class="highlight">│ • Vector search │ │             │ │ • Redis/local │</span>
+<span class="highlight">│ • Intent class  │ │ • Static    │ │ • Session-scoped│</span>
+<span class="highlight">│ • Direct answer │ │ • Header    │ │ • Shown items │</span>
+<span class="highlight">│ • Fact-check    │ │ • Session   │ │ • 1hr TTL     │</span>
+<span class="highlight">│ • LLM fallback  │ │             │ │               │</span>
+<span class="highlight">└────────┬────────┘ └─────────────┘ └───────────────┘</span>
+         │
+    ┌────┴────┐
+    ▼         ▼
+<span class="highlight">┌───────┐ ┌──────────┐</span>
+<span class="highlight">│Vector │ │  ClickHouse│</span>
+<span class="highlight">│Store  │ │ (personal) │</span>
+<span class="highlight">└───────┘ └──────────┘</span>
+</pre>
+      </div>
+    </section>
+
+    <!-- APPROACH -->
+    <section class="content-section">
+      <h3>Approach & Implementation</h3>
+      <ul>
+        <li><strong>Hybrid Intent Routing:</strong> Designed a routing engine that resolves ~75% of queries through deterministic shortcuts (FAQ/offer template matching) before falling back to LLM generation. This combines dense embeddings with lexical token-overlap scoring and cosine-similarity normalization.</li>
+        <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Selected multilingual-E5-large for production based on 94.9% recall.</li>
+        <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector) on 18k+ indexed documents. FAISS delivered 0.62ms avg query latency vs. 7.6-65ms for alternatives, while all maintained 85%+ recall.</li>
+        <li><strong>Fact-Checking Layer:</strong> Built an automated system that extracts verifiable claims (prices, discounts, dates) from LLM-generated answers and cross-checks them against retrieved sources, stripping unsupported claims.</li>
+        <li><strong>Personal Queries:</strong> Implemented live ClickHouse lookups for user-specific data (coupons, orders, spending history) routed away from the vector index to keep PII out of embeddings and ensure fresh results.</li>
+        <li><strong>Automated Ingestion:</strong> Created Airflow DAGs for scheduled ingestion from MySQL and ClickHouse, deduplication by content hash, SCD2 versioning, and vector index updates on data changes.</li>
+        <li><strong>CI Integration:</strong> Built an evaluation harness with 110+ test cases across 7 categories (offers, FAQs, personal queries, follow-ups, catalog, negative/hallucination, Arabic). Holds 96.4% pass rate with exit-code gating.</li>
+        <li><strong>Docker Deployment:</strong> Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with model-baked images for zero-runtime-network production deployment.</li>
+      </ul>
+    </section>
+
+    <!-- CHALLENGES -->
+    <section class="content-section">
+      <h3>Challenges & Solutions</h3>
+
+      <div class="challenge-card">
+        <h4>Challenge: Hallucination in LLM Responses</h4>
+        <p>LLM-generated answers sometimes included fabricated prices or incorrect offer details not found in the knowledge base.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Automated Fact-Checking</h4>
+        <p>Built a claim extraction layer that identifies verifiable assertions in LLM output and validates them against retrieved source documents. Unsupported claims are stripped before response delivery.</p>
+      </div>
+
+      <div class="challenge-card">
+        <h4>Challenge: Bilingual Query Complexity</h4>
+        <p>Users mixed Arabic, English, and Franco-Arabic (Arabic in Latin script) in single queries, making standard embedding models ineffective.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Multilingual E5 + Lexical Boost</h4>
+        <p>Selected multilingual-E5-large embeddings and added a lexical token-overlap bonus to improve retrieval for mixed-language queries. Also implemented language detection to route queries to appropriate processing paths.</p>
+      </div>
+
+      <div class="challenge-card">
+        <h4>Challenge: Personal Data Privacy</h4>
+        <p>User-specific queries (coupons, orders) needed to be answered accurately but shouldn't be stored in the vector index alongside public FAQ data.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Intent-Based Routing</h4>
+        <p>Personal queries are detected and routed directly to ClickHouse for live lookups, bypassing the vector store entirely. This keeps PII out of embeddings and ensures data freshness.</p>
+      </div>
+    </section>
+
+    <!-- OUTCOME -->
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The Waffarha Assistant is now in production serving customer support queries.
+        The hybrid routing approach handles 75% of queries without LLM calls, reducing
+        costs and latency. The fact-checking layer has significantly reduced hallucination
+        rates, and the CI-integrated evaluation harness ensures regression prevention.
+      </p>
+      <p>
+        The modular architecture allows easy addition of new vector backends and embedding
+        models through configuration changes, making the system adaptable as requirements evolve.
+      </p>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>
