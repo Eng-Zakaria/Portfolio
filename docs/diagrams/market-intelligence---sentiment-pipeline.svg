@@ -1,126 +1,203 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 660" width="540" height="660">
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 950" width="960" height="950">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#6B7280"/>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
     </marker>
-    <marker id="arrow-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF"/>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
     </marker>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F9FAFB"/>
-      <stop offset="100%" style="stop-color:#FFFFFF"/>
-    </linearGradient>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
+    </marker>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
     </filter>
-  </defs><rect width="540" height="660" fill="url(#bg)"/>
-<text x="270" y="24" text-anchor="middle" font-size="16" font-weight="600" fill="#111827" font-family="Inter, sans-serif">Market Intelligence — Sentiment Pipeline</text>
-<text x="270" y="40" text-anchor="middle" font-size="11" fill="#6B7280" font-family="Inter, sans-serif">Architecture Diagram</text>
-  <rect x="40" y="55" width="460" height="80" rx="12" ry="12"
-    fill="#E3F2FD" fill-opacity="0.2" stroke="#1976D2" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="75" font-size="10" font-weight="600" fill="#1976D2" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Data Sources</text>
-  <rect x="40" y="165" width="460" height="70" rx="12" ry="12"
-    fill="#E8F5E9" fill-opacity="0.2" stroke="#388E3C" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="185" font-size="10" font-weight="600" fill="#388E3C" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Connector Registry</text>
-  <rect x="40" y="265" width="460" height="150" rx="12" ry="12"
-    fill="#E0F2F1" fill-opacity="0.2" stroke="#00838F" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="285" font-size="10" font-weight="600" fill="#00838F" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Processing Pipeline</text>
-  <rect x="40" y="455" width="460" height="70" rx="12" ry="12"
-    fill="#FFF8E1" fill-opacity="0.2" stroke="#FF8F00" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="475" font-size="10" font-weight="600" fill="#FF8F00" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Dashboard</text>
-  <line x1="92.5" y1="120" x2="270" y2="185" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="187.5" y1="120" x2="270" y2="185" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="282.5" y1="120" x2="270" y2="185" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="377.5" y1="120" x2="270" y2="185" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="460" y1="120" x2="270" y2="185" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="270" y1="235" x2="105" y2="285" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <text x="187.5" y="254" text-anchor="middle" font-size="9" fill="#6B7280" font-family="Inter, sans-serif">Collect</text>
-  <line x1="105" y1="335" x2="235" y2="285" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <text x="170" y="304" text-anchor="middle" font-size="9" fill="#6B7280" font-family="Inter, sans-serif">Arabic</text>
-  <line x1="105" y1="335" x2="365" y2="285" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <text x="235" y="304" text-anchor="middle" font-size="9" fill="#6B7280" font-family="Inter, sans-serif">English</text>
-  <line x1="235" y1="335" x2="105" y2="365" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="365" y1="335" x2="235" y2="365" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="105" y1="415" x2="365" y2="365" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="235" y1="415" x2="365" y2="365" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="365" y1="415" x2="270" y2="475" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <rect x="50" y="65" width="85" height="55" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="92.5" cy="85" r="14" fill="#0D96F6"/>
-  <text x="92.5" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">A</text>
-  <text x="92.5" y="108" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">App Store</text>
-  <rect x="145" y="65" width="85" height="55" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="187.5" cy="85" r="14" fill="#414141"/>
-  <text x="187.5" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">G</text>
-  <text x="187.5" y="108" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Play Store</text>
-  <rect x="240" y="65" width="85" height="55" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="282.5" cy="85" r="14" fill="#FF4500"/>
-  <text x="282.5" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">R</text>
-  <text x="282.5" y="108" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Reddit</text>
-  <rect x="335" y="65" width="85" height="55" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="377.5" cy="85" r="14" fill="#4285F4"/>
-  <text x="377.5" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">G</text>
-  <text x="377.5" y="108" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Google News</text>
-  <rect x="430" y="65" width="60" height="55" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="460" cy="85" r="14" fill="#4285F4"/>
-  <text x="460" y="89" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">G</text>
-  <text x="460" y="108" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Web Search</text>
-  <rect x="50" y="185" width="440" height="50" rx="10" ry="10"
-    fill="#E8F5E9" stroke="#388E3C" stroke-width="1.5"/>
-  <circle cx="270" cy="205" r="14" fill="#3776AB"/>
-  <text x="270" y="209" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="270" y="223" text-anchor="middle" font-size="11" font-weight="500" fill="#1B5E20" font-family="Inter, sans-serif">Connectors</text>
-  <rect x="50" y="285" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="105" cy="305" r="14" fill="#3776AB"/>
-  <text x="105" y="309" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="105" y="323" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">Lang Detection</text>
-  <rect x="180" y="285" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="235" cy="305" r="14" fill="#FFD21E"/>
-  <text x="235" y="309" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">H</text>
-  <text x="235" y="323" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">AraBERT</text>
-  <rect x="310" y="285" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="365" cy="305" r="14" fill="#FFD21E"/>
-  <text x="365" y="309" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">H</text>
-  <text x="365" y="323" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">RoBERTa</text>
-  <rect x="50" y="365" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="105" cy="385" r="14" fill="#3776AB"/>
-  <text x="105" y="389" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="105" y="403" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">Topic Tagger</text>
-  <rect x="180" y="365" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="235" cy="385" r="14" fill="#3776AB"/>
-  <text x="235" y="389" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="235" y="403" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">Neg. Triage</text>
-  <rect x="310" y="365" width="110" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="365" cy="385" r="14" fill="#7A76FF"/>
-  <text x="365" y="389" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="365" y="403" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">Trend Analysis</text>
-  <rect x="50" y="475" width="440" height="50" rx="10" ry="10"
-    fill="#FFF8E1" stroke="#FF8F00" stroke-width="1.5"/>
-  <circle cx="270" cy="495" r="14" fill="#FF4B4B"/>
-  <text x="270" y="499" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">S</text>
-  <text x="270" y="513" text-anchor="middle" font-size="11" font-weight="500" fill="#E65100" font-family="Inter, sans-serif">Streamlit</text>
-  <rect x="370" y="530" width="155" height="110" rx="8" fill="white" stroke="#E5E7EB"/>
-  <text x="380" y="548" font-size="10" font-weight="600" fill="#374151" font-family="Inter, sans-serif">LAYER LEGEND</text>
-  <rect x="380" y="562" width="12" height="12" rx="2" fill="#E3F2FD" stroke="#1976D2"/>
-  <text x="398" y="572" font-size="9" fill="#374151" font-family="Inter, sans-serif">DATA SOURCES</text>
-  <rect x="380" y="576" width="12" height="12" rx="2" fill="#E8F5E9" stroke="#388E3C"/>
-  <text x="398" y="586" font-size="9" fill="#374151" font-family="Inter, sans-serif">INGESTION</text>
-  <rect x="380" y="590" width="12" height="12" rx="2" fill="#FFF3E0" stroke="#F57C00"/>
-  <text x="398" y="600" font-size="9" fill="#374151" font-family="Inter, sans-serif">ORCHESTRATION</text>
-  <rect x="380" y="604" width="12" height="12" rx="2" fill="#E0F2F1" stroke="#00838F"/>
-  <text x="398" y="614" font-size="9" fill="#374151" font-family="Inter, sans-serif">PROCESSING</text>
-  <rect x="380" y="618" width="12" height="12" rx="2" fill="#F3E5F5" stroke="#7B1FA2"/>
-  <text x="398" y="628" font-size="9" fill="#374151" font-family="Inter, sans-serif">STORAGE</text>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc"/>
+      <stop offset="100%" style="stop-color:#ffffff"/>
+    </linearGradient>
+  </defs>
+
+  <style>
+    text { font-family: 'Inter', -apple-system, sans-serif; }
+    .title { font-size: 22px; font-weight: 700; fill: #0f172a; }
+    .subtitle { font-size: 12px; fill: #6b7280; }
+    .label { font-size: 11px; fill: #475569; font-weight: 500; }
+    .layer-label { font-size: 10px; font-weight: 600; fill: #2563eb; text-transform: uppercase; letter-spacing: 0.08em; }
+  </style>
+
+  <!-- Background -->
+  <rect width="960" height="950" fill="url(#bg-gradient)"/>
+
+  <!-- Title -->
+  <text x="480" y="35" text-anchor="middle" class="title">Waffarha Market Sentiment</text>
+  <text x="480" y="55" text-anchor="middle" class="subtitle">Multilingual Sentiment Analysis &amp; Brand Monitoring Pipeline</text>
+
+  <!-- Layer 1: Data Sources -->
+  <rect x="30" y="80" width="900" height="140" rx="12" fill="#fef3c7" fill-opacity="0.5" stroke="#fcd34d" stroke-width="1.5"/>
+  <text x="50" y="100" class="layer-label">Data Sources</text>
+
+  <!-- App Store -->
+  <rect x="50" y="115" width="130" height="80" rx="8" fill="#ffffff" stroke="#007aff" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="115" y="145" text-anchor="middle" font-size="26">🍎</text>
+  <text x="115" y="175" text-anchor="middle" class="label">App Store</text>
+  <text x="115" y="188" text-anchor="middle" font-size="9" fill="#6b7280">Reviews</text>
+
+  <!-- Google Play -->
+  <rect x="210" y="115" width="130" height="80" rx="8" fill="#ffffff" stroke="#34a853" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="275" y="145" text-anchor="middle" font-size="26">🤖</text>
+  <text x="275" y="175" text-anchor="middle" class="label">Google Play</text>
+  <text x="275" y="188" text-anchor="middle" font-size="9" fill="#6b7280">Reviews</text>
+
+  <!-- Reddit -->
+  <rect x="370" y="115" width="130" height="80" rx="8" fill="#ffffff" stroke="#ff4500" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="435" y="145" text-anchor="middle" font-size="26">👽</text>
+  <text x="435" y="175" text-anchor="middle" class="label">Reddit</text>
+  <text x="435" y="188" text-anchor="middle" font-size="9" fill="#6b7280">Posts &amp; Comments</text>
+
+  <!-- Google News -->
+  <rect x="530" y="115" width="130" height="80" rx="8" fill="#ffffff" stroke="#4285f4" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="595" y="145" text-anchor="middle" font-size="26">📰</text>
+  <text x="595" y="175" text-anchor="middle" class="label">Google News</text>
+  <text x="595" y="188" text-anchor="middle" font-size="9" fill="#6b7280">Articles</text>
+
+  <!-- Social Media -->
+  <rect x="690" y="115" width="130" height="80" rx="8" fill="#ffffff" stroke="#1da1f2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="755" y="145" text-anchor="middle" font-size="26">🐦</text>
+  <text x="755" y="175" text-anchor="middle" class="label">Twitter/X</text>
+  <text x="755" y="188" text-anchor="middle" font-size="9" fill="#6b7280">Tweets</text>
+
+  <!-- Connector Registry -->
+  <rect x="830" y="115" width="80" height="80" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="870" y="155" text-anchor="middle" font-size="24">🔗</text>
+  <text x="870" y="185" text-anchor="middle" font-size="8" fill="#7c3aed">Connector</text>
+
+  <!-- Layer 2: Collection -->
+  <rect x="30" y="240" width="900" height="100" rx="12" fill="#e0f2fe" fill-opacity="0.5" stroke="#7dd3fc" stroke-width="1.5"/>
+  <text x="50" y="260" class="layer-label">Data Collection Layer</text>
+
+  <!-- Scrapers -->
+  <rect x="80" y="270" width="160" height="55" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="160" y="295" text-anchor="middle" font-size="22">🕷️</text>
+  <text x="160" y="315" text-anchor="middle" class="label">Web Scrapers</text>
+
+  <!-- APIs -->
+  <rect x="290" y="270" width="160" height="55" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="370" y="295" text-anchor="middle" font-size="22">🔌</text>
+  <text x="370" y="315" text-anchor="middle" class="label">API Endpoints</text>
+
+  <!-- Rate Limiting -->
+  <rect x="500" y="270" width="160" height="55" rx="8" fill="#ffffff" stroke="#f59e0b" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="580" y="295" text-anchor="middle" font-size="22">⏱️</text>
+  <text x="580" y="315" text-anchor="middle" class="label">Rate Limiter</text>
+
+  <!-- Deduplication -->
+  <rect x="710" y="270" width="160" height="55" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="790" y="295" text-anchor="middle" font-size="22">🔄</text>
+  <text x="790" y="315" text-anchor="middle" class="label">Deduplication</text>
+
+  <!-- Layer 3: Processing -->
+  <rect x="30" y="360" width="900" height="200" rx="12" fill="#f0fdf4" fill-opacity="0.5" stroke="#86efac" stroke-width="1.5"/>
+  <text x="50" y="380" class="layer-label">NLP Processing Layer</text>
+
+  <!-- Language Detection -->
+  <rect x="60" y="400" width="160" height="65" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="140" y="425" text-anchor="middle" font-size="22">🌐</text>
+  <text x="140" y="448" text-anchor="middle" class="label">Language Detection</text>
+
+  <!-- Arabic Processing -->
+  <rect x="260" y="400" width="160" height="65" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="340" y="425" text-anchor="middle" font-size="22">🇸🇦</text>
+  <text x="340" y="448" text-anchor="middle" class="label">Arabic Pipeline</text>
+
+  <!-- English Processing -->
+  <rect x="460" y="400" width="160" height="65" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="540" y="425" text-anchor="middle" font-size="22">🇬🇧</text>
+  <text x="540" y="448" text-anchor="middle" class="label">English Pipeline</text>
+
+  <!-- Sentiment Analysis -->
+  <rect x="660" y="400" width="160" height="65" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="740" y="425" text-anchor="middle" font-size="22">😊</text>
+  <text x="740" y="448" text-anchor="middle" class="label">Sentiment Analysis</text>
+
+  <!-- AraBERT -->
+  <rect x="80" y="480" width="180" height="55" rx="8" fill="#fff7ed" stroke="#ff6b35" stroke-width="2" filter="url(#shadow)"/>
+  <text x="170" y="505" text-anchor="middle" font-size="22">🧠</text>
+  <text x="170" y="525" text-anchor="middle" class="label" font-weight="600">AraBERT Model</text>
+
+  <!-- RoBERTa -->
+  <rect x="300" y="480" width="180" height="55" rx="8" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="2" filter="url(#shadow)"/>
+  <text x="390" y="505" text-anchor="middle" font-size="22">🤗</text>
+  <text x="390" y="525" text-anchor="middle" class="label" font-weight="600">RoBERTa Model</text>
+
+  <!-- Processing Flow -->
+  <path d="M 320 430 L 380 430" stroke="#059669" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <path d="M 520 430 L 580 430" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <path d="M 720 430 L 740 430" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+
+  <!-- Layer 4: Storage -->
+  <rect x="30" y="580" width="900" height="100" rx="12" fill="#faf5ff" fill-opacity="0.5" stroke="#e9d5ff" stroke-width="1.5"/>
+  <text x="50" y="600" class="layer-label">Data Storage &amp; Indexing</text>
+
+  <!-- Postgres -->
+  <rect x="80" y="615" width="140" height="55" rx="8" fill="#ffffff" stroke="#336791" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="150" y="640" text-anchor="middle" font-size="22">🐘</text>
+  <text x="150" y="660" text-anchor="middle" class="label">PostgreSQL</text>
+
+  <!-- ClickHouse -->
+  <rect x="260" y="615" width="140" height="55" rx="8" fill="#ffffff" stroke="#1976d2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="330" y="640" text-anchor="middle" font-size="22">🗄️</text>
+  <text x="330" y="660" text-anchor="middle" class="label">ClickHouse</text>
+
+  <!-- Vector Store -->
+  <rect x="440" y="615" width="140" height="55" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="510" y="640" text-anchor="middle" font-size="22">📚</text>
+  <text x="510" y="660" text-anchor="middle" class="label">Vector Store</text>
+
+  <!-- Redis -->
+  <rect x="620" y="615" width="140" height="55" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="690" y="640" text-anchor="middle" font-size="22">⚡</text>
+  <text x="690" y="660" text-anchor="middle" class="label">Redis Cache</text>
+
+  <!-- S3 -->
+  <rect x="800" y="615" width="120" height="55" rx="8" fill="#ffffff" stroke="#ff9900" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="860" y="640" text-anchor="middle" font-size="22">☁️</text>
+  <text x="860" y="660" text-anchor="middle" class="label">S3 Archive</text>
+
+  <!-- Layer 5: Visualization -->
+  <rect x="30" y="700" width="900" height="120" rx="12" fill="#fff7ed" fill-opacity="0.5" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="50" y="720" class="layer-label">Dashboard &amp; Visualization</text>
+
+  <!-- Streamlit -->
+  <rect x="80" y="740" width="160" height="65" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="160" y="765" text-anchor="middle" font-size="22">📊</text>
+  <text x="160" y="785" text-anchor="middle" class="label">Streamlit App</text>
+
+  <!-- Trend Charts -->
+  <rect x="280" y="740" width="160" height="65" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="360" y="765" text-anchor="middle" font-size="22">📈</text>
+  <text x="360" y="785" text-anchor="middle" class="label">Trend Visualization</text>
+
+  <!-- Sentiment Gauge -->
+  <rect x="480" y="740" width="160" height="65" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="560" y="765" text-anchor="middle" font-size="22">🎚️</text>
+  <text x="560" y="785" text-anchor="middle" class="label">Sentiment Gauge</text>
+
+  <!-- Alerts -->
+  <rect x="680" y="740" width="160" height="65" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="760" y="765" text-anchor="middle" font-size="22">🔔</text>
+  <text x="760" y="785" text-anchor="middle" class="label">Alert System</text>
+
+  <!-- Export -->
+  <rect x="860" y="740" width="100" height="65" rx="8" fill="#ffffff" stroke="#6b7280" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="910" y="765" text-anchor="middle" font-size="22">📥</text>
+  <text x="910" y="785" text-anchor="middle" class="label">Export</text>
+
+  <!-- Airflow -->
+  <rect x="30" y="840" width="900" height="60" rx="12" fill="#f8fafc" stroke="#017cfa" stroke-width="1.5"/>
+  <text x="450" y="875" text-anchor="middle" font-size="16" font-weight="600" fill="#017cfa">🔄 Airflow Orchestration - Automated Pipeline</text>
 </svg>
