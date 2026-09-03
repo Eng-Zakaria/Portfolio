@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" width="1000" height="700">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea580c"/>
+    </marker>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <style>
+    text { font-family: 'Inter', -apple-system, sans-serif; }
+    .title { font-size: 22px; font-weight: 700; fill: #f8fafc; }
+    .label { font-size: 12px; fill: #94a3b8; font-weight: 500; }
+    .component { font-size: 14px; fill: #f8fafc; font-weight: 600; }
+    .stage { font-size: 11px; fill: #64748b; }
+    .metric { font-size: 11px; fill: #64748b; }
+
+    @keyframes flow {
+      0% { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 0; }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .flow-line { stroke-dasharray: 10 5; animation: flow 1s linear infinite; }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    .blinking { animation: blink 1.5s ease-in-out infinite; }
+  </style>
+
+  <!-- Background -->
+  <rect width="1000" height="700" fill="url(#bg-gradient)"/>
+
+  <!-- Title -->
+  <text x="500" y="40" text-anchor="middle" class="title">Reddit Spark Pipeline — 7-Stage Medallion ETL</text>
+
+  <!-- Source: Reddit API -->
+  <rect x="30" y="120" width="120" height="70" rx="10" fill="#1e293b" stroke="#ff4500" stroke-width="2" filter="url(#glow)"/>
+  <text x="90" y="150" text-anchor="middle" font-size="28">👽</text>
+  <text x="90" y="175" text-anchor="middle" class="component">Reddit API</text>
+
+  <!-- Stage 1: Ingestion -->
+  <rect x="200" y="120" width="120" height="70" rx="10" fill="#1e293b" stroke="#f87171" stroke-width="2"/>
+  <text x="260" y="150" text-anchor="middle" font-size="28">📥</text>
+  <text x="260" y="175" text-anchor="middle" class="component">1. Ingest</text>
+
+  <!-- Stage 2: Validation -->
+  <rect x="370" y="120" width="120" height="70" rx="10" fill="#1e293b" stroke="#fb923c" stroke-width="2"/>
+  <text x="430" y="150" text-anchor="middle" font-size="28">✓</text>
+  <text x="430" y="175" text-anchor="middle" class="component">2. Validate</text>
+
+  <!-- Stage 3: Enrichment -->
+  <rect x="540" y="120" width="120" height="70" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="2"/>
+  <text x="600" y="150" text-anchor="middle" font-size="28">🔧</text>
+  <text x="600" y="175" text-anchor="middle" class="component">3. Enrich</text>
+
+  <!-- Flow arrows for ingestion stages -->
+  <line x1="150" y1="155" x2="200" y2="155" stroke="#6b7280" stroke-width="2" class="flow-line"/>
+  <line x1="320" y1="155" x2="370" y2="155" stroke="#6b7280" stroke-width="2" class="flow-line"/>
+  <line x1="490" y1="155" x2="540" y2="155" stroke="#6b7280" stroke-width="2" class="flow-line"/>
+
+  <!-- MEDALLION ARCHITECTURE -->
+  <!-- Bronze Layer -->
+  <rect x="30" y="250" width="280" height="200" rx="12" fill="#fef2f2" fill-opacity="0.1" stroke="#f87171" stroke-width="2"/>
+  <text x="50" y="275" class="component" fill="#f87171">BRONZE LAYER</text>
+  <text x="50" y="295" class="metric">Raw Data Storage</text>
+  <text x="170" y="350" font-size="48" text-anchor="middle">🔴</text>
+  <text x="170" y="400" text-anchor="middle" class="component">Raw Posts</text>
+  <text x="170" y="420" text-anchor="middle" class="metric">Unprocessed JSON</text>
+  <text x="170" y="440" text-anchor="middle" class="metric">7-day Retention</text>
+
+  <!-- Silver Layer -->
+  <rect x="340" y="250" width="280" height="200" rx="12" fill="#fff7ed" fill-opacity="0.1" stroke="#fb923c" stroke-width="2"/>
+  <text x="360" y="275" class="component" fill="#fb923c">SILVER LAYER</text>
+  <text x="360" y="295" class="metric">Cleaned &amp; Structured</text>
+  <text x="480" y="350" font-size="48" text-anchor="middle">🟠</text>
+  <text x="480" y="400" text-anchor="middle" class="component">Cleaned Data</text>
+  <text x="480" y="420" text-anchor="middle" class="metric">DEDUP &amp; Standardize</text>
+  <text x="480" y="440" text-anchor="middle" class="metric">Schema Validation</text>
+
+  <!-- Gold Layer -->
+  <rect x="650" y="250" width="280" height="200" rx="12" fill="#f0fdf4" fill-opacity="0.1" stroke="#4ade80" stroke-width="2"/>
+  <text x="670" y="275" class="component" fill="#4ade80">GOLD LAYER</text>
+  <text x="670" y="295" class="metric">Enriched &amp; Aggregated</text>
+  <text x="790" y="350" font-size="48" text-anchor="middle">🟢</text>
+  <text x="790" y="400" text-anchor="middle" class="component">Analytics Ready</text>
+  <text x="790" y="420" text-anchor="middle" class="metric">Engagement Scores</text>
+  <text x="790" y="440" text-anchor="middle" class="metric">Ranking &amp; Insights</text>
+
+  <!-- Processing stages in medallion -->
+  <rect x="30" y="480" width="280" height="60" rx="8" fill="#1e293b" stroke="#f87171" stroke-width="1"/>
+  <text x="170" y="505" text-anchor="middle" class="component">Spark Structured Streaming</text>
+  <text x="170" y="525" text-anchor="middle" class="metric">Real-time Data Processing</text>
+
+  <rect x="340" y="480" width="280" height="60" rx="8" fill="#1e293b" stroke="#fb923c" stroke-width="1"/>
+  <text x="480" y="505" text-anchor="middle" class="component">UDF: Engagement Scoring</text>
+  <text x="480" y="525" text-anchor="middle" class="metric">Custom Scoring Algorithms</text>
+
+  <rect x="650" y="480" width="280" height="60" rx="8" fill="#1e293b" stroke="#4ade80" stroke-width="1"/>
+  <text x="790" y="505" text-anchor="middle" class="component">Window Functions &amp; Joins</text>
+  <text x="790" y="525" text-anchor="middle" class="metric">Broadcast &amp; Partitioned</text>
+
+  <!-- Output Parquet -->
+  <rect x="350" y="580" width="300" height="80" rx="12" fill="#1e293b" stroke="#60a5fa" stroke-width="2" filter="url(#glow)"/>
+  <text x="500" y="615" text-anchor="middle" font-size="28">📊</text>
+  <text x="500" y="645" text-anchor="middle" class="component">Partitioned Parquet Output</text>
+
+  <!-- Animated Data Flow -->
+  <circle cx="100" cy="155" r="5" fill="#ff4500" class="blinking">
+    <animate attributeName="cx" from="100" to="260" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="260" cy="155" r="5" fill="#f87171" class="blinking">
+    <animate attributeName="cx" from="260" to="430" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="430" cy="155" r="5" fill="#fb923c" class="blinking">
+    <animate attributeName="cx" from="430" to="600" dur="2s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Flow from Silver to Gold -->
+  <line x1="480" y1="350" x2="650" y2="350" stroke="#4ade80" stroke-width="2" class="flow-line"/>
+  <line x1="480" y1="450" x2="650" y2="450" stroke="#4ade80" stroke-width="2" class="flow-line"/>
+
+  <!-- Performance Metrics -->
+  <rect x="80" y="580" width="200" height="80" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1"/>
+  <text x="180" y="605" text-anchor="middle" class="component">PIPELINE PERFORMANCE</text>
+  <text x="100" y="630" class="metric">• 7-Stage Processing</text>
+  <text x="100" y="650" class="metric">• Sub-hourly Updates</text>
+</svg>
