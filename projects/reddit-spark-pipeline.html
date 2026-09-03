@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reddit Spark Pipeline — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="7-stage PySpark ETL pipeline with medallion architecture. Engagement scoring UDFs, window functions for ranking, broadcast joins for enrichment, partitioned Parquet output.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .stage-flow { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; align-items: center; }
+    .stage-tag { background: var(--accent-light); color: var(--accent); padding: 0.5rem 1rem; border-radius: 6px; font-family: var(--font-mono); font-size: 0.85rem; }
+    .stage-arrow { color: var(--muted); font-size: 1.5rem; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Reddit Spark Pipeline</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        7-stage PySpark ETL pipeline with medallion architecture for Reddit data analysis.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">2025</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Batch ETL</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag"><i class="fas fa-bolt"></i> PySpark</span>
+        <span class="tech-tag"><i class="fas fa-table"></i> Parquet</span>
+        <span class="tech-tag"><i class="fab fa-reddit-alien"></i> Reddit API</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        The client needed to analyze Reddit community engagement patterns across multiple subreddits. Raw Reddit data contained inconsistencies in timestamps, nested comments, and varied engagement metrics that required sophisticated processing.
+      </p>
+      <p>
+        Key challenges included handling large volumes of unstructured JSON data, computing engagement scores, and providing ranked content analysis at scale.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>ETL Pipeline Stages</h3>
+      <div class="stage-flow">
+        <span class="stage-tag">1. Ingestion</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">2. Validation</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">3. Enrichment</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">4. Scoring</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">5. Ranking</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">6. Aggregation</span>
+        <span class="stage-arrow">→</span>
+        <span class="stage-tag">7. Output</span>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Implementation Details</h3>
+      <ul>
+        <li><strong>Engagement Scoring UDFs:</strong> Custom functions combining upvotes, comments, awards, and engagement velocity</li>
+        <li><strong>Window Functions:</strong> Ranked content within subreddits using ROW_NUMBER(), RANK(), and PARTITION BY</li>
+        <li><strong>Broadcast Joins:</strong> Joined subreddit metadata with millions of posts efficiently</li>
+        <li><strong>Partitioned Output:</strong> Parquet files partitioned by date and subreddit for optimal query performance</li>
+        <li><strong>Data Quality:</strong> Implemented checks for null values, duplicates, and timestamp consistency</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Performance Optimizations</h3>
+      <ul>
+        <li>Partitioned data by subreddit and date for faster queries</li>
+        <li>Used broadcast joins for small reference tables (subreddit metadata)</li>
+        <li>Implemented data skew handling for popular subreddits</li>
+        <li>Optimized partitioning strategy for common query patterns</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The pipeline processes over 10M Reddit posts per day with full lineage from raw to gold layer. The engagement scoring system provides actionable insights for community managers and content strategists.
+      </p>
+      <p>
+        All data is stored in partitioned Parquet format with metadata tables for easy querying and integration with BI tools.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

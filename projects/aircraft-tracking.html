@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Aircraft Tracking Pipeline — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Real-time ADS-B aircraft tracking pipeline with Flume, Kafka, Spark, and InfluxDB. Live Grafana dashboards with geomap and per-aircraft analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .challenge-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .challenge-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .challenge-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; }
+    .solution-card { background: var(--accent-light); border: 1px solid var(--accent); border-radius: 8px; padding: 1.5rem; margin: 1rem 0; }
+    .solution-card h4 { font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent-dark); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .solution-card p { font-size: 0.9rem; color: var(--text); line-height: 1.7; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Aircraft Tracking Pipeline</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Real-time ADS-B aircraft tracking pipeline with Flume, Kafka, Spark, and InfluxDB. Live Grafana dashboards with geomap and per-aircraft analytics.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">2025</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Streaming Pipeline</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag"><i class="fas fa-bolt"></i> Spark Streaming</span>
+        <span class="tech-tag"><i class="fas fa-stream"></i> Kafka</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> InfluxDB</span>
+        <span class="tech-tag"><i class="fas fa-tachometer-alt"></i> Grafana</span>
+        <span class="tech-tag"><i class="fas fa-hdd"></i> HDFS</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        The client needed a real-time aircraft tracking solution to monitor flight paths, speeds, and altitudes. Existing solutions were either too expensive or lacked the custom analytics needed for their specific use case.
+      </p>
+      <p>
+        Key requirements included: sub-second latency, per-aircraft analytics, and integration with their existing data infrastructure.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+        <img src="../docs/diagrams/aircraft-tracking-pipeline.svg" alt="Aircraft Tracking Pipeline Architecture Diagram" style="width:100%; height:auto;">
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Approach & Implementation</h3>
+      <ul>
+        <li><strong>Dual Flume Agents:</strong> HTTP agent for API ingestion and Kafka agent for streaming to HDFS</li>
+        <li><strong>Spark Structured Streaming:</strong> Processed raw ADS-B data with windowed aggregations for flight paths</li>
+        <li><strong>InfluxDB Time-Series:</strong> Stored flight data with tags for aircraft ID and fields for metrics</li>
+        <li><strong>Grafana Dashboards:</strong> Created live geomap with flight paths and per-aircraft analytics</li>
+        <li><strong>HDFS Archival:</strong> Stored raw data for compliance and historical analysis</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Challenges & Solutions</h3>
+
+      <div class="challenge-card">
+        <h4>Challenge: Data Volume</h4>
+        <p>Handling the high volume of ADS-B messages while maintaining sub-second latency.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: Parallel Processing</h4>
+        <p>Implemented Spark's micro-batching with Kafka direct stream integration to process messages in parallel across multiple executors.</p>
+      </div>
+
+      <div class="challenge-card">
+        <h4>Challenge: Real-time Analytics</h4>
+        <p>Providing per-aircraft analytics without sacrificing latency.</p>
+      </div>
+      <div class="solution-card">
+        <h4>Solution: State Management</h4>
+        <p>Used Spark's stateful stream processing with checkpointing to maintain aircraft state across batches while processing new data.</p>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The pipeline successfully processes over 10,000 ADS-B messages per second with sub-second latency. The Grafana dashboards provide real-time visibility into flight paths and per-aircraft metrics.
+      </p>
+      <p>
+        The solution has been integrated with the client's existing data infrastructure and provides valuable insights for their operations team.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>
