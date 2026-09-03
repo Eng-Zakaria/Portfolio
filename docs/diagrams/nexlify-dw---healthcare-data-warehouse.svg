@@ -1,132 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 540 580" width="540" height="580">
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 800" width="960" height="800">
   <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#6B7280"/>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
     </marker>
-    <marker id="arrow-dashed" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#9CA3AF"/>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#059669"/>
     </marker>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F9FAFB"/>
-      <stop offset="100%" style="stop-color:#FFFFFF"/>
-    </linearGradient>
     <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
       <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.1"/>
     </filter>
-  </defs><rect width="540" height="580" fill="url(#bg)"/>
-<text x="270" y="24" text-anchor="middle" font-size="16" font-weight="600" fill="#111827" font-family="Inter, sans-serif">Nexlify DW — Healthcare Data Warehouse</text>
-<text x="270" y="40" text-anchor="middle" font-size="11" fill="#6B7280" font-family="Inter, sans-serif">Architecture Diagram</text>
-  <rect x="40" y="55" width="460" height="90" rx="12" ry="12"
-    fill="#E3F2FD" fill-opacity="0.2" stroke="#1976D2" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="75" font-size="10" font-weight="600" fill="#1976D2" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Source Systems (10+ Clinics)</text>
-  <rect x="40" y="175" width="460" height="80" rx="12" ry="12"
-    fill="#E0F2F1" fill-opacity="0.2" stroke="#00838F" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="195" font-size="10" font-weight="600" fill="#00838F" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">ETL / Transformation</text>
-  <rect x="40" y="285" width="460" height="120" rx="12" ry="12"
-    fill="#F3E5F5" fill-opacity="0.2" stroke="#7B1FA2" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="305" font-size="10" font-weight="600" fill="#7B1FA2" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Data Warehouse (PostgreSQL)</text>
-  <rect x="40" y="435" width="460" height="80" rx="12" ry="12"
-    fill="#FFF8E1" fill-opacity="0.2" stroke="#FF8F00" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="52" y="455" font-size="10" font-weight="600" fill="#FF8F00" font-family="Inter, sans-serif" text-transform="uppercase" letter-spacing="0.08em">Business Intelligence</text>
-  <line x1="105" y1="125" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="225" y1="125" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="345" y1="125" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="105" y1="190" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="225" y1="190" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="345" y1="190" x2="115" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="115" y1="245" x2="270" y2="195" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <text x="192.5" y="214" text-anchor="middle" font-size="9" fill="#6B7280" font-family="Inter, sans-serif">Orchestrate</text>
-  <line x1="270" y1="245" x2="115" y2="305" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <text x="192.5" y="269" text-anchor="middle" font-size="9" fill="#6B7280" font-family="Inter, sans-serif">Load</text>
-  <line x1="115" y1="355" x2="260" y2="305" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="260" y1="355" x2="115" y2="375" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="260" y1="355" x2="260" y2="375" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="260" y1="355" x2="400" y2="375" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="115" y1="425" x2="155" y2="455" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="260" y1="425" x2="155" y2="455" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <line x1="400" y1="425" x2="155" y2="455" stroke="#6B7280" stroke-width="1.5" marker-end="url(#arrow)" opacity="0.7"/>
-  <rect x="55" y="75" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="105" cy="95" r="14" fill="#0A0A0A"/>
-  <text x="105" y="99" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">E</text>
-  <text x="105" y="113" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Clinic APIs</text>
-  <rect x="175" y="75" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="225" cy="95" r="14" fill="#000000"/>
-  <text x="225" y="99" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">J</text>
-  <text x="225" y="113" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">Excel/CSV</text>
-  <rect x="295" y="75" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="345" cy="95" r="14" fill="#4479A1"/>
-  <text x="345" y="99" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">M</text>
-  <text x="345" y="113" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">MySQL</text>
-  <rect x="55" y="140" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="105" cy="160" r="14" fill="#4169E1"/>
-  <text x="105" y="164" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="105" y="178" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">PostgreSQL</text>
-  <rect x="175" y="140" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="225" cy="160" r="14" fill="#9CA3AF" opacity="0.3"/>
-  <text x="225" y="164" text-anchor="middle" font-size="10" fill="#6B7280" font-family="Inter, sans-serif">?</text>
-  <text x="225" y="178" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">SQL Server</text>
-  <rect x="295" y="140" width="100" height="50" rx="10" ry="10"
-    fill="#E3F2FD" stroke="#1976D2" stroke-width="1.5"/>
-  <circle cx="345" cy="160" r="14" fill="#003B57"/>
-  <text x="345" y="164" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">S</text>
-  <text x="345" y="178" text-anchor="middle" font-size="11" font-weight="500" fill="#0D47A1" font-family="Inter, sans-serif">SQLite</text>
-  <rect x="55" y="195" width="120" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="115" cy="215" r="14" fill="#017CEE"/>
-  <text x="115" y="219" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">A</text>
-  <text x="115" y="233" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">Airflow</text>
-  <rect x="200" y="195" width="140" height="50" rx="10" ry="10"
-    fill="#E0F2F1" stroke="#00838F" stroke-width="1.5"/>
-  <circle cx="270" cy="215" r="14" fill="#4169E1"/>
-  <text x="270" y="219" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="270" y="233" text-anchor="middle" font-size="11" font-weight="500" fill="#004D40" font-family="Inter, sans-serif">SQL Transforms</text>
-  <rect x="55" y="305" width="120" height="50" rx="10" ry="10"
-    fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
-  <circle cx="115" cy="325" r="14" fill="#4169E1"/>
-  <text x="115" y="329" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="115" y="343" text-anchor="middle" font-size="11" font-weight="500" fill="#4A148C" font-family="Inter, sans-serif">PostgreSQL DW</text>
-  <rect x="200" y="305" width="120" height="50" rx="10" ry="10"
-    fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
-  <circle cx="260" cy="325" r="14" fill="#4169E1"/>
-  <text x="260" y="329" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="260" y="343" text-anchor="middle" font-size="11" font-weight="500" fill="#4A148C" font-family="Inter, sans-serif">Star Schema</text>
-  <rect x="55" y="375" width="120" height="50" rx="10" ry="10"
-    fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
-  <circle cx="115" cy="395" r="14" fill="#4169E1"/>
-  <text x="115" y="399" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="115" y="413" text-anchor="middle" font-size="11" font-weight="500" fill="#4A148C" font-family="Inter, sans-serif">Fact Tables</text>
-  <rect x="200" y="375" width="120" height="50" rx="10" ry="10"
-    fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
-  <circle cx="260" cy="395" r="14" fill="#4169E1"/>
-  <text x="260" y="399" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="260" y="413" text-anchor="middle" font-size="11" font-weight="500" fill="#4A148C" font-family="Inter, sans-serif">Dim Tables</text>
-  <rect x="340" y="375" width="120" height="50" rx="10" ry="10"
-    fill="#F3E5F5" stroke="#7B1FA2" stroke-width="1.5"/>
-  <circle cx="400" cy="395" r="14" fill="#4169E1"/>
-  <text x="400" y="399" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Inter, sans-serif">P</text>
-  <text x="400" y="413" text-anchor="middle" font-size="11" font-weight="500" fill="#4A148C" font-family="Inter, sans-serif">Bridge Tables</text>
-  <rect x="55" y="455" width="200" height="50" rx="10" ry="10"
-    fill="#FFF8E1" stroke="#FF8F00" stroke-width="1.5"/>
-  <circle cx="155" cy="475" r="14" fill="#9CA3AF" opacity="0.3"/>
-  <text x="155" y="479" text-anchor="middle" font-size="10" fill="#6B7280" font-family="Inter, sans-serif">?</text>
-  <text x="155" y="493" text-anchor="middle" font-size="11" font-weight="500" fill="#E65100" font-family="Inter, sans-serif">Power BI</text>
-  <rect x="370" y="450" width="155" height="110" rx="8" fill="white" stroke="#E5E7EB"/>
-  <text x="380" y="468" font-size="10" font-weight="600" fill="#374151" font-family="Inter, sans-serif">LAYER LEGEND</text>
-  <rect x="380" y="482" width="12" height="12" rx="2" fill="#E3F2FD" stroke="#1976D2"/>
-  <text x="398" y="492" font-size="9" fill="#374151" font-family="Inter, sans-serif">DATA SOURCES</text>
-  <rect x="380" y="496" width="12" height="12" rx="2" fill="#E8F5E9" stroke="#388E3C"/>
-  <text x="398" y="506" font-size="9" fill="#374151" font-family="Inter, sans-serif">INGESTION</text>
-  <rect x="380" y="510" width="12" height="12" rx="2" fill="#FFF3E0" stroke="#F57C00"/>
-  <text x="398" y="520" font-size="9" fill="#374151" font-family="Inter, sans-serif">ORCHESTRATION</text>
-  <rect x="380" y="524" width="12" height="12" rx="2" fill="#E0F2F1" stroke="#00838F"/>
-  <text x="398" y="534" font-size="9" fill="#374151" font-family="Inter, sans-serif">PROCESSING</text>
-  <rect x="380" y="538" width="12" height="12" rx="2" fill="#F3E5F5" stroke="#7B1FA2"/>
-  <text x="398" y="548" font-size="9" fill="#374151" font-family="Inter, sans-serif">STORAGE</text>
+  </defs>
+
+  <style>
+    text { font-family: 'Inter', -apple-system, sans-serif; }
+    .title { font-size: 20px; font-weight: 700; fill: #0f172a; }
+    .subtitle { font-size: 12px; fill: #6b7280; }
+    .label { font-size: 11px; fill: #475569; font-weight: 500; }
+    .layer-label { font-size: 10px; font-weight: 600; fill: #2563eb; text-transform: uppercase; letter-spacing: 0.08em; }
+  </style>
+
+  <rect width="960" height="800" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="480" y="35" text-anchor="middle" class="title">Healthcare Clinic Data Warehouse</text>
+  <text x="480" y="55" text-anchor="middle" class="subtitle">Nexlify Client Engagement — Dimensional Modeling &amp; Star Schema</text>
+
+  <!-- Data Sources Layer -->
+  <rect x="30" y="80" width="900" height="120" rx="12" fill="#fef3c7" fill-opacity="0.5" stroke="#fcd34d" stroke-width="1.5"/>
+  <text x="50" y="100" class="layer-label">Source Systems (10+ Clinics)</text>
+
+  <!-- Excel Files -->
+  <rect x="50" y="115" width="130" height="55" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="115" y="145" text-anchor="middle" font-size="24">📊</text>
+  <text x="115" y="165" text-anchor="middle" class="label">Excel Files</text>
+
+  <!-- Clinic APIs -->
+  <rect x="220" y="115" width="130" height="55" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="285" y="145" text-anchor="middle" font-size="24">🔌</text>
+  <text x="285" y="165" text-anchor="middle" class="label">Clinic APIs</text>
+
+  <!-- SQL Server -->
+  <rect x="390" y="115" width="130" height="55" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="455" y="145" text-anchor="middle" font-size="24">🗄️</text>
+  <text x="455" y="165" text-anchor="middle" class="label">SQL Server</text>
+
+  <!-- MySQL -->
+  <rect x="560" y="115" width="130" height="55" rx="8" fill="#ffffff" stroke="#005571" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="625" y="145" text-anchor="middle" font-size="24">🐬</text>
+  <text x="625" y="165" text-anchor="middle" class="label">MySQL</text>
+
+  <!-- SQLite -->
+  <rect x="730" y="115" width="130" height="55" rx="8" fill="#ffffff" stroke="#6b7280" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="795" y="145" text-anchor="middle" font-size="24">📁</text>
+  <text x="795" y="165" text-anchor="middle" class="label">SQLite</text>
+
+  <!-- ETL Layer -->
+  <rect x="30" y="220" width="900" height="140" rx="12" fill="#e0f2fe" fill-opacity="0.5" stroke="#7dd3fc" stroke-width="1.5"/>
+  <text x="50" y="240" class="layer-label">ETL &amp; Data Processing</text>
+
+  <!-- Airflow -->
+  <rect x="60" y="255" width="150" height="60" rx="8" fill="#ffffff" stroke="#017cfa" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="135" y="280" text-anchor="middle" font-size="24">🔄</text>
+  <text x="135" y="300" text-anchor="middle" class="label">Airflow</text>
+
+  <!-- Python Scripts -->
+  <rect x="250" y="255" width="150" height="60" rx="8" fill="#ffffff" stroke="#3776ab" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="325" y="280" text-anchor="middle" font-size="24">🐍</text>
+  <text x="325" y="300" text-anchor="middle" class="label">Python ETL</text>
+
+  <!-- SQL Server -->
+  <rect x="440" y="255" width="150" height="60" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="515" y="280" text-anchor="middle" font-size="24">⚙️</text>
+  <text x="515" y="300" text-anchor="middle" class="label">CTE &amp; JOINs</text>
+
+  <!-- Data Quality -->
+  <rect x="630" y="255" width="150" height="60" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="705" y="280" text-anchor="middle" font-size="24">✓</text>
+  <text x="705" y="300" text-anchor="middle" class="label">Data Quality</text>
+
+  <!-- Data Lake -->
+  <rect x="820" y="255" width="100" height="60" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="870" y="280" text-anchor="middle" font-size="24">🏞️</text>
+  <text x="870" y="300" text-anchor="middle" class="label">Raw Zone</text>
+
+  <!-- Warehouse Layer -->
+  <rect x="30" y="380" width="900" height="180" rx="12" fill="#f0fdf4" fill-opacity="0.5" stroke="#86efac" stroke-width="1.5"/>
+  <text x="50" y="400" class="layer-label">Data Warehouse (PostgreSQL)</text>
+
+  <!-- Star Schema -->
+  <rect x="60" y="420" width="200" height="100" rx="8" fill="#ffffff" stroke="#059669" stroke-width="2" filter="url(#shadow)"/>
+  <text x="160" y="445" text-anchor="middle" font-size="24">⭐</text>
+  <text x="160" y="465" text-anchor="middle" class="label" font-weight="600">Star Schema</text>
+  <text x="160" y="480" text-anchor="middle" font-size="9" fill="#6b7280">Fact + Dimension Tables</text>
+  <text x="160" y="495" text-anchor="middle" font-size="9" fill="#6b7280">SCD2 Type 2</text>
+
+  <!-- Fact Tables -->
+  <rect x="300" y="420" width="140" height="50" rx="8" fill="#f0fdf4" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="370" y="450" text-anchor="middle" font-size="16">📊</text>
+  <text x="370" y="468" text-anchor="middle" class="label">Fact Tables</text>
+
+  <!-- Dimension Tables -->
+  <rect x="480" y="420" width="140" height="50" rx="8" fill="#f0fdf4" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="550" y="450" text-anchor="middle" font-size="16">📋</text>
+  <text x="550" y="468" text-anchor="middle" class="label">Dimension Tables</text>
+
+  <!-- Bridge Tables -->
+  <rect x="660" y="420" width="140" height="50" rx="8" fill="#f0fdf4" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="730" y="450" text-anchor="middle" font-size="16">🔗</text>
+  <text x="730" y="468" text-anchor="middle" class="label">Bridge Tables</text>
+
+  <!-- PostgreSQL -->
+  <rect x="840" y="420" width="80" height="50" rx="8" fill="#ffffff" stroke="#336791" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="880" y="450" text-anchor="middle" font-size="20">🐘</text>
+
+  <!-- Visualization Layer -->
+  <rect x="30" y="580" width="900" height="120" rx="12" fill="#fff7ed" fill-opacity="0.5" stroke="#fdba74" stroke-width="1.5"/>
+  <text x="50" y="600" class="layer-label">Analytics &amp; Reporting</text>
+
+  <!-- Power BI -->
+  <rect x="60" y="620" width="150" height="60" rx="8" fill="#ffffff" stroke="#f2c811" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="135" y="645" text-anchor="middle" font-size="24">📊</text>
+  <text x="135" y="665" text-anchor="middle" class="label">Power BI</text>
+
+  <!-- Clinic Switcher -->
+  <rect x="250" y="620" width="150" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="325" y="645" text-anchor="middle" font-size="24">🏥</text>
+  <text x="325" y="665" text-anchor="middle" class="label">Clinic Switcher</text>
+
+  <!-- KPIs -->
+  <rect x="440" y="620" width="150" height="60" rx="8" fill="#ffffff" stroke="#059669" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="515" y="645" text-anchor="middle" font-size="24">📈</text>
+  <text x="515" y="665" text-anchor="middle" class="label">KPI Dashboards</text>
+
+  <!-- Metrics -->
+  <rect x="630" y="620" width="150" height="60" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="705" y="645" text-anchor="middle" font-size="24">📉</text>
+  <text x="705" y="665" text-anchor="middle" class="label">Revenue Tracking</text>
+
+  <!-- Appointment Analytics -->
+  <rect x="820" y="620" width="120" height="60" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="880" y="645" text-anchor="middle" font-size="24">📅</text>
+  <text x="880" y="665" text-anchor="middle" class="label">Appointments</text>
+
+  <!-- Performance Box -->
+  <rect x="300" y="720" width="360" height="60" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2" filter="url(#shadow)"/>
+  <text x="480" y="745" text-anchor="middle" font-size="11" font-weight="600" fill="#2563eb">PERFORMANCE IMPROVEMENTS</text>
+  <text x="350" y="765" font-size="12" fill="#475569">• 40% Faster Reporting</text>
+  <text x="520" y="765" font-size="12" fill="#475569">• 100% Dashboard Timeouts Eliminated</text>
 </svg>
