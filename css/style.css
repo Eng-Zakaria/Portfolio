@@ -12,7 +12,7 @@
   --accent: #2563eb;
   --accent-light: #dbeafe;
   --accent-dark: #1d4ed8;
-  --accent2: #059669;
+  --nav-bg: rgba(248, 250, 252, 0.9);
 
   --font-display: 'Playfair Display', serif;
   --font-body: 'Inter', sans-serif;
@@ -39,6 +39,7 @@
   --accent-light: #1e3a5f;
   --accent-dark: #93c5fd;
   --accent2: #34d399;
+  --nav-bg: #0f172a;
 
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
@@ -69,7 +70,7 @@ nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 500;
   padding: 1rem 2rem;
   display: flex; justify-content: space-between; align-items: center;
-  background: rgba(248, 250, 252, 0.9);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
@@ -515,7 +516,7 @@ footer { padding: 2rem; border-top: 1px solid var(--border); display: flex; just
   .btn { padding: 0.75rem 1.25rem; font-size: 0.75rem; }
   .image-wrapper { width: 180px; height: 180px; }
   .skill-tag { font-size: 0.68rem; padding: 0.35rem 0.6rem 0.35rem 0.4rem; }
-  .skill-tag i { font-size: 0.75rem; width: 14px; }
+  .skill-tag i, .stack-tag i { font-size: 0.75rem; width: 14px; }
   .project-card { padding: 1.5rem; }
   .project-name { font-size: 1rem; }
   .project-desc { font-size: 0.82rem; }
