@@ -33,7 +33,6 @@
     @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } }
   </style>
   <script defer src="../js/main.js"></script>
-  <script defer src="../js/arch-diagrams.js"></script>
 </head>
 <body>
   <nav>
@@ -107,39 +106,8 @@
       <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
         <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
       </p>
-      <div class="arch-diagram-interactive">
-<pre>
-┌──────────────────────────────────┐
-│ <span class="arch-node" data-node-id="sources" data-detail="App Store, Google Play, Reddit, Google News, and web search" data-tech="Multiple sources">Sources</span>          │
-└───────────────┬──────────────────┘
-                │
-                ▼
-<span class="arch-flow">──────────────────</span>
-                │
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="connectors" data-detail="Connector registry: each source has one file, adding new sources requires no changes to core logic" data-tech="Connector Registry">Connectors</span>   │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="lang" data-detail="Language detection routing Arabic to AraBERT and English to RoBERTa" data-tech="AraBERT, RoBERTa">Lang Detect</span>  │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="sentiment" data-detail="Sentiment analysis with multilingual model support" data-tech="Transformers">Sentiment</span>    │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="topics" data-detail="Topic tagging across 6 business categories: app bugs, customer service, pricing, security, offers, delivery" data-tech="Rule-based">Topics</span>       │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="dashboard" data-detail="Streamlit dashboard with sentiment trends, topic breakdown, and negative mention triage" data-tech="Streamlit">Dashboard</span>    │
-└──────────────────────────────────┘
-</pre>
+      <div class="arch-full">
+        <img src="../docs/diagrams/market-intelligence---sentiment-pipeline.svg" alt="Market Intelligence Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
 

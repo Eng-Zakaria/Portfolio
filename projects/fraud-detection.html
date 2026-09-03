@@ -37,7 +37,6 @@
     @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
   </style>
   <script defer src="../js/main.js"></script>
-  <script defer src="../js/arch-diagrams.js"></script>
 </head>
 <body>
   <nav>
@@ -130,35 +129,8 @@
       <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
         <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
       </p>
-      <div class="arch-diagram-interactive">
-<pre>
-┌──────────────────────────────────┐
-│ <span class="arch-node" data-node-id="sources" data-detail="Payment gateways, bank APIs, and transaction feeds" data-tech="Multiple sources">Tx Sources</span>       │
-└───────────────┬──────────────────┘
-                │
-                ▼
-<span class="arch-flow">──────────────────</span>
-                │
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="kafka" data-detail="Kafka topic for transactions with partitioning by merchant ID for parallel processing" data-tech="Apache Kafka">Kafka</span>          │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="processing" data-detail="Streaming processing with feature extraction, window aggregations, and anomaly detection" data-tech="Spark Streaming">Processing</span>   │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="serving" data-detail="FastAPI for real-time scoring with Redis feature cache and model versioning" data-tech="FastAPI, Redis">FastAPI</span>      │
-└───────────────┬──────────────────┘
-                │
-    ┌───────────┼───────────┐
-    ▼           ▼           ▼
-┌────────┐ ┌────────┐ ┌──────────┐
-│<span class="arch-node" data-node-id="dashboard" data-detail="Plotly/Dash for real-time fraud analytics and system health" data-tech="Plotly, Dash">Dashboard</span>│ │<span class="arch-node" data-node-id="slack" data-detail="Slack alerts for suspicious transaction notifications" data-tech="Slack">Slack</span>  │ │<span class="arch-node" data-node-id="email" data-detail="Email notifications for critical fraud alerts" data-tech="Email">Email</span>  │
-└────────┘ └────────┘ └──────────┘
-</pre>
+      <div class="arch-full">
+        <img src="../docs/diagrams/fraud-detection---streaming-pipeline.svg" alt="Fraud Detection Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
 

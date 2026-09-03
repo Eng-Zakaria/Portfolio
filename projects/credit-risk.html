@@ -41,7 +41,6 @@
     @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
   </style>
   <script defer src="../js/main.js"></script>
-  <script defer src="../js/arch-diagrams.js"></script>
 </head>
 <body>
   <nav>
@@ -167,35 +166,8 @@
       <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
         <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
       </p>
-      <div class="arch-diagram-interactive">
-<pre>
-┌──────────────────────────────────┐
-│ <span class="arch-node" data-node-id="data" data-detail="BigQuery-compatible SQL data marts and synthetic credit data generation" data-tech="BigQuery, SQL">Data Sources</span>       │
-└───────────────┬──────────────────┘
-                │
-                ▼
-<span class="arch-flow">──────────────────</span>
-                │
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="airflow" data-detail="Airflow DAGs for ingestion, feature engineering, training, validation, deployment, and monitoring" data-tech="Apache Airflow">Airflow</span>        │
-└───────────────┬──────────────────┘
-                │
-    ┌───────────┼───────────┐
-    ▼           ▼           ▼
-┌────────┐ ┌────────┐ ┌──────────┐
-│<span class="arch-node" data-node-id="mlflow" data-detail="MLflow for experiment tracking, model versioning, and registry management" data-tech="MLflow">MLflow</span>  │ │<span class="arch-node" data-node-id="features" data-detail="Feature store for consistent feature engineering across training and serving" data-tech="Feature Store">Features</span>  │ │<span class="arch-node" data-node-id="redis" data-detail="Redis for low-latency feature lookups in production serving" data-tech="Redis">Redis</span>  │
-└────────┘ └────────┘ └──────────┘
-    └───────────┼───────────┘
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="serving" data-detail="FastAPI microservice for real-time risk scoring and model inference" data-tech="FastAPI">FastAPI</span>      │
-└───────────────┬──────────────────┘
-                │
-                ▼
-┌───────────────▼──────────────────┐
-│ <span class="arch-node" data-node-id="dashboard" data-detail="Streamlit dashboard for model comparison, feature importance, and risk visualization" data-tech="Streamlit">Dashboard</span>    │
-└──────────────────────────────────┘
-</pre>
+      <div class="arch-full">
+        <img src="../docs/diagrams/credit-risk-analysis---mlops-platform.svg" alt="Credit Risk Analysis Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
 
