@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" width="1100" height="720">
+  <defs>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <style>
+    text { font-family: 'Inter', -apple-system, sans-serif; }
+    .title { font-size: 18px; font-weight: 700; fill: #0f172a; }
+    .label { font-size: 11px; fill: #475569; font-weight: 500; }
+    .component { font-size: 13px; fill: #0f172a; font-weight: 600; }
+    .small { font-size: 10px; fill: #6b7280; }
+    .layer-label { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
+  </style>
+
+  <!-- Background -->
+  <rect width="1100" height="720" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="550" y="35" text-anchor="middle" class="title">Telecom Enterprise Data &amp; Automation Platform — 8-Domain Medallion Architecture</text>
+
+  <!-- SOURCE SYSTEMS ROW -->
+  <rect x="30" y="65" width="1040" height="100" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="90" class="layer-label" fill="#475569">SOURCE SYSTEMS</text>
+
+  <!-- Sources -->
+  <rect x="50" y="105" width="140" height="45" rx="8" fill="#fef2f2" stroke="#f87171" stroke-width="1.5"/>
+  <text x="120" y="125" text-anchor="middle" font-size="18">📞</text>
+  <text x="120" y="140" text-anchor="middle" class="component" font-size="11">CDR Generator</text>
+  <text x="120" y="150" text-anchor="middle" class="small" font-size="9">Synthetic Calls</text>
+
+  <rect x="210" y="105" width="140" height="45" rx="8" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="280" y="125" text-anchor="middle" font-size="18">🌐</text>
+  <text x="280" y="140" text-anchor="middle" class="component" font-size="11">Web Scraper</text>
+  <text x="280" y="150" text-anchor="middle" class="small" font-size="9">Real-time Data</text>
+
+  <rect x="370" y="105" width="140" height="45" rx="8" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.5"/>
+  <text x="440" y="125" text-anchor="middle" font-size="18">📡</text>
+  <text x="440" y="140" text-anchor="middle" class="component" font-size="11">Streaming Feed</text>
+  <text x="440" y="150" text-anchor="middle" class="small" font-size="9">Outage Events</text>
+
+  <rect x="530" y="105" width="140" height="45" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.5"/>
+  <text x="600" y="125" text-anchor="middle" font-size="18">💳</text>
+  <text x="600" y="140" text-anchor="middle" class="component" font-size="11">Billing System</text>
+  <text x="600" y="150" text-anchor="middle" class="small" font-size="9">Transaction Log</text>
+
+  <rect x="690" y="105" width="140" height="45" rx="8" fill="#faf5ff" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="760" y="125" text-anchor="middle" font-size="18">⚙️</text>
+  <text x="760" y="140" text-anchor="middle" class="component" font-size="11">Network KPIs</text>
+  <text x="760" y="150" text-anchor="middle" class="small" font-size="9">Cell Metrics</text>
+
+  <rect x="850" y="105" width="180" height="45" rx="8" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5"/>
+  <text x="940" y="125" text-anchor="middle" font-size="18">📝</text>
+  <text x="940" y="140" text-anchor="middle" class="component" font-size="11">Customer Care</text>
+  <text x="940" y="150" text-anchor="middle" class="small" font-size="9">Complaint Tickets</text>
+
+  <!-- Arrows down to Ingestion -->
+  <line x1="120" y1="155" x2="120" y2="200" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+  <line x1="940" y1="155" x2="940" y2="200" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+
+  <!-- INGESTION LAYER -->
+  <rect x="30" y="205" width="1040" height="70" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="230" class="layer-label" fill="#475569">INGESTION LAYER</text>
+  <rect x="50" y="240" width="180" height="25" rx="6" fill="#fef2f2" stroke="#f87171" stroke-width="1"/>
+  <text x="140" y="257" text-anchor="middle" class="small" font-size="10" fill="#dc2626">Batch (Azure Data Factory)</text>
+  <rect x="250" y="240" width="200" height="25" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
+  <text x="350" y="257" text-anchor="middle" class="small" font-size="10" fill="#2563eb">Event Hubs / Kafka</text>
+  <rect x="470" y="240" width="160" height="25" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
+  <text x="550" y="257" text-anchor="middle" class="small" font-size="10" fill="#16a34a">MinIO / Azurite</text>
+  <rect x="650" y="240" width="180" height="25" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
+  <text x="740" y="257" text-anchor="middle" class="small" font-size="10" fill="#7c3aed">Redpanda Cluster</text>
+  <rect x="850" y="240" width="180" height="25" rx="6" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1"/>
+  <text x="940" y="257" text-anchor="middle" class="small" font-size="10" fill="#0284c7">CDC / Change Tracking</text>
+
+  <!-- STORAGE (MEDALLION) -->
+  <rect x="30" y="295" width="1040" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="320" class="layer-label" fill="#475569">STORAGE — Delta Lake (OneLake / MinIO)</text>
+
+  <!-- Bronze -->
+  <rect x="50" y="330" width="280" height="115" rx="10" fill="#fef2f2" stroke="#f87171" stroke-width="2"/>
+  <text x="70" y="355" class="layer-label" fill="#dc2626">BRONZE (Raw)</text>
+  <text x="70" y="375" font-size="10" fill="#475569">• Immutable raw data</text>
+  <text x="70" y="390" font-size="10" fill="#475569">• Schema-on-read</text>
+  <text x="70" y="405" font-size="10" fill="#475569">• 7-day retention</text>
+  <text x="70" y="420" font-size="10" fill="#475569">• PII masked at load</text>
+  <text x="190" y="440" text-anchor="middle" font-size="36">🔴</text>
+
+  <!-- Silver -->
+  <rect x="360" y="330" width="280" height="115" rx="10" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
+  <text x="380" y="355" class="layer-label" fill="#ea580c">SILVER (Cleaned)</text>
+  <text x="380" y="375" font-size="10" fill="#475569">• De-duplicated</text>
+  <text x="380" y="390" font-size="10" fill="#475569">• Validated &amp; typed</text>
+  <text x="380" y="405" font-size="10" fill="#475569">• Great Expectations</text>
+  <text x="380" y="420" font-size="10" fill="#475569">• Cross-source join</text>
+  <text x="500" y="440" text-anchor="middle" font-size="36">🟠</text>
+
+  <!-- Gold -->
+  <rect x="670" y="330" width="300" height="115" rx="10" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
+  <text x="690" y="355" class="layer-label" fill="#16a34a">GOLD (Curated)</text>
+  <text x="690" y="375" font-size="10" fill="#475569">• Business constructs</text>
+  <text x="690" y="390" font-size="10" fill="#475569">• Customer 360°</text>
+  <text x="690" y="405" font-size="10" fill="#475569">• Network KPI summary</text>
+  <text x="690" y="420" font-size="10" fill="#475569">• Billing aggregation</text>
+  <text x="820" y="440" text-anchor="middle" font-size="36">🟢</text>
+
+  <!-- TRANSFORMATION -->
+  <rect x="30" y="475" width="1040" height="90" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="500" class="layer-label" fill="#475569">TRANSFORMATION — dbt + Spark</text>
+  <rect x="50" y="510" width="220" height="25" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
+  <text x="160" y="527" text-anchor="middle" class="small" font-size="10" fill="#2563eb">Core Gold Layer</text>
+  <rect x="290" y="510" width="220" height="25" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
+  <text x="400" y="527" text-anchor="middle" class="small" font-size="10" fill="#16a34a">Shared Dimensions</text>
+  <rect x="530" y="510" width="220" height="25" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
+  <text x="640" y="527" text-anchor="middle" class="small" font-size="10" fill="#7c3aed">dbt Models</text>
+  <rect x="770" y="510" width="220" height="25" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+  <text x="880" y="527" text-anchor="middle" class="small" font-size="10" fill="#ea580c">Spark Jobs</text>
+
+  <!-- DOMAIN MARTS -->
+  <rect x="30" y="585" width="1040" height="120" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="50" y="610" class="layer-label" fill="#475569">8 BUSINESS DOMAINS</text>
+
+  <!-- Domain boxes -->
+  <rect x="50" y="620" width="115" height="35" rx="6" fill="#fef2f2" stroke="#f87171" stroke-width="1"/>
+  <text x="107" y="635" text-anchor="middle" class="small" font-size="9" fill="#dc2626">Customer</text>
+  <text x="107" y="648" text-anchor="middle" class="small" font-size="9" fill="#dc2626">Retention</text>
+
+  <rect x="175" y="620" width="115" height="35" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+  <text x="232" y="635" text-anchor="middle" class="small" font-size="9" fill="#ea580c">Revenue</text>
+  <text x="232" y="648" text-anchor="middle" class="small" font-size="9" fill="#ea580c">Assurance</text>
+
+  <rect x="300" y="620" width="115" height="35" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
+  <text x="357" y="635" text-anchor="middle" class="small" font-size="9" fill="#16a34a">Network</text>
+  <text x="357" y="648" text-anchor="middle" class="small" font-size="9" fill="#16a34a">Operations</text>
+
+  <rect x="425" y="620" width="115" height="35" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
+  <text x="482" y="635" text-anchor="middle" class="small" font-size="9" fill="#2563eb">Marketing</text>
+  <text x="482" y="648" text-anchor="middle" class="small" font-size="9" fill="#2563eb">Sales</text>
+
+  <rect x="550" y="620" width="115" height="35" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
+  <text x="607" y="635" text-anchor="middle" class="small" font-size="9" fill="#7c3aed">Customer</text>
+  <text x="607" y="648" text-anchor="middle" class="small" font-size="9" fill="#7c3aed">Care</text>
+
+  <rect x="675" y="620" width="115" height="35" rx="6" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1"/>
+  <text x="732" y="635" text-anchor="middle" class="small" font-size="9" fill="#0284c7">Finance</text>
+  <text x="732" y="648" text-anchor="middle" class="small" font-size="9" fill="#0284c7">ARPU</text>
+
+  <rect x="800" y="620" width="115" height="35" rx="6" fill="#fff1f2" stroke="#f43f5e" stroke-width="1"/>
+  <text x="857" y="635" text-anchor="middle" class="small" font-size="9" fill="#e11d48">Roaming</text>
+  <text x="857" y="648" text-anchor="middle" class="small" font-size="9" fill="#e11d48">Settlement</text>
+
+  <rect x="925" y="620" width="115" height="35" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1"/>
+  <text x="982" y="635" text-anchor="middle" class="small" font-size="9" fill="#059669">Product</text>
+  <text x="982" y="648" text-anchor="middle" class="small" font-size="9" fill="#059669">Mgmt</text>
+
+  <!-- ML layer -->
+  <rect x="30" y="715" width="1040" height="30" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="50" y="735" class="small" font-size="10" fill="#475569">ML Flow Tracking  •  Drift Detection  •  Champion/Challenger  •  Auto-Retrain  •  Model Registry</text>
+</svg>
