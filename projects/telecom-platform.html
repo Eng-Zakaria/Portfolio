@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Telecom Data Platform — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Enterprise analytics platform for telecom data at scale. 8 business domains, medallion architecture, local-cloud parity, MLOps with MLflow.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .domain-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .domain-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; }
+    .domain-name { font-family: var(--font-mono); font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+    .domain-focus { font-size: 0.75rem; color: var(--muted); }
+    .env-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.85rem; }
+    .env-table th, .env-table td { border: 1px solid var(--border); padding: 0.75rem 1rem; text-align: left; }
+    .env-table th { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; background: var(--card); }
+    .env-table td { color: var(--text-secondary); }
+    .env-table tr:hover td { background: var(--accent-light); }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } .domain-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <script defer src="../js/main.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study</div>
+      <h1>Telecom Enterprise Data Platform</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
+        Production-grade analytics platform for telecom data at enterprise scale. 8 business domains, medallion architecture, full local-to-cloud parity.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item">
+          <span class="meta-label">Role</span>
+          <span class="meta-value">Data Engineer / Platform Architect</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Timeline</span>
+          <span class="meta-value">2025</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Type</span>
+          <span class="meta-value">Enterprise Platform</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Scale</span>
+          <span class="meta-value">8 Domains / Multi-Cloud</span>
+        </div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag"><i class="fab fa-microsoft"></i> Azure</span>
+        <span class="tech-tag"><i class="fas fa-cubes"></i> Fabric</span>
+        <span class="tech-tag"><i class="fas fa-bolt"></i> Spark</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> Delta Lake</span>
+        <span class="tech-tag"><i class="fab fa-docker"></i> Docker</span>
+        <span class="tech-tag"><i class="fas fa-server"></i> Terraform</span>
+        <span class="tech-tag"><i class="fas fa-exclamation-circle"></i> Great Expectations</span>
+        <span class="tech-tag"><i class="fas fa-flask"></i> MLflow</span>
+        <span class="tech-tag"><i class="fas fa-infinity"></i> Kafka / Redpanda</span>
+        <span class="tech-tag"><i class="fas fa-project-diagram"></i> dbt</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Telecom operators face a fundamental tension: business domains need data fast, but data quality and governance can't be compromised. A single-source-of-truth approach is required across customer retention, revenue assurance, network operations, marketing, and more — yet each domain has distinct analytical needs.
+      </p>
+      <p>
+        The challenge was to build a platform that could ingest heterogeneous data sources (CDRs, billing systems, network KPIs, customer complaints), transform them through a governed pipeline, and serve eight business domains without fragmenting ownership or sacrificing auditability.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Architecture</h3>
+      <div class="arch-full">
+        <img src="../docs/diagrams/telecom-platform---enterprise-data-platform.svg" alt="Telecom Platform Architecture Diagram" style="width:100%; height:auto;">
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Medallion Architecture</h3>
+      <p>
+        The platform follows a bronze → silver → gold Delta Lake pattern, ensuring every transformation is auditable and reproducible:
+      </p>
+      <ul>
+        <li><strong>Bronze:</strong> Immutable raw ingestion layer. CDRs, billing records, and streaming events land as-is. Schema-on-read preserves provenance.</li>
+        <li><strong>Silver:</strong> Cleaned, validated, PII-masked. Great Expectations run on every batch to catch schema drift before it propagates.</li>
+        <li><strong>Gold:</strong> Business-level constructs — Customer 360°, network summaries, billing aggregations. Single source of truth for all downstream consumers.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Eight Business Domains</h3>
+      <div class="domain-grid">
+        <div class="domain-card">
+          <div class="domain-name">Customer Retention</div>
+          <div class="domain-focus">Churn prediction, segmentation, CLV</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Revenue Assurance</div>
+          <div class="domain-focus">Fraud detection, leakage, reconciliation</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Network Operations</div>
+          <div class="domain-focus">KPI monitoring, capacity forecasting</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Marketing &amp; Sales</div>
+          <div class="domain-focus">Campaign performance, propensity scoring</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Customer Care</div>
+          <div class="domain-focus">Sentiment analysis, ticket routing</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Finance</div>
+          <div class="domain-focus">ARPU trending, executive dashboards</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Roaming</div>
+          <div class="domain-focus">Settlement, partner tracking</div>
+        </div>
+        <div class="domain-card">
+          <div class="domain-name">Product Management</div>
+          <div class="domain-focus">Plan performance, bundle optimization</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>Local-Cloud Parity</h3>
+      <p>
+        A core design principle: develop locally with Docker, deploy to Azure with identical configurations. This eliminates the classic "works on my machine" gap and ensures every environment behaves the same way.
+      </p>
+      <table class="env-table">
+        <thead>
+          <tr><th>Environment</th><th>Purpose</th><th>Infrastructure</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Local</td><td>Development &amp; testing</td><td>Docker Compose (Azurite, MinIO, Redpanda)</td></tr>
+          <tr><td>Dev</td><td>Feature development</td><td>Azure F2 capacity</td></tr>
+          <tr><td>Staging</td><td>Pre-production validation</td><td>Azure F4 capacity</td></tr>
+          <tr><td>Production</td><td>Live traffic</td><td>Azure F8 capacity</td></tr>
+          <tr><td>Ephemeral</td><td>PR testing</td><td>Auto-delete after 24h</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="content-section">
+      <h3>MLOps &amp; Governance</h3>
+      <ul>
+        <li><strong>MLflow tracking:</strong> Every experiment logged, model registry for version control, drift-triggered retraining pipelines</li>
+        <li><strong>Champion/challenger:</strong> A/B model promotion with automated evaluation gates</li>
+        <li><strong>Purview lineage:</strong> End-to-end data traceability from source to domain mart</li>
+        <li><strong>Unity Catalog:</strong> Centralized access control and metadata management</li>
+        <li><strong>Key Vault:</strong> All secrets rotated and managed centrally — zero hardcoded credentials</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        The platform serves as the central data backbone for the organization, enabling eight business domains to build analytics on a consistent, governed foundation. The medallion architecture ensures reproducibility, while the local-cloud parity eliminates environment-specific bugs.
+      </p>
+      <p>
+        CI/CD pipelines with ephemeral environments mean every PR is tested against production-like infrastructure before merge. The self-healing patterns and automated alerting reduce operational overhead and improve mean time to recovery.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Key Metrics</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">8</div>
+          <div class="metric-label">Business Domains</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">5</div>
+          <div class="metric-label">Environments</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">100%</div>
+          <div class="metric-label">Local-Cloud Parity</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">24h</div>
+          <div class="metric-label">Ephemeral TTL</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>
