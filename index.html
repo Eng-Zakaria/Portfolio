@@ -25,6 +25,26 @@
 
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <meta property="article:author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#2563eb">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Mohammed Zakaria",
+    "jobTitle": "Data Engineer",
+    "address": { "@type": "PostalAddress", "addressLocality": "Cairo", "addressCountry": "EG" },
+    "email": "mailto:mohamedzakaria.cs@gmail.com",
+    "url": "https://eng-zakaria.github.io/Portfolio/",
+    "sameAs": [
+      "https://linkedin.com/in/eng-zakaria",
+      "https://github.com/Eng-Zakaria",
+      "https://eng-zakaria.medium.com"
+    ],
+    "knowsAbout": ["Data Engineering", "Apache Spark", "Apache Kafka", "Apache Airflow", "AWS", "ETL", "RAG", "Dimensional Modeling"]
+  }
+  </script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,8 +63,13 @@
       <li><a href="#about"><span class="nav-dot">.</span>about</a></li>
       <li><a href="#skills"><span class="nav-dot">.</span>skills</a></li>
       <li><a href="#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="#articles"><span class="nav-dot">.</span>articles</a></li>
       <li><a href="#experience"><span class="nav-dot">.</span>experience</a></li>
+      <li><a href="#credentials"><span class="nav-dot">.</span>credentials</a></li>
       <li><a href="#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="nav-resume" target="_blank" rel="noopener">Resume ↓</a>
+      </li>
       <li>
         <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
           🌙 <span>Dark</span>
@@ -63,14 +88,22 @@
     <div class="container">
       <div class="hero-split">
         <div class="hero-content">
+          <div class="availability-badge"><span class="pulse-dot"></span> Open to Data Engineering roles — Cairo / Remote</div>
           <div class="hero-eyebrow">Hello, My Name Is</div>
           <h1 class="hero-name">Mohammed<span>Zakaria</span></h1>
-          <p class="hero-role">Data Engineer</p>
+          <p class="hero-role">Data Engineer — Batch, Streaming & RAG Systems</p>
           <p class="hero-desc">
-            Building data infrastructure that turns raw noise into insight.
-            ETL pipelines, distributed systems, and streaming architectures
-            for Fintech, Web3, and healthcare — from Cairo to Zurich.
+            I build production data platforms that turn raw noise into decisions.
+            Bilingual RAG at <strong>Waffarha</strong> (18k+ docs, 94.9% recall),
+            healthcare warehouses that cut reporting time 40%, and streaming
+            pipelines with sub-second latency — from Cairo to Zurich.
           </p>
+          <div class="hero-stats">
+            <div class="hero-stat"><span class="stat-num" data-count="1.5" data-decimals="1">1.5+</span><span class="stat-label">yrs production</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="14">14</span><span class="stat-label">projects shipped</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="18" data-suffix="k+">18k+</span><span class="stat-label">docs in prod RAG</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="5">5</span><span class="stat-label">technical articles</span></div>
+          </div>
           <div class="hero-contact">
             <div class="contact-item">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -87,8 +120,10 @@
           </div>
           <div class="hero-btns">
             <a href="#projects" class="btn btn-primary">View Projects</a>
+            <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="btn btn-ghost" target="_blank" rel="noopener">Download Résumé ↓</a>
             <a href="#contact" class="btn btn-ghost">Get In Touch</a>
           </div>
+          <div class="hero-note">⚡ Currently at Waffarha · Usually responds within 24h · English / Arabic</div>
         </div>
         <div class="hero-image">
           <div class="image-wrapper">
@@ -110,6 +145,11 @@
           <p>Data Engineer with 1.5+ years of hands-on experience building and automating end-to-end data pipelines across batch and real-time systems. I specialize in dimensional modeling, ETL/ELT pipeline development, and scalable analytics platforms including data warehouses, star schemas, and Spark/Airflow orchestration.</p>
           <p>Production experience on AWS (EC2, S3, IAM, VPC) with exposure to Azure. Currently building production RAG pipelines at Waffarha and deepening distributed systems expertise at the National Telecommunication Institute.</p>
           <p>Graduate of Helwan University (GPA 3.3, Graduation Project A+). Previously researched on-chain data at the University of Zurich and taught Machine Learning to 100+ students as an AI Instructor.</p>
+          <div class="about-highlights">
+            <div class="highlight-item"><span>🎯</span> I care about <strong>measurable impact</strong> — every pipeline ships with quality checks, monitoring, and a latency budget.</div>
+            <div class="highlight-item"><span>🤝</span> I enjoy <strong>making data approachable</strong> — teaching 100+ students taught me to explain complex systems simply.</div>
+            <div class="highlight-item"><span>🌍</span> Based in <strong>Cairo, open to remote</strong> — English & Arabic, exempted military service, ready to start.</div>
+          </div>
         </div>
         <div class="about-links">
           <a href="https://linkedin.com/in/eng-zakaria" class="about-link" target="_blank" rel="noopener noreferrer">↗ LinkedIn</a>
@@ -210,6 +250,30 @@
             <span class="skill-tag"><i class="fas fa-clock"></i><span>SCD2</span></span>
             <span class="skill-tag"><i class="fas fa-vial"></i><span>Data Validation</span></span>
             <span class="skill-tag"><i class="fas fa-broom"></i><span>Data Cleansing</span></span>
+            <span class="skill-tag"><i class="fas fa-table"></i><span>dbt</span></span>
+          </div>
+        </div>
+
+        <div class="skill-category reveal">
+          <div class="skill-cat-label"><i class="fas fa-brain"></i> AI / RAG & Serving</div>
+          <div class="skill-tags">
+            <span class="skill-tag"><i class="fas fa-comments"></i><span>RAG Pipelines</span></span>
+            <span class="skill-tag"><i class="fas fa-vector-square"></i><span>FAISS / Qdrant</span></span>
+            <span class="skill-tag"><i class="fas fa-robot"></i><span>Ollama / LLMs</span></span>
+            <span class="skill-tag"><i class="fas fa-rocket"></i><span>FastAPI</span></span>
+            <span class="skill-tag"><i class="fas fa-flask"></i><span>MLflow</span></span>
+            <span class="skill-tag"><i class="fab fa-redis"></i><span>Redis</span></span>
+          </div>
+        </div>
+
+        <div class="skill-category reveal reveal-d1">
+          <div class="skill-cat-label"><i class="fas fa-cubes"></i> Platform & IaC</div>
+          <div class="skill-tags">
+            <span class="skill-tag"><i class="fas fa-ship"></i><span>Kubernetes</span></span>
+            <span class="skill-tag"><i class="fas fa-cloud"></i><span>Terraform</span></span>
+            <span class="skill-tag"><i class="fas fa-rabbit"></i><span>RabbitMQ</span></span>
+            <span class="skill-tag"><i class="fas fa-fire"></i><span>Prometheus</span></span>
+            <span class="skill-tag"><i class="fas fa-chart-line"></i><span>CI/CD</span></span>
           </div>
         </div>
 
@@ -222,7 +286,16 @@
     <div class="container">
       <div class="sec-label">// selected work</div>
       <h2>Projects</h2>
-      <div class="projects-grid">
+      <p class="projects-sub">14 shipped systems — production RAG, streaming, batch ETL, and price intelligence. Filter by track:</p>
+      <div class="project-filters" role="tablist" aria-label="Filter projects">
+        <button class="filter-btn active" data-filter="all">All (14)</button>
+        <button class="filter-btn" data-filter="rag">RAG / AI</button>
+        <button class="filter-btn" data-filter="streaming">Streaming</button>
+        <button class="filter-btn" data-filter="batch">Batch ETL</button>
+        <button class="filter-btn" data-filter="platform">Platforms</button>
+        <button class="filter-btn" data-filter="price">Price Intel</button>
+      </div>
+      <div class="projects-grid" id="projects-grid">
 
         <div class="project-card reveal">
           <div class="project-num">01 — PRODUCTION RAG</div>
@@ -428,6 +501,114 @@
           </div>
         </div>
 
+        <div class="project-card wide reveal" data-category="platform batch streaming">
+          <div class="project-num">12 — ENERGY PLATFORM · NEW</div>
+          <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Platform — Well Monitoring + Market Intel</div>
+          <div class="project-desc">
+            Oil & petroleum well monitoring meets live market data. Historical Volve field data + EIA / Baker Hughes scrapers → RabbitMQ → NiFi → Beam-on-Flink anomaly detection, Elasticsearch search, BigQuery/MinIO warehouse, Grafana + Prometheus observability. 3-node NiFi cluster, IaC with Terraform/Ansible/K8s.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-water"></i> NiFi</span>
+            <span class="stack-tag"><i class="fas fa-rabbit"></i> RabbitMQ</span>
+            <span class="stack-tag"><i class="fas fa-bolt"></i> Flink / Beam</span>
+            <span class="stack-tag"><i class="fas fa-search"></i> Elasticsearch</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> BigQuery</span>
+            <span class="stack-tag"><i class="fas fa-tachometer-alt"></i> Grafana</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/petroleum-platform.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/petroleum-platform" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card wide reveal reveal-d1" data-category="price platform batch">
+          <div class="project-num">13 — PRICE INTELLIGENCE · NEW</div>
+          <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Multi-Domain Price Intelligence</div>
+          <div class="project-desc">
+            Production-grade e-commerce price intel across domains/regions/categories. Playwright scraping on Celery + Redis workers, Airflow 6-stage ETL (fetch → parse → load → quality → alert), raw HTML snapshots for lossless re-parsing, dimensional Postgres warehouse (fact_price_snapshot), Telegram/Email alerts, Streamlit analytics, circuit breakers + anti-bot resilience.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
+            <span class="stack-tag"><i class="fas fa-mouse"></i> Playwright</span>
+            <span class="stack-tag"><i class="fas fa-tasks"></i> Celery + Redis</span>
+            <span class="stack-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
+            <span class="stack-tag"><i class="fas fa-stream"></i> Streamlit</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/watchdog-prices.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card wide reveal reveal-d2" data-category="platform streaming rag">
+          <div class="project-num">14 — ENVIRONMENTAL AI · NEW</div>
+          <div class="project-name"><i class="fas fa-leaf"></i>AirSense — Urban Air Quality Intelligence</div>
+          <div class="project-desc">
+            City-scale air quality monitoring + forecasting: 15k+ sensors, 2.8M daily measurements, &lt;200ms critical alerts. Kafka/NiFi → Spark + Airflow → TimescaleDB/S3 with dbt, LSTM+XGBoost ensemble (92% 6-hr AQI accuracy), FastAPI + Redis + MLflow serving, React/Mapbox dashboard, K8s on AWS with Terraform, Prometheus/Grafana, 99.95% uptime SLA.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
+            <span class="stack-tag"><i class="fas fa-bolt"></i> Spark</span>
+            <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> TimescaleDB</span>
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fas fa-brain"></i> LSTM + XGBoost</span>
+            <span class="stack-tag"><i class="fas fa-ship"></i> Kubernetes</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/airsense-platform.html" class="proj-link">Case Study ↗</a>
+            <a href="https://github.com/Eng-Zakaria/airsense-platform" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ARTICLES -->
+  <section id="articles">
+    <div class="container">
+      <div class="sec-label">// writing</div>
+      <h2>Articles</h2>
+      <p class="projects-sub">I write deep, practical guides on data engineering — Airflow, NoSQL, resilience, and where the field is heading. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a></p>
+      <div class="articles-grid" id="articles-grid">
+        <article class="article-card reveal">
+          <div class="article-meta"><span class="article-date">Sep 2026</span><span class="article-tag">Airflow · Orchestration</span></div>
+          <h3><a href="https://eng-zakaria.medium.com/airflow-orchestration-best-practices-lessons-from-building-production-grade-data-pipelines-0dc2a4d829e9" target="_blank" rel="noopener noreferrer">Airflow Orchestration Best Practices: Lessons from Building Production-Grade Data Pipelines</a></h3>
+          <p>Idempotent atomic tasks, TaskFlow vs operators, dynamic mapping, deferrable sensors, XCom discipline, datasets, pools, testing, and observability — with a full worked DAG.</p>
+          <a class="proj-link" href="https://eng-zakaria.medium.com/airflow-orchestration-best-practices-lessons-from-building-production-grade-data-pipelines-0dc2a4d829e9" target="_blank" rel="noopener noreferrer">Read on Medium ↗</a>
+        </article>
+        <article class="article-card reveal reveal-d1">
+          <div class="article-meta"><span class="article-date">May 2026</span><span class="article-tag">NoSQL · Architecture</span></div>
+          <h3><a href="https://eng-zakaria.medium.com/the-architectural-shift-a-comprehensive-analysis-of-nosql-systems-in-modern-data-management-3e191440eb78" target="_blank" rel="noopener noreferrer">The Architectural Shift: NoSQL Systems in Modern Data Management</a></h3>
+          <p>From Bigtable & Dynamo to CAP/PACELC, LSM-trees, document/key-value/wide-column/graph models, and vector DBs as AI memory — with DynamoDB vs Cosmos DB.</p>
+          <a class="proj-link" href="https://eng-zakaria.medium.com/the-architectural-shift-a-comprehensive-analysis-of-nosql-systems-in-modern-data-management-3e191440eb78" target="_blank" rel="noopener noreferrer">Read on Medium ↗</a>
+        </article>
+        <article class="article-card reveal reveal-d2">
+          <div class="article-meta"><span class="article-date">May 2026</span><span class="article-tag">Reliability</span></div>
+          <h3><a href="https://eng-zakaria.medium.com/data-engineering-resilience-a-comprehensive-framework-for-data-system-maintenance-reliability-ab0d2c863564" target="_blank" rel="noopener noreferrer">Data Engineering Resilience: Maintenance & Reliability Framework</a></h3>
+          <p>A comprehensive framework for keeping data systems healthy — maintenance cadences, reliability patterns, monitoring, and recovery playbooks.</p>
+          <a class="proj-link" href="https://eng-zakaria.medium.com/data-engineering-resilience-a-comprehensive-framework-for-data-system-maintenance-reliability-ab0d2c863564" target="_blank" rel="noopener noreferrer">Read on Medium ↗</a>
+        </article>
+        <article class="article-card reveal">
+          <div class="article-meta"><span class="article-date">Feb 2026</span><span class="article-tag">History · Architecture</span></div>
+          <h3><a href="https://eng-zakaria.medium.com/the-chronological-evolution-of-data-architecture-from-early-beginnings-to-modern-innovations-2239163de601" target="_blank" rel="noopener noreferrer">The Chronological Evolution of Data Architecture</a></h3>
+          <p>From early files and RDBMS to warehouses, lakes, lakehouses, and modern innovations — how we got here and what stuck.</p>
+          <a class="proj-link" href="https://eng-zakaria.medium.com/the-chronological-evolution-of-data-architecture-from-early-beginnings-to-modern-innovations-2239163de601" target="_blank" rel="noopener noreferrer">Read on Medium ↗</a>
+        </article>
+        <article class="article-card reveal reveal-d1">
+          <div class="article-meta"><span class="article-date">Feb 2026</span><span class="article-tag">Careers · 2026</span></div>
+          <h3><a href="https://eng-zakaria.medium.com/data-engineering-in-2026-from-pipe-layers-to-intelligence-architects-4e74a63c57a6" target="_blank" rel="noopener noreferrer">Data Engineering in 2026: From Pipe-Layers to Intelligence Architects</a></h3>
+          <p>Why the role is shifting from moving bytes to designing intelligent systems — and the skills that matter now.</p>
+          <a class="proj-link" href="https://eng-zakaria.medium.com/data-engineering-in-2026-from-pipe-layers-to-intelligence-architects-4e74a63c57a6" target="_blank" rel="noopener noreferrer">Read on Medium ↗</a>
+        </article>
+        <article class="article-card article-cta reveal reveal-d2">
+          <h3>Want the next one first?</h3>
+          <p>I publish practical, code-first data engineering guides. New posts auto-appear here via my RSS feed.</p>
+          <a href="https://eng-zakaria.medium.com" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Follow on Medium</a>
+          <div class="rss-note" id="rss-status">● Live feed connected</div>
+        </article>
       </div>
     </div>
   </section>
@@ -543,25 +724,63 @@
     </div>
   </section>
 
+  <!-- CREDENTIALS -->
+  <section id="credentials">
+    <div class="container">
+      <div class="sec-label">// proof, not promises</div>
+      <h2>Credentials</h2>
+      <div class="cred-grid">
+        <div class="cred-card reveal">
+          <div class="cred-label">🎓 Education</div>
+          <h3>Helwan University — Computers & AI</h3>
+          <div class="cred-meta">2020 – 2024 · Cairo · GPA 3.3 · Graduation Project A+</div>
+          <p>Arabic RAG graduation project (Hadith Chat App, Django + Qdrant, 70% accuracy) — the foundation for my production RAG work at Waffarha.</p>
+        </div>
+        <div class="cred-card reveal reveal-d1">
+          <div class="cred-label">📜 Certifications</div>
+          <ul class="cred-list">
+            <li><strong>Huawei HCIP – Big Data (H13-723)</strong><span>NTI · 2026 — Hadoop, Spark, Hive, HBase, Kafka, Flink</span></li>
+            <li><strong>AWS Certified Cloud Practitioner</strong><span>AWS · 2026 — EC2, S3, IAM, VPC for data workloads</span></li>
+            <li><strong>ITI Full-Stack Development</strong><span>ITI · 2021 — .NET end-to-end, 3 demos early</span></li>
+          </ul>
+        </div>
+        <div class="cred-card reveal reveal-d2">
+          <div class="cred-label">📄 Résumé</div>
+          <h3>ATS-friendly, one page of proof</h3>
+          <p>Same impact numbers as this site, formatted for recruiters and hiring managers. Updated Sep 2026.</p>
+          <div class="cred-btns">
+            <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="btn btn-primary" target="_blank" rel="noopener">Download PDF ↓</a>
+            <a href="https://linkedin.com/in/eng-zakaria" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CONTACT -->
   <section id="contact">
     <div class="container">
       <div class="sec-label">// let's connect</div>
       <h2>Get In Touch</h2>
-      <p class="contact-sub">Open to data engineering roles, collaborations, and interesting data problems.</p>
+      <p class="contact-sub">Open to data engineering roles, collaborations, and interesting data problems. I reply within 24 hours.</p>
       <div class="contact-grid">
         <a href="mailto:mohamedzakaria.cs@gmail.com" class="contact-btn primary">✉ mohamedzakaria.cs@gmail.com</a>
+        <button class="contact-btn" id="copy-email" type="button">⧉ Copy email</button>
         <a href="https://linkedin.com/in/eng-zakaria" class="contact-btn" target="_blank" rel="noopener noreferrer">↗ LinkedIn</a>
         <a href="https://github.com/Eng-Zakaria" class="contact-btn" target="_blank" rel="noopener noreferrer">↗ GitHub</a>
         <a href="https://eng-zakaria.medium.com" class="contact-btn" target="_blank" rel="noopener noreferrer">↗ Medium</a>
         <a href="tel:+201501015701" class="contact-btn">📞 +20 150 101 5701</a>
       </div>
+      <p class="contact-note">Prefer LinkedIn? <a href="https://linkedin.com/in/eng-zakaria" target="_blank" rel="noopener noreferrer" class="inline-link">DMs are open</a> — mention a project or article so I know you're human. Cairo (GMT+3) · English / Arabic.</p>
     </div>
   </section>
 
+  <button id="to-top" aria-label="Back to top">↑</button>
+  <div id="toast" role="status" aria-live="polite"></div>
+
   <footer>
-    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
-    <div class="footer-right">Built with <span>♥</span> and data</div>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span> · <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" target="_blank" rel="noopener">Résumé</a> · <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer">Blog</a></div>
+    <div class="footer-right">Built with <span>♥</span> and data · <a href="#hero" class="inline-link">Back to top ↑</a></div>
   </footer>
 
 </body>
