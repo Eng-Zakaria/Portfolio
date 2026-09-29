@@ -24,7 +24,7 @@
   <meta name="twitter:description" content="Data Engineer specializing in ETL pipelines, distributed systems, and cloud infrastructure.">
 
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <meta property="article:author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#0b1020">
 
@@ -89,9 +89,17 @@
       <div class="hero-split">
         <div class="hero-content">
           <div class="availability-badge"><span class="pulse-dot"></span> Open to Data Engineering roles — Cairo / Remote</div>
-          <div class="hero-eyebrow">Hello, My Name Is</div>
-          <h1 class="hero-name">Mohammed<span>Zakaria</span></h1>
-          <p class="hero-role">Data Engineer — Batch, Streaming & RAG Systems</p>
+          <div class="hero-identity">
+            <div class="avatar-frame">
+              <img src="assets/Profile.png" alt="Mohammed Zakaria — Data Engineer" class="avatar-img" loading="eager">
+              <span class="avatar-status" title="Open to work"></span>
+            </div>
+            <div class="identity-text">
+              <div class="hero-eyebrow">Hello, My Name Is</div>
+              <h1 class="hero-name">Mohammed<span>Zakaria</span></h1>
+              <p class="hero-role">Data Engineer — Batch, Streaming & RAG Systems</p>
+            </div>
+          </div>
           <p class="hero-desc">
             I build production data platforms that turn raw noise into decisions.
             Customer-service agent at <strong>Waffarha</strong> over <strong>15M+ live rows</strong>
@@ -126,16 +134,17 @@
           </div>
           <div class="hero-note">⚡ Currently at Waffarha · Usually responds within 24h · English / Arabic</div>
         </div>
-        <div class="hero-image">
-          <div class="image-wrapper">
-            <div class="image-blob"></div>
-            <img src="assets/Profile.png" alt="Mohammed Zakaria" class="profile-photo" loading="eager">
-          </div>
+        <aside class="hero-side">
           <div class="terminal" aria-label="Live pipeline status">
             <div class="terminal-bar"><span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span><span class="terminal-title">waffarha-agent — live</span></div>
             <div class="terminal-body"><code id="terminal-typed"></code><span class="caret">▍</span></div>
           </div>
-        </div>
+          <div class="live-chips">
+            <div class="live-chip"><span class="chip-num">15M+</span><span class="chip-label">live rows</span></div>
+            <div class="live-chip"><span class="chip-num">94.9%</span><span class="chip-label">recall</span></div>
+            <div class="live-chip"><span class="chip-num">0.62ms</span><span class="chip-label">vector latency</span></div>
+          </div>
+        </aside>
       </div>
     </div>
   </section>

@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/arch-diagrams.css">
   <style>
@@ -100,11 +101,12 @@
     </section>
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;"><i class="fas fa-info-circle" style="color: var(--accent);"></i> Airflow orchestrates stages; Celery executes browser work; warehouse serves alerts + dashboard</p>
-      <div class="arch-full"><pre>Airflow DAG: <span class="highlight">fetch_batch → parse_normalize → load_warehouse → data_quality → alert</span>
-fetch_batch triggers Celery + Redis Playwright workers ─▶ raw snapshot store (HTML)
-raw snapshots ─▶ Postgres star schema (dims + fact_price_snapshot + dq_scraper_health)
-warehouse ─▶ Telegram/Email alerts + Streamlit analytics</pre></div>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Airflow orchestrates stages; Celery executes browser work; warehouse serves alerts + dashboard
+      </p>
+      <div class="arch-full">
+        <img src="../docs/diagrams/watchdog-prices.svg" alt="Watchdog Price Intelligence Architecture Diagram" style="width:100%; height:auto;">
+      </div>
     </section>
     <section class="content-section">
       <h3>Approach &amp; Implementation</h3>

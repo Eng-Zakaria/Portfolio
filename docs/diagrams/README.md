@@ -13,6 +13,13 @@ Production-quality SVG architecture diagrams for all portfolio projects, generat
 | Credit Risk Analysis (MLOps Platform) | `credit-risk-analysis---mlops-platform.svg` | 11.8 KB |
 | Fraud Detection (Streaming Pipeline) | `fraud-detection---streaming-pipeline.svg` | 11.3 KB |
 | Nexlify DW (Healthcare Data Warehouse) | `nexlify-dw---healthcare-data-warehouse.svg` | 12.1 KB |
+| Aircraft Tracking (Streaming Pipeline) | `aircraft-tracking-pipeline.svg` | — |
+| Reddit (Spark Batch ETL) | `reddit-spark-pipeline.svg` | — |
+| Hadith Chat App (Arabic RAG) | `hadith-chat-app-arabic-rag.svg` | — |
+| Telecom (Enterprise Data Platform) | `telecom-platform---enterprise-data-platform.svg` | — |
+| Petroleum Platform (Well Monitoring) | `petroleum-platform.svg` | — |
+| Watchdog (Price Intelligence) | `watchdog-prices.svg` | — |
+| AirSense (Air Quality Intelligence) | `airsense-platform.svg` | — |
 
 ## Icon Coverage
 
@@ -92,16 +99,15 @@ Some tools were mapped to close approximations:
 - **JSON** → `siJson` (JSON Web Token variant)
 - **Email** → `siMinutemailer` (minimal email icon)
 
-## Diagram Features
+## Diagram Features (v2 design system)
 
-- **Valid standalone SVG** with proper `viewBox`, width, and height attributes
-- **Layer-colored containers** with dashed borders for architectural boundaries
-- **Real logo icons** as colored circles with first-letter initials
-- **Directional arrows** showing data flow between components
-- **Edge labels** indicating data/control flow type
-- **Legend** in bottom-right corner explaining layer colors
-- **No ASCII art** — pure SVG output
-- **Consistent styling** across all diagrams
+- **Dark premium canvas** (`#0b1020`) matching the portfolio theme, with ambient glows
+- **Real brand marks** rendered from Simple Icons vector paths (no more initial letters)
+- **Branded monogram tiles** for tools without official icons (FAISS, XGBoost, PowerBI, Playwright…)
+- **Animated data-flow edges** (SMIL dash flow, color-coded by source layer, no JS needed)
+- **Lane bands** with accent bars + uppercase chips, title + metric pills header
+- **Footer brand line** + per-diagram layer legend
+- **Auto-layout**: lanes distribute nodes evenly; canvas height adapts per diagram
 
 ## Layer Color Legend
 
@@ -122,7 +128,7 @@ Some tools were mapped to close approximations:
 To regenerate all diagrams:
 
 ```bash
-node scripts/generate-diagrams.js
+node scripts/generate-diagrams-v2.js
 ```
 
 The script uses the `simple-icons` npm package for icon resolution. Install dependencies:

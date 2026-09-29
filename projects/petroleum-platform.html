@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/arch-diagrams.css">
   <style>
@@ -104,11 +105,12 @@
     </section>
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;"><i class="fas fa-info-circle" style="color: var(--accent);"></i> Producers → broker → ingestion/search/warehouse → stream + batch compute → observability</p>
-      <div class="arch-full"><pre>Volve Dataset ─┐
-EIA / Baker Hughes scrapers ─┼─▶ <span class="highlight">RabbitMQ</span> ─┬─▶ NiFi ─┬─▶ Beam/Flink anomaly detection ─┐
-Replay Simulator (SCADA) ────┘                │         └─▶ Elasticsearch (logs/search) ──────┤
-                                              └─▶ BigQuery / MinIO ─▶ PySpark batch ─────────┴─▶ Grafana + Prometheus</pre></div>
+      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Producers → broker → ingestion/search/warehouse → stream + batch compute → observability
+      </p>
+      <div class="arch-full">
+        <img src="../docs/diagrams/petroleum-platform.svg" alt="Petroleum Platform Architecture Diagram" style="width:100%; height:auto;">
+      </div>
     </section>
     <section class="content-section">
       <h3>Approach &amp; Implementation</h3>

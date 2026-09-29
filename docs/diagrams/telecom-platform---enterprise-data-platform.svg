@@ -1,163 +1,152 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" width="1100" height="720">
-  <defs>
-    <marker id="arrow-gray" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
-    </marker>
-    <filter id="shadow">
-      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.08"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 1096" width="980" height="1096" font-family="Inter, -apple-system, Segoe UI, sans-serif">
+<defs>
+    <radialGradient id="glowA" cx="18%" cy="6%" r="55%">
+      <stop offset="0%" stop-color="#7aa5ff" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#7aa5ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="85%" cy="95%" r="60%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="nodeGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.55"/>
     </filter>
+    <marker id="arr-source" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 9 3.5, 0 7" fill="#60a5fa"/></marker>
+<marker id="arr-processing" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 9 3.5, 0 7" fill="#22d3ee"/></marker>
+<marker id="arr-orchestration" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 9 3.5, 0 7" fill="#fb923c"/></marker>
+<marker id="arr-ml" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 9 3.5, 0 7" fill="#f472b6"/></marker>
+<marker id="arr-consumer" markerWidth="9" markerHeight="7" refX="7.5" refY="3.5" orient="auto" markerUnits="strokeWidth"><polygon points="0 0, 9 3.5, 0 7" fill="#a3e635"/></marker>
   </defs>
-
-  <style>
-    text { font-family: 'Inter', -apple-system, sans-serif; }
-    .title { font-size: 18px; font-weight: 700; fill: #0f172a; }
-    .label { font-size: 11px; fill: #475569; font-weight: 500; }
-    .component { font-size: 13px; fill: #0f172a; font-weight: 600; }
-    .small { font-size: 10px; fill: #6b7280; }
-    .layer-label { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; }
-  </style>
-
-  <!-- Background -->
-  <rect width="1100" height="720" fill="#f8fafc"/>
-
-  <!-- Title -->
-  <text x="550" y="35" text-anchor="middle" class="title">Telecom Enterprise Data &amp; Automation Platform — 8-Domain Medallion Architecture</text>
-
-  <!-- SOURCE SYSTEMS ROW -->
-  <rect x="30" y="65" width="1040" height="100" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="50" y="90" class="layer-label" fill="#475569">SOURCE SYSTEMS</text>
-
-  <!-- Sources -->
-  <rect x="50" y="105" width="140" height="45" rx="8" fill="#fef2f2" stroke="#f87171" stroke-width="1.5"/>
-  <text x="120" y="125" text-anchor="middle" font-size="18">📞</text>
-  <text x="120" y="140" text-anchor="middle" class="component" font-size="11">CDR Generator</text>
-  <text x="120" y="150" text-anchor="middle" class="small" font-size="9">Synthetic Calls</text>
-
-  <rect x="210" y="105" width="140" height="45" rx="8" fill="#fff7ed" stroke="#fb923c" stroke-width="1.5"/>
-  <text x="280" y="125" text-anchor="middle" font-size="18">🌐</text>
-  <text x="280" y="140" text-anchor="middle" class="component" font-size="11">Web Scraper</text>
-  <text x="280" y="150" text-anchor="middle" class="small" font-size="9">Real-time Data</text>
-
-  <rect x="370" y="105" width="140" height="45" rx="8" fill="#f0fdf4" stroke="#4ade80" stroke-width="1.5"/>
-  <text x="440" y="125" text-anchor="middle" font-size="18">📡</text>
-  <text x="440" y="140" text-anchor="middle" class="component" font-size="11">Streaming Feed</text>
-  <text x="440" y="150" text-anchor="middle" class="small" font-size="9">Outage Events</text>
-
-  <rect x="530" y="105" width="140" height="45" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.5"/>
-  <text x="600" y="125" text-anchor="middle" font-size="18">💳</text>
-  <text x="600" y="140" text-anchor="middle" class="component" font-size="11">Billing System</text>
-  <text x="600" y="150" text-anchor="middle" class="small" font-size="9">Transaction Log</text>
-
-  <rect x="690" y="105" width="140" height="45" rx="8" fill="#faf5ff" stroke="#a78bfa" stroke-width="1.5"/>
-  <text x="760" y="125" text-anchor="middle" font-size="18">⚙️</text>
-  <text x="760" y="140" text-anchor="middle" class="component" font-size="11">Network KPIs</text>
-  <text x="760" y="150" text-anchor="middle" class="small" font-size="9">Cell Metrics</text>
-
-  <rect x="850" y="105" width="180" height="45" rx="8" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5"/>
-  <text x="940" y="125" text-anchor="middle" font-size="18">📝</text>
-  <text x="940" y="140" text-anchor="middle" class="component" font-size="11">Customer Care</text>
-  <text x="940" y="150" text-anchor="middle" class="small" font-size="9">Complaint Tickets</text>
-
-  <!-- Arrows down to Ingestion -->
-  <line x1="120" y1="155" x2="120" y2="200" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
-  <line x1="940" y1="155" x2="940" y2="200" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
-
-  <!-- INGESTION LAYER -->
-  <rect x="30" y="205" width="1040" height="70" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="50" y="230" class="layer-label" fill="#475569">INGESTION LAYER</text>
-  <rect x="50" y="240" width="180" height="25" rx="6" fill="#fef2f2" stroke="#f87171" stroke-width="1"/>
-  <text x="140" y="257" text-anchor="middle" class="small" font-size="10" fill="#dc2626">Batch (Azure Data Factory)</text>
-  <rect x="250" y="240" width="200" height="25" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
-  <text x="350" y="257" text-anchor="middle" class="small" font-size="10" fill="#2563eb">Event Hubs / Kafka</text>
-  <rect x="470" y="240" width="160" height="25" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
-  <text x="550" y="257" text-anchor="middle" class="small" font-size="10" fill="#16a34a">MinIO / Azurite</text>
-  <rect x="650" y="240" width="180" height="25" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
-  <text x="740" y="257" text-anchor="middle" class="small" font-size="10" fill="#7c3aed">Redpanda Cluster</text>
-  <rect x="850" y="240" width="180" height="25" rx="6" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1"/>
-  <text x="940" y="257" text-anchor="middle" class="small" font-size="10" fill="#0284c7">CDC / Change Tracking</text>
-
-  <!-- STORAGE (MEDALLION) -->
-  <rect x="30" y="295" width="1040" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="50" y="320" class="layer-label" fill="#475569">STORAGE — Delta Lake (OneLake / MinIO)</text>
-
-  <!-- Bronze -->
-  <rect x="50" y="330" width="280" height="115" rx="10" fill="#fef2f2" stroke="#f87171" stroke-width="2"/>
-  <text x="70" y="355" class="layer-label" fill="#dc2626">BRONZE (Raw)</text>
-  <text x="70" y="375" font-size="10" fill="#475569">• Immutable raw data</text>
-  <text x="70" y="390" font-size="10" fill="#475569">• Schema-on-read</text>
-  <text x="70" y="405" font-size="10" fill="#475569">• 7-day retention</text>
-  <text x="70" y="420" font-size="10" fill="#475569">• PII masked at load</text>
-  <text x="190" y="440" text-anchor="middle" font-size="36">🔴</text>
-
-  <!-- Silver -->
-  <rect x="360" y="330" width="280" height="115" rx="10" fill="#fff7ed" stroke="#fb923c" stroke-width="2"/>
-  <text x="380" y="355" class="layer-label" fill="#ea580c">SILVER (Cleaned)</text>
-  <text x="380" y="375" font-size="10" fill="#475569">• De-duplicated</text>
-  <text x="380" y="390" font-size="10" fill="#475569">• Validated &amp; typed</text>
-  <text x="380" y="405" font-size="10" fill="#475569">• Great Expectations</text>
-  <text x="380" y="420" font-size="10" fill="#475569">• Cross-source join</text>
-  <text x="500" y="440" text-anchor="middle" font-size="36">🟠</text>
-
-  <!-- Gold -->
-  <rect x="670" y="330" width="300" height="115" rx="10" fill="#f0fdf4" stroke="#4ade80" stroke-width="2"/>
-  <text x="690" y="355" class="layer-label" fill="#16a34a">GOLD (Curated)</text>
-  <text x="690" y="375" font-size="10" fill="#475569">• Business constructs</text>
-  <text x="690" y="390" font-size="10" fill="#475569">• Customer 360°</text>
-  <text x="690" y="405" font-size="10" fill="#475569">• Network KPI summary</text>
-  <text x="690" y="420" font-size="10" fill="#475569">• Billing aggregation</text>
-  <text x="820" y="440" text-anchor="middle" font-size="36">🟢</text>
-
-  <!-- TRANSFORMATION -->
-  <rect x="30" y="475" width="1040" height="90" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="50" y="500" class="layer-label" fill="#475569">TRANSFORMATION — dbt + Spark</text>
-  <rect x="50" y="510" width="220" height="25" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
-  <text x="160" y="527" text-anchor="middle" class="small" font-size="10" fill="#2563eb">Core Gold Layer</text>
-  <rect x="290" y="510" width="220" height="25" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
-  <text x="400" y="527" text-anchor="middle" class="small" font-size="10" fill="#16a34a">Shared Dimensions</text>
-  <rect x="530" y="510" width="220" height="25" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
-  <text x="640" y="527" text-anchor="middle" class="small" font-size="10" fill="#7c3aed">dbt Models</text>
-  <rect x="770" y="510" width="220" height="25" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
-  <text x="880" y="527" text-anchor="middle" class="small" font-size="10" fill="#ea580c">Spark Jobs</text>
-
-  <!-- DOMAIN MARTS -->
-  <rect x="30" y="585" width="1040" height="120" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5" filter="url(#shadow)"/>
-  <text x="50" y="610" class="layer-label" fill="#475569">8 BUSINESS DOMAINS</text>
-
-  <!-- Domain boxes -->
-  <rect x="50" y="620" width="115" height="35" rx="6" fill="#fef2f2" stroke="#f87171" stroke-width="1"/>
-  <text x="107" y="635" text-anchor="middle" class="small" font-size="9" fill="#dc2626">Customer</text>
-  <text x="107" y="648" text-anchor="middle" class="small" font-size="9" fill="#dc2626">Retention</text>
-
-  <rect x="175" y="620" width="115" height="35" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
-  <text x="232" y="635" text-anchor="middle" class="small" font-size="9" fill="#ea580c">Revenue</text>
-  <text x="232" y="648" text-anchor="middle" class="small" font-size="9" fill="#ea580c">Assurance</text>
-
-  <rect x="300" y="620" width="115" height="35" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
-  <text x="357" y="635" text-anchor="middle" class="small" font-size="9" fill="#16a34a">Network</text>
-  <text x="357" y="648" text-anchor="middle" class="small" font-size="9" fill="#16a34a">Operations</text>
-
-  <rect x="425" y="620" width="115" height="35" rx="6" fill="#eff6ff" stroke="#60a5fa" stroke-width="1"/>
-  <text x="482" y="635" text-anchor="middle" class="small" font-size="9" fill="#2563eb">Marketing</text>
-  <text x="482" y="648" text-anchor="middle" class="small" font-size="9" fill="#2563eb">Sales</text>
-
-  <rect x="550" y="620" width="115" height="35" rx="6" fill="#faf5ff" stroke="#a78bfa" stroke-width="1"/>
-  <text x="607" y="635" text-anchor="middle" class="small" font-size="9" fill="#7c3aed">Customer</text>
-  <text x="607" y="648" text-anchor="middle" class="small" font-size="9" fill="#7c3aed">Care</text>
-
-  <rect x="675" y="620" width="115" height="35" rx="6" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1"/>
-  <text x="732" y="635" text-anchor="middle" class="small" font-size="9" fill="#0284c7">Finance</text>
-  <text x="732" y="648" text-anchor="middle" class="small" font-size="9" fill="#0284c7">ARPU</text>
-
-  <rect x="800" y="620" width="115" height="35" rx="6" fill="#fff1f2" stroke="#f43f5e" stroke-width="1"/>
-  <text x="857" y="635" text-anchor="middle" class="small" font-size="9" fill="#e11d48">Roaming</text>
-  <text x="857" y="648" text-anchor="middle" class="small" font-size="9" fill="#e11d48">Settlement</text>
-
-  <rect x="925" y="620" width="115" height="35" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1"/>
-  <text x="982" y="635" text-anchor="middle" class="small" font-size="9" fill="#059669">Product</text>
-  <text x="982" y="648" text-anchor="middle" class="small" font-size="9" fill="#059669">Mgmt</text>
-
-  <!-- ML layer -->
-  <rect x="30" y="715" width="1040" height="30" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
-  <text x="50" y="735" class="small" font-size="10" fill="#475569">ML Flow Tracking  •  Drift Detection  •  Champion/Challenger  •  Auto-Retrain  •  Model Registry</text>
+<rect width="980" height="1096" rx="18" fill="#0b1020"/>
+<rect width="980" height="1096" rx="18" fill="url(#glowA)"/>
+<rect width="980" height="1096" rx="18" fill="url(#glowB)"/>
+<text x="40" y="44" font-size="23" font-weight="800" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif" letter-spacing="-0.01em">Telecom — Enterprise Data Platform</text>
+  <text x="40" y="68" font-size="12.5" fill="#8ea0c4" font-family="Inter, -apple-system, Segoe UI, sans-serif">8 domains · Delta medallion · Docker-to-Azure parity</text>
+  <g transform="translate(834.8,30)"><g><rect x="0" y="0" width="105.2" height="24" rx="12" fill="#16264d" stroke="#35446e"/><text x="52.6" y="16.5" text-anchor="middle" font-size="10.5" font-weight="600" fill="#b3ccff" font-family="'JetBrains Mono', ui-monospace, monospace">drift retrain</text></g></g><g transform="translate(740.8,30)"><g><rect x="0" y="0" width="86" height="24" rx="12" fill="#16264d" stroke="#35446e"/><text x="43" y="16.5" text-anchor="middle" font-size="10.5" font-weight="600" fill="#b3ccff" font-family="'JetBrains Mono', ui-monospace, monospace">Delta Lake</text></g></g><g transform="translate(653.1999999999999,30)"><g><rect x="0" y="0" width="79.6" height="24" rx="12" fill="#16264d" stroke="#35446e"/><text x="39.8" y="16.5" text-anchor="middle" font-size="10.5" font-weight="600" fill="#b3ccff" font-family="'JetBrains Mono', ui-monospace, monospace">8 domains</text></g></g>
+  <line x1="40" y1="86" x2="940" y2="86" stroke="#263252" stroke-width="1"/><rect x="40" y="104" width="900" height="138" rx="14" fill="#60a5fa" fill-opacity="0.055" stroke="#60a5fa" stroke-opacity="0.28"/>
+  <rect x="54" y="104" width="54" height="3.5" rx="1.75" fill="#60a5fa"/>
+  <g transform="translate(54,114)">
+    <rect x="0" y="0" width="99.19999999999999" height="19" rx="9.5" fill="#60a5fa" fill-opacity="0.16" stroke="#60a5fa" stroke-opacity="0.5"/>
+    <text x="49.599999999999994" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#60a5fa" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">DOMAIN FEEDS</text>
+  </g><rect x="40" y="262" width="900" height="138" rx="14" fill="#22d3ee" fill-opacity="0.055" stroke="#22d3ee" stroke-opacity="0.28"/>
+  <rect x="54" y="262" width="54" height="3.5" rx="1.75" fill="#22d3ee"/>
+  <g transform="translate(54,272)">
+    <rect x="0" y="0" width="86" height="19" rx="9.5" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity="0.5"/>
+    <text x="43" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">DELTA LAKE</text>
+  </g><rect x="40" y="420" width="900" height="138" rx="14" fill="#22d3ee" fill-opacity="0.055" stroke="#22d3ee" stroke-opacity="0.28"/>
+  <rect x="54" y="420" width="54" height="3.5" rx="1.75" fill="#22d3ee"/>
+  <g transform="translate(54,430)">
+    <rect x="0" y="0" width="79.4" height="19" rx="9.5" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity="0.5"/>
+    <text x="39.7" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">TRANSFORM</text>
+  </g><rect x="40" y="578" width="900" height="138" rx="14" fill="#fb923c" fill-opacity="0.055" stroke="#fb923c" stroke-opacity="0.28"/>
+  <rect x="54" y="578" width="54" height="3.5" rx="1.75" fill="#fb923c"/>
+  <g transform="translate(54,588)">
+    <rect x="0" y="0" width="72.8" height="19" rx="9.5" fill="#fb923c" fill-opacity="0.16" stroke="#fb923c" stroke-opacity="0.5"/>
+    <text x="36.4" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fb923c" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">PLATFORM</text>
+  </g><rect x="40" y="736" width="900" height="138" rx="14" fill="#f472b6" fill-opacity="0.055" stroke="#f472b6" stroke-opacity="0.28"/>
+  <rect x="54" y="736" width="54" height="3.5" rx="1.75" fill="#f472b6"/>
+  <g transform="translate(54,746)">
+    <rect x="0" y="0" width="53" height="19" rx="9.5" fill="#f472b6" fill-opacity="0.16" stroke="#f472b6" stroke-opacity="0.5"/>
+    <text x="26.5" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#f472b6" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">MLOPS</text>
+  </g><rect x="40" y="894" width="900" height="138" rx="14" fill="#a3e635" fill-opacity="0.055" stroke="#a3e635" stroke-opacity="0.28"/>
+  <rect x="54" y="894" width="54" height="3.5" rx="1.75" fill="#a3e635"/>
+  <g transform="translate(54,904)">
+    <rect x="0" y="0" width="66.19999999999999" height="19" rx="9.5" fill="#a3e635" fill-opacity="0.16" stroke="#a3e635" stroke-opacity="0.5"/>
+    <text x="33.099999999999994" y="13.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#a3e635" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.12em">CONSUME</text>
+  </g><path d="M 256 226 L 256 294" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-source)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><path d="M 490 226 C 490 261, 256 261, 256 294" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-source)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><path d="M 724 226 C 724 261, 256 261, 256 294" fill="none" stroke="#60a5fa" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-source)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><path d="M 256 384 L 490 294" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><path d="M 490 384 L 724 294" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><path d="M 256 542 L 490 294" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(373,410)"><rect x="-21.5" y="0" width="43" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">build</text></g><path d="M 490 542 L 724 294" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(607,410)"><rect x="-21.5" y="0" width="43" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">model</text></g><path d="M 724 542 L 724 294" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(724,410)"><rect x="-18.8" y="0" width="37.6" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">gate</text></g><path d="M 256 700 L 256 452" fill="none" stroke="#fb923c" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-orchestration)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(256,568)"><rect x="-29.6" y="0" width="59.2" height="17" rx="8.5" fill="#0b1020" stroke="#fb923c" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#fb923c" font-family="'JetBrains Mono', ui-monospace, monospace">schedule</text></g><path d="M 724 384 C 724 498, 490 498, 490 610" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(607,489)"><rect x="-18.8" y="0" width="37.6" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">sync</text></g><path d="M 724 384 C 724 577, 373 577, 373 768" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(548.5,568)"><rect x="-29.6" y="0" width="59.2" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">features</text></g><path d="M 373 858 L 607 768" fill="none" stroke="#f472b6" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-ml)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(490,805)"><rect x="-26.900000000000002" y="0" width="53.800000000000004" height="17" rx="8.5" fill="#0b1020" stroke="#f472b6" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#f472b6" font-family="'JetBrains Mono', ui-monospace, monospace">trigger</text></g><path d="M 724 384 C 724 656, 373 656, 373 926" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="7 5" opacity="0.85" marker-end="url(#arr-processing)">
+    <animate attributeName="stroke-dashoffset" from="24" to="0" dur="1.1s" repeatCount="indefinite"/></path><g transform="translate(548.5,647)"><rect x="-21.5" y="0" width="43" height="17" rx="8.5" fill="#0b1020" stroke="#22d3ee" stroke-opacity="0.55"/><text x="0" y="12" text-anchor="middle" font-size="8.5" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">serve</text></g><g filter="url(#nodeGlow)">
+    <rect x="146" y="138" width="220" height="88" rx="12" fill="#141d38" stroke="#60a5fa" stroke-width="1.6"/>
+    <rect x="156" y="144" width="200" height="2.5" rx="1.25" fill="#60a5fa" fill-opacity="0.5"/>
+  </g><circle cx="256" cy="162" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#60a5fa" stroke-opacity="0.35"/>
+      <g transform="translate(245.5,151.5) scale(0.875)"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z" fill="#3776AB"/></g>
+  <text x="256" y="210" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">CRM + Billing</text><g filter="url(#nodeGlow)">
+    <rect x="380" y="138" width="220" height="88" rx="12" fill="#141d38" stroke="#60a5fa" stroke-width="1.6"/>
+    <rect x="390" y="144" width="200" height="2.5" rx="1.25" fill="#60a5fa" fill-opacity="0.5"/>
+  </g><circle cx="490" cy="162" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#60a5fa" stroke-opacity="0.35"/>
+      <g transform="translate(479.5,151.5) scale(0.875)"><path d="M9.71 2.136a1.43 1.43 0 0 0-2.047 0h-.007a1.48 1.48 0 0 0-.421 1.042c0 .41.161.777.422 1.039l.007.007c.257.264.616.426 1.019.426.404 0 .766-.162 1.027-.426l.003-.007c.261-.262.421-.629.421-1.039 0-.408-.159-.777-.421-1.042H9.71zM8.683 22.295c.404 0 .766-.167 1.027-.429l.003-.008c.261-.261.421-.631.421-1.036 0-.41-.159-.778-.421-1.044H9.71a1.42 1.42 0 0 0-1.027-.432 1.4 1.4 0 0 0-1.02.432h-.007c-.26.266-.422.634-.422 1.044 0 .406.161.775.422 1.036l.007.008c.258.262.617.429 1.02.429zm7.89-4.462c.359-.096.683-.33.882-.684l.027-.052a1.47 1.47 0 0 0 .114-1.067 1.454 1.454 0 0 0-.675-.896l-.021-.014a1.425 1.425 0 0 0-1.078-.132c-.36.091-.684.335-.881.686-.2.349-.241.75-.146 1.119.099.363.33.691.675.896h.002c.346.203.737.239 1.101.144zm-6.405-7.342a2.083 2.083 0 0 0-1.485-.627c-.58 0-1.103.242-1.482.627-.378.385-.612.916-.612 1.507s.233 1.124.612 1.514a2.08 2.08 0 0 0 2.967 0c.379-.39.612-.923.612-1.514s-.233-1.122-.612-1.507zm-.835-2.51c.843.141 1.6.552 2.178 1.144h.004c.092.093.182.196.265.299l1.446-.851a3.176 3.176 0 0 1-.047-1.808 3.149 3.149 0 0 1 1.456-1.926l.025-.016a3.062 3.062 0 0 1 2.345-.306c.77.21 1.465.721 1.898 1.482v.002c.431.757.518 1.626.313 2.408a3.145 3.145 0 0 1-1.456 1.928l-.198.118h-.02a3.095 3.095 0 0 1-2.154.201 3.127 3.127 0 0 1-1.514-.944l-1.444.848a4.162 4.162 0 0 1 0 2.879l1.444.846c.413-.47.939-.789 1.514-.944a3.041 3.041 0 0 1 2.371.319l.048.023v.002a3.17 3.17 0 0 1 1.408 1.906 3.215 3.215 0 0 1-.313 2.405l-.026.053-.003-.005a3.147 3.147 0 0 1-1.867 1.436 3.096 3.096 0 0 1-2.371-.318v-.006a3.156 3.156 0 0 1-1.456-1.927 3.175 3.175 0 0 1 .047-1.805l-1.446-.848a3.905 3.905 0 0 1-.265.294l-.004.005a3.938 3.938 0 0 1-2.178 1.138v1.699a3.09 3.09 0 0 1 1.56.862l.002.004c.565.572.914 1.368.914 2.243 0 .873-.35 1.664-.914 2.239l-.002.009a3.1 3.1 0 0 1-2.21.931 3.1 3.1 0 0 1-2.206-.93h-.002v-.009a3.186 3.186 0 0 1-.916-2.239c0-.875.35-1.672.916-2.243v-.004h.002a3.1 3.1 0 0 1 1.558-.862v-1.699a3.926 3.926 0 0 1-2.176-1.138l-.006-.005a4.098 4.098 0 0 1-1.173-2.874c0-1.122.452-2.136 1.173-2.872h.006a3.947 3.947 0 0 1 2.176-1.144V6.289a3.137 3.137 0 0 1-1.558-.864h-.002v-.004a3.192 3.192 0 0 1-.916-2.243c0-.871.35-1.669.916-2.243l.002-.002A3.084 3.084 0 0 1 8.683 0c.861 0 1.641.355 2.21.932v.002h.002c.565.574.914 1.372.914 2.243 0 .876-.35 1.667-.914 2.243l-.002.005a3.142 3.142 0 0 1-1.56.864v1.692zm8.121-1.129l-.012-.019a1.452 1.452 0 0 0-.87-.668 1.43 1.43 0 0 0-1.103.146h.002c-.347.2-.58.529-.677.896-.095.365-.054.768.146 1.119l.007.009c.2.347.519.579.874.673.357.103.755.059 1.098-.144l.019-.009a1.47 1.47 0 0 0 .657-.885 1.493 1.493 0 0 0-.141-1.118" fill="#231F20"/></g>
+  <text x="490" y="210" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Network Telemetry</text><g filter="url(#nodeGlow)">
+    <rect x="614" y="138" width="220" height="88" rx="12" fill="#141d38" stroke="#60a5fa" stroke-width="1.6"/>
+    <rect x="624" y="144" width="200" height="2.5" rx="1.25" fill="#60a5fa" fill-opacity="0.5"/>
+  </g><circle cx="724" cy="162" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#60a5fa" stroke-opacity="0.35"/>
+      <g transform="translate(713.5,151.5) scale(0.875)"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z" fill="#3776AB"/></g>
+  <text x="724" y="210" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">IoT Sensors</text><g filter="url(#nodeGlow)">
+    <rect x="146" y="296" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="156" y="302" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><rect x="239" y="303" width="34" height="34" rx="9" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity="0.7"/>
+      <text x="256" y="325" text-anchor="middle" font-size="12" font-weight="800" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">Δ</text>
+  <text x="256" y="368" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Bronze Raw</text><g filter="url(#nodeGlow)">
+    <rect x="380" y="296" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="390" y="302" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><rect x="473" y="303" width="34" height="34" rx="9" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity="0.7"/>
+      <text x="490" y="325" text-anchor="middle" font-size="12" font-weight="800" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">Δ</text>
+  <text x="490" y="368" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Silver Clean</text><g filter="url(#nodeGlow)">
+    <rect x="614" y="296" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="624" y="302" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><rect x="707" y="303" width="34" height="34" rx="9" fill="#22d3ee" fill-opacity="0.16" stroke="#22d3ee" stroke-opacity="0.7"/>
+      <text x="724" y="325" text-anchor="middle" font-size="12" font-weight="800" fill="#22d3ee" font-family="'JetBrains Mono', ui-monospace, monospace">Δ</text>
+  <text x="724" y="368" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Gold Marts</text><g filter="url(#nodeGlow)">
+    <rect x="146" y="454" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="156" y="460" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><circle cx="256" cy="478" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#22d3ee" stroke-opacity="0.35"/>
+      <g transform="translate(245.5,467.5) scale(0.875)"><path d="M10.812 0c-.425.013-.845.215-1.196.605a3.593 3.593 0 00-.493.722c-.355.667-.425 1.415-.556 2.143a551.9 551.9 0 00-.726 4.087c-.027.16-.096.227-.244.273C5.83 8.386 4.06 8.94 2.3 9.514c-.387.125-.773.289-1.114.506-1.042.665-1.196 1.753-.415 2.71.346.422.79.715 1.284.936 1.1.49 2.202.976 3.3 1.47.019.01.036.013.053.019h-.004l1.306.535c0 .023.002.045 0 .073-.2 2.03-.39 4.063-.58 6.095-.04.419-.012.831.134 1.23.317.87 1.065 1.148 1.881.701.372-.204.666-.497.937-.818 1.372-1.623 2.746-3.244 4.113-4.872.111-.133.205-.15.363-.098.349.117.697.231 1.045.347h.001c.02.012.045.02.073.03l.142.042c1.248.416 2.68.775 3.929 1.19.4.132.622.164 1.045.098.311-.048.592-.062.828-.236.602-.33.995-.957.988-1.682-.005-.427-.154-.813-.35-1.186-.82-1.556-1.637-3.113-2.461-4.666-.078-.148-.076-.243.037-.375 1.381-1.615 2.756-3.236 4.133-4.855.272-.32.513-.658.653-1.058.308-.878-.09-1.57-1-1.741a2.783 2.783 0 00-1.235.069c-1.974.521-3.947 1.041-5.918 1.57-.175.047-.26.015-.355-.144a353.08 353.08 0 00-2.421-4.018 4.61 4.61 0 00-.652-.849c-.371-.37-.802-.549-1.227-.536zm.172 3.703a.592.592 0 01.189.211c.87 1.446 1.742 2.89 2.609 4.338.07.118.135.16.277.121 1.525-.41 3.052-.813 4.579-1.217.367-.098.735-.193 1.103-.289a.399.399 0 01-.1.2c-1.259 1.48-2.516 2.962-3.779 4.438-.11.13-.12.22-.04.37.937 1.803 1.768 3.309 2.498 4.76l-3.696-1.019c-.538-.18-1.077-.358-1.615-.539-.163-.055-.25-.03-.36.1-1.248 1.488-2.504 2.97-3.759 4.454a.398.398 0 01-.18.132c.035-.378.068-.757.104-1.136.149-1.572.297-3.144.451-4.716-.03-.318.117-.405-.322-.545-1.493-.593-3.346-1.321-4.816-1.905a.595.595 0 01.24-.134c1.797-.57 3.595-1.14 5.394-1.705.127-.04.199-.092.211-.233.013-.148.05-.294.076-.441.241-1.363.483-2.726.726-4.088.068-.386.14-.771.21-1.157z" fill="#E25A1C"/></g>
+  <text x="256" y="526" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Spark Batch</text><g filter="url(#nodeGlow)">
+    <rect x="380" y="454" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="390" y="460" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><rect x="473" y="461" width="34" height="34" rx="9" fill="#f97316" fill-opacity="0.16" stroke="#f97316" stroke-opacity="0.7"/>
+      <text x="490" y="483" text-anchor="middle" font-size="12" font-weight="800" fill="#f97316" font-family="'JetBrains Mono', ui-monospace, monospace">dbt</text>
+  <text x="490" y="526" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">dbt Models</text><g filter="url(#nodeGlow)">
+    <rect x="614" y="454" width="220" height="88" rx="12" fill="#141d38" stroke="#22d3ee" stroke-width="1.6"/>
+    <rect x="624" y="460" width="200" height="2.5" rx="1.25" fill="#22d3ee" fill-opacity="0.5"/>
+  </g><circle cx="724" cy="478" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#22d3ee" stroke-opacity="0.35"/>
+      <g transform="translate(713.5,467.5) scale(0.875)"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z" fill="#3776AB"/></g>
+  <text x="724" y="526" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">DQ Checks</text><g filter="url(#nodeGlow)">
+    <rect x="146" y="612" width="220" height="88" rx="12" fill="#141d38" stroke="#fb923c" stroke-width="1.6"/>
+    <rect x="156" y="618" width="200" height="2.5" rx="1.25" fill="#fb923c" fill-opacity="0.5"/>
+  </g><circle cx="256" cy="636" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#fb923c" stroke-opacity="0.35"/>
+      <g transform="translate(245.5,625.5) scale(0.875)"><path d="M17.195 16.822l4.002-4.102C23.55 10.308 23.934 5.154 24 .43a.396.396 0 0 0-.246-.373.392.392 0 0 0-.437.09l-6.495 6.658-4.102-4.003C10.309.45 5.154.066.43 0H.423a.397.397 0 0 0-.277.683l6.658 6.494-4.003 4.103C.45 13.692.065 18.846 0 23.57a.398.398 0 0 0 .683.282l6.494-6.657 3.934 3.837.17.165c2.41 2.353 7.565 2.737 12.288 2.803h.006a.397.397 0 0 0 .277-.683l-6.657-6.495zm-.409-9.476c.04.115.05.24.031.344-.17.96-1.593 2.538-4.304 3.87a.597.597 0 0 0-.08-.079c1.432-3.155 1.828-5.61 1.175-7.322l3.058 2.984.12.203zm-.131 9.44a.73.73 0 0 1-.347.031c-.96-.171-2.537-1.594-3.87-4.307a.656.656 0 0 0 .08-.078l-.001.001c3.155 1.432 5.61 1.83 7.324 1.174l-2.969 3.043M23.568.392a.05.05 0 0 1 .052-.011c.018.006.03.024.029.043-.065 4.655-.437 9.726-2.703 12.05-1.53 1.565-4.326 1.419-8.283-.377.006-.037.021-.07.02-.108 0-.044-.017-.082-.026-.123 2.83-1.39 4.315-3.037 4.506-4.115.057-.322-.009-.542-.102-.688l6.507-6.67V.392zM.393.43A.045.045 0 0 1 .382.38C.39.36.403.343.425.35c4.655.065 9.727.438 12.05 2.703l.002.002c1.56 1.527 1.415 4.323-.379 8.28-.033-.005-.062-.02-.097-.02h-.008c-.045.001-.084.019-.126.027-1.39-2.83-3.037-4.314-4.115-4.506-.323-.057-.542.01-.688.103L.393.43zm11.94 11.563a.331.331 0 0 1-.327.335H12a.332.332 0 0 1-.004-.661c.172.016.333.144.335.326h.002zm-5.12 4.661a.722.722 0 0 1-.03-.345c.17-.96 1.595-2.54 4.309-3.873.013.016.019.035.033.05.013.012.03.017.044.028-1.434 3.158-1.83 5.613-1.177 7.326l-3.041-2.967m-.006-9.659a.735.735 0 0 1 .345-.031c.961.17 2.54 1.594 3.871 4.306a.597.597 0 0 0-.079.08c-2.167-.983-4.007-1.484-5.498-1.484-.68 0-1.289.103-1.825.308L7.128 7.35M.43 23.607c-.018.018-.038.015-.052.01-.019-.007-.028-.021-.028-.043.065-4.654.437-9.725 2.703-12.049 1.527-1.565 4.325-1.419 8.286.378-.006.035-.02.067-.02.104 0 .043.018.083.026.124-2.831 1.391-4.317 3.04-4.51 4.117-.057.322.01.542.103.688L.43 23.607zm23.144.042c-4.655-.065-9.726-.437-12.05-2.703l-.005-.006c-1.56-1.526-1.412-4.322.383-8.279.033.005.064.02.098.02h.009c.043 0 .08-.018.122-.027 1.39 2.832 3.036 4.317 4.115 4.51.083.014.16.021.23.021a.776.776 0 0 0 .45-.133l6.68 6.516c.02.02.016.04.01.052a.042.042 0 0 1-.042.029z" fill="#017CEE"/></g>
+  <text x="256" y="684" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Airflow</text><g filter="url(#nodeGlow)">
+    <rect x="380" y="612" width="220" height="88" rx="12" fill="#141d38" stroke="#fb923c" stroke-width="1.6"/>
+    <rect x="390" y="618" width="200" height="2.5" rx="1.25" fill="#fb923c" fill-opacity="0.5"/>
+  </g><rect x="473" y="619" width="34" height="34" rx="9" fill="#38bdf8" fill-opacity="0.16" stroke="#38bdf8" stroke-opacity="0.7"/>
+      <text x="490" y="641" text-anchor="middle" font-size="12" font-weight="800" fill="#38bdf8" font-family="'JetBrains Mono', ui-monospace, monospace">Az</text>
+  <text x="490" y="675" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Azure</text><text x="490" y="690" text-anchor="middle" font-size="9" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace">Blob + Fabric</text><g filter="url(#nodeGlow)">
+    <rect x="614" y="612" width="220" height="88" rx="12" fill="#141d38" stroke="#fb923c" stroke-width="1.6"/>
+    <rect x="624" y="618" width="200" height="2.5" rx="1.25" fill="#fb923c" fill-opacity="0.5"/>
+  </g><circle cx="724" cy="636" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#fb923c" stroke-opacity="0.35"/>
+      <g transform="translate(713.5,625.5) scale(0.875)"><path d="M1.44 0v7.575l6.561 3.79V3.787zm21.12 4.227l-6.561 3.791v7.574l6.56-3.787zM8.72 4.23v7.575l6.561 3.787V8.018zm0 8.405v7.575L15.28 24v-7.578z" fill="#844FBA"/></g>
+  <text x="724" y="675" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Terraform</text><text x="724" y="690" text-anchor="middle" font-size="9" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace">local parity</text><g filter="url(#nodeGlow)">
+    <rect x="263" y="770" width="220" height="88" rx="12" fill="#141d38" stroke="#f472b6" stroke-width="1.6"/>
+    <rect x="273" y="776" width="200" height="2.5" rx="1.25" fill="#f472b6" fill-opacity="0.5"/>
+  </g><circle cx="373" cy="794" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#f472b6" stroke-opacity="0.35"/>
+      <g transform="translate(362.5,783.5) scale(0.875)"><path d="M11.883.002a12.044 12.044 0 0 0-9.326 19.463l3.668-2.694A7.573 7.573 0 0 1 12.043 4.45v2.867l6.908-5.14A12.012 12.012 0 0 0 11.883.002zm9.562 4.533L17.777 7.23a7.573 7.573 0 0 1-5.818 12.322v-2.867l-6.908 5.14a12.046 12.046 0 0 0 16.394-17.29z" fill="#0194E2"/></g>
+  <text x="373" y="842" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">MLflow Tracking</text><g filter="url(#nodeGlow)">
+    <rect x="497" y="770" width="220" height="88" rx="12" fill="#141d38" stroke="#f472b6" stroke-width="1.6"/>
+    <rect x="507" y="776" width="200" height="2.5" rx="1.25" fill="#f472b6" fill-opacity="0.5"/>
+  </g><circle cx="607" cy="794" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#f472b6" stroke-opacity="0.35"/>
+      <g transform="translate(596.5,783.5) scale(0.875)"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z" fill="#3776AB"/></g>
+  <text x="607" y="842" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">Drift Retrain</text><g filter="url(#nodeGlow)">
+    <rect x="263" y="928" width="220" height="88" rx="12" fill="#141d38" stroke="#a3e635" stroke-width="1.6"/>
+    <rect x="273" y="934" width="200" height="2.5" rx="1.25" fill="#a3e635" fill-opacity="0.5"/>
+  </g><rect x="356" y="935" width="34" height="34" rx="9" fill="#facc15" fill-opacity="0.16" stroke="#facc15" stroke-opacity="0.7"/>
+      <text x="373" y="957" text-anchor="middle" font-size="12" font-weight="800" fill="#facc15" font-family="'JetBrains Mono', ui-monospace, monospace">PBI</text>
+  <text x="373" y="1000" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">BI Dashboards</text><g filter="url(#nodeGlow)">
+    <rect x="497" y="928" width="220" height="88" rx="12" fill="#141d38" stroke="#a3e635" stroke-width="1.6"/>
+    <rect x="507" y="934" width="200" height="2.5" rx="1.25" fill="#a3e635" fill-opacity="0.5"/>
+  </g><circle cx="607" cy="952" r="17" fill="#ffffff" fill-opacity="0.07" stroke="#a3e635" stroke-opacity="0.35"/>
+      <g transform="translate(596.5,941.5) scale(0.875)"><path d="M12 .0387C5.3729.0384.0003 5.3931 0 11.9988c-.001 6.6066 5.372 11.9628 12 11.9625 6.628.0003 12.001-5.3559 12-11.9625-.0003-6.6057-5.3729-11.9604-12-11.96m-.829 5.4153h7.55l-7.5805 5.3284h5.1828L5.279 18.5436q2.9466-6.5444 5.892-13.0896" fill="#009688"/></g>
+  <text x="607" y="1000" text-anchor="middle" font-size="11" font-weight="600" fill="#eef2ff" font-family="Inter, -apple-system, Segoe UI, sans-serif">DQ + Lineage API</text><line x1="40" y1="1044" x2="940" y2="1044" stroke="#263252" stroke-width="1"/>
+  <text x="40" y="1072" font-size="10.5" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace">◈ Mohammed Zakaria — Data Engineering Portfolio</text><g transform="translate(870,1066)"><circle cx="0" cy="0" r="4" fill="#a3e635"/><text x="9" y="3.5" font-size="9" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.08em">CONSUMER</text></g><g transform="translate(794,1066)"><circle cx="0" cy="0" r="4" fill="#f472b6"/><text x="9" y="3.5" font-size="9" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.08em">ML / AI</text></g><g transform="translate(682,1066)"><circle cx="0" cy="0" r="4" fill="#fb923c"/><text x="9" y="3.5" font-size="9" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.08em">ORCHESTRATION</text></g><g transform="translate(588,1066)"><circle cx="0" cy="0" r="4" fill="#22d3ee"/><text x="9" y="3.5" font-size="9" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.08em">PROCESSING</text></g><g transform="translate(512,1066)"><circle cx="0" cy="0" r="4" fill="#60a5fa"/><text x="9" y="3.5" font-size="9" font-weight="600" fill="#8ea0c4" font-family="'JetBrains Mono', ui-monospace, monospace" letter-spacing="0.08em">SOURCES</text></g>
 </svg>
