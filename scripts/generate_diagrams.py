@@ -139,7 +139,7 @@ def generate_waffarha_diagram():
   <text x="805" y="645" text-anchor="middle" font-size="12" font-weight="600" fill="#2563eb">KEY METRICS</text>
   <text x="720" y="670" font-size="11" fill="#475569">• 94.9% Recall</text>
   <text x="720" y="688" font-size="11" fill="#475569">• 0.62ms Latency</text>
-  <text x="720" y="706" font-size="11" fill="#475569">• 18k+ Docs Indexed</text>
+  <text x="720" y="706" font-size="11" fill="#475569">• 15M+ Live Rows Served</text>
 </svg>'''
     return svg
 

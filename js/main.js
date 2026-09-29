@@ -35,11 +35,13 @@ function setTheme(theme) {
   themeToggle.innerHTML = `${icon} <span>${theme === 'dark' ? 'Light' : 'Dark'}</span>`;
 }
 
-// Load saved theme or prefer-color-scheme
+// Load saved theme or prefer-color-scheme (default: dark)
 const saved = localStorage.getItem('theme');
 if (saved) {
   setTheme(saved);
-} else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+} else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+  setTheme('light');
+} else {
   setTheme('dark');
 }
 
@@ -172,4 +174,38 @@ statNums.forEach(el => statObs.observe(el));
   } catch {
     status.textContent = '● 5 featured posts — see all on Medium ↗';
   }
+})();
+
+// ---- Terminal typing (hero live-pipeline card) ----
+(() => {
+  const el = document.getElementById('terminal-typed');
+  if (!el) return;
+  const lines = [
+    '$ airflow dags list --active | grep waffarha',
+    '✓ ingest_mysql_clickhouse … 15M+ rows [OK]',
+    '✓ dedup(content_hash) + SCD2 versioning [OK]',
+    '✓ faiss index: 18k docs · recall 94.9% · 0.62ms',
+    '$ agent answer --query "where is my order?" → served ✓',
+  ];
+  let li = 0, ci = 0, out = [];
+  function tick() {
+    const cur = lines[li];
+    ci++;
+    out[li] = cur.slice(0, ci);
+    el.textContent = out.join('\n');
+    if (ci >= cur.length) {
+      li++; ci = 0;
+      if (li >= lines.length) {
+        setTimeout(() => { li = 0; ci = 0; out = []; el.textContent = ''; tick(); }, 4200);
+        return;
+      }
+      setTimeout(tick, 420);
+      return;
+    }
+    setTimeout(tick, 28 + Math.random() * 40);
+  }
+  const io = new IntersectionObserver(e => {
+    if (e[0].isIntersecting) { io.disconnect(); tick(); }
+  }, { threshold: 0.3 });
+  io.observe(el);
 })();

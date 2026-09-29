@@ -674,3 +674,95 @@ footer a { color: var(--accent); }
   .articles-grid, .cred-grid { grid-template-columns: 1fr; }
   .hero-stats { gap: 1.25rem; justify-content: center; }
 }
+
+/* ── PREMIUM DARK-FIRST REDESIGN (2026 best-practice pass) ── */
+[data-theme="dark"] {
+  --bg: #0b1020;
+  --surface: #101830;
+  --card: #121c36;
+  --border: #263252;
+  --border-strong: #35446e;
+  --text: #eef2ff;
+  --text-secondary: #a5b4d4;
+  --muted: #6b7a9d;
+  --accent: #7aa5ff;
+  --accent-light: #16264d;
+  --accent-dark: #b3ccff;
+  --accent2: #34d399;
+  --nav-bg: rgba(11, 16, 32, 0.78);
+}
+::selection { background: var(--accent); color: #fff; }
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+body {
+  background:
+    radial-gradient(900px 500px at 85% -5%, rgba(122, 165, 255, 0.12), transparent 60%),
+    radial-gradient(700px 500px at -10% 20%, rgba(52, 211, 153, 0.08), transparent 60%),
+    var(--bg);
+}
+nav {
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow: 0 1px 0 var(--border), 0 8px 32px -12px rgba(0, 0, 0, 0.45);
+}
+.nav-logo {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  font-weight: 700;
+}
+.hero-name span {
+  background: linear-gradient(92deg, var(--accent) 10%, var(--accent2) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-grid-bg { opacity: 0.5; mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 75%); }
+.hero-glow { opacity: 0.14; width: 700px; height: 700px; }
+.btn-primary { box-shadow: 0 8px 24px -8px var(--accent); font-weight: 700; }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -8px var(--accent); }
+.sec-label { display: flex; align-items: center; gap: 0.6rem; }
+.sec-label::after { content: ''; height: 1px; width: 56px; background: linear-gradient(90deg, var(--accent), transparent); }
+
+/* Terminal card */
+.hero-image { flex-direction: column; gap: 1.25rem; }
+.terminal {
+  width: 100%; max-width: 380px;
+  background: rgba(10, 15, 30, 0.9);
+  border: 1px solid var(--border-strong);
+  border-radius: 12px; overflow: hidden;
+  box-shadow: var(--shadow-xl), 0 0 40px -12px var(--accent);
+  font-family: var(--font-mono);
+}
+[data-theme="light"] .terminal { background: #0f172a; border-color: #1e293b; }
+.terminal-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.tdot { width: 10px; height: 10px; border-radius: 50%; }
+.tdot.r { background: #f87171; } .tdot.y { background: #fbbf24; } .tdot.g { background: #34d399; }
+.terminal-title { margin-left: 0.5rem; font-size: 0.68rem; color: #8ea0c4; letter-spacing: 0.05em; }
+.terminal-body { padding: 0.9rem 1rem 1.1rem; min-height: 8.5rem; font-size: 0.72rem; line-height: 1.75; color: #c7d5f2; }
+.terminal-body code { white-space: pre-line; }
+.caret { color: var(--accent2); animation: blink 1s step-end infinite; }
+
+/* Tech ticker */
+.ticker { border-bottom: 1px solid var(--border); overflow: hidden; padding: 0.9rem 0; background: var(--surface); }
+.ticker-track { display: inline-flex; align-items: center; gap: 1.5rem; white-space: nowrap; animation: ticker 28s linear infinite; font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); }
+.ticker-track i { color: var(--accent); font-style: normal; font-size: 0.6rem; }
+@keyframes ticker { to { transform: translateX(-50%); } }
+.ticker:hover .ticker-track { animation-play-state: paused; }
+
+/* Cards: glow hover language */
+.project-card:hover, .article-card:hover, .cred-card:hover, .skill-category:hover {
+  box-shadow: var(--shadow-xl), 0 0 0 1px var(--accent), 0 0 36px -12px var(--accent);
+}
+.project-num {
+  display: inline-block; padding: 0.25rem 0.7rem; border-radius: 999px;
+  border: 1px solid var(--border-strong); background: var(--bg);
+}
+.stat-num {
+  background: linear-gradient(180deg, var(--text), var(--text-secondary));
+  -webkit-background-clip: text; background-clip: text;
+}
+@media (max-width: 900px) {
+  .terminal { max-width: 100%; }
+  .ticker-track { animation-duration: 20s; }
+}

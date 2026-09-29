@@ -254,8 +254,12 @@
           <div class="metric-label">Avg Latency</div>
         </div>
         <div class="metric-card">
+          <div class="metric-value">15M+</div>
+          <div class="metric-label">Live Rows Served</div>
+        </div>
+        <div class="metric-card">
           <div class="metric-value">18k+</div>
-          <div class="metric-label">Indexed Docs</div>
+          <div class="metric-label">Vector Docs</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">110+</div>
@@ -297,7 +301,7 @@
       <ul>
         <li><strong>Hybrid Intent Routing:</strong> Designed a routing engine that resolves ~75% of queries through deterministic shortcuts (FAQ/offer template matching) before falling back to LLM generation. This combines dense embeddings with lexical token-overlap scoring and cosine-similarity normalization.</li>
         <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Selected multilingual-E5-large for production based on 94.9% recall.</li>
-        <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector) on 18k+ indexed documents. FAISS delivered 0.62ms avg query latency vs. 7.6-65ms for alternatives, while all maintained 85%+ recall.</li>
+        <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector) on 18k+ vector docs; production agent answers from 15M+ live rows across MySQL + ClickHouse. FAISS delivered 0.62ms avg vector latency vs. 7.6-65ms for alternatives, while all maintained 85%+ recall.</li>
         <li><strong>Fact-Checking Layer:</strong> Built an automated system that extracts verifiable claims (prices, discounts, dates) from LLM-generated answers and cross-checks them against retrieved sources, stripping unsupported claims.</li>
         <li><strong>Personal Queries:</strong> Implemented live ClickHouse lookups for user-specific data (coupons, orders, spending history) routed away from the vector index to keep PII out of embeddings and ensure fresh results.</li>
         <li><strong>Automated Ingestion:</strong> Created Airflow DAGs for scheduled ingestion from MySQL and ClickHouse, deduplication by content hash, SCD2 versioning, and vector index updates on data changes.</li>

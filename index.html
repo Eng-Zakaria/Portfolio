@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -26,7 +26,7 @@
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
   <meta property="article:author" content="Mohammed Zakaria">
-  <meta name="theme-color" content="#2563eb">
+  <meta name="theme-color" content="#0b1020">
 
   <script type="application/ld+json">
   {
@@ -68,11 +68,11 @@
       <li><a href="#credentials"><span class="nav-dot">.</span>credentials</a></li>
       <li><a href="#contact"><span class="nav-dot">.</span>contact</a></li>
       <li>
-        <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="nav-resume" target="_blank" rel="noopener">Resume ↓</a>
+        <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="nav-resume" target="_blank" rel="noopener">Resume ↓</a>
       </li>
       <li>
         <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
-          🌙 <span>Dark</span>
+          ☀️ <span>Light</span>
         </button>
       </li>
     </ul>
@@ -94,14 +94,15 @@
           <p class="hero-role">Data Engineer — Batch, Streaming & RAG Systems</p>
           <p class="hero-desc">
             I build production data platforms that turn raw noise into decisions.
-            Bilingual RAG at <strong>Waffarha</strong> (18k+ docs, 94.9% recall),
-            healthcare warehouses that cut reporting time 40%, and streaming
-            pipelines with sub-second latency — from Cairo to Zurich.
+            Customer-service agent at <strong>Waffarha</strong> over <strong>15M+ live rows</strong>
+            (MySQL + ClickHouse, 94.9% recall), healthcare warehouses that cut
+            reporting time 40%, and streaming pipelines with sub-second latency —
+            from Cairo to Zurich.
           </p>
           <div class="hero-stats">
-            <div class="hero-stat"><span class="stat-num" data-count="1.5" data-decimals="1">1.5+</span><span class="stat-label">yrs production</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="2">2</span><span class="stat-label">yrs production</span></div>
             <div class="hero-stat"><span class="stat-num" data-count="14">14</span><span class="stat-label">projects shipped</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="18" data-suffix="k+">18k+</span><span class="stat-label">docs in prod RAG</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="15" data-suffix="M+">15M+</span><span class="stat-label">live rows served</span></div>
             <div class="hero-stat"><span class="stat-num" data-count="5">5</span><span class="stat-label">technical articles</span></div>
           </div>
           <div class="hero-contact">
@@ -120,7 +121,7 @@
           </div>
           <div class="hero-btns">
             <a href="#projects" class="btn btn-primary">View Projects</a>
-            <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="btn btn-ghost" target="_blank" rel="noopener">Download Résumé ↓</a>
+            <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="btn btn-ghost" target="_blank" rel="noopener">Download Résumé ↓</a>
             <a href="#contact" class="btn btn-ghost">Get In Touch</a>
           </div>
           <div class="hero-note">⚡ Currently at Waffarha · Usually responds within 24h · English / Arabic</div>
@@ -130,10 +131,22 @@
             <div class="image-blob"></div>
             <img src="assets/Profile.png" alt="Mohammed Zakaria" class="profile-photo" loading="eager">
           </div>
+          <div class="terminal" aria-label="Live pipeline status">
+            <div class="terminal-bar"><span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span><span class="terminal-title">waffarha-agent — live</span></div>
+            <div class="terminal-body"><code id="terminal-typed"></code><span class="caret">▍</span></div>
+          </div>
         </div>
       </div>
     </div>
   </section>
+
+  <!-- TECH TICKER -->
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>Spark</span><i>◆</i><span>Kafka</span><i>◆</i><span>Airflow</span><i>◆</i><span>AWS</span><i>◆</i><span>ClickHouse</span><i>◆</i><span>FAISS</span><i>◆</i><span>FastAPI</span><i>◆</i><span>PostgreSQL</span><i>◆</i><span>dbt</span><i>◆</i><span>Docker</span><i>◆</i><span>Kubernetes</span><i>◆</i><span>Terraform</span><i>◆</i><span>Redis</span><i>◆</i><span>Elasticsearch</span><i>◆</i>
+      <span>Spark</span><i>◆</i><span>Kafka</span><i>◆</i><span>Airflow</span><i>◆</i><span>AWS</span><i>◆</i><span>ClickHouse</span><i>◆</i><span>FAISS</span><i>◆</i><span>FastAPI</span><i>◆</i><span>PostgreSQL</span><i>◆</i><span>dbt</span><i>◆</i><span>Docker</span><i>◆</i><span>Kubernetes</span><i>◆</i><span>Terraform</span><i>◆</i><span>Redis</span><i>◆</i><span>Elasticsearch</span><i>◆</i>
+    </div>
+  </div>
 
   <!-- ABOUT -->
   <section id="about">
@@ -142,7 +155,7 @@
         <div class="sec-label">// about me</div>
         <h2>Who I Am</h2>
         <div class="about-text">
-          <p>Data Engineer with 1.5+ years of hands-on experience building and automating end-to-end data pipelines across batch and real-time systems. I specialize in dimensional modeling, ETL/ELT pipeline development, and scalable analytics platforms including data warehouses, star schemas, and Spark/Airflow orchestration.</p>
+          <p>Data Engineer with 2 years of hands-on experience building and automating end-to-end data pipelines across batch and real-time systems. I specialize in dimensional modeling, ETL/ELT pipeline development, and scalable analytics platforms including data warehouses, star schemas, and Spark/Airflow orchestration.</p>
           <p>Production experience on AWS (EC2, S3, IAM, VPC) with exposure to Azure. Currently building production RAG pipelines at Waffarha and deepening distributed systems expertise at the National Telecommunication Institute.</p>
           <p>Graduate of Helwan University (GPA 3.3, Graduation Project A+). Previously researched on-chain data at the University of Zurich and taught Machine Learning to 100+ students as an AI Instructor.</p>
           <div class="about-highlights">
@@ -301,7 +314,7 @@
           <div class="project-num">01 — PRODUCTION RAG</div>
           <div class="project-name"><i class="fas fa-comments"></i>Waffarha Assistant — Bilingual RAG Chatbot</div>
           <div class="project-desc">
-            Production RAG system for Egypt's leading deals platform. Supports 18k+ indexed documents with 94.9% recall and 0.62ms query latency. Hybrid intent routing resolves 75% of queries via direct answers. CI harness with 110+ test cases.
+            Production RAG + customer-service agent for Egypt's leading deals platform. Answers from 15M+ live rows (MySQL + ClickHouse) with 18k+ docs in vector index — 94.9% recall, 0.62ms vector latency. Hybrid intent routing resolves 75% of queries via direct answers. Voice calls via STT/TTS. CI harness with 110+ test cases.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
@@ -629,7 +642,7 @@
           <div class="exp-company">Waffarha</div>
           <ul class="exp-bullets">
             <li>Built a bilingual (Arabic/English) RAG chatbot pipeline for offers/FAQ data with FastAPI backend, Redis session handling, and Streamlit UI supporting concurrent multi-user querying</li>
-            <li>Evaluated 4 multilingual embedding models and 5 vector store backends on 18k+ indexed documents; selected multilingual-E5-large and FAISS (0.62ms avg query latency, 94.9% recall) for production</li>
+            <li>Evaluated 4 multilingual embedding models and 5 vector store backends on 18k+ vector docs (production agent serves 15M+ live rows across MySQL + ClickHouse); selected multilingual-E5-large and FAISS (0.62ms avg vector latency, 94.9% recall) for production</li>
             <li>Designed a hybrid intent-routing engine resolving ~75% of queries through deterministic sub-100ms shortcuts, combining dense embeddings with lexical token-overlap and cosine similarity</li>
             <li>Built an automated fact-checking layer extracting verifiable claims from LLM answers and cross-checking against retrieved sources to reduce hallucination</li>
             <li>Automated Airflow DAGs for ingestion from MySQL and ClickHouse, deduplication, SCD2 versioning, and vector index updates on new or changed data</li>
@@ -700,6 +713,7 @@
           <div class="exp-company">University of Zurich (UZH)</div>
           <ul class="exp-bullets">
             <li>Extracted and processed large-scale Web3/Fintech datasets from the Ethereum blockchain using Python for research</li>
+            <li>Earned a Blockchain Deep Dive certificate covering Ethereum, Polkadot, Bitcoin, and 20+ protocols — consensus, smart contracts, and on-chain data models</li>
             <li>Developed automated validation scripts to sanitize raw node data (blocks/transactions), improving downstream data integrity</li>
             <li>Generated on-chain data summaries and quality reports for stakeholder visibility into data health and trends</li>
           </ul>
@@ -739,6 +753,7 @@
         <div class="cred-card reveal reveal-d1">
           <div class="cred-label">📜 Certifications</div>
           <ul class="cred-list">
+            <li><strong>UZH Blockchain Deep Dive Certificate</strong><span>Univ. of Zurich · 2023 — Ethereum, Polkadot, Bitcoin + 20 protocols</span></li>
             <li><strong>Huawei HCIP – Big Data (H13-723)</strong><span>NTI · 2026 — Hadoop, Spark, Hive, HBase, Kafka, Flink</span></li>
             <li><strong>AWS Certified Cloud Practitioner</strong><span>AWS · 2026 — EC2, S3, IAM, VPC for data workloads</span></li>
             <li><strong>ITI Full-Stack Development</strong><span>ITI · 2021 — .NET end-to-end, 3 demos early</span></li>
@@ -746,10 +761,10 @@
         </div>
         <div class="cred-card reveal reveal-d2">
           <div class="cred-label">📄 Résumé</div>
-          <h3>ATS-friendly, one page of proof</h3>
+          <h3>Polished 2-page Data Engineer version</h3>
           <p>Same impact numbers as this site, formatted for recruiters and hiring managers. Updated Sep 2026.</p>
           <div class="cred-btns">
-            <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" class="btn btn-primary" target="_blank" rel="noopener">Download PDF ↓</a>
+            <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="btn btn-primary" target="_blank" rel="noopener">Download PDF ↓</a>
             <a href="https://linkedin.com/in/eng-zakaria" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
           </div>
         </div>
@@ -779,7 +794,7 @@
   <div id="toast" role="status" aria-live="polite"></div>
 
   <footer>
-    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span> · <a href="docs/Mohammed_Zakaria_Master_Resume.pdf" target="_blank" rel="noopener">Résumé</a> · <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer">Blog</a></div>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span> · <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">Résumé</a> · <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer">Blog</a></div>
     <div class="footer-right">Built with <span>♥</span> and data · <a href="#hero" class="inline-link">Back to top ↑</a></div>
   </footer>
 
