@@ -20,6 +20,9 @@ Production-quality SVG architecture diagrams for all portfolio projects, generat
 | Petroleum Platform (Well Monitoring) | `petroleum-platform.svg` | — |
 | Watchdog (Price Intelligence) | `watchdog-prices.svg` | — |
 | AirSense (Air Quality Intelligence) | `airsense-platform.svg` | — |
+| Retail Analytics (Streaming Pipeline) | `retail-analytics-pipeline.svg` | — |
+| AquaWatch (Fish-Farm Monitoring) | `aquawatch.svg` | — |
+| Blockchain GDPR Aggregator | `blockchain-gdpr-aggregator.svg` | — |
 
 ## Icon Coverage
 

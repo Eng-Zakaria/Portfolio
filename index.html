@@ -51,6 +51,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/design-bento.css">
+  <link rel="stylesheet" href="css/design-bento-dark.css">
   <script defer src="js/main.js"></script>
 </head>
 <body>
@@ -102,15 +104,15 @@
           </div>
           <p class="hero-desc">
             I build production data platforms that turn raw noise into decisions.
-            Customer-service agent at <strong>Waffarha</strong> over <strong>15M+ live rows</strong>
-            (MySQL + ClickHouse, 94.9% recall), healthcare warehouses that cut
+            Customer-service agent at <strong>Waffarha</strong> over <strong>~13.7M live rows</strong>
+            (ClickHouse, 87.8% retrieval), healthcare warehouses that cut
             reporting time 40%, and streaming pipelines with sub-second latency —
             from Cairo to Zurich.
           </p>
           <div class="hero-stats">
             <div class="hero-stat"><span class="stat-num" data-count="2">2</span><span class="stat-label">yrs production</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="14">14</span><span class="stat-label">projects shipped</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="15" data-suffix="M+">15M+</span><span class="stat-label">live rows served</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="17">17</span><span class="stat-label">projects shipped</span></div>
+            <div class="hero-stat"><span class="stat-num" data-count="13.7" data-decimals="1" data-suffix="M">13.7M</span><span class="stat-label">live rows served</span></div>
             <div class="hero-stat"><span class="stat-num" data-count="5">5</span><span class="stat-label">technical articles</span></div>
           </div>
           <div class="hero-contact">
@@ -140,9 +142,9 @@
             <div class="terminal-body"><code id="terminal-typed"></code><span class="caret">▍</span></div>
           </div>
           <div class="live-chips">
-            <div class="live-chip"><span class="chip-num">15M+</span><span class="chip-label">live rows</span></div>
-            <div class="live-chip"><span class="chip-num">94.9%</span><span class="chip-label">recall</span></div>
-            <div class="live-chip"><span class="chip-num">0.62ms</span><span class="chip-label">vector latency</span></div>
+            <div class="live-chip"><span class="chip-num">13.7M</span><span class="chip-label">live rows</span></div>
+            <div class="live-chip"><span class="chip-num">87.8%</span><span class="chip-label">retrieval</span></div>
+            <div class="live-chip"><span class="chip-num">225</span><span class="chip-label">eval cases</span></div>
           </div>
         </aside>
       </div>
@@ -308,9 +310,9 @@
     <div class="container">
       <div class="sec-label">// selected work</div>
       <h2>Projects</h2>
-      <p class="projects-sub">14 shipped systems — production RAG, streaming, batch ETL, and price intelligence. Filter by track:</p>
+      <p class="projects-sub">17 shipped systems — production RAG, streaming, batch ETL, and price intelligence. Filter by track:</p>
       <div class="project-filters" role="tablist" aria-label="Filter projects">
-        <button class="filter-btn active" data-filter="all">All (14)</button>
+        <button class="filter-btn active" data-filter="all">All (17)</button>
         <button class="filter-btn" data-filter="rag">RAG / AI</button>
         <button class="filter-btn" data-filter="streaming">Streaming</button>
         <button class="filter-btn" data-filter="batch">Batch ETL</button>
@@ -323,11 +325,11 @@
           <div class="project-num">01 — PRODUCTION RAG</div>
           <div class="project-name"><i class="fas fa-comments"></i>Waffarha Assistant — Bilingual RAG Chatbot</div>
           <div class="project-desc">
-            Production RAG + customer-service agent for Egypt's leading deals platform. Answers from 15M+ live rows (MySQL + ClickHouse) with 18k+ docs in vector index — 94.9% recall, 0.62ms vector latency. Hybrid intent routing resolves 75% of queries via direct answers. Voice calls via STT/TTS. CI harness with 110+ test cases.
+            Production RAG + customer-service agent for Egypt's leading deals platform. Answers from ~13.7M live rows (ClickHouse) with 9,106 docs in a bge-m3 + Qdrant vector index — 87.8% retrieval over a 225-case eval harness. Deterministic intent gates resolve routine queries via direct answers before LLM fallback. Arabic voice STT/TTS evaluated in lab.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-            <span class="stack-tag"><i class="fas fa-vector-square"></i> FAISS</span>
+            <span class="stack-tag"><i class="fas fa-vector-square"></i> Qdrant</span>
             <span class="stack-tag"><i class="fas fa-database"></i> ClickHouse</span>
             <span class="stack-tag"><i class="fab fa-redis"></i> Redis</span>
             <span class="stack-tag"><i class="fas fa-brain"></i> Ollama</span>
@@ -584,6 +586,62 @@
           </div>
         </div>
 
+        <div class="project-card wide reveal" data-category="platform streaming batch">
+          <div class="project-num">15 — RETAIL ANALYTICS</div>
+          <div class="project-name"><i class="fas fa-store"></i>Retail Analytics — Streaming Pipeline</div>
+          <div class="project-desc">
+            Real-time retail analytics over POS, e-commerce, and inventory feeds. 15-service Docker stack: Kafka + Debezium CDC → Spark & Flink streaming → Delta Lake on MinIO + PostgreSQL 15 → FastAPI + Nginx, with ML forecasting and Prometheus/Grafana observability.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
+            <span class="stack-tag"><i class="fas fa-bolt"></i> Spark + Flink</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> Delta Lake</span>
+            <span class="stack-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/retail-analytics-pipeline.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal reveal-d1" data-category="platform streaming">
+          <div class="project-num">16 — AQUACULTURE IOT · NEW</div>
+          <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Fish-Farm Monitoring</div>
+          <div class="project-desc">
+            Closed-loop water-quality monitoring for fish farms. Python sensor sim (3 ponds × 4 params, 5-min cadence) → Airflow → TimescaleDB hypertables → Grafana dashboards with SMTP + SMS alerts on threshold breach (15-min cooldown) and a FastAPI read layer.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> TimescaleDB</span>
+            <span class="stack-tag"><i class="fas fa-tachometer-alt"></i> Grafana</span>
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/aquawatch.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal reveal-d2" data-category="platform batch">
+          <div class="project-num">17 — COMPLIANCE PLATFORM · NEW</div>
+          <div class="project-name"><i class="fas fa-shield-alt"></i>Blockchain GDPR Aggregator</div>
+          <div class="project-desc">
+            Blockchain analytics with GDPR/PCI compliance built into the pipeline. Ethereum + Bitcoin + market ingest (Binance, CoinGecko, Alpha Vantage) → regex PII masking + Fernet encryption + audit trails → Postgres, Elasticsearch, MongoDB. Celery workers, FastAPI behind Nginx, 365-day retention.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-link"></i> web3.py</span>
+            <span class="stack-tag"><i class="fas fa-tasks"></i> Celery</span>
+            <span class="stack-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
+            <span class="stack-tag"><i class="fas fa-search"></i> Elasticsearch</span>
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/blockchain-gdpr-aggregator.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -651,10 +709,10 @@
           <div class="exp-company">Waffarha</div>
           <ul class="exp-bullets">
             <li>Built a bilingual (Arabic/English) RAG chatbot pipeline for offers/FAQ data with FastAPI backend, Redis session handling, and Streamlit UI supporting concurrent multi-user querying</li>
-            <li>Evaluated 4 multilingual embedding models and 5 vector store backends on 18k+ vector docs (production agent serves 15M+ live rows across MySQL + ClickHouse); selected multilingual-E5-large and FAISS (0.62ms avg vector latency, 94.9% recall) for production</li>
-            <li>Designed a hybrid intent-routing engine resolving ~75% of queries through deterministic sub-100ms shortcuts, combining dense embeddings with lexical token-overlap and cosine similarity</li>
+            <li>Evaluated 4 multilingual embedding models and 5 vector store backends; production runs bge-m3 + Qdrant over 9,106 docs / 2,923 merchants with 87.8% retrieval on a 225-case, 20-category harness, answering from ~13.7M live rows across 19 ClickHouse tables</li>
+            <li>Designed a deterministic gate cascade (greeting/injection/refusal floors, FAQ-topic override, direct FAQ/stock shortcuts) that resolves routine queries without LLM calls, with an evidence gate so the agent never freeforms beyond retrieved sources</li>
             <li>Built an automated fact-checking layer extracting verifiable claims from LLM answers and cross-checking against retrieved sources to reduce hallucination</li>
-            <li>Automated Airflow DAGs for ingestion from MySQL and ClickHouse, deduplication, SCD2 versioning, and vector index updates on new or changed data</li>
+            <li>Automated Airflow DAGs for ingestion from ClickHouse, deduplication, SCD2 versioning, and vector index updates on new or changed data</li>
             <li>Built a market-intelligence pipeline monitoring public mentions across App Store, Google Play, Reddit, and Google News with connector-registry architecture</li>
             <li>Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with Docker Compose, baking Ollama and embedding models into images for zero-runtime-network deployment</li>
           </ul>

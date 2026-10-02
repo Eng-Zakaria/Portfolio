@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Waffarha Assistant — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Production RAG customer-service agent for Egypt's leading deals platform. ~13.7M ClickHouse rows, bge-m3 + Qdrant, 87.8% retrieval on a 225-case harness. Bilingual Arabic/English.">
+  <title>Blockchain GDPR Aggregator — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Compliance-first crypto data platform: Ethereum and Bitcoin ingestion, market APIs, PII masking and audit trails, Celery scheduling, FastAPI behind Nginx.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -202,37 +202,31 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-comments"></i> Waffarha Assistant</h1>
+      <h1>Blockchain GDPR Aggregator</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Production RAG-powered customer support chatbot serving Egypt's leading deals platform.
+        Compliance-first crypto data platform unifying on-chain and market data behind masked, auditable APIs.
       </p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Data Engineer Intern</span>
+          <span class="meta-value">Data Engineer</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">Jul 2026 – Present</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Platform</span>
-          <span class="meta-value">Waffarha.com</span>
+          <span class="meta-value">2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Production System</span>
+          <span class="meta-value">Compliance Platform</span>
         </div>
       </div>
       <div class="tech-stack">
-        <span class="tech-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-        <span class="tech-tag"><i class="fas fa-vector-square"></i> Qdrant</span>
-        <span class="tech-tag"><i class="fas fa-database"></i> ClickHouse</span>
-        <span class="tech-tag"><i class="fab fa-redis"></i> Redis</span>
-        <span class="tech-tag"><i class="fas fa-brain"></i> Ollama</span>
-        <span class="tech-tag"><i class="fab fa-docker"></i> Docker</span>
-        <span class="tech-tag"><i class="fas fa-sync"></i> Airflow</span>
-        <span class="tech-tag"><i class="fas fa-stream"></i> Streamlit</span>
+        <span class="tech-tag">web3.py</span>
+        <span class="tech-tag">Celery</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">Elasticsearch</span>
+        <span class="tech-tag">FastAPI</span>
+        <span class="tech-tag">Docker</span>
       </div>
     </div>
   </header>
@@ -241,7 +235,6 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
-      <a href="https://github.com/Eng-Zakaria/waffarha-chatbot" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
     <!-- METRICS -->
@@ -249,24 +242,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">87.8%</div>
-          <div class="metric-label">Retrieval</div>
+          <div class="metric-value">100/min</div>
+          <div class="metric-label">Req Limit</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">225</div>
-          <div class="metric-label">Eval Cases</div>
+          <div class="metric-value">365-day</div>
+          <div class="metric-label">Retention</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">13.7M</div>
-          <div class="metric-label">Live Rows Served</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">9,106</div>
-          <div class="metric-label">Vector Docs</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">2,923</div>
-          <div class="metric-label">Merchants Indexed</div>
+          <div class="metric-value">2555-day</div>
+          <div class="metric-label">Audit Trail</div>
         </div>
       </div>
     </section>
@@ -274,17 +259,8 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>
-        Waffarha, Egypt's leading deals and coupon platform, needed a customer support solution
-        that could handle the volume and complexity of bilingual (Arabic/English) queries while
-        maintaining accuracy and reducing response times. Traditional FAQ systems couldn't handle
-        the nuance of customer questions, and manual support was scaling poorly.
-      </p>
-      <p>
-        The challenge was threefold: support both languages effectively, provide personalized
-        responses based on user data (coupons, orders, spending), and ensure answers were
-        factually grounded in the knowledge base to prevent hallucinations.
-      </p>
+      <p>Blockchain and market data arrive from many endpoints — Ethereum nodes, Bitcoin RPC, and exchange APIs — while PII can hide in memos, labels, and metadata. Serving that data without masking, retention, and erasure support creates compliance risk.</p>
+      <p>The aggregator puts a compliance gate in front of analytics: mask and encrypt sensitive fields, record every processing step with timing, and support Article 20 export plus erasure trails before data reaches search, storage, and APIs.</p>
     </section>
 
     <!-- ARCHITECTURE -->
@@ -294,7 +270,7 @@
         <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
       </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/waffarha-assistant---rag-chatbot.svg" alt="Waffarha Assistant Architecture Diagram" style="width:100%; height:auto;">
+        <img src="../docs/diagrams/blockchain-gdpr-aggregator.svg" alt="Blockchain GDPR Aggregator Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
 
@@ -302,62 +278,41 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Deterministic Routing:</strong> Built a gate cascade (greeting/injection/refusal floors, FAQ-topic override, direct FAQ/stock shortcuts) that resolves routine queries without LLM calls, plus an evidence gate so the agent never freeforms beyond retrieved sources.</li>
-        <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Production runs BAAI/bge-m3 (1024-dim) with 87.8% retrieval on the 225-case harness.</li>
-        <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector); production uses embedded Qdrant over 9,106 docs / 2,923 merchants while the agent answers from ~13.7M live rows across 19 ClickHouse tables.</li>
-        <li><strong>Fact-Checking Layer:</strong> Built an automated system that extracts verifiable claims (prices, discounts, dates) from LLM-generated answers and cross-checks them against retrieved sources, stripping unsupported claims.</li>
-        <li><strong>Personal Queries:</strong> Implemented live ClickHouse lookups for user-specific data (coupons, orders, spending history) routed away from the vector index to keep PII out of embeddings and ensure fresh results.</li>
-        <li><strong>Automated Ingestion:</strong> Created Airflow DAGs for scheduled ingestion from ClickHouse, deduplication by content hash, SCD2 versioning, and vector index updates on data changes.</li>
-        <li><strong>CI Integration:</strong> Built a 225-case, 20-category evaluation harness with exit-code gating — retrieval holds 87.8%, and per-category gaps (dialect queries, follow-up memory) are tracked openly as open work.</li>
-        <li><strong>Docker Deployment:</strong> Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with model-baked images for zero-runtime-network production deployment.</li>
+        <li><strong>Sources:</strong> Ethereum via web3.py HTTP provider, Bitcoin via bitcoinlib JSON-RPC, and market APIs — Binance via ccxt, CoinGecko, and Alpha Vantage.</li>
+        <li><strong>Compliance gate:</strong> Regex PII masking for email, phone, SSN, cards, IBAN, and wallet addresses with partial, full, hash, and tokenize modes; Fernet encryption; audit-log table with processing_time_ms and Art. 20 export plus erasure trails.</li>
+        <li><strong>Analytics:</strong> pandas, numpy, scipy, and sklearn flow analytics over the cleansed datasets.</li>
+        <li><strong>Storage:</strong> PostgreSQL 15 plus Elasticsearch 8.11, MongoDB 7, and Redis 7.</li>
+        <li><strong>Scheduling & serving:</strong> Celery workers (concurrency 4) with beat, FastAPI on :8000 behind Nginx, batch size 1000, rate limits of 100 requests per minute and 1000 per hour.</li>
+        <li><strong>Observability:</strong> Prometheus plus Grafana and Sentry.</li>
       </ul>
     </section>
 
     <!-- CHALLENGES -->
     <section class="content-section">
       <h3>Challenges & Solutions</h3>
-
       <div class="challenge-card">
-        <h4>Challenge: Hallucination in LLM Responses</h4>
-        <p>LLM-generated answers sometimes included fabricated prices or incorrect offer details not found in the knowledge base.</p>
+        <h4>Challenge: PII in chain and market payloads</h4>
+        <p>Emails, phones, card numbers, IBANs, and wallet-linked labels can appear anywhere in free-text fields across chains and APIs.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Automated Fact-Checking</h4>
-        <p>Built a claim extraction layer that identifies verifiable assertions in LLM output and validates them against retrieved source documents. Unsupported claims are stripped before response delivery.</p>
+        <h4>Solution: Masking gate with modes</h4>
+        <p>Applied regex masking across email, phone, SSN, cards, IBAN, and wallet patterns with partial, full, hash, and tokenize modes plus Fernet encryption before storage or analytics.</p>
       </div>
-
       <div class="challenge-card">
-        <h4>Challenge: Bilingual Query Complexity</h4>
-        <p>Users mixed Arabic, English, and Franco-Arabic (Arabic in Latin script) in single queries, making standard embedding models ineffective.</p>
+        <h4>Challenge: Provable retention and erasure</h4>
+        <p>Compliance needs proof of what ran, how long it took, and what was exported or erased.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: bge-m3 + Lexical Boost</h4>
-        <p>Selected BAAI/bge-m3 embeddings and added a lexical token-overlap bonus to improve retrieval for mixed-language queries. Also implemented language detection to route queries to appropriate processing paths.</p>
-      </div>
-
-      <div class="challenge-card">
-        <h4>Challenge: Personal Data Privacy</h4>
-        <p>User-specific queries (coupons, orders) needed to be answered accurately but shouldn't be stored in the vector index alongside public FAQ data.</p>
-      </div>
-      <div class="solution-card">
-        <h4>Solution: Intent-Based Routing</h4>
-        <p>Personal queries are detected and routed directly to ClickHouse for live lookups, bypassing the vector store entirely. This keeps PII out of embeddings and ensures data freshness.</p>
+        <h4>Solution: Timed audit log</h4>
+        <p>Records each step in an audit-log table with processing_time_ms, supporting Art. 20 export and erasure trails across the 365-day retention and 2555-day audit trail windows.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>
-        The Waffarha Assistant is now in production serving customer support queries.
-        The deterministic gate cascade resolves routine queries without LLM calls, reducing
-        costs and latency. The fact-checking layer has significantly reduced hallucination
-        rates, and the CI-integrated evaluation harness ensures regression prevention.
-      </p>
-      <p>
-        The modular architecture allows easy addition of new vector backends and embedding
-        models through configuration changes, making the system adaptable as requirements evolve.
-      </p>
+      <p>The aggregator funnels Ethereum, Bitcoin, and market feeds through a masking and audit gate into PostgreSQL, Elasticsearch, MongoDB, and Redis, served by Celery-scheduled workers and a rate-limited FastAPI behind Nginx.</p>
+      <p>Rate limits hold at 100 requests per minute and 1000 per hour with batch size 1000, backed by Prometheus, Grafana, and Sentry. Local project — no public GitHub link.</p>
     </section>
   </main>
 

@@ -1,0 +1,163 @@
+/* Bento Dark — same playful bento language as Bento Light, on a warm dark canvas.
+   Scoped under html[data-design="bento-dark"]. Pair with data-theme="dark". */
+
+html[data-design="bento-dark"] {
+  --bg: #14121c;
+  --surface: #1d1a28;
+  --card: #201c30;
+  --border: #2e2942;
+  --border-strong: #453d66;
+  --text: #f4f2fa;
+  --text-secondary: #b6b1cc;
+  --muted: #7d7894;
+  --accent: #a5b4fc;
+  --accent-light: #26224a;
+  --accent-dark: #c7d2fe;
+  --accent2: #34d399;
+  --nav-bg: rgba(20, 18, 28, 0.85);
+}
+html[data-design="bento-dark"] body {
+  background-color: var(--bg);
+  background-image: none;
+  letter-spacing: 0;
+}
+html[data-design="bento-dark"] nav {
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(165, 180, 252, 0.08);
+}
+html[data-design="bento-dark"] .nav-links a { letter-spacing: 0.02em; }
+html[data-design="bento-dark"] .nav-resume { border-radius: 999px; }
+/* Hero: dark dotted pattern + jewel-tone blob (no grid lines, no neon glow) */
+html[data-design="bento-dark"] .hero-grid-bg {
+  background-image: radial-gradient(#3a3358 1.2px, transparent 1.2px);
+  background-size: 22px 22px; background-color: transparent;
+  filter: none; animation: none; opacity: 0.9;
+}
+html[data-design="bento-dark"] .hero-glow {
+  background: radial-gradient(circle, rgba(129, 140, 248, 0.22) 0%, rgba(52, 211, 153, 0.12) 45%, transparent 65%);
+  filter: blur(24px); opacity: 1;
+}
+html[data-design="bento-dark"] .hero-glow::before {
+  background: radial-gradient(circle at 60% 55%, rgba(52, 211, 153, 0.16) 0%, transparent 55%);
+}
+/* Avatar: dark sticker tile, tilted, straightens on hover */
+html[data-design="bento-dark"] .avatar-frame {
+  background: #262239; border-radius: 28px; padding: 6px; border: 3px solid #343055;
+  box-shadow: 0 12px 28px -8px rgba(129, 140, 248, 0.45), 0 8px 22px -10px rgba(52, 211, 153, 0.4);
+  animation: none; transform: rotate(-3deg);
+}
+html[data-design="bento-dark"] .avatar-frame:hover { transform: rotate(0deg) translateY(-3px); }
+html[data-design="bento-dark"] .avatar-img { border-radius: 22px; border: none; }
+html[data-design="bento-dark"] .hero-name { letter-spacing: -0.03em; line-height: 1; }
+html[data-design="bento-dark"] .hero-name span {
+  background: linear-gradient(92deg, var(--accent) 10%, var(--accent2) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+html[data-design="bento-dark"] .hero-eyebrow { letter-spacing: 0.08em; }
+html[data-design="bento-dark"] .availability-badge { border-radius: 999px; border-color: var(--border-strong); letter-spacing: 0.01em; }
+/* Section labels: small pill badges; h2 stays Playfair */
+html[data-design="bento-dark"] .sec-label {
+  display: inline-flex; align-items: center; background: var(--accent-light);
+  border: 1px solid var(--border-strong); color: var(--accent); border-radius: 999px;
+  padding: 0.35rem 0.9rem; letter-spacing: 0.08em; margin-bottom: 1rem;
+}
+html[data-design="bento-dark"] .sec-label::after { display: none; }
+html[data-design="bento-dark"] h2 { letter-spacing: -0.02em; }
+/* Buttons: fully rounded pill language */
+html[data-design="bento-dark"] .btn { border-radius: 999px; letter-spacing: 0.04em; }
+html[data-design="bento-dark"] .btn-primary {
+  background: var(--accent); border-color: var(--accent); color: #14121c;
+  box-shadow: 0 10px 22px -10px rgba(165, 180, 252, 0.6);
+}
+html[data-design="bento-dark"] .btn-primary:hover {
+  background: var(--accent-dark); border-color: var(--accent-dark); color: #14121c;
+  transform: translateY(-2px); box-shadow: 0 14px 28px -10px rgba(165, 180, 252, 0.65);
+}
+html[data-design="bento-dark"] .btn-ghost { background: var(--card); border-radius: 999px; }
+/* Bento project cards: big radius, playful border, lift (no neon glow) */
+html[data-design="bento-dark"] .project-card {
+  border-radius: 22px; border: 2px solid var(--border);
+  box-shadow: 0 2px 0 rgba(165, 180, 252, 0.08); overflow: hidden;
+}
+html[data-design="bento-dark"] .project-card::after { display: none; }
+html[data-design="bento-dark"] .project-card::before { height: 6px; transform: scaleX(1); background: #4f46e5; }
+html[data-design="bento-dark"] .projects-grid .project-card:nth-child(4n+1)::before { background: linear-gradient(90deg, #818cf8, #4f46e5); }
+html[data-design="bento-dark"] .projects-grid .project-card:nth-child(4n+2)::before { background: linear-gradient(90deg, #6ee7b7, #10b981); }
+html[data-design="bento-dark"] .projects-grid .project-card:nth-child(4n+3)::before { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
+html[data-design="bento-dark"] .projects-grid .project-card:nth-child(4n+4)::before { background: linear-gradient(90deg, #f9a8d4, #ec4899); }
+html[data-design="bento-dark"] .project-card:hover {
+  transform: translateY(-6px); border-color: var(--accent);
+  box-shadow: 0 20px 36px -16px rgba(129, 140, 248, 0.45), 0 12px 24px -14px rgba(52, 211, 153, 0.3);
+}
+html[data-design="bento-dark"] .project-num { border-radius: 999px; letter-spacing: 0.04em; }
+html[data-design="bento-dark"] .project-name i {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; margin-right: 0.5rem; border-radius: 10px;
+  background: var(--accent-light); color: var(--accent); font-size: 0.85rem; vertical-align: middle;
+}
+html[data-design="bento-dark"] .stack-tag { border-radius: 999px; }
+/* Skills: matching bento tiles with jewel-tone top borders */
+html[data-design="bento-dark"] .skill-category {
+  border-radius: 20px; border: 2px solid var(--border);
+  box-shadow: 0 2px 0 rgba(52, 211, 153, 0.1);
+}
+html[data-design="bento-dark"] .skill-category:hover {
+  transform: translateY(-4px); border-color: var(--accent2);
+  box-shadow: 0 18px 32px -16px rgba(52, 211, 153, 0.45);
+}
+html[data-design="bento-dark"] .skills-grid .skill-category:nth-child(3n+1) { border-top: 6px solid #4f46e5; }
+html[data-design="bento-dark"] .skills-grid .skill-category:nth-child(3n+2) { border-top: 6px solid #10b981; }
+html[data-design="bento-dark"] .skills-grid .skill-category:nth-child(3n+3) { border-top: 6px solid #f59e0b; }
+html[data-design="bento-dark"] .skill-tag { border-radius: 999px; letter-spacing: 0; }
+html[data-design="bento-dark"] .skill-cat-label { letter-spacing: 0.1em; }
+/* Terminal stays a dark console, restyled to bento */
+html[data-design="bento-dark"] .terminal {
+  background: #100e1a; border: 2px solid var(--border-strong); border-radius: 20px;
+  box-shadow: 0 20px 36px -18px rgba(129, 140, 248, 0.5);
+}
+html[data-design="bento-dark"] .terminal-bar { background: #1a1626; border-bottom: 1px solid var(--border); }
+html[data-design="bento-dark"] .terminal-title { color: var(--text-secondary); }
+html[data-design="bento-dark"] .terminal-body { color: #d9d5ec; }
+html[data-design="bento-dark"] .caret { color: var(--accent2); }
+/* Ticker: pill items on a dark strip */
+html[data-design="bento-dark"] .ticker { background: #1a1626; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+html[data-design="bento-dark"] .ticker-track { letter-spacing: 0.06em; }
+html[data-design="bento-dark"] .ticker-track span {
+  background: var(--card); border: 1px solid var(--border-strong); border-radius: 999px;
+  padding: 0.25rem 0.85rem; color: var(--text-secondary);
+}
+/* Shared bento rounding + soft hover language */
+html[data-design="bento-dark"] .article-card, html[data-design="bento-dark"] .cred-card,
+html[data-design="bento-dark"] .about-highlights, html[data-design="bento-dark"] .live-chip,
+html[data-design="bento-dark"] .project-diagram, html[data-design="bento-dark"] .arch-diagram { border-radius: 20px; }
+html[data-design="bento-dark"] .article-card:hover, html[data-design="bento-dark"] .cred-card:hover {
+  box-shadow: 0 20px 36px -18px rgba(129, 140, 248, 0.5);
+}
+html[data-design="bento-dark"] .live-chip { border: 2px solid var(--border); }
+html[data-design="bento-dark"] .chip-num, html[data-design="bento-dark"] .stat-num {
+  background: none; -webkit-text-fill-color: currentColor; color: var(--text);
+}
+html[data-design="bento-dark"] .filter-btn, html[data-design="bento-dark"] .about-link,
+html[data-design="bento-dark"] .contact-btn, html[data-design="bento-dark"] .theme-toggle { border-radius: 999px; }
+html[data-design="bento-dark"] .contact-btn.primary {
+  background: var(--accent); color: #14121c;
+  border-color: var(--accent);
+  box-shadow: 0 10px 22px -10px rgba(165, 180, 252, 0.6);
+}
+html[data-design="bento-dark"] .contact-btn.primary:hover {
+  background: var(--accent-dark); color: #14121c;
+  border-color: var(--accent-dark);
+}
+html[data-design="bento-dark"] .exp-item {
+  background: var(--card);
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+}
+html[data-design="bento-dark"] .exp-bullets li::before { content: '●'; font-size: 0.55rem; top: 0.45rem; }
+html[data-design="bento-dark"] footer { background: #100e1a; border-top: 1px solid var(--border); }
+@media (max-width: 480px) {
+  html[data-design="bento-dark"] .project-card { border-radius: 18px; }
+  html[data-design="bento-dark"] .avatar-frame { border-radius: 22px; }
+}

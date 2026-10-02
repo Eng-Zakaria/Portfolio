@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Waffarha Assistant — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Production RAG customer-service agent for Egypt's leading deals platform. ~13.7M ClickHouse rows, bge-m3 + Qdrant, 87.8% retrieval on a 225-case harness. Bilingual Arabic/English.">
+  <title>Retail Analytics — Streaming Pipeline — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Real-time retail analytics platform: Kafka + Debezium CDC, Spark and Flink streaming, Delta Lake, PostgreSQL, FastAPI. 15 Docker services.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -202,37 +202,33 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-comments"></i> Waffarha Assistant</h1>
+      <h1>Retail Analytics — Streaming Pipeline</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Production RAG-powered customer support chatbot serving Egypt's leading deals platform.
+        Real-time retail analytics platform streaming POS, e-commerce, and inventory data into forecasting and recommendation APIs.
       </p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Data Engineer Intern</span>
+          <span class="meta-value">Data Engineer</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">Jul 2026 – Present</span>
-        </div>
-        <div class="meta-item">
-          <span class="meta-label">Platform</span>
-          <span class="meta-value">Waffarha.com</span>
+          <span class="meta-value">2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Production System</span>
+          <span class="meta-value">Platform</span>
         </div>
       </div>
       <div class="tech-stack">
-        <span class="tech-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-        <span class="tech-tag"><i class="fas fa-vector-square"></i> Qdrant</span>
-        <span class="tech-tag"><i class="fas fa-database"></i> ClickHouse</span>
-        <span class="tech-tag"><i class="fab fa-redis"></i> Redis</span>
-        <span class="tech-tag"><i class="fas fa-brain"></i> Ollama</span>
-        <span class="tech-tag"><i class="fab fa-docker"></i> Docker</span>
-        <span class="tech-tag"><i class="fas fa-sync"></i> Airflow</span>
-        <span class="tech-tag"><i class="fas fa-stream"></i> Streamlit</span>
+        <span class="tech-tag">Kafka</span>
+        <span class="tech-tag">Debezium</span>
+        <span class="tech-tag">Spark</span>
+        <span class="tech-tag">Flink</span>
+        <span class="tech-tag">Delta Lake</span>
+        <span class="tech-tag">PostgreSQL</span>
+        <span class="tech-tag">FastAPI</span>
+        <span class="tech-tag">Docker</span>
       </div>
     </div>
   </header>
@@ -241,7 +237,6 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
-      <a href="https://github.com/Eng-Zakaria/waffarha-chatbot" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
     <!-- METRICS -->
@@ -249,24 +244,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">87.8%</div>
-          <div class="metric-label">Retrieval</div>
+          <div class="metric-value">15</div>
+          <div class="metric-label">Docker Services</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">225</div>
-          <div class="metric-label">Eval Cases</div>
+          <div class="metric-value">CDC</div>
+          <div class="metric-label">via Debezium</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">13.7M</div>
-          <div class="metric-label">Live Rows Served</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">9,106</div>
-          <div class="metric-label">Vector Docs</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">2,923</div>
-          <div class="metric-label">Merchants Indexed</div>
+          <div class="metric-value">2</div>
+          <div class="metric-label">Stream Engines</div>
         </div>
       </div>
     </section>
@@ -274,17 +261,8 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>
-        Waffarha, Egypt's leading deals and coupon platform, needed a customer support solution
-        that could handle the volume and complexity of bilingual (Arabic/English) queries while
-        maintaining accuracy and reducing response times. Traditional FAQ systems couldn't handle
-        the nuance of customer questions, and manual support was scaling poorly.
-      </p>
-      <p>
-        The challenge was threefold: support both languages effectively, provide personalized
-        responses based on user data (coupons, orders, spending), and ensure answers were
-        factually grounded in the knowledge base to prevent hallucinations.
-      </p>
+      <p>Retail data arrives from disconnected sources — in-store POS systems, e-commerce events, and an inventory database — each with its own format and cadence. Batch-only pipelines leave stock, sales, and demand signals stale by the time analysts and downstream services see them.</p>
+      <p>The platform needed a unified streaming path: capture every change at the source, process it with dedicated stream engines, and serve fresh features to forecasting, segmentation, and recommendation workloads behind a single API.</p>
     </section>
 
     <!-- ARCHITECTURE -->
@@ -294,7 +272,7 @@
         <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
       </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/waffarha-assistant---rag-chatbot.svg" alt="Waffarha Assistant Architecture Diagram" style="width:100%; height:auto;">
+        <img src="../docs/diagrams/retail-analytics-pipeline.svg" alt="Retail Analytics Streaming Pipeline Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
 
@@ -302,62 +280,41 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Deterministic Routing:</strong> Built a gate cascade (greeting/injection/refusal floors, FAQ-topic override, direct FAQ/stock shortcuts) that resolves routine queries without LLM calls, plus an evidence gate so the agent never freeforms beyond retrieved sources.</li>
-        <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Production runs BAAI/bge-m3 (1024-dim) with 87.8% retrieval on the 225-case harness.</li>
-        <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector); production uses embedded Qdrant over 9,106 docs / 2,923 merchants while the agent answers from ~13.7M live rows across 19 ClickHouse tables.</li>
-        <li><strong>Fact-Checking Layer:</strong> Built an automated system that extracts verifiable claims (prices, discounts, dates) from LLM-generated answers and cross-checks them against retrieved sources, stripping unsupported claims.</li>
-        <li><strong>Personal Queries:</strong> Implemented live ClickHouse lookups for user-specific data (coupons, orders, spending history) routed away from the vector index to keep PII out of embeddings and ensure fresh results.</li>
-        <li><strong>Automated Ingestion:</strong> Created Airflow DAGs for scheduled ingestion from ClickHouse, deduplication by content hash, SCD2 versioning, and vector index updates on data changes.</li>
-        <li><strong>CI Integration:</strong> Built a 225-case, 20-category evaluation harness with exit-code gating — retrieval holds 87.8%, and per-category gaps (dialect queries, follow-up memory) are tracked openly as open work.</li>
-        <li><strong>Docker Deployment:</strong> Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with model-baked images for zero-runtime-network production deployment.</li>
+        <li><strong>Ingest:</strong> POS systems plus e-commerce events and inventory DB changes feed Kafka topics, Debezium CDC 2.3, and a REST ingest path.</li>
+        <li><strong>Stream processing:</strong> Spark 3.4 Streaming and Flink 1.17 run the streaming transforms (dbt per README) over the Kafka event backbone.</li>
+        <li><strong>Storage:</strong> Curated output lands in Delta Lake on MinIO, with PostgreSQL 15 and Redis 7 serving operational and low-latency reads.</li>
+        <li><strong>Serving & ML:</strong> FastAPI behind Nginx exposes the data, with Jupyter/ML workloads for forecasting, customer segmentation, and recommendations.</li>
+        <li><strong>Observability:</strong> Prometheus and Grafana monitor the pipeline end to end.</li>
+        <li><strong>15 compose services:</strong> zookeeper, kafka, postgres, redis, spark-master, spark-worker, flink-jobmanager, flink-taskmanager, api, prometheus, grafana, Debezium, nginx, minio, jupyter.</li>
       </ul>
     </section>
 
     <!-- CHALLENGES -->
     <section class="content-section">
       <h3>Challenges & Solutions</h3>
-
       <div class="challenge-card">
-        <h4>Challenge: Hallucination in LLM Responses</h4>
-        <p>LLM-generated answers sometimes included fabricated prices or incorrect offer details not found in the knowledge base.</p>
+        <h4>Challenge: Heterogeneous sources</h4>
+        <p>POS, e-commerce events, and inventory tables each change in different ways, making a single batch pull unreliable for fresh analytics.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Automated Fact-Checking</h4>
-        <p>Built a claim extraction layer that identifies verifiable assertions in LLM output and validates them against retrieved source documents. Unsupported claims are stripped before response delivery.</p>
+        <h4>Solution: Kafka + Debezium CDC ingest</h4>
+        <p>Standardized all change capture on Kafka topics with Debezium CDC 2.3 for the inventory database plus REST ingest, so every source streams through one backbone.</p>
       </div>
-
       <div class="challenge-card">
-        <h4>Challenge: Bilingual Query Complexity</h4>
-        <p>Users mixed Arabic, English, and Franco-Arabic (Arabic in Latin script) in single queries, making standard embedding models ineffective.</p>
+        <h4>Challenge: Dual-engine orchestration</h4>
+        <p>Running Spark and Flink side by side with 15 containers raises coordination and monitoring overhead.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: bge-m3 + Lexical Boost</h4>
-        <p>Selected BAAI/bge-m3 embeddings and added a lexical token-overlap bonus to improve retrieval for mixed-language queries. Also implemented language detection to route queries to appropriate processing paths.</p>
-      </div>
-
-      <div class="challenge-card">
-        <h4>Challenge: Personal Data Privacy</h4>
-        <p>User-specific queries (coupons, orders) needed to be answered accurately but shouldn't be stored in the vector index alongside public FAQ data.</p>
-      </div>
-      <div class="solution-card">
-        <h4>Solution: Intent-Based Routing</h4>
-        <p>Personal queries are detected and routed directly to ClickHouse for live lookups, bypassing the vector store entirely. This keeps PII out of embeddings and ensures data freshness.</p>
+        <h4>Solution: Composed platform with unified observability</h4>
+        <p>Packaged all 15 services in Docker Compose with Prometheus and Grafana, keeping Spark 3.4 Streaming, Flink 1.17, Delta Lake on MinIO, PostgreSQL 15, and Redis 7 observable from one place.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>
-        The Waffarha Assistant is now in production serving customer support queries.
-        The deterministic gate cascade resolves routine queries without LLM calls, reducing
-        costs and latency. The fact-checking layer has significantly reduced hallucination
-        rates, and the CI-integrated evaluation harness ensures regression prevention.
-      </p>
-      <p>
-        The modular architecture allows easy addition of new vector backends and embedding
-        models through configuration changes, making the system adaptable as requirements evolve.
-      </p>
+      <p>The platform unifies POS, e-commerce, and inventory change streams into Delta Lake, PostgreSQL, and Redis, served through FastAPI and Nginx with Jupyter-based forecasting, segmentation, and recommendation workloads.</p>
+      <p>CDC via Debezium and dual Spark plus Flink stream processing give the pipeline a dedicated streaming path from source change to served API. Local project — no public GitHub link.</p>
     </section>
   </main>
 

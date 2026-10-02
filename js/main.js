@@ -30,6 +30,9 @@ const html = document.documentElement;
 
 function setTheme(theme) {
   html.setAttribute('data-theme', theme);
+  // Official designs: Bento Light <-> Bento Dark follow the theme toggle
+  if (theme === 'dark') html.setAttribute('data-design', 'bento-dark');
+  else html.setAttribute('data-design', 'bento');
   localStorage.setItem('theme', theme);
   const icon = theme === 'dark' ? '☀️' : '🌙';
   themeToggle.innerHTML = `${icon} <span>${theme === 'dark' ? 'Light' : 'Dark'}</span>`;
@@ -182,9 +185,9 @@ statNums.forEach(el => statObs.observe(el));
   if (!el) return;
   const lines = [
     '$ airflow dags list --active | grep waffarha',
-    '✓ ingest_mysql_clickhouse … 15M+ rows [OK]',
+    '✓ ingest_clickhouse main_eg … ~13.7M rows [OK]',
     '✓ dedup(content_hash) + SCD2 versioning [OK]',
-    '✓ faiss index: 18k docs · recall 94.9% · 0.62ms',
+    '✓ qdrant index: 9106 docs · bge-m3 · retrieval 87.8%',
     '$ agent answer --query "where is my order?" → served ✓',
   ];
   let li = 0, ci = 0, out = [];

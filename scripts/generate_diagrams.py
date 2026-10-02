@@ -137,9 +137,9 @@ def generate_waffarha_diagram():
   <!-- Metrics Box -->
   <rect x="700" y="620" width="210" height="100" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
   <text x="805" y="645" text-anchor="middle" font-size="12" font-weight="600" fill="#2563eb">KEY METRICS</text>
-  <text x="720" y="670" font-size="11" fill="#475569">• 94.9% Recall</text>
-  <text x="720" y="688" font-size="11" fill="#475569">• 0.62ms Latency</text>
-  <text x="720" y="706" font-size="11" fill="#475569">• 15M+ Live Rows Served</text>
+  <text x="720" y="670" font-size="11" fill="#475569">• 87.8% Retrieval</text>
+  <text x="720" y="688" font-size="11" fill="#475569">• 225-case Eval</text>
+  <text x="720" y="706" font-size="11" fill="#475569">• ~13.7M Live Rows Served</text>
 </svg>'''
     return svg
 
