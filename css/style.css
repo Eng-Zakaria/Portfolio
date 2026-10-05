@@ -228,6 +228,7 @@ nav {
   box-shadow: 0 0 12px var(--accent2);
   animation: pulse 2s infinite;
 }
+.hero-split > *, .hero-content > * { min-width: 0; }
 .identity-text { min-width: 0; }
 .hero-content { display: flex; flex-direction: column; gap: 1.25rem; }
 
@@ -662,6 +663,7 @@ nav, .hero-glow, .hero-grid-bg {
   .hero-identity { gap: 0.85rem; }
   .avatar-frame { width: 88px; height: 88px; }
   .hero-name { font-size: clamp(2.1rem, 9vw, 2.6rem); }
+  .availability-badge { max-width: 100%; font-size: 0.66rem; overflow-wrap: anywhere; }
   .hero-desc { font-size: 0.9rem; }
   .contact-item { font-size: 0.75rem; }
   .btn { padding: 0.75rem 1.25rem; font-size: 0.75rem; }
