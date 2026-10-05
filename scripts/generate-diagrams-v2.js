@@ -61,6 +61,11 @@ const MONOGRAMS = {
   dbt: { t: 'dbt', c: '#f97316' }, s3: { t: 'S3', c: '#f59e0b' },
   flume: { t: 'Fl', c: '#2dd4bf' }, parquet: { t: 'Pq', c: '#93c5fd' },
   debezium: { t: 'CDC', c: '#34d399' }, bitcoin: { t: '₿', c: '#f7931a' },
+  java: { t: 'Jv', c: '#f87171' }, kong: { t: 'Kg', c: '#4ade80' },
+  api: { t: 'API', c: '#60a5fa' }, lambda: { t: 'λ', c: '#fbbf24' },
+  dynamodb: { t: 'DDB', c: '#38bdf8' }, cloudfront: { t: 'CF', c: '#a78bfa' },
+  cdk: { t: 'CDK', c: '#f472b6' }, codepipeline: { t: 'CP', c: '#34d399' },
+  cloudwatch: { t: 'CW', c: '#fb923c' },
   hdfs: { t: 'HDFS', c: '#94a3b8' }, delta: { t: 'Δ', c: '#22d3ee' },
   beautifulsoup: { t: 'BS', c: '#4ade80' },
 };
@@ -988,6 +993,204 @@ const DIAGRAMS = [
     { from: 'api', to: 'nginx' },
     { from: 'api', to: 'prom', label: 'metrics' },
     { from: 'prom', to: 'graf' },
+  ],
+},
+{
+  file: 'bim-model-health.svg',
+  title: 'BIM Model Health Analyzer',
+  subtitle: 'pyRevit audit · collectors → analyzers → scored reports',
+  metrics: ['Revit API', 'WPF dashboard', 'JSON + HTML'],
+  lanes: [
+    { title: 'MODEL', layer: 'source', nodes: [
+      { id: 'elems', label: 'Elements', sub: 'collectors', icon: 'python' },
+      { id: 'params', label: 'Parameters', sub: 'incl. shared', icon: 'python' },
+      { id: 'views', label: 'Views + Links', sub: 'worksets', icon: 'python' },
+    ]},
+    { title: 'AUDIT', layer: 'processing', nodes: [
+      { id: 'orphan', label: 'Orphan Detector', icon: 'python' },
+      { id: 'consist', label: 'Consistency Check', sub: '80% rule', icon: 'python' },
+      { id: 'perf', label: 'Perf Profiler', icon: 'python' },
+    ]},
+    { title: 'SCORE', layer: 'ml', nodes: [
+      { id: 'score', label: 'Health Score', sub: '0–100', icon: 'python' },
+    ]},
+    { title: 'REPORT', layer: 'serving', nodes: [
+      { id: 'json', label: 'JSON Export', icon: 'json' },
+      { id: 'html', label: 'HTML Report', sub: 'styled', icon: 'json' },
+    ]},
+    { title: 'DESK', layer: 'consumer', nodes: [
+      { id: 'wpf', label: 'WPF Dashboard', sub: '6 tabs', icon: 'python' },
+    ]},
+  ],
+  edges: [
+    { from: 'elems', to: 'orphan' }, { from: 'params', to: 'consist' },
+    { from: 'views', to: 'perf' }, { from: 'elems', to: 'perf' },
+    { from: 'orphan', to: 'score' }, { from: 'consist', to: 'score' },
+    { from: 'perf', to: 'score' },
+    { from: 'score', to: 'json', label: 'export' },
+    { from: 'score', to: 'html', label: 'export' },
+    { from: 'json', to: 'wpf' }, { from: 'html', to: 'wpf' },
+  ],
+},
+{
+  file: 'e-finance.svg',
+  title: 'E-Finance — Digital Banking Platform',
+  subtitle: 'Core banking + fraud/AML + BNPL + Web3 · orchestrated',
+  metrics: ['6 services', '3 Airflow DAGs', '5 data stores'],
+  lanes: [
+    { title: 'SOURCES', layer: 'source', nodes: [
+      { id: 'core', label: 'Core Banking API', sub: 'Python', icon: 'python' },
+      { id: 'txn', label: 'Txn Service', sub: 'Java', icon: 'java' },
+      { id: 'mkt', label: 'Market Feeds', icon: 'json' },
+    ]},
+    { title: 'STREAM', layer: 'ingestion', nodes: [
+      { id: 'kafka', label: 'Kafka', icon: 'apache-kafka' },
+    ]},
+    { title: 'STORE', layer: 'storage', nodes: [
+      { id: 'pg', label: 'PostgreSQL', icon: 'postgresql' },
+      { id: 'mongo', label: 'MongoDB', icon: 'mongodb' },
+      { id: 'redis', label: 'Redis', icon: 'redis' },
+      { id: 'es', label: 'Elasticsearch', icon: 'elasticsearch' },
+    ]},
+    { title: 'INTEL', layer: 'ml', nodes: [
+      { id: 'fraud', label: 'Fraud / AML', icon: 'scikit-learn' },
+      { id: 'bnpl', label: 'BNPL Scoring', icon: 'python' },
+    ]},
+    { title: 'ORCHESTRATE', layer: 'orchestration', nodes: [
+      { id: 'air', label: 'Airflow · 3 DAGs', icon: 'apache-airflow' },
+    ]},
+    { title: 'SERVE', layer: 'serving', nodes: [
+      { id: 'api', label: 'FastAPI', icon: 'fastapi' },
+      { id: 'kong', label: 'Kong Gateway', icon: 'kong' },
+      { id: 'w3', label: 'Web3 Wallets', icon: 'web3' },
+    ]},
+    { title: 'OBSERVE', layer: 'monitoring', nodes: [
+      { id: 'prom', label: 'Prometheus', icon: 'prometheus' },
+      { id: 'graf', label: 'Grafana', icon: 'grafana' },
+    ]},
+  ],
+  edges: [
+    { from: 'core', to: 'kafka' }, { from: 'txn', to: 'kafka' }, { from: 'mkt', to: 'kafka' },
+    { from: 'kafka', to: 'pg', label: 'sink' },
+    { from: 'kafka', to: 'mongo' }, { from: 'pg', to: 'redis', label: 'cache' },
+    { from: 'pg', to: 'es', label: 'index' },
+    { from: 'pg', to: 'fraud' }, { from: 'fraud', to: 'bnpl', label: 'score' },
+    { from: 'air', to: 'kafka', label: 'schedule' },
+    { from: 'fraud', to: 'api', label: 'serve' },
+    { from: 'api', to: 'kong' }, { from: 'api', to: 'w3' },
+    { from: 'api', to: 'prom', label: 'metrics' },
+    { from: 'prom', to: 'graf' },
+  ],
+},
+{
+  file: 'automative-scrapper.svg',
+  title: 'Automative Scrapper — Wholesale Leads',
+  subtitle: 'Compliant EG lead collection · phones stay with sellers',
+  metrics: ['SQLite + CSV', 'WhatsApp-hint filter', 'FB·IG·TikTok parsers'],
+  lanes: [
+    { title: 'DIRECTORIES', layer: 'source', nodes: [
+      { id: 'yp', label: 'Yellow Pages', icon: 'python' },
+      { id: 'egy', label: 'EgypYello · Dalili', icon: 'json' },
+      { id: 'buy', label: 'buy.com.eg', icon: 'python' },
+    ]},
+    { title: 'SOCIAL EXPORTS', layer: 'source', nodes: [
+      { id: 'fb', label: 'Facebook Ads', icon: 'json' },
+      { id: 'igt', label: 'IG + TikTok', icon: 'json' },
+    ]},
+    { title: 'COLLECT', layer: 'processing', nodes: [
+      { id: 'pw', label: 'Playwright Sweep', sub: 'governorates', icon: 'playwright' },
+      { id: 'parse', label: 'Export Parsers', icon: 'python' },
+    ]},
+    { title: 'EXTRACT', layer: 'processing', nodes: [
+      { id: 'phone', label: 'Phone Extractor', sub: 'Arabic-Indic', icon: 'python' },
+      { id: 'intent', label: 'Intent Splitter', sub: 'buyer / seller', icon: 'python' },
+    ]},
+    { title: 'STORE', layer: 'storage', nodes: [
+      { id: 'lite', label: 'SQLite', icon: 'sqlite' },
+      { id: 'csv', label: 'CSV Exports', sub: 'per-governorate', icon: 'json' },
+    ]},
+  ],
+  edges: [
+    { from: 'yp', to: 'pw' }, { from: 'egy', to: 'pw' }, { from: 'buy', to: 'pw' },
+    { from: 'fb', to: 'parse' }, { from: 'igt', to: 'parse' },
+    { from: 'pw', to: 'phone', label: 'ads' },
+    { from: 'parse', to: 'phone' },
+    { from: 'phone', to: 'intent', label: 'WA hint' },
+    { from: 'intent', to: 'lite', label: 'load' },
+    { from: 'lite', to: 'csv', label: 'export' },
+  ],
+},
+{
+  file: 'digital-estates.svg',
+  title: 'Digital Estates Platform',
+  subtitle: 'Synthetic estate data → governed checks → star + Power BI',
+  metrics: ['Synthetic generators', 'Uniclass·SFG20 checks', 'Star + Power BI'],
+  lanes: [
+    { title: 'GENERATE', layer: 'source', nodes: [
+      { id: 'asset', label: 'Asset Generator', icon: 'python' },
+      { id: 'space', label: 'Space + COBie', icon: 'python' },
+      { id: 'bms', label: 'CAFM / BMS Feeds', icon: 'json' },
+    ]},
+    { title: 'VALIDATE', layer: 'processing', nodes: [
+      { id: 'uni', label: 'Uniclass Check', icon: 'python' },
+      { id: 'sfg', label: 'SFG20 · HESA Rules', icon: 'python' },
+    ]},
+    { title: 'MODEL', layer: 'storage', nodes: [
+      { id: 'star', label: 'SQLite Star Schema', icon: 'sqlite' },
+    ]},
+    { title: 'ORCHESTRATE', layer: 'orchestration', nodes: [
+      { id: 'air', label: 'Airflow DAG', sub: 'optional', icon: 'apache-airflow' },
+    ]},
+    { title: 'BI', layer: 'consumer', nodes: [
+      { id: 'bi', label: 'Power BI + DAX', icon: 'microsoft' },
+    ]},
+  ],
+  edges: [
+    { from: 'asset', to: 'uni' }, { from: 'space', to: 'uni' }, { from: 'bms', to: 'sfg' },
+    { from: 'uni', to: 'star', label: 'pass' },
+    { from: 'sfg', to: 'star', label: 'pass' },
+    { from: 'air', to: 'uni', label: 'schedule' },
+    { from: 'star', to: 'bi', label: 'serve' },
+  ],
+},
+{
+  file: 'aws-serverless.svg',
+  title: 'Serverless Task Manager — AWS',
+  subtitle: 'Lambda + DynamoDB · CDK IaC · CodePipeline delivery',
+  metrics: ['Lambda + DynamoDB', 'CDK IaC', 'CodePipeline CI/CD'],
+  lanes: [
+    { title: 'EDGE', layer: 'source', nodes: [
+      { id: 'gw', label: 'API Gateway', icon: 'api' },
+      { id: 's3', label: 'S3 Static Site', icon: 's3' },
+    ]},
+    { title: 'COMPUTE', layer: 'processing', nodes: [
+      { id: 'lmb', label: 'Lambda Functions', icon: 'lambda' },
+    ]},
+    { title: 'DATA', layer: 'storage', nodes: [
+      { id: 'ddb', label: 'DynamoDB', icon: 'dynamodb' },
+    ]},
+    { title: 'FRONTEND', layer: 'consumer', nodes: [
+      { id: 'react', label: 'React App', icon: 'react' },
+      { id: 'cf', label: 'CloudFront CDN', icon: 'cloudfront' },
+    ]},
+    { title: 'INFRA', layer: 'orchestration', nodes: [
+      { id: 'cdk', label: 'CDK Stacks', sub: 'TypeScript', icon: 'cdk' },
+      { id: 'pipe', label: 'CodePipeline', sub: 'build + deploy', icon: 'codepipeline' },
+    ]},
+    { title: 'OBSERVE', layer: 'monitoring', nodes: [
+      { id: 'cw', label: 'CloudWatch', icon: 'cloudwatch' },
+    ]},
+  ],
+  edges: [
+    { from: 'gw', to: 'lmb', label: 'invoke' },
+    { from: 'lmb', to: 'ddb', label: 'CRUD' },
+    { from: 's3', to: 'cf', label: 'origin' },
+    { from: 'cf', to: 'react', label: 'serve' },
+    { from: 'react', to: 'gw', label: 'calls' },
+    { from: 'cdk', to: 'lmb', label: 'deploy' },
+    { from: 'cdk', to: 'ddb', label: 'provision' },
+    { from: 'pipe', to: 'cdk', label: 'deliver' },
+    { from: 'lmb', to: 'cw', label: 'logs' },
   ],
 },
 //__MORE__

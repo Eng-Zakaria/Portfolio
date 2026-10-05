@@ -52,6 +52,9 @@
         </button>
       </li>
     </ul>
+    <button class="hamburger" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <header class="project-header">
@@ -118,7 +121,7 @@
       <h3>Implementation</h3>
       <ul>
         <li><strong>Connector Registry:</strong> Designed a modular architecture where each data source requires only one connector file. No changes needed to ingestion, analysis, storage, or dashboard layers when adding new sources.</li>
-        <li><strong>Multilingual Processing:</strong> Routed Arabic mentions to AraBERT and English mentions to RoBERTa for sentiment analysis, handling Arabizi (Arabic in Latin script) with rule-based detection.</li>
+        <li><strong>Multilingual Processing:</strong> Design routes Arabic mentions to AraBERT (aubmindlab/bert-base-arabertv02) and English mentions to RoBERTa for sentiment analysis, handling Arabizi (Arabic in Latin script) with rule-based detection — documented architecture, serving not yet implemented.</li>
         <li><strong>Topic Tagging:</strong> Implemented a rule-based tagger across 6 business categories: app bugs, customer service, pricing, wallet security, offer accuracy, and delivery.</li>
         <li><strong>Negative Triage:</strong> Built a feed that surfaces negative mentions for immediate attention, prioritized by sentiment score and recency.</li>
         <li><strong>Visualization:</strong> Created Streamlit dashboards with sentiment trends over time, topic breakdowns, and interactive filters.</li>

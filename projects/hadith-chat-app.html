@@ -56,6 +56,9 @@
         </button>
       </li>
     </ul>
+    <button class="hamburger" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
 
   <header class="project-header">
@@ -122,7 +125,7 @@
         <li><strong>Hadith Corpus Collection:</strong> Aggregated from multiple authenticated sources (Sahih Bukhari, Muslim, Abu Dawud)</li>
         <li><strong>Preprocessing:</strong> Cleaned Arabic text, normalized diacritics, and extracted hadith numbers for citation</li>
         <li><strong>Chunking Strategy:</strong> Split into contextually coherent paragraphs with metadata (collection, book, hadith number)</li>
-        <li><strong>Embedding Generation:</strong> Used AraBERT v2 for Arabic-specific semantic embeddings</li>
+        <li><strong>Embedding Generation:</strong> Design specifies AraBERT v2 for Arabic-specific semantic embeddings (documented architecture; embedding serving not yet implemented)</li>
         <li><strong>Vector Storage:</strong> Indexed in Qdrant with collection metadata for filtering</li>
       </ul>
     </section>

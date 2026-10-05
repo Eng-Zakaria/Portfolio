@@ -23,6 +23,10 @@ Production-quality SVG architecture diagrams for all portfolio projects, generat
 | Retail Analytics (Streaming Pipeline) | `retail-analytics-pipeline.svg` | — |
 | AquaWatch (Fish-Farm Monitoring) | `aquawatch.svg` | — |
 | Blockchain GDPR Aggregator | `blockchain-gdpr-aggregator.svg` | — |
+| E-Finance (Digital Banking) | `e-finance.svg` | — |
+| Automative Scrapper (Wholesale Leads) | `automative-scrapper.svg` | — |
+| Digital Estates Platform | `digital-estates.svg` | — |
+| AWS Serverless Task Manager | `aws-serverless.svg` | — |
 
 ## Icon Coverage
 
