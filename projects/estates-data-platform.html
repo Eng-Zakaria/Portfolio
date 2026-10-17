@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Estates Data Portfolio — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Synthetic university-estates data platform: dbt, Airflow, Terraform and CI-gated contracts. 196 dbt tests, 21 contracts, 8/8 sources reconciled zero-loss.">
+  <meta name="description" content="Complete estates data portfolio for freelance client work: 20 projects plus a foundation generator, dbt gold marts, CI-gated contracts and a live interactive demo for every project — 100% synthetic and public open data.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -208,7 +208,13 @@
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-city"></i> Estates Data Portfolio</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        A synthetic university-estates data platform with CI-gated dbt contracts — 7 of 20 planned projects delivered.
+        A complete estates data platform — 20 projects plus a foundation generator, from messy source exports to
+        governed gold marts. Every project has a live interactive demo.
+      </p>
+      <p style="font-size: 0.95rem; color: var(--muted); max-width: 640px; margin-top: 0.75rem;">
+        <i class="fas fa-lock" style="color: var(--accent);"></i> The workflows come from freelance client engagements.
+        Client data is confidential and cannot be exposed, so every dataset here is synthetic (with a known ground
+        truth) or public open data.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -221,20 +227,26 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Data</span>
-          <span class="meta-value">100% Synthetic</span>
+          <span class="meta-value">Synthetic + Public</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Data Platform / Portfolio</span>
+          <span class="meta-value">Freelance / Portfolio</span>
         </div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag"><i class="fas fa-database"></i> dbt</span>
         <span class="tech-tag"><i class="fas fa-sync"></i> Airflow</span>
-        <span class="tech-tag"><i class="fas fa-layer-group"></i> Terraform</span>
+        <span class="tech-tag"><i class="fas fa-bolt"></i> DuckDB</span>
+        <span class="tech-tag"><i class="fas fa-chart-bar"></i> Power BI</span>
         <span class="tech-tag"><i class="fab fa-python"></i> Python</span>
         <span class="tech-tag"><i class="fas fa-flask"></i> pytest</span>
+        <span class="tech-tag"><i class="fas fa-layer-group"></i> Terraform</span>
         <span class="tech-tag"><i class="fab fa-github"></i> GitHub Actions</span>
+      </div>
+      <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1.5rem;">
+        <a href="https://eng-zakaria.github.io/estates-data-portfolio/" class="btn btn-primary" target="_blank" rel="noopener noreferrer">Live Interactive Demo</a>
+        <a href="https://github.com/Eng-Zakaria/estates-data-portfolio" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Source on GitHub</a>
       </div>
     </div>
   </header>
@@ -250,16 +262,20 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">196</div>
-          <div class="metric-label">dbt Tests Passing</div>
+          <div class="metric-value">20/20</div>
+          <div class="metric-label">Projects Delivered</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">21</div>
-          <div class="metric-label">dbt Contracts</div>
+          <div class="metric-value">196</div>
+          <div class="metric-label">dbt Tests · 21 Contracts</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">8/8</div>
           <div class="metric-label">Sources Zero-Loss</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">100%</div>
+          <div class="metric-label">Synthetic or Public Data</div>
         </div>
       </div>
     </section>
@@ -268,15 +284,15 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        A portfolio of 20 estates-data projects is a liability, not an asset, if each one is a standalone
-        demo with its own naming, its own fixtures and no acceptance criteria. Anything untested quietly
-        rots, and the next person cannot tell whether a broken dashboard means a broken pipeline or a
-        changed schema.
+        Estates data work is hard to show. Registers, CAFM work orders, meter readings and BIM models belong
+        to clients, under confidentiality — so the most interesting pipelines usually stop at the client's
+        firewall, and portfolio demonstrations either leak data or prove nothing.
       </p>
       <p>
-        Real institutional data is not available for portfolio work, which removes the usual escape route:
-        nobody can check whether a number is right. Without ground truth and a gate in CI, "the build is
-        green" says nothing about correctness — it only says nothing crashed.
+        This portfolio takes that constraint seriously: 20 estates projects, drawn from freelance client
+        engagements, rebuilt end-to-end on a synthetic campus whose ground truth is known — plus public open
+        data where realism demands it. Nothing real is exposed, and every number is still checkable against
+        a test or an acceptance document.
       </p>
     </section>
 
@@ -295,15 +311,18 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Synthetic by Design:</strong> every figure comes from a <code>campus_synth</code> foundation generator that also emits ground truth; public open sources came later. Provenance is tracked in <code>DATA.md</code> and every chart carries a "synthetic data" footer.</li>
-        <li><strong>Foundation (P00):</strong> 20 tests pass at 96% coverage with ruff and mypy clean; a small <code>generate</code> run takes 17–20 s, so the loop stays fast enough to use.</li>
-        <li><strong>Campus Warehouse (P01):</strong> 7 platform tests, 35 s ingest, and all 8 sources reconciled with zero row loss.</li>
-        <li><strong>dbt Project (P04):</strong> <code>dbt build</code> green — 196 pass / 0 error from 147 tests plus 2 unit tests, 100% of models tested, 100% of columns documented, 21 contracts.</li>
-        <li><strong>CI/CD for Data (P05):</strong> <code>ci</code>, <code>nightly</code>, <code>docs</code>, <code>release</code> and <code>security</code> workflows plus reusable workflows, pre-commit and sqlfluff. Verified gate chain: ruff + mypy clean → pytest 27 pass (84%) → dbt build 196 pass → sqlfluff + mkdocs + compose clean, with the data-quality gate running inside CI.</li>
-        <li><strong>Space Utilisation (P06):</strong> frequency × occupancy on gold marts, 7 calculation tests and 5 validation SQL, handed off to Power BI.</li>
-        <li><strong>Net Zero &amp; Carbon (P08):</strong> scopes, intensity, pathway and baseload on gold marts with 7 calculation tests and 4 validation SQL — baseload came out as the top band at 48.8%.</li>
-        <li><strong>Spatial Analysis (P19):</strong> OSM building footprints plus synthetic metrics, area-rank matching, 8 buildings, 4 heat clusters and 5/10-minute isochrones, exported as gpkg, geojson, topojson, png, folium, qml and csv with a Power BI map handoff.</li>
-        <li><strong>Honest Scope:</strong> 7 of 20 projects are complete; the remaining 13 are marked not-started in <code>STATUS.md</code> rather than quietly implied. Project status is dated 2026-10-03 → 05.</li>
+        <li><strong>Synthetic by Design:</strong> every figure comes from a <code>campus_synth</code> foundation generator that also emits a known ground truth and planted defects; public open sources (DESNZ factors, BDG2, OpenStreetMap) are used where realism demands. Client data is never involved, provenance for every public dataset is tracked in <code>DATA.md</code>, and every chart carries a synthetic-data footer.</li>
+        <li><strong>Foundation (F):</strong> 17 truth tables and 7 deliberately messy exports — merged cells, mixed date formats, stuck sensors — with 20 tests at 96% coverage, ruff and mypy strict clean, and a 17–20 s small-profile generate that keeps the dev loop fast.</li>
+        <li><strong>Lakehouse (P01):</strong> bronze → silver medallion ingestion with data contracts, idempotent re-runs and quarantine; all 8 sources reconciled row-by-row with zero unexplained loss in a ~35 s ingest.</li>
+        <li><strong>Orchestration (P02):</strong> 7 Airflow DAGs with watermarks, schema-drift quarantine and failure alerting — a deliberately corrupted file is routed to quarantine and raises an alert through Mailpit.</li>
+        <li><strong>Data Quality (P03):</strong> 133 YAML checks compiled to Great Expectations and DuckDB with weighted scoring, alerting and 100% defect recall against the planted ground truth.</li>
+        <li><strong>dbt Project (P04):</strong> <code>dbt build</code> green — 196 pass / 0 errors from 147 data tests plus 2 unit tests, 100% of models tested, 292/292 columns documented, 21 contracts, plus silver→gold reconciliation of every mart.</li>
+        <li><strong>CI/CD for Data (P05):</strong> <code>ci</code>, <code>nightly</code>, <code>docs</code>, <code>release</code> and <code>security</code> workflows: lint + types → pytest → small-profile build → <code>dbt build</code> → data-quality gate → sqlfluff + MkDocs + compose checks on every push.</li>
+        <li><strong>Dashboards &amp; Returns (P06–P10):</strong> space utilisation (frequency × occupancy plus sensor-observed occupancy), asset &amp; maintenance (backlog, SLA, lifecycle and renewal forecasts), net-zero carbon (Scope 1/2 on fetched DESNZ factors, baseload analysis), a statutory-compliance tracker with weekly digest, and a mock HESA/TRAC-style return — each with validation SQL and a Power BI handoff.</li>
+        <li><strong>BIM &amp; Standards (P11–P14):</strong> IFC → analytical tables with a model QA report that finds every planted defect; a COBie validator with a handover loader; a Uniclass mapper measuring 97.81% top-1 accuracy against a 21.49% fuzzy baseline; and an ISO 19650 naming/metadata checker with 20 rules at 94% coverage.</li>
+        <li><strong>Building Systems (P15–P17):</strong> MQTT → Node-RED → TimescaleDB → Grafana ingestion (84,435/84,435 valid messages, 141 dead-lettered, 20/20 planted faults detected); energy-anomaly detection over 210 injected faults ranking the planted findings #1 and #2; and air-quality/occupancy analytics on 15-minute sensor data with 38 tests.</li>
+        <li><strong>Twin, Spatial &amp; Governance (P18–P20):</strong> a canonical-ID crosswalk with Brick Schema and a FastAPI context API; an OpenStreetMap-footprint spatial carbon map with heat clusters and isochrones; and a governance pack — metric registry, glossary, dashboard guides, runbooks and a training kit — held together by 126 tests.</li>
+        <li><strong>Honest Scope:</strong> all 20 projects plus the foundation are delivered and evidenced in dated acceptance docs. Recorded gaps stay visible: the P15 live Docker stack was not exercised in the build environment, and P13 classifies against a clearly named dev placeholder until the official NBS tables are fetched (it refuses final runs).</li>
       </ul>
     </section>
 
@@ -311,6 +330,8 @@
     <section class="content-section">
       <h3>Challenges & Solutions</h3>
 
+      <div class="challenge-card"><h4>Challenge: Showing Client Work Without Exposing It</h4><p>The real workflows come from freelance client engagements — registers, meters, BIM models — and client data is confidential and cannot be published.</p></div>
+      <div class="solution-card"><h4>Solution: Rebuild Everything on Synthetic + Public Data</h4><p>A generator with known ground truth reproduces the messy exports (and plants defects to measure detection against), public datasets supply realism where it matters, and <code>DATA.md</code> records provenance for every source.</p></div>
       <div class="challenge-card"><h4>Challenge: 20 Projects Becoming Unmaintainable Demos</h4><p>Twenty separate mini-projects tend to fragment into code that only its original author can run, with no shared assumptions.</p></div>
       <div class="solution-card"><h4>Solution: One Foundation Generator + Per-Project Acceptance Docs</h4><p>All data descends from a <code>campus_synth</code> generator that also produces ground truth, and each project ships an acceptance document defining what "done" means.</p></div>
       <div class="challenge-card"><h4>Challenge: Silent dbt Breakage</h4><p>Refactors and schema changes break models quietly — a green build can still be serving wrong columns to a mart.</p></div>
@@ -325,13 +346,15 @@
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        7 of 20 projects delivered with the whole chain reproducible from a single <code>make ci</code>,
-        196 dbt tests passing, 21 contracts enforced, and 8/8 sources reconciled with zero loss against
-        ground truth. Provenance is documented in <code>DATA.md</code> and every chart is labelled synthetic.
+        All 20 projects plus the foundation are delivered and evidenced: the whole chain is reproducible from a
+        single <code>make ci</code>, 196 dbt tests pass with 21 contracts enforced, 8/8 sources reconcile with
+        zero loss against ground truth, and 133 data-quality checks measure 100% defect recall. Every project has
+        a live interactive demo generated from the same marts the tests and acceptance docs quote.
       </p>
       <p>
-        What is not finished is stated plainly: the remaining 13 projects are marked not-started in
-        <code>STATUS.md</code> rather than implied. The delivered chain is real; the plan is still a plan.
+        The constraint made the work stronger: because client data cannot be exposed, correctness was measured
+        against known ground truth instead of assumed. What remains open is stated plainly in
+        <code>STATUS.md</code> — the P15 live stack and the P13 official code tables — rather than implied.
       </p>
     </section>
   </main>
