@@ -1,0 +1,778 @@
+{
+  "meta": {
+    "code": "P07",
+    "name": "P07 Boutique Office 240m2 - open studio + meets",
+    "type": "office",
+    "units": "mm",
+    "version": "2.0",
+    "description": "18000x12000 open office, height 3000mm, L1. Reception + 24-desk workspace + 2 meeting rooms + kitchen-breakout + 2 focus pods + WCs. Acoustic + carpet commercial palette.",
+    "note": "Original demo geometry. No third-party plan copied."
+  },
+  "levels": [
+    {
+      "name": "L1",
+      "elevation_mm": 0
+    }
+  ],
+  "grids": [
+    {
+      "name": "GA",
+      "x1": 0,
+      "y1": -500,
+      "x2": 0,
+      "y2": 12500
+    },
+    {
+      "name": "GB",
+      "x1": 6000,
+      "y1": -500,
+      "x2": 6000,
+      "y2": 12500
+    },
+    {
+      "name": "GC",
+      "x1": 12000,
+      "y1": -500,
+      "x2": 12000,
+      "y2": 12500
+    },
+    {
+      "name": "GD",
+      "x1": 18000,
+      "y1": -500,
+      "x2": 18000,
+      "y2": 12500
+    },
+    {
+      "name": "G1",
+      "x1": -500,
+      "y1": 0,
+      "x2": 18500,
+      "y2": 0
+    },
+    {
+      "name": "G2",
+      "x1": -500,
+      "y1": 8000,
+      "x2": 18500,
+      "y2": 8000
+    },
+    {
+      "name": "G3",
+      "x1": -500,
+      "y1": 12000,
+      "x2": 18500,
+      "y2": 12000
+    }
+  ],
+  "wall_height_mm": 3000,
+  "walls": [
+    {
+      "id": "W1-south",
+      "level": "L1",
+      "x1": 0,
+      "y1": 0,
+      "x2": 18000,
+      "y2": 0,
+      "kind": "exterior"
+    },
+    {
+      "id": "W2-north",
+      "level": "L1",
+      "x1": 0,
+      "y1": 12000,
+      "x2": 18000,
+      "y2": 12000,
+      "kind": "exterior"
+    },
+    {
+      "id": "W3-west",
+      "level": "L1",
+      "x1": 0,
+      "y1": 0,
+      "x2": 0,
+      "y2": 12000,
+      "kind": "exterior"
+    },
+    {
+      "id": "W4-east",
+      "level": "L1",
+      "x1": 18000,
+      "y1": 0,
+      "x2": 18000,
+      "y2": 12000,
+      "kind": "exterior"
+    },
+    {
+      "id": "W10-vert1",
+      "level": "L1",
+      "x1": 6000,
+      "y1": 0,
+      "x2": 6000,
+      "y2": 12000,
+      "kind": "interior"
+    },
+    {
+      "id": "W11-vert2",
+      "level": "L1",
+      "x1": 12000,
+      "y1": 0,
+      "x2": 12000,
+      "y2": 12000,
+      "kind": "interior"
+    },
+    {
+      "id": "W12-horiz",
+      "level": "L1",
+      "x1": 0,
+      "y1": 8000,
+      "x2": 18000,
+      "y2": 8000,
+      "kind": "interior"
+    },
+    {
+      "id": "W13-lobby",
+      "level": "L1",
+      "x1": 0,
+      "y1": 4000,
+      "x2": 6000,
+      "y2": 4000,
+      "kind": "interior"
+    },
+    {
+      "id": "W14-meetdiv",
+      "level": "L1",
+      "x1": 3000,
+      "y1": 8000,
+      "x2": 3000,
+      "y2": 12000,
+      "kind": "interior"
+    },
+    {
+      "id": "W15-focusdiv",
+      "level": "L1",
+      "x1": 15000,
+      "y1": 8000,
+      "x2": 15000,
+      "y2": 12000,
+      "kind": "interior"
+    }
+  ],
+  "rooms": [
+    {
+      "name": "Reception Lobby",
+      "number": "101",
+      "level": "L1",
+      "point": [
+        3000,
+        2000
+      ],
+      "finishes": {
+        "floor": "Polished concrete + rug",
+        "wall": "Oak slats + white emulsion",
+        "ceiling": "Acoustic black open"
+      }
+    },
+    {
+      "name": "Open Workspace",
+      "number": "102",
+      "level": "L1",
+      "point": [
+        9000,
+        4000
+      ],
+      "finishes": {
+        "floor": "Interface carpet tiles",
+        "wall": "White emulsion + acoustic felt",
+        "ceiling": "Acoustic raft + linear LED"
+      }
+    },
+    {
+      "name": "Meeting Large",
+      "number": "103",
+      "level": "L1",
+      "point": [
+        1500,
+        10000
+      ],
+      "finishes": {
+        "floor": "Interface carpet tiles",
+        "wall": "Glass + acoustic timber",
+        "ceiling": "Acoustic plaster"
+      }
+    },
+    {
+      "name": "Meeting Small",
+      "number": "104",
+      "level": "L1",
+      "point": [
+        4500,
+        10000
+      ],
+      "finishes": {
+        "floor": "Interface carpet tiles",
+        "wall": "Glass + sage emulsion",
+        "ceiling": "Acoustic plaster"
+      }
+    },
+    {
+      "name": "Kitchen-Breakout",
+      "number": "105",
+      "level": "L1",
+      "point": [
+        9000,
+        10000
+      ],
+      "finishes": {
+        "floor": "Grey porcelain 600x600",
+        "wall": "Sage emulsion + oak",
+        "ceiling": "White plaster"
+      }
+    },
+    {
+      "name": "Focus Pod 1",
+      "number": "106",
+      "level": "L1",
+      "point": [
+        13500,
+        10000
+      ],
+      "finishes": {
+        "floor": "Interface carpet tiles",
+        "wall": "Acoustic felt greige",
+        "ceiling": "Acoustic plaster"
+      }
+    },
+    {
+      "name": "Focus Pod 2",
+      "number": "107",
+      "level": "L1",
+      "point": [
+        16500,
+        10000
+      ],
+      "finishes": {
+        "floor": "Interface carpet tiles",
+        "wall": "Acoustic felt clay",
+        "ceiling": "Acoustic plaster"
+      }
+    },
+    {
+      "name": "WC Lobby",
+      "number": "108",
+      "level": "L1",
+      "point": [
+        15000,
+        4000
+      ],
+      "finishes": {
+        "floor": "Grey porcelain R10",
+        "wall": "White ceramic 300x600",
+        "ceiling": "Moisture plaster"
+      }
+    }
+  ],
+  "doors": [
+    {
+      "wall": "W1-south",
+      "offset_mm": 3000,
+      "width_mm": 1500,
+      "type_contains": "Entry|Double|Glazed"
+    },
+    {
+      "wall": "W13-lobby",
+      "offset_mm": 3000,
+      "width_mm": 1200,
+      "type_contains": "Double|Glazed"
+    },
+    {
+      "wall": "W10-vert1",
+      "offset_mm": 6000,
+      "width_mm": 1000,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W11-vert2",
+      "offset_mm": 6000,
+      "width_mm": 1000,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 3000,
+      "width_mm": 1000,
+      "type_contains": "Single|Glazed"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 9000,
+      "width_mm": 1200,
+      "type_contains": "Double|Glazed"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 15000,
+      "width_mm": 1000,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W14-meetdiv",
+      "offset_mm": 2000,
+      "width_mm": 900,
+      "type_contains": "Single|Glazed"
+    },
+    {
+      "wall": "W15-focusdiv",
+      "offset_mm": 2000,
+      "width_mm": 900,
+      "type_contains": "Single"
+    }
+  ],
+  "windows": [
+    {
+      "wall": "W2-north",
+      "offset_mm": 3000,
+      "width_mm": 2400,
+      "sill_mm": 500
+    },
+    {
+      "wall": "W2-north",
+      "offset_mm": 9000,
+      "width_mm": 2400,
+      "sill_mm": 500
+    },
+    {
+      "wall": "W2-north",
+      "offset_mm": 15000,
+      "width_mm": 2400,
+      "sill_mm": 500
+    },
+    {
+      "wall": "W1-south",
+      "offset_mm": 9000,
+      "width_mm": 2400,
+      "sill_mm": 500
+    },
+    {
+      "wall": "W1-south",
+      "offset_mm": 15000,
+      "width_mm": 2400,
+      "sill_mm": 500
+    },
+    {
+      "wall": "W3-west",
+      "offset_mm": 6000,
+      "width_mm": 2000,
+      "sill_mm": 800
+    },
+    {
+      "wall": "W4-east",
+      "offset_mm": 6000,
+      "width_mm": 2000,
+      "sill_mm": 800
+    }
+  ],
+  "electrical": [
+    {
+      "id": "E01",
+      "kind": "socket",
+      "room": "Open Workspace",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-B",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 12
+    },
+    {
+      "id": "E02",
+      "kind": "switch",
+      "room": "Open Workspace",
+      "level": "L1",
+      "wall": "W10-vert1",
+      "offset_mm": 5800,
+      "height_mm": 1050,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "LS990 2-Gang",
+      "price": 58,
+      "qty": 4
+    },
+    {
+      "id": "E03",
+      "kind": "tv",
+      "room": "Meeting Large",
+      "level": "L1",
+      "height_mm": 400,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "TV+SAT Plug",
+      "price": 52,
+      "qty": 2
+    },
+    {
+      "id": "E04",
+      "kind": "socket",
+      "room": "Meeting Large",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 4
+    },
+    {
+      "id": "E05",
+      "kind": "socket",
+      "room": "Meeting Small",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 3
+    },
+    {
+      "id": "E06",
+      "kind": "sensor",
+      "room": "Open Workspace",
+      "level": "L1",
+      "height_mm": 2400,
+      "circuit": "L1-A",
+      "manufacturer": "Steinel",
+      "model": "Presence Sensor",
+      "price": 95,
+      "qty": 4
+    },
+    {
+      "id": "E07",
+      "kind": "switch",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-K",
+      "manufacturer": "Jung",
+      "model": "LS990 1-Gang IP44",
+      "price": 48,
+      "qty": 2
+    },
+    {
+      "id": "E08",
+      "kind": "socket",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-K",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 4
+    },
+    {
+      "id": "E09",
+      "kind": "panel",
+      "room": "WC Lobby",
+      "level": "L1",
+      "height_mm": 1500,
+      "circuit": "L1-MAIN",
+      "manufacturer": "Hager",
+      "model": "Volta 36MU",
+      "price": 620,
+      "qty": 1
+    },
+    {
+      "id": "E10",
+      "kind": "thermostat",
+      "room": "Open Workspace",
+      "level": "L1",
+      "height_mm": 1400,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "Room Thermostat",
+      "price": 120,
+      "qty": 2
+    }
+  ],
+  "plumbing": [
+    {
+      "id": "P01",
+      "kind": "wc",
+      "room": "WC Lobby",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo Wall WC",
+      "finish": "White Alpin",
+      "price": 420,
+      "supplier": "Sanitop",
+      "qty": 2
+    },
+    {
+      "id": "P02",
+      "kind": "sink",
+      "room": "WC Lobby",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo 550 Washbasin",
+      "finish": "White Alpin",
+      "price": 310,
+      "supplier": "Sanitop",
+      "qty": 2
+    },
+    {
+      "id": "P03",
+      "kind": "faucet",
+      "room": "WC Lobby",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Talis E 110",
+      "finish": "Chrome",
+      "price": 165,
+      "supplier": "Sanitop",
+      "qty": 2
+    },
+    {
+      "id": "P04",
+      "kind": "sink",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "manufacturer": "Franke",
+      "model": "Maris 86 Inset",
+      "finish": "Stainless",
+      "price": 540,
+      "supplier": "Franke",
+      "qty": 1
+    },
+    {
+      "id": "P05",
+      "kind": "faucet",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Focus M51",
+      "finish": "Chrome",
+      "price": 210,
+      "supplier": "Sanitop",
+      "qty": 2
+    }
+  ],
+  "furniture": [
+    {
+      "family": "Vitra Desk",
+      "type": "Workstation 160",
+      "room": "Open Workspace",
+      "level": "L1",
+      "manufacturer": "Vitra",
+      "model": "Workstation 160",
+      "finish": "Oak/White",
+      "price": 890,
+      "supplier": "Vitra",
+      "qty": 12
+    },
+    {
+      "family": "Vitra Chair",
+      "type": "Task Chair",
+      "room": "Open Workspace",
+      "level": "L1",
+      "manufacturer": "Vitra",
+      "model": "Task Chair",
+      "finish": "Black mesh",
+      "price": 420,
+      "supplier": "Vitra",
+      "qty": 12
+    },
+    {
+      "family": "Muuto Table",
+      "type": "Meeting 240",
+      "room": "Meeting Large",
+      "level": "L1",
+      "manufacturer": "Muuto",
+      "model": "Meeting 240",
+      "finish": "Oak",
+      "price": 1890,
+      "supplier": "Muuto",
+      "qty": 1
+    },
+    {
+      "family": "Muuto Chair",
+      "type": "Fiber Chair",
+      "room": "Meeting Large",
+      "level": "L1",
+      "manufacturer": "Muuto",
+      "model": "Fiber Chair",
+      "finish": "Grey",
+      "price": 349,
+      "supplier": "Muuto",
+      "qty": 8
+    },
+    {
+      "family": "Muuto Table",
+      "type": "Meeting 140",
+      "room": "Meeting Small",
+      "level": "L1",
+      "manufacturer": "Muuto",
+      "model": "Meeting 140",
+      "finish": "Oak",
+      "price": 990,
+      "supplier": "Muuto",
+      "qty": 1
+    },
+    {
+      "family": "Muuto Chair",
+      "type": "Fiber Chair",
+      "room": "Meeting Small",
+      "level": "L1",
+      "manufacturer": "Muuto",
+      "model": "Fiber Chair",
+      "finish": "Grey",
+      "price": 349,
+      "supplier": "Muuto",
+      "qty": 4
+    },
+    {
+      "family": "Hay Sofa",
+      "type": "Breakout 2-Seat",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "manufacturer": "Hay",
+      "model": "Breakout Sofa",
+      "finish": "Sage fabric",
+      "price": 1190,
+      "supplier": "Hay",
+      "qty": 2
+    },
+    {
+      "family": "String Shelf",
+      "type": "Shelf 80",
+      "room": "Reception Lobby",
+      "level": "L1",
+      "manufacturer": "String",
+      "model": "Shelf 80",
+      "finish": "White Ash",
+      "price": 320,
+      "supplier": "String",
+      "qty": 2
+    }
+  ],
+  "lighting": [
+    {
+      "family": "Artemide Linear",
+      "type": "Linear 240 Office",
+      "room": "Open Workspace",
+      "level": "L1",
+      "manufacturer": "Artemide",
+      "model": "Linear 240",
+      "wattage": "42W",
+      "price": 480,
+      "qty": 10
+    },
+    {
+      "family": "Flos Pendant",
+      "type": "Aim 3-Head",
+      "room": "Reception Lobby",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Aim 3-Head",
+      "wattage": "36W",
+      "price": 1150,
+      "qty": 1
+    },
+    {
+      "family": "Artemide Linear",
+      "type": "Linear 140 Meet",
+      "room": "Meeting Large",
+      "level": "L1",
+      "manufacturer": "Artemide",
+      "model": "Linear 140",
+      "wattage": "28W",
+      "price": 390,
+      "qty": 2
+    },
+    {
+      "family": "Artemide Linear",
+      "type": "Linear 140 Meet",
+      "room": "Meeting Small",
+      "level": "L1",
+      "manufacturer": "Artemide",
+      "model": "Linear 140",
+      "wattage": "28W",
+      "price": 390,
+      "qty": 1
+    },
+    {
+      "family": "Flos Spot",
+      "type": "Spot Dimmable",
+      "room": "Kitchen-Breakout",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Spot Dimmable",
+      "wattage": "9W",
+      "price": 140,
+      "qty": 6
+    },
+    {
+      "family": "Flos Spot",
+      "type": "Spot IP44",
+      "room": "WC Lobby",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Spot IP44",
+      "wattage": "7W",
+      "price": 120,
+      "qty": 4
+    }
+  ],
+  "sheets": [
+    {
+      "number": "ID-101",
+      "name": "P07 - Office Furniture Plan",
+      "template": ""
+    },
+    {
+      "number": "ID-201",
+      "name": "P07 - Power + Data Plan",
+      "template": ""
+    },
+    {
+      "number": "ID-301",
+      "name": "P07 - Reflected Ceiling Plan",
+      "template": ""
+    },
+    {
+      "number": "ID-401",
+      "name": "P07 - Finishes + Details",
+      "template": ""
+    },
+    {
+      "number": "ID-501",
+      "name": "P07 - BOQ Schedule",
+      "template": ""
+    }
+  ],
+  "views": [
+    {
+      "name": "P07 - L1 Furniture Plan",
+      "type": "plan",
+      "level": "L1",
+      "template": "Interiors - Furniture"
+    },
+    {
+      "name": "P07 - L1 Ceiling Plan",
+      "type": "plan",
+      "level": "L1",
+      "template": "Interiors - Lighting"
+    },
+    {
+      "name": "P07 - South Elevation",
+      "type": "elevation",
+      "template": "Interiors - Elevation"
+    },
+    {
+      "name": "P07 - 3D Office",
+      "type": "3d",
+      "template": "Interiors - 3D"
+    }
+  ]
+}

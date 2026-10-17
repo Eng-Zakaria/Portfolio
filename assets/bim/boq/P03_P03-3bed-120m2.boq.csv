@@ -1,0 +1,27 @@
+category,family,type,level,rooms,unit,qty,unit_price,total,has_price,element_ids
+Electrical Fixtures,Hager Panel,Volta 24MU,L1,Living + Kitchen,pcs,1,450.0,450.0,True,1046
+Electrical Fixtures,Jung Socket,LS990 Socket,L1,"Bedroom 1 Master, Living + Kitchen",pcs,10,38.0,380.0,True,1031;1032;1033;1034;1035;1036;1038;1039;1040;1041
+Electrical Fixtures,Jung Thermostat,Room Thermostat,L1,Living + Kitchen,pcs,1,120.0,120.0,True,1047
+Electrical Fixtures,Jung Switch,LS990 2-Gang,L1,Living + Kitchen,pcs,2,58.0,116.0,True,1029;1030
+Electrical Fixtures,Jung Switch,LS990 1-Gang IP44,L1,"Bath 1, Bath 2",pcs,2,48.0,96.0,True,1044;1045
+Electrical Fixtures,Jung Switch,LS990 1-Gang,L1,"Bedroom 2, Bedroom 3",pcs,2,45.0,90.0,True,1042;1043
+Electrical Fixtures,Jung TV Plug,TV+SAT Plug,L1,Living + Kitchen,pcs,1,52.0,52.0,True,1037
+Furniture,Muuto Chair,Fiber Chair,L1,Living + Kitchen,pcs,6,349.0,2094.0,True,1003;1004;1005;1006;1007;1008
+Furniture,Aria Sofa,Aria 3-Seat,L1,Living + Kitchen,pcs,1,1899.0,1899.0,True,1001
+Furniture,Noguchi Table,Coffee Table,L1,Living + Kitchen,pcs,1,799.0,799.0,True,1002
+Furniture,String Shelf,Shelf 80,L1,Bedroom 1 Master,pcs,2,380.0,760.0,True,1012;1013
+Furniture,IKEA Bed,Malm 180,L1,Bedroom 1 Master,pcs,1,649.0,649.0,True,1009
+Furniture,IKEA Bed,Malm 160,L1,Bedroom 2,pcs,1,549.0,549.0,True,1010
+Furniture,IKEA Bed,Malm 140,L1,Bedroom 3,pcs,1,499.0,499.0,True,1011
+Lighting Fixtures,Flos Pendant,Aim 3-Head,L1,Living + Kitchen,pcs,1,1150.0,1150.0,True,1014
+Lighting Fixtures,Flos Spot,Spot Dimmable,L1,Living + Kitchen,pcs,6,140.0,840.0,True,1015;1016;1017;1018;1019;1020
+Lighting Fixtures,Flos Spot,Spot IP44,L1,"Bath 1, Bath 2",pcs,6,120.0,720.0,True,1021;1022;1023;1024;1025;1026
+Lighting Fixtures,Artemide Wall,Tolomeo Micro,L1,Bedroom 1 Master,pcs,2,280.0,560.0,True,1027;1028
+Plumbing Fixtures,Kaldewei Bath,Cayono 170,L1,Bath 1,pcs,1,980.0,980.0,True,1052
+Plumbing Fixtures,Duravit WC,D-Neo Wall WC,L1,"Bath 1, Bath 2",pcs,2,420.0,840.0,True,1048;1053
+Plumbing Fixtures,Hansgrohe Faucet,Talis E 110,L1,"Bath 1, Bath 2",pcs,3,240.0,720.0,True,1050;1051;1055
+Plumbing Fixtures,Hansgrohe Shower,Raindance 240 Set,L1,Bath 2,pcs,1,620.0,620.0,True,1056
+Plumbing Fixtures,Duravit Sink,Maris 86 Inset,L1,Living + Kitchen,pcs,1,540.0,540.0,True,1057
+Plumbing Fixtures,Duravit Sink,D-Neo 600 Double,L1,Bath 1,pcs,1,520.0,520.0,True,1049
+Plumbing Fixtures,Hansgrohe Faucet,Aquno M81,L1,Living + Kitchen,pcs,1,390.0,390.0,True,1058
+Plumbing Fixtures,Duravit Sink,D-Neo 550 Washbasin,L1,Bath 2,pcs,1,310.0,310.0,True,1054

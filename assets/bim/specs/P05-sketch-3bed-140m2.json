@@ -1,0 +1,102 @@
+{
+  "meta": {
+    "code": "P05",
+    "name": "P05 Sketch 3-bed 140m2 — hand-sketch apartment",
+    "type": "apartment-3bed",
+    "units": "mm",
+    "version": "2.0",
+    "description": "11100x12700mm apartment + 2 balconies + stair landing, height 2700mm, L1. Built from hand sketch: 3.7m bays (reception/office/children north, living/hall/master middle, bath-lobby/kitchen south).",
+    "note": "Interpreted dims: bays 3x3700=11100 wide; depths north 5000 / middle 3700 / south 4000 = 12700. Children 3.7x5, master 3.7x3.7, kitchen 3.7x4 per sketch labels. Children door not drawn in sketch: assumed office<->children on W11 (move in Revit if needed). Arch = 1500 wide cased opening hall<->lobby. Balcony parapets 1500 high.",
+    "sketch_mapping": "reception NW / office N / children NE / living W / hall center / master E / bathroom S-middle / kitchen SE / stair landing SW / balcony-NW L-shaped / balcony-E master"
+  },
+  "levels": [
+    {"name": "L1", "elevation_mm": 0}
+  ],
+  "grids": [
+    {"name": "GA", "x1": 0, "y1": -500, "x2": 0, "y2": 13200},
+    {"name": "GB", "x1": 3700, "y1": -500, "x2": 3700, "y2": 13200},
+    {"name": "GC", "x1": 7400, "y1": -500, "x2": 7400, "y2": 13200},
+    {"name": "GD", "x1": 11100, "y1": -500, "x2": 11100, "y2": 13200},
+    {"name": "G1", "x1": -2000, "y1": 0, "x2": 13100, "y2": 0},
+    {"name": "G2", "x1": -2000, "y1": 4000, "x2": 13100, "y2": 4000},
+    {"name": "G3", "x1": -2000, "y1": 7700, "x2": 13100, "y2": 7700},
+    {"name": "G4", "x1": -2000, "y1": 12700, "x2": 13100, "y2": 12700}
+  ],
+  "wall_height_mm": 2700,
+  "walls": [
+    {"id": "W01-south", "level": "L1", "x1": 3700, "y1": 0, "x2": 11100, "y2": 0, "kind": "exterior"},
+    {"id": "W02-living-south", "level": "L1", "x1": 0, "y1": 4000, "x2": 3700, "y2": 4000, "kind": "exterior"},
+    {"id": "W03-west", "level": "L1", "x1": 0, "y1": 4000, "x2": 0, "y2": 12700, "kind": "exterior"},
+    {"id": "W04-north", "level": "L1", "x1": 0, "y1": 12700, "x2": 11100, "y2": 12700, "kind": "exterior"},
+    {"id": "W05-east", "level": "L1", "x1": 11100, "y1": 0, "x2": 11100, "y2": 12700, "kind": "exterior"},
+    {"id": "W06-stair-south", "level": "L1", "x1": 0, "y1": 0, "x2": 3700, "y2": 0, "kind": "exterior"},
+    {"id": "W07-stair-west", "level": "L1", "x1": 0, "y1": 0, "x2": 0, "y2": 4000, "kind": "exterior"},
+    {"id": "W10-vert-west", "level": "L1", "x1": 3700, "y1": 0, "x2": 3700, "y2": 12700, "kind": "interior"},
+    {"id": "W11-vert-east", "level": "L1", "x1": 7400, "y1": 0, "x2": 7400, "y2": 12700, "kind": "interior"},
+    {"id": "W12-horiz-south", "level": "L1", "x1": 3700, "y1": 4000, "x2": 11100, "y2": 4000, "kind": "interior"},
+    {"id": "W13-horiz-north", "level": "L1", "x1": 0, "y1": 7700, "x2": 11100, "y2": 7700, "kind": "interior"},
+    {"id": "W14-bath-north", "level": "L1", "x1": 3700, "y1": 3000, "x2": 7400, "y2": 3000, "kind": "interior"},
+    {"id": "W20-balN-north", "level": "L1", "x1": -1500, "y1": 14200, "x2": 3700, "y2": 14200, "kind": "exterior", "height_mm": 1500},
+    {"id": "W21-balN-west", "level": "L1", "x1": -1500, "y1": 7700, "x2": -1500, "y2": 14200, "kind": "exterior", "height_mm": 1500},
+    {"id": "W22-balN-sstub", "level": "L1", "x1": -1500, "y1": 7700, "x2": 0, "y2": 7700, "kind": "exterior", "height_mm": 1500},
+    {"id": "W23-balE-east", "level": "L1", "x1": 12600, "y1": 4000, "x2": 12600, "y2": 7700, "kind": "exterior", "height_mm": 1500},
+    {"id": "W24-balE-north", "level": "L1", "x1": 11100, "y1": 7700, "x2": 12600, "y2": 7700, "kind": "exterior", "height_mm": 1500},
+    {"id": "W25-balE-south", "level": "L1", "x1": 11100, "y1": 4000, "x2": 12600, "y2": 4000, "kind": "exterior", "height_mm": 1500}
+  ],
+  "rooms": [
+    {"name": "Reception", "number": "101", "level": "L1", "point": [1850, 10200],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "White emulsion", "ceiling": "White plaster"}},
+    {"name": "Office", "number": "102", "level": "L1", "point": [5550, 10200],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "Greige emulsion", "ceiling": "White plaster"}},
+    {"name": "Children", "number": "103", "level": "L1", "point": [9250, 10200],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "Sage emulsion", "ceiling": "White plaster"}},
+    {"name": "Living", "number": "104", "level": "L1", "point": [1850, 5850],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "White emulsion + oak slats", "ceiling": "White plaster"}},
+    {"name": "Hall", "number": "105", "level": "L1", "point": [5550, 5850],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "White emulsion", "ceiling": "White plaster"}},
+    {"name": "Master Bedroom", "number": "106", "level": "L1", "point": [9250, 5850],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "Greige emulsion", "ceiling": "White plaster"}},
+    {"name": "Bathroom", "number": "107", "level": "L1", "point": [5550, 1500],
+     "finishes": {"floor": "Grey porcelain R10", "wall": "White ceramic 300x600", "ceiling": "Moisture plaster"}},
+    {"name": "Kitchen", "number": "108", "level": "L1", "point": [9250, 2000],
+     "finishes": {"floor": "Grey porcelain R10", "wall": "White emulsion + splashback", "ceiling": "White plaster"}},
+    {"name": "Lobby", "number": "109", "level": "L1", "point": [5550, 3500],
+     "finishes": {"floor": "Grey porcelain R10", "wall": "White emulsion", "ceiling": "White plaster"}},
+    {"name": "Balcony NW", "number": "110", "level": "L1", "point": [1850, 13450],
+     "finishes": {"floor": "Outdoor porcelain", "wall": "Facade plaster", "ceiling": "Open to sky"}},
+    {"name": "Balcony E", "number": "111", "level": "L1", "point": [11850, 5850],
+     "finishes": {"floor": "Outdoor porcelain", "wall": "Facade plaster", "ceiling": "Open to sky"}},
+    {"name": "Stair Landing", "number": "112", "level": "L1", "point": [1850, 2000],
+     "finishes": {"floor": "Grey porcelain R10", "wall": "White emulsion", "ceiling": "White plaster"}}
+  ],
+  "doors": [
+    {"wall": "W02-living-south", "offset_mm": 1850, "width_mm": 1000, "type_contains": "Entry|Single"},
+    {"wall": "W13-horiz-north", "offset_mm": 1850, "width_mm": 1500, "type_contains": "Opening|Cased|Double"},
+    {"wall": "W13-horiz-north", "offset_mm": 5550, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W11-vert-east", "offset_mm": 6000, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W11-vert-east", "offset_mm": 3500, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W11-vert-east", "offset_mm": 9500, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W14-bath-north", "offset_mm": 1850, "width_mm": 800, "type_contains": "Single"},
+    {"wall": "W12-horiz-south", "offset_mm": 1850, "width_mm": 1500, "type_contains": "Arch|Opening|Cased"},
+    {"wall": "W05-east", "offset_mm": 5850, "width_mm": 900, "type_contains": "Single|Balcony"},
+    {"wall": "W04-north", "offset_mm": 1850, "width_mm": 1000, "type_contains": "Single|Balcony"}
+  ],
+  "windows": [
+    {"wall": "W04-north", "offset_mm": 5550, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W04-north", "offset_mm": 9250, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W03-west", "offset_mm": 1850, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W03-west", "offset_mm": 6200, "width_mm": 1200, "sill_mm": 800},
+    {"wall": "W05-east", "offset_mm": 10200, "width_mm": 1200, "sill_mm": 800},
+    {"wall": "W05-east", "offset_mm": 2000, "width_mm": 1200, "sill_mm": 800},
+    {"wall": "W01-south", "offset_mm": 1850, "width_mm": 1200, "sill_mm": 800},
+    {"wall": "W01-south", "offset_mm": 5550, "width_mm": 1500, "sill_mm": 800}
+  ],
+  "sheets": [
+    {"number": "ID-101", "name": "P05 - Apartment Furniture Plan", "template": ""},
+    {"number": "ID-501", "name": "P05 - BOQ Schedule", "template": ""}
+  ],
+  "views": [
+    {"name": "P05 - L1 Furniture Plan", "type": "plan", "level": "L1", "template": "Interiors - Furniture"},
+    {"name": "P05 - 3D Overview", "type": "3d", "template": "Interiors - 3D"}
+  ]
+}

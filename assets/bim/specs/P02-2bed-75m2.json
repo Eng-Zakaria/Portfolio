@@ -1,0 +1,92 @@
+{
+  "meta": {
+    "code": "P02",
+    "name": "P02 Family 2-bed 75m2 — enriched apartment",
+    "type": "apartment-2bed",
+    "units": "mm",
+    "version": "2.0",
+    "description": "10200x7200mm, height 2700mm, L1. Enriched v2 of legacy sample_2bed with finishes + full MEP.",
+    "note": "Original demo geometry extended with procurement-ready MEP."
+  },
+  "levels": [
+    {"name": "L1", "elevation_mm": 0}
+  ],
+  "grids": [
+    {"name": "GA", "x1": 0, "y1": -500, "x2": 0, "y2": 7700},
+    {"name": "GB", "x1": 5200, "y1": -500, "x2": 5200, "y2": 7700},
+    {"name": "GC", "x1": 10200, "y1": -500, "x2": 10200, "y2": 7700},
+    {"name": "G1", "x1": -500, "y1": 0, "x2": 10700, "y2": 0},
+    {"name": "G2", "x1": -500, "y1": 7200, "x2": 10700, "y2": 7200}
+  ],
+  "wall_height_mm": 2700,
+  "walls": [
+    {"id": "W1-south", "level": "L1", "x1": 0, "y1": 0, "x2": 10200, "y2": 0, "kind": "exterior"},
+    {"id": "W2-north", "level": "L1", "x1": 0, "y1": 7200, "x2": 10200, "y2": 7200, "kind": "exterior"},
+    {"id": "W3-west", "level": "L1", "x1": 0, "y1": 0, "x2": 0, "y2": 7200, "kind": "exterior"},
+    {"id": "W4-east", "level": "L1", "x1": 10200, "y1": 0, "x2": 10200, "y2": 7200, "kind": "exterior"},
+    {"id": "W5-spine", "level": "L1", "x1": 5200, "y1": 0, "x2": 5200, "y2": 7200, "kind": "interior"},
+    {"id": "W6-div", "level": "L1", "x1": 5200, "y1": 4000, "x2": 10200, "y2": 4000, "kind": "interior"},
+    {"id": "W7-bath", "level": "L1", "x1": 7700, "y1": 0, "x2": 7700, "y2": 4000, "kind": "interior"}
+  ],
+  "rooms": [
+    {"name": "Living + Kitchen", "number": "101", "level": "L1", "point": [2600, 3600],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "White emulsion + oak slats", "ceiling": "White plaster"}},
+    {"name": "Bedroom 1", "number": "102", "level": "L1", "point": [7700, 5600],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "Sage emulsion", "ceiling": "White plaster"}},
+    {"name": "Bedroom 2", "number": "103", "level": "L1", "point": [6450, 2000],
+     "finishes": {"floor": "Oak engineered 15mm", "wall": "Greige emulsion", "ceiling": "White plaster"}},
+    {"name": "Bath", "number": "104", "level": "L1", "point": [8950, 2000],
+     "finishes": {"floor": "Grey porcelain R10", "wall": "White ceramic 300x600", "ceiling": "Moisture plaster"}}
+  ],
+  "doors": [
+    {"wall": "W5-spine", "offset_mm": 3600, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W6-div", "offset_mm": 1500, "width_mm": 900, "type_contains": "Single"},
+    {"wall": "W7-bath", "offset_mm": 1500, "width_mm": 800, "type_contains": "Single"},
+    {"wall": "W1-south", "offset_mm": 2600, "width_mm": 1000, "type_contains": "Entry|Single|Double"}
+  ],
+  "windows": [
+    {"wall": "W2-north", "offset_mm": 2600, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W2-north", "offset_mm": 7700, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W1-south", "offset_mm": 7000, "width_mm": 1500, "sill_mm": 800},
+    {"wall": "W4-east", "offset_mm": 2000, "width_mm": 1200, "sill_mm": 800}
+  ],
+  "electrical": [
+    {"id": "E01", "kind": "switch", "room": "Living + Kitchen", "level": "L1", "wall": "W5-spine", "offset_mm": 3400, "height_mm": 1050, "circuit": "L1-A", "manufacturer": "Jung", "model": "LS990 1-Gang", "price": 45, "qty": 2},
+    {"id": "E02", "kind": "socket", "room": "Living + Kitchen", "level": "L1", "wall": "W3-west", "offset_mm": 3600, "height_mm": 300, "circuit": "L1-B", "manufacturer": "Jung", "model": "LS990 Socket", "price": 38, "qty": 4},
+    {"id": "E03", "kind": "tv", "room": "Living + Kitchen", "level": "L1", "height_mm": 400, "circuit": "L1-B", "manufacturer": "Jung", "model": "TV+SAT Plug", "price": 52, "qty": 1},
+    {"id": "E04", "kind": "socket", "room": "Bedroom 1", "level": "L1", "height_mm": 300, "circuit": "L1-C", "manufacturer": "Jung", "model": "LS990 Socket", "price": 38, "qty": 3},
+    {"id": "E05", "kind": "switch", "room": "Bedroom 2", "level": "L1", "height_mm": 1050, "circuit": "L1-C", "manufacturer": "Jung", "model": "LS990 1-Gang", "price": 45, "qty": 1},
+    {"id": "E06", "kind": "switch", "room": "Bath", "level": "L1", "height_mm": 1050, "circuit": "L1-A", "manufacturer": "Jung", "model": "LS990 1-Gang IP44", "price": 48, "qty": 1},
+    {"id": "E07", "kind": "panel", "room": "Living + Kitchen", "level": "L1", "height_mm": 1500, "circuit": "L1-MAIN", "manufacturer": "Hager", "model": "Volta 18MU", "price": 380, "qty": 1}
+  ],
+  "plumbing": [
+    {"id": "P01", "kind": "wc", "room": "Bath", "level": "L1", "manufacturer": "Duravit", "model": "D-Neo Wall WC", "finish": "White Alpin", "price": 420, "supplier": "Sanitop", "qty": 1},
+    {"id": "P02", "kind": "sink", "room": "Bath", "level": "L1", "manufacturer": "Duravit", "model": "D-Neo 550 Washbasin", "finish": "White Alpin", "price": 310, "supplier": "Sanitop", "qty": 1},
+    {"id": "P03", "kind": "faucet", "room": "Bath", "level": "L1", "manufacturer": "Hansgrohe", "model": "Talis E 110", "finish": "Chrome", "price": 165, "supplier": "Sanitop", "qty": 1},
+    {"id": "P04", "kind": "sink", "room": "Living + Kitchen", "level": "L1", "manufacturer": "Franke", "model": "Maris 86 Inset", "finish": "Stainless", "price": 540, "supplier": "Franke", "qty": 1},
+    {"id": "P05", "kind": "faucet", "room": "Living + Kitchen", "level": "L1", "manufacturer": "Hansgrohe", "model": "Focus M51", "finish": "Chrome", "price": 210, "supplier": "Sanitop", "qty": 1}
+  ],
+  "furniture": [
+    {"family": "Aria Sofa", "type": "Aria 3-Seat", "room": "Living + Kitchen", "level": "L1", "manufacturer": "BoConcept", "model": "Aria 3-Seat", "finish": "Boucle Beige", "price": 1899, "supplier": "BoConcept", "qty": 1},
+    {"family": "Noguchi Table", "type": "Coffee Table", "room": "Living + Kitchen", "level": "L1", "manufacturer": "Vitra", "model": "Coffee Table", "finish": "Walnut", "price": 799, "supplier": "Vitra", "qty": 1},
+    {"family": "IKEA Bed", "type": "Malm 160", "room": "Bedroom 1", "level": "L1", "manufacturer": "IKEA", "model": "Malm 160", "finish": "Oak Veneer", "price": 549, "supplier": "IKEA", "qty": 1},
+    {"family": "IKEA Bed", "type": "Malm 140", "room": "Bedroom 2", "level": "L1", "manufacturer": "IKEA", "model": "Malm 140", "finish": "White", "price": 499, "supplier": "IKEA", "qty": 1},
+    {"family": "String Shelf", "type": "Shelf 80", "room": "Bedroom 1", "level": "L1", "manufacturer": "String", "model": "Shelf 80", "finish": "White Ash", "price": 320, "supplier": "String", "qty": 1},
+    {"family": "Muuto Chair", "type": "Fiber Chair", "room": "Living + Kitchen", "level": "L1", "manufacturer": "Muuto", "model": "Fiber Chair", "finish": "Oak/Beige", "price": 349, "supplier": "Muuto", "qty": 4}
+  ],
+  "lighting": [
+    {"family": "Flos Pendant", "type": "Aim 1-Head", "room": "Living + Kitchen", "level": "L1", "manufacturer": "Flos", "model": "Aim Pendant", "wattage": "12W", "price": 450, "qty": 3},
+    {"family": "Flos Spot", "type": "Spot IP44", "room": "Bath", "level": "L1", "manufacturer": "Flos", "model": "Spot IP44", "wattage": "7W", "price": 120, "qty": 2},
+    {"family": "Artemide Wall", "type": "Tolomeo Micro", "room": "Bedroom 1", "level": "L1", "manufacturer": "Artemide", "model": "Tolomeo Micro", "wattage": "8W", "price": 280, "qty": 2}
+  ],
+  "sheets": [
+    {"number": "ID-101", "name": "P02 - Living Furniture Plan", "template": ""},
+    {"number": "ID-102", "name": "P02 - Bedrooms Furniture Plan", "template": ""},
+    {"number": "ID-501", "name": "P02 - BOQ Schedule", "template": ""}
+  ],
+  "views": [
+    {"name": "P02 - L1 Furniture Plan", "type": "plan", "level": "L1", "template": "Interiors - Furniture"},
+    {"name": "P02 - L1 Reflected Ceiling", "type": "plan", "level": "L1", "template": "Interiors - Lighting"},
+    {"name": "P02 - 3D Overview", "type": "3d", "template": "Interiors - 3D"}
+  ]
+}

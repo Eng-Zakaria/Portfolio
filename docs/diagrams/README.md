@@ -27,6 +27,9 @@ Production-quality SVG architecture diagrams for all portfolio projects, generat
 | Automative Scrapper (Wholesale Leads) | `automative-scrapper.svg` | — |
 | Digital Estates Platform | `digital-estates.svg` | — |
 | AWS Serverless Task Manager | `aws-serverless.svg` | — |
+| Interiors Toolkit (Parametric Revit) | `interiors-toolkit.svg` | — |
+| Estates Data Portfolio | `estates-data-platform.svg` | — |
+| Component Data Pipeline | `component-data-pipeline.svg` | — |
 
 ## Icon Coverage
 

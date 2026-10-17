@@ -1,0 +1,20 @@
+category,family,type,level,rooms,unit,qty,unit_price,total,has_price,element_ids
+Electrical Fixtures,Hager Panel,Volta 12MU,L1,Entry,pcs,1,320.0,320.0,True,1022
+Electrical Fixtures,Jung Switch,LS990 1-Gang,L1,"Entry, Lounge",pcs,2,45.0,90.0,True,1015;1019
+Electrical Fixtures,Jung Socket,LS990 Socket,L1,Sleeping,pcs,2,38.0,76.0,True,1016;1017
+Electrical Fixtures,Jung TV Plug,TV+SAT Plug,L1,Lounge,pcs,1,52.0,52.0,True,1018
+Electrical Fixtures,Jung Switch,LS990 1-Gang IP44,L1,Bath,pcs,1,48.0,48.0,True,1021
+Electrical Fixtures,Jung Socket,LS990 Socket IP44,L1,Bath,pcs,1,44.0,44.0,True,1020
+Furniture,Lounge Chair,Outline High,L1,Lounge,pcs,2,899.0,1798.0,True,1004;1005
+Furniture,King Bed,Lugo 180,L1,Sleeping,pcs,1,1499.0,1499.0,True,1001
+Furniture,Wardrobe,Pax 200x60,L1,Sleeping,pcs,1,680.0,680.0,True,1007
+Furniture,Desk,Desk 120,L1,Lounge,pcs,1,540.0,540.0,True,1006
+Furniture,Nightstand,Cube 40,L1,Sleeping,pcs,2,249.0,498.0,True,1002;1003
+Lighting Fixtures,Flos Pendant,Aim 1-Head,L1,Lounge,pcs,2,450.0,900.0,True,1008;1009
+Lighting Fixtures,Artemide Wall,Tolomeo Micro,L1,Sleeping,pcs,2,280.0,560.0,True,1010;1011
+Lighting Fixtures,Flos Pendant,Aim Mini,L1,Entry,pcs,1,290.0,290.0,True,1014
+Lighting Fixtures,Flos Spot,Spot IP44,L1,Bath,pcs,2,120.0,240.0,True,1012;1013
+Plumbing Fixtures,Duravit WC,D-Neo Wall WC,L1,Bath,pcs,1,420.0,420.0,True,1023
+Plumbing Fixtures,Hansgrohe Shower,Raindance 240 Set,L1,Bath,pcs,1,390.0,390.0,True,1026
+Plumbing Fixtures,Duravit Sink,D-Neo 450 Washbasin,L1,Bath,pcs,1,290.0,290.0,True,1024
+Plumbing Fixtures,Hansgrohe Faucet,Talis E 110 Brass,L1,Bath,pcs,1,245.0,245.0,True,1025

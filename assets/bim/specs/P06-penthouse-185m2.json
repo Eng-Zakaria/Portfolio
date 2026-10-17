@@ -1,0 +1,977 @@
+{
+  "meta": {
+    "code": "P06",
+    "name": "P06 Sky Penthouse 185m2 - L-shape + 50m2 terrace",
+    "type": "penthouse",
+    "units": "mm",
+    "version": "2.0",
+    "description": "14400x9800 main + 14400x3600 south terrace (50m2), height 3000mm, L1. Panoramic sill 300mm glazing, ensuite + family bath, oak chevron + travertine palette.",
+    "note": "Original demo geometry. No third-party plan copied."
+  },
+  "levels": [
+    {
+      "name": "L1",
+      "elevation_mm": 0
+    }
+  ],
+  "grids": [
+    {
+      "name": "GA",
+      "x1": 0,
+      "y1": -4100,
+      "x2": 0,
+      "y2": 10300
+    },
+    {
+      "name": "GB",
+      "x1": 4800,
+      "y1": -4100,
+      "x2": 4800,
+      "y2": 10300
+    },
+    {
+      "name": "GC",
+      "x1": 9600,
+      "y1": -4100,
+      "x2": 9600,
+      "y2": 10300
+    },
+    {
+      "name": "GD",
+      "x1": 14400,
+      "y1": -4100,
+      "x2": 14400,
+      "y2": 10300
+    },
+    {
+      "name": "G0",
+      "x1": -1000,
+      "y1": -3600,
+      "x2": 15400,
+      "y2": -3600
+    },
+    {
+      "name": "G1",
+      "x1": -1000,
+      "y1": 0,
+      "x2": 15400,
+      "y2": 0
+    },
+    {
+      "name": "G2",
+      "x1": -1000,
+      "y1": 6000,
+      "x2": 15400,
+      "y2": 6000
+    },
+    {
+      "name": "G3",
+      "x1": -1000,
+      "y1": 9800,
+      "x2": 15400,
+      "y2": 9800
+    }
+  ],
+  "wall_height_mm": 3000,
+  "walls": [
+    {
+      "id": "W01-south",
+      "level": "L1",
+      "x1": 0,
+      "y1": 0,
+      "x2": 14400,
+      "y2": 0,
+      "kind": "exterior"
+    },
+    {
+      "id": "W02-north",
+      "level": "L1",
+      "x1": 0,
+      "y1": 9800,
+      "x2": 14400,
+      "y2": 9800,
+      "kind": "exterior"
+    },
+    {
+      "id": "W03-west",
+      "level": "L1",
+      "x1": 0,
+      "y1": 0,
+      "x2": 0,
+      "y2": 9800,
+      "kind": "exterior"
+    },
+    {
+      "id": "W04-east",
+      "level": "L1",
+      "x1": 14400,
+      "y1": 0,
+      "x2": 14400,
+      "y2": 9800,
+      "kind": "exterior"
+    },
+    {
+      "id": "W10-vert1",
+      "level": "L1",
+      "x1": 4800,
+      "y1": 0,
+      "x2": 4800,
+      "y2": 9800,
+      "kind": "interior"
+    },
+    {
+      "id": "W11-vert2",
+      "level": "L1",
+      "x1": 9600,
+      "y1": 0,
+      "x2": 9600,
+      "y2": 9800,
+      "kind": "interior"
+    },
+    {
+      "id": "W12-horiz",
+      "level": "L1",
+      "x1": 0,
+      "y1": 6000,
+      "x2": 14400,
+      "y2": 6000,
+      "kind": "interior"
+    },
+    {
+      "id": "W13-lobby",
+      "level": "L1",
+      "x1": 12000,
+      "y1": 0,
+      "x2": 12000,
+      "y2": 6000,
+      "kind": "interior"
+    },
+    {
+      "id": "W14-ensuite",
+      "level": "L1",
+      "x1": 9600,
+      "y1": 8000,
+      "x2": 14400,
+      "y2": 8000,
+      "kind": "interior"
+    },
+    {
+      "id": "T01-terS",
+      "level": "L1",
+      "x1": 0,
+      "y1": -3600,
+      "x2": 14400,
+      "y2": -3600,
+      "kind": "exterior",
+      "height_mm": 1500
+    },
+    {
+      "id": "T02-terW",
+      "level": "L1",
+      "x1": 0,
+      "y1": -3600,
+      "x2": 0,
+      "y2": 0,
+      "kind": "exterior",
+      "height_mm": 1500
+    },
+    {
+      "id": "T03-terE",
+      "level": "L1",
+      "x1": 14400,
+      "y1": -3600,
+      "x2": 14400,
+      "y2": 0,
+      "kind": "exterior",
+      "height_mm": 1500
+    }
+  ],
+  "rooms": [
+    {
+      "name": "Living",
+      "number": "101",
+      "level": "L1",
+      "point": [
+        2400,
+        3000
+      ],
+      "finishes": {
+        "floor": "Oak chevron 15mm",
+        "wall": "White emulsion + fluted oak",
+        "ceiling": "White plaster + cove LED"
+      }
+    },
+    {
+      "name": "Kitchen-Dining",
+      "number": "102",
+      "level": "L1",
+      "point": [
+        7200,
+        3000
+      ],
+      "finishes": {
+        "floor": "Oak chevron 15mm",
+        "wall": "Sage emulsion + stone splashback",
+        "ceiling": "White plaster"
+      }
+    },
+    {
+      "name": "Lobby",
+      "number": "103",
+      "level": "L1",
+      "point": [
+        13200,
+        3000
+      ],
+      "finishes": {
+        "floor": "Travertine porcelain 600x1200",
+        "wall": "Limewash greige",
+        "ceiling": "White plaster"
+      }
+    },
+    {
+      "name": "Bedroom 2",
+      "number": "104",
+      "level": "L1",
+      "point": [
+        2400,
+        7900
+      ],
+      "finishes": {
+        "floor": "Oak engineered 15mm",
+        "wall": "Sage emulsion",
+        "ceiling": "White plaster"
+      }
+    },
+    {
+      "name": "Bedroom 3",
+      "number": "105",
+      "level": "L1",
+      "point": [
+        7200,
+        7000
+      ],
+      "finishes": {
+        "floor": "Oak engineered 15mm",
+        "wall": "Greige emulsion",
+        "ceiling": "White plaster"
+      }
+    },
+    {
+      "name": "Master Suite",
+      "number": "106",
+      "level": "L1",
+      "point": [
+        12000,
+        8900
+      ],
+      "finishes": {
+        "floor": "Oak chevron 15mm",
+        "wall": "Clay limewash",
+        "ceiling": "White plaster + cove"
+      }
+    },
+    {
+      "name": "Ensuite",
+      "number": "107",
+      "level": "L1",
+      "point": [
+        10800,
+        7000
+      ],
+      "finishes": {
+        "floor": "Travertine porcelain",
+        "wall": "Travertine porcelain 600x1200",
+        "ceiling": "Moisture plaster"
+      }
+    },
+    {
+      "name": "Family Bath",
+      "number": "108",
+      "level": "L1",
+      "point": [
+        13200,
+        7000
+      ],
+      "finishes": {
+        "floor": "Grey porcelain R10",
+        "wall": "Sage ceramic 300x600",
+        "ceiling": "Moisture plaster"
+      }
+    },
+    {
+      "name": "Terrace",
+      "number": "109",
+      "level": "L1",
+      "point": [
+        7200,
+        -1800
+      ],
+      "finishes": {
+        "floor": "Outdoor porcelain 600x600",
+        "wall": "Facade plaster",
+        "ceiling": "Open to sky"
+      }
+    }
+  ],
+  "doors": [
+    {
+      "wall": "W01-south",
+      "offset_mm": 2400,
+      "width_mm": 1800,
+      "type_contains": "Sliding|Terrace"
+    },
+    {
+      "wall": "W01-south",
+      "offset_mm": 7200,
+      "width_mm": 1800,
+      "type_contains": "Sliding|Terrace"
+    },
+    {
+      "wall": "W01-south",
+      "offset_mm": 13200,
+      "width_mm": 1000,
+      "type_contains": "Entry|Single"
+    },
+    {
+      "wall": "W10-vert1",
+      "offset_mm": 3000,
+      "width_mm": 1500,
+      "type_contains": "Cased|Opening"
+    },
+    {
+      "wall": "W11-vert2",
+      "offset_mm": 3000,
+      "width_mm": 900,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W13-lobby",
+      "offset_mm": 3000,
+      "width_mm": 900,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 2400,
+      "width_mm": 900,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 7200,
+      "width_mm": 900,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W12-horiz",
+      "offset_mm": 10800,
+      "width_mm": 900,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W14-ensuite",
+      "offset_mm": 1200,
+      "width_mm": 800,
+      "type_contains": "Single"
+    },
+    {
+      "wall": "W14-ensuite",
+      "offset_mm": 3600,
+      "width_mm": 800,
+      "type_contains": "Single"
+    }
+  ],
+  "windows": [
+    {
+      "wall": "W02-north",
+      "offset_mm": 2400,
+      "width_mm": 2400,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W02-north",
+      "offset_mm": 7200,
+      "width_mm": 2400,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W02-north",
+      "offset_mm": 12000,
+      "width_mm": 2400,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W03-west",
+      "offset_mm": 3000,
+      "width_mm": 1800,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W03-west",
+      "offset_mm": 7900,
+      "width_mm": 1800,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W04-east",
+      "offset_mm": 3000,
+      "width_mm": 1800,
+      "sill_mm": 300
+    },
+    {
+      "wall": "W04-east",
+      "offset_mm": 8900,
+      "width_mm": 1800,
+      "sill_mm": 300
+    }
+  ],
+  "electrical": [
+    {
+      "id": "E01",
+      "kind": "switch",
+      "room": "Living",
+      "level": "L1",
+      "wall": "W10-vert1",
+      "offset_mm": 2800,
+      "height_mm": 1050,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "LS990 2-Gang",
+      "price": 58,
+      "qty": 3
+    },
+    {
+      "id": "E02",
+      "kind": "socket",
+      "room": "Living",
+      "level": "L1",
+      "wall": "W03-west",
+      "offset_mm": 3000,
+      "height_mm": 300,
+      "circuit": "L1-B",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 6
+    },
+    {
+      "id": "E03",
+      "kind": "tv",
+      "room": "Living",
+      "level": "L1",
+      "height_mm": 400,
+      "circuit": "L1-B",
+      "manufacturer": "Jung",
+      "model": "TV+SAT Plug",
+      "price": 52,
+      "qty": 1
+    },
+    {
+      "id": "E04",
+      "kind": "socket",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-K",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 6
+    },
+    {
+      "id": "E05",
+      "kind": "switch",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-K",
+      "manufacturer": "Jung",
+      "model": "LS990 2-Gang",
+      "price": 58,
+      "qty": 2
+    },
+    {
+      "id": "E06",
+      "kind": "socket",
+      "room": "Master Suite",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 4
+    },
+    {
+      "id": "E07",
+      "kind": "switch",
+      "room": "Master Suite",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "LS990 1-Gang",
+      "price": 45,
+      "qty": 2
+    },
+    {
+      "id": "E08",
+      "kind": "switch",
+      "room": "Bedroom 2",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-D",
+      "manufacturer": "Jung",
+      "model": "LS990 1-Gang",
+      "price": 45,
+      "qty": 1
+    },
+    {
+      "id": "E09",
+      "kind": "socket",
+      "room": "Bedroom 3",
+      "level": "L1",
+      "height_mm": 300,
+      "circuit": "L1-D",
+      "manufacturer": "Jung",
+      "model": "LS990 Socket",
+      "price": 38,
+      "qty": 3
+    },
+    {
+      "id": "E10",
+      "kind": "switch",
+      "room": "Ensuite",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "LS990 1-Gang IP44",
+      "price": 48,
+      "qty": 1
+    },
+    {
+      "id": "E11",
+      "kind": "switch",
+      "room": "Family Bath",
+      "level": "L1",
+      "height_mm": 1050,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "LS990 1-Gang IP44",
+      "price": 48,
+      "qty": 1
+    },
+    {
+      "id": "E12",
+      "kind": "panel",
+      "room": "Lobby",
+      "level": "L1",
+      "height_mm": 1500,
+      "circuit": "L1-MAIN",
+      "manufacturer": "Hager",
+      "model": "Volta 24MU",
+      "price": 450,
+      "qty": 1
+    },
+    {
+      "id": "E13",
+      "kind": "thermostat",
+      "room": "Living",
+      "level": "L1",
+      "height_mm": 1400,
+      "circuit": "L1-A",
+      "manufacturer": "Jung",
+      "model": "Room Thermostat",
+      "price": 120,
+      "qty": 1
+    },
+    {
+      "id": "E14",
+      "kind": "thermostat",
+      "room": "Master Suite",
+      "level": "L1",
+      "height_mm": 1400,
+      "circuit": "L1-C",
+      "manufacturer": "Jung",
+      "model": "Room Thermostat",
+      "price": 120,
+      "qty": 1
+    }
+  ],
+  "plumbing": [
+    {
+      "id": "P01",
+      "kind": "wc",
+      "room": "Ensuite",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo Wall WC",
+      "finish": "White Alpin",
+      "price": 420,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P02",
+      "kind": "sink",
+      "room": "Ensuite",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo 600 Double",
+      "finish": "White Alpin",
+      "price": 520,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P03",
+      "kind": "faucet",
+      "room": "Ensuite",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Talis E 110",
+      "finish": "Brushed Bronze",
+      "price": 240,
+      "supplier": "Sanitop",
+      "qty": 2
+    },
+    {
+      "id": "P04",
+      "kind": "shower",
+      "room": "Ensuite",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Raindance 240 Set",
+      "finish": "Brushed Bronze",
+      "price": 720,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P05",
+      "kind": "wc",
+      "room": "Family Bath",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo Wall WC",
+      "finish": "White Alpin",
+      "price": 420,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P06",
+      "kind": "sink",
+      "room": "Family Bath",
+      "level": "L1",
+      "manufacturer": "Duravit",
+      "model": "D-Neo 550 Washbasin",
+      "finish": "White Alpin",
+      "price": 310,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P07",
+      "kind": "faucet",
+      "room": "Family Bath",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Talis E 110",
+      "finish": "Chrome",
+      "price": 165,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P08",
+      "kind": "bathtub",
+      "room": "Family Bath",
+      "level": "L1",
+      "manufacturer": "Kaldewei",
+      "model": "Cayono 170",
+      "finish": "White Alpin",
+      "price": 980,
+      "supplier": "Kaldewei",
+      "qty": 1
+    },
+    {
+      "id": "P09",
+      "kind": "sink",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "manufacturer": "Franke",
+      "model": "Maris 86 Inset",
+      "finish": "Stainless",
+      "price": 540,
+      "supplier": "Franke",
+      "qty": 1
+    },
+    {
+      "id": "P10",
+      "kind": "faucet",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "manufacturer": "Hansgrohe",
+      "model": "Aquno M81",
+      "finish": "Chrome",
+      "price": 390,
+      "supplier": "Sanitop",
+      "qty": 1
+    },
+    {
+      "id": "P11",
+      "kind": "sink",
+      "room": "Terrace",
+      "level": "L1",
+      "manufacturer": "Franke",
+      "model": "Outdoor Sink",
+      "finish": "Stainless",
+      "price": 480,
+      "supplier": "Franke",
+      "qty": 1
+    }
+  ],
+  "furniture": [
+    {
+      "family": "Aria Sofa",
+      "type": "Aria 3-Seat",
+      "room": "Living",
+      "level": "L1",
+      "manufacturer": "BoConcept",
+      "model": "Aria 3-Seat",
+      "finish": "Boucle Ivory",
+      "price": 2199,
+      "supplier": "BoConcept",
+      "qty": 1
+    },
+    {
+      "family": "Noguchi Table",
+      "type": "Coffee Table",
+      "room": "Living",
+      "level": "L1",
+      "manufacturer": "Vitra",
+      "model": "Coffee Table",
+      "finish": "Walnut",
+      "price": 799,
+      "supplier": "Vitra",
+      "qty": 1
+    },
+    {
+      "family": "Muuto Chair",
+      "type": "Fiber Chair",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "manufacturer": "Muuto",
+      "model": "Fiber Chair",
+      "finish": "Oak/Beige",
+      "price": 349,
+      "supplier": "Muuto",
+      "qty": 6
+    },
+    {
+      "family": "BoConcept Table",
+      "type": "Dining 200",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "manufacturer": "BoConcept",
+      "model": "Dining 200 Oak",
+      "finish": "Oak",
+      "price": 1299,
+      "supplier": "BoConcept",
+      "qty": 1
+    },
+    {
+      "family": "IKEA Bed",
+      "type": "Malm 180",
+      "room": "Master Suite",
+      "level": "L1",
+      "manufacturer": "IKEA",
+      "model": "Malm 180",
+      "finish": "Oak Veneer",
+      "price": 649,
+      "supplier": "IKEA",
+      "qty": 1
+    },
+    {
+      "family": "IKEA Bed",
+      "type": "Malm 160",
+      "room": "Bedroom 2",
+      "level": "L1",
+      "manufacturer": "IKEA",
+      "model": "Malm 160",
+      "finish": "Oak Veneer",
+      "price": 549,
+      "supplier": "IKEA",
+      "qty": 1
+    },
+    {
+      "family": "IKEA Bed",
+      "type": "Malm 140",
+      "room": "Bedroom 3",
+      "level": "L1",
+      "manufacturer": "IKEA",
+      "model": "Malm 140",
+      "finish": "White",
+      "price": 499,
+      "supplier": "IKEA",
+      "qty": 1
+    },
+    {
+      "family": "String Shelf",
+      "type": "Shelf 80",
+      "room": "Master Suite",
+      "level": "L1",
+      "manufacturer": "String",
+      "model": "Shelf 80",
+      "finish": "Walnut",
+      "price": 380,
+      "supplier": "String",
+      "qty": 2
+    },
+    {
+      "family": "Outdoor Lounge",
+      "type": "Terrace Set",
+      "room": "Terrace",
+      "level": "L1",
+      "manufacturer": "Kettal",
+      "model": "Terrace Lounge",
+      "finish": "Teak/Grey",
+      "price": 2499,
+      "supplier": "Kettal",
+      "qty": 1
+    }
+  ],
+  "lighting": [
+    {
+      "family": "Flos Pendant",
+      "type": "Aim 3-Head",
+      "room": "Living",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Aim 3-Head",
+      "wattage": "36W",
+      "price": 1150,
+      "qty": 1
+    },
+    {
+      "family": "Flos Spot",
+      "type": "Spot Dimmable",
+      "room": "Living",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Spot Dimmable",
+      "wattage": "9W",
+      "price": 140,
+      "qty": 6
+    },
+    {
+      "family": "Flos Linear",
+      "type": "Kitchen Linear 180",
+      "room": "Kitchen-Dining",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Linear 180",
+      "wattage": "28W",
+      "price": 620,
+      "qty": 2
+    },
+    {
+      "family": "Flos Spot",
+      "type": "Spot IP44",
+      "room": "Ensuite",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Spot IP44",
+      "wattage": "7W",
+      "price": 120,
+      "qty": 4
+    },
+    {
+      "family": "Flos Spot",
+      "type": "Spot IP44",
+      "room": "Family Bath",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Spot IP44",
+      "wattage": "7W",
+      "price": 120,
+      "qty": 4
+    },
+    {
+      "family": "Artemide Wall",
+      "type": "Tolomeo Micro",
+      "room": "Master Suite",
+      "level": "L1",
+      "manufacturer": "Artemide",
+      "model": "Tolomeo Micro",
+      "wattage": "8W",
+      "price": 280,
+      "qty": 2
+    },
+    {
+      "family": "Flos Outdoor",
+      "type": "Wall Spot Outdoor",
+      "room": "Terrace",
+      "level": "L1",
+      "manufacturer": "Flos",
+      "model": "Outdoor Spot",
+      "wattage": "9W",
+      "price": 180,
+      "qty": 4
+    }
+  ],
+  "sheets": [
+    {
+      "number": "ID-101",
+      "name": "P06 - Penthouse Furniture Plan",
+      "template": ""
+    },
+    {
+      "number": "ID-102",
+      "name": "P06 - Bedrooms + Baths Plan",
+      "template": ""
+    },
+    {
+      "number": "ID-201",
+      "name": "P06 - Lighting + Electrical",
+      "template": ""
+    },
+    {
+      "number": "ID-301",
+      "name": "P06 - Terrace + Facade",
+      "template": ""
+    },
+    {
+      "number": "ID-501",
+      "name": "P06 - BOQ Schedule",
+      "template": ""
+    }
+  ],
+  "views": [
+    {
+      "name": "P06 - L1 Furniture Plan",
+      "type": "plan",
+      "level": "L1",
+      "template": "Interiors - Furniture"
+    },
+    {
+      "name": "P06 - L1 Lighting Plan",
+      "type": "plan",
+      "level": "L1",
+      "template": "Interiors - Lighting"
+    },
+    {
+      "name": "P06 - South Elevation Terrace",
+      "type": "elevation",
+      "template": "Interiors - Elevation"
+    },
+    {
+      "name": "P06 - 3D Penthouse",
+      "type": "3d",
+      "template": "Interiors - 3D"
+    }
+  ]
+}

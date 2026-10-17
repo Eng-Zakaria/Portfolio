@@ -1,0 +1,25 @@
+category,family,type,level,rooms,unit,qty,unit_price,total,has_price,element_ids
+Electrical Fixtures,Jung Socket,LS990 Socket,L1,"Kitchen-Breakout, Meeting Large, Meeting Small, Open Workspace",pcs,23,38.0,874.0,True,1067;1068;1069;1070;1071;1072;1073;1074;1075;1076;1077;1078;1085;1086;1087;1088;1089;1090;1091;1098;1099;1100;1101
+Electrical Fixtures,Hager Panel,Volta 36MU,L1,WC Lobby,pcs,1,620.0,620.0,True,1102
+Electrical Fixtures,Steinel Sensor,Presence Sensor,L1,Open Workspace,pcs,4,95.0,380.0,True,1092;1093;1094;1095
+Electrical Fixtures,Jung Thermostat,Room Thermostat,L1,Open Workspace,pcs,2,120.0,240.0,True,1103;1104
+Electrical Fixtures,Jung Switch,LS990 2-Gang,L1,Open Workspace,pcs,4,58.0,232.0,True,1079;1080;1081;1082
+Electrical Fixtures,Jung TV Plug,TV+SAT Plug,L1,Meeting Large,pcs,2,52.0,104.0,True,1083;1084
+Electrical Fixtures,Jung Switch,LS990 1-Gang IP44,L1,Kitchen-Breakout,pcs,2,48.0,96.0,True,1096;1097
+Furniture,Vitra Desk,Workstation 160,L1,Open Workspace,pcs,12,890.0,10680.0,True,1001;1002;1003;1004;1005;1006;1007;1008;1009;1010;1011;1012
+Furniture,Vitra Chair,Task Chair,L1,Open Workspace,pcs,12,420.0,5040.0,True,1013;1014;1015;1016;1017;1018;1019;1020;1021;1022;1023;1024
+Furniture,Muuto Chair,Fiber Chair,L1,"Meeting Large, Meeting Small",pcs,12,349.0,4188.0,True,1026;1027;1028;1029;1030;1031;1032;1033;1035;1036;1037;1038
+Furniture,Hay Sofa,Breakout 2-Seat,L1,Kitchen-Breakout,pcs,2,1190.0,2380.0,True,1039;1040
+Furniture,Muuto Table,Meeting 240,L1,Meeting Large,pcs,1,1890.0,1890.0,True,1025
+Furniture,Muuto Table,Meeting 140,L1,Meeting Small,pcs,1,990.0,990.0,True,1034
+Furniture,String Shelf,Shelf 80,L1,Reception Lobby,pcs,2,320.0,640.0,True,1041;1042
+Lighting Fixtures,Artemide Linear,Linear 240 Office,L1,Open Workspace,pcs,10,480.0,4800.0,True,1043;1044;1045;1046;1047;1048;1049;1050;1051;1052
+Lighting Fixtures,Artemide Linear,Linear 140 Meet,L1,"Meeting Large, Meeting Small",pcs,3,390.0,1170.0,True,1054;1055;1056
+Lighting Fixtures,Flos Pendant,Aim 3-Head,L1,Reception Lobby,pcs,1,1150.0,1150.0,True,1053
+Lighting Fixtures,Flos Spot,Spot Dimmable,L1,Kitchen-Breakout,pcs,6,140.0,840.0,True,1057;1058;1059;1060;1061;1062
+Lighting Fixtures,Flos Spot,Spot IP44,L1,WC Lobby,pcs,4,120.0,480.0,True,1063;1064;1065;1066
+Plumbing Fixtures,Duravit WC,D-Neo Wall WC,L1,WC Lobby,pcs,2,420.0,840.0,True,1105;1106
+Plumbing Fixtures,Duravit Sink,D-Neo 550 Washbasin,L1,WC Lobby,pcs,2,310.0,620.0,True,1107;1108
+Plumbing Fixtures,Duravit Sink,Maris 86 Inset,L1,Kitchen-Breakout,pcs,1,540.0,540.0,True,1111
+Plumbing Fixtures,Hansgrohe Faucet,Focus M51,L1,Kitchen-Breakout,pcs,2,210.0,420.0,True,1112;1113
+Plumbing Fixtures,Hansgrohe Faucet,Talis E 110,L1,WC Lobby,pcs,2,165.0,330.0,True,1109;1110

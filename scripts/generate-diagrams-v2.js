@@ -50,6 +50,7 @@ const ICON_REGISTRY = {
   'google-cloud': 'siGoogle', slack: 'siSlackware', email: 'siGmail',
   databricks: 'siDatabricks', snowflake: 'siSnowflake', telegram: 'siTelegram',
   'apache-hadoop': 'siApachehadoop', celery: 'siCelery',
+  autodesk: 'siAutodesk', qgis: 'siQgis', osm: 'siOpenstreetmap',
 };
 
 const MONOGRAMS = {
@@ -61,6 +62,9 @@ const MONOGRAMS = {
   dbt: { t: 'dbt', c: '#f97316' }, s3: { t: 'S3', c: '#f59e0b' },
   flume: { t: 'Fl', c: '#2dd4bf' }, parquet: { t: 'Pq', c: '#93c5fd' },
   debezium: { t: 'CDC', c: '#34d399' }, bitcoin: { t: '₿', c: '#f7931a' },
+  csharp: { t: 'C#', c: '#a78bfa' }, ifc: { t: 'IFC', c: '#38bdf8' },
+  sqlfluff: { t: 'SF', c: '#4b8bbe' }, mypy: { t: 'MP', c: '#60a5fa' },
+  pbi: { t: 'PBI', c: '#facc15' },
   java: { t: 'Jv', c: '#f87171' }, kong: { t: 'Kg', c: '#4ade80' },
   api: { t: 'API', c: '#60a5fa' }, lambda: { t: 'λ', c: '#fbbf24' },
   dynamodb: { t: 'DDB', c: '#38bdf8' }, cloudfront: { t: 'CF', c: '#a78bfa' },
@@ -1191,6 +1195,150 @@ const DIAGRAMS = [
     { from: 'cdk', to: 'ddb', label: 'provision' },
     { from: 'pipe', to: 'cdk', label: 'deliver' },
     { from: 'lmb', to: 'cw', label: 'logs' },
+  ],
+},
+{
+  file: 'interiors-toolkit.svg',
+  title: 'Interiors Toolkit — Parametric Revit Generation',
+  subtitle: 'Spec → native .RVT → IFC4 + priced BOQ, repeatable in batch',
+  metrics: ['10 native .RVT', '$156,733 BOQ', '0 audit errors'],
+  lanes: [
+    { title: 'SPEC', layer: 'source', nodes: [
+      { id: 'spec', label: 'Project Specs', sub: 'P01–P10', icon: 'json' },
+      { id: 'params', label: 'MEP + Furniture', sub: 'quantities', icon: 'json' },
+    ]},
+    { title: 'BUILD', layer: 'processing', nodes: [
+      { id: 'pyrevit', label: 'pyRevit Script', sub: 'IronPython', icon: 'python' },
+      { id: 'batch', label: 'Interiors.Batch', sub: 'C# net48', icon: 'csharp' },
+    ]},
+    { title: 'MODEL', layer: 'ml', nodes: [
+      { id: 'revit', label: 'Revit 2026', sub: 'TransactionGroup', icon: 'autodesk' },
+    ]},
+    { title: 'EXPORT', layer: 'storage', nodes: [
+      { id: 'rvt', label: 'Native .RVT', sub: '10 projects', icon: 'autodesk' },
+      { id: 'ifc', label: 'IFC4 Backup', sub: 'ifcopenshell', icon: 'ifc' },
+      { id: 'png', label: 'Plan + 3D Renders', icon: 'json' },
+    ]},
+    { title: 'QUANTIFY', layer: 'processing', nodes: [
+      { id: 'boq', label: 'Priced BOQ', sub: '$156,733', icon: 'python' },
+      { id: 'csv', label: 'Power BI CSV', icon: 'pbi' },
+    ]},
+    { title: 'VERIFY', layer: 'monitoring', nodes: [
+      { id: 'audit', label: 'Schema v2 Audit', sub: '0 errors', icon: 'python' },
+      { id: 'ci', label: 'pytest + CI', sub: '36 test files', icon: 'github-actions' },
+    ]},
+  ],
+  edges: [
+    { from: 'spec', to: 'pyrevit', label: 'build' },
+    { from: 'params', to: 'pyrevit' },
+    { from: 'spec', to: 'batch', label: 'PROJECT_JSON' },
+    { from: 'pyrevit', to: 'revit', label: 'levels→sheets' },
+    { from: 'batch', to: 'revit', label: 'headless' },
+    { from: 'revit', to: 'rvt' }, { from: 'revit', to: 'ifc' },
+    { from: 'revit', to: 'png' }, { from: 'revit', to: 'boq' },
+    { from: 'boq', to: 'csv', label: 'export' },
+    { from: 'rvt', to: 'audit', label: 'check' },
+    { from: 'audit', to: 'ci', label: 'gate' },
+  ],
+},
+{
+  file: 'estates-data-platform.svg',
+  title: 'Estates Data Portfolio — Governed Platform',
+  subtitle: 'Synthetic sources → dbt contracts → space, carbon, spatial marts',
+  metrics: ['196 dbt tests', '21 contracts', '8/8 zero-loss'],
+  lanes: [
+    { title: 'SYNTHESIZE', layer: 'source', nodes: [
+      { id: 'synth', label: 'campus_synth', sub: '96% cov · 20 tests', icon: 'python' },
+      { id: 'truth', label: 'Ground Truth', icon: 'json' },
+      { id: 'osm', label: 'OSM Footprints', icon: 'osm' },
+    ]},
+    { title: 'LAND', layer: 'ingestion', nodes: [
+      { id: 'lake', label: 'Campus Lakehouse', sub: '8/8 zero-loss', icon: 'delta' },
+    ]},
+    { title: 'MODEL', layer: 'processing', nodes: [
+      { id: 'dbt', label: 'dbt Gold Marts', sub: '196 pass / 0 err', icon: 'dbt' },
+      { id: 'contract', label: 'Contracts', sub: '21 enforced', icon: 'dbt' },
+    ]},
+    { title: 'ANALYTICS', layer: 'ml', nodes: [
+      { id: 'space', label: 'Space Utilisation', sub: 'freq × occupancy', icon: 'pandas' },
+      { id: 'carbon', label: 'Net Zero Carbon', sub: 'baseload 48.8%', icon: 'python' },
+      { id: 'spatial', label: 'Spatial', sub: 'isochrones + heat', icon: 'qgis' },
+    ]},
+    { title: 'SERVE', layer: 'serving', nodes: [
+      { id: 'bi', label: 'Power BI Handoff', icon: 'microsoft' },
+      { id: 'gis', label: 'GIS Exports', sub: 'gpkg/geojson', icon: 'qgis' },
+    ]},
+    { title: 'CI GATE', layer: 'orchestration', nodes: [
+      { id: 'lint', label: 'ruff + mypy', icon: 'mypy' },
+      { id: 'pytest', label: 'pytest', icon: 'python' },
+      { id: 'dq', label: 'DQ Gate', icon: 'sqlfluff' },
+      { id: 'wf', label: 'GitHub Actions', sub: 'ci/nightly/sec', icon: 'github-actions' },
+    ]},
+  ],
+  edges: [
+    { from: 'synth', to: 'lake' }, { from: 'osm', to: 'lake' },
+    { from: 'lake', to: 'truth', label: 'reconcile' },
+    { from: 'lake', to: 'dbt', label: 'transform' },
+    { from: 'dbt', to: 'contract', label: 'enforce' },
+    { from: 'dbt', to: 'space' }, { from: 'dbt', to: 'carbon' },
+    { from: 'dbt', to: 'spatial' },
+    { from: 'space', to: 'bi' }, { from: 'carbon', to: 'bi' },
+    { from: 'spatial', to: 'gis' },
+    { from: 'lint', to: 'pytest', label: 'then' },
+    { from: 'pytest', to: 'dbt', label: 'then' },
+    { from: 'dq', to: 'wf', label: 'gate' },
+  ],
+},
+{
+  file: 'component-data-pipeline.svg',
+  title: 'Component Data Pipeline — Config-Driven Ingestion',
+  subtitle: 'YAML sources → drift gate → bronze → dimensional warehouse',
+  metrics: ['3 sources', 'schema-drift gate', 'Airflow DAG'],
+  lanes: [
+    { title: 'CONFIG', layer: 'source', nodes: [
+      { id: 'yaml', label: 'Source YAML', sub: 'selectors + field map', icon: 'json' },
+    ]},
+    { title: 'SOURCES', layer: 'source', nodes: [
+      { id: 'sf', label: 'SparkFun', sub: 'HTML', icon: 'python' },
+      { id: 'ti', label: 'Texas Instruments', sub: 'HTML', icon: 'python' },
+      { id: 'mouser', label: 'Mouser API', sub: 'public + ToS-safe', icon: 'python' },
+    ]},
+    { title: 'EXTRACT', layer: 'processing', nodes: [
+      { id: 'scrape', label: 'Config-Driven Scraper', icon: 'python' },
+      { id: 'client', label: 'API Client', icon: 'python' },
+    ]},
+    { title: 'GATE', layer: 'monitoring', nodes: [
+      { id: 'drift', label: 'Schema-Drift Gate', sub: 'fails loudly', icon: 'python' },
+      { id: 'robots', label: 'robots.txt + Rate', sub: 'polite by default', icon: 'python' },
+    ]},
+    { title: 'LAND', layer: 'storage', nodes: [
+      { id: 'bronze', label: 'Bronze JSONL', sub: 'S3 prefix in prod', icon: 'json' },
+    ]},
+    { title: 'TRANSFORM', layer: 'processing', nodes: [
+      { id: 'clean', label: 'Clean + Dedupe', icon: 'pandas' },
+      { id: 'dim', label: 'Silver / Gold', sub: 'dimensional', icon: 'postgresql' },
+    ]},
+    { title: 'ORCHESTRATE', layer: 'orchestration', nodes: [
+      { id: 'air', label: 'Airflow DAG', icon: 'apache-airflow' },
+      { id: 'cli', label: 'cdp CLI', sub: 'doctor · run · status', icon: 'python' },
+    ]},
+    { title: 'SERVE', layer: 'serving', nodes: [
+      { id: 'api', label: 'Analytics API', sub: 'roadmap', icon: 'api' },
+    ]},
+  ],
+  edges: [
+    { from: 'yaml', to: 'scrape', label: 'rules' },
+    { from: 'sf', to: 'scrape' }, { from: 'ti', to: 'scrape' },
+    { from: 'mouser', to: 'client' },
+    { from: 'scrape', to: 'drift', label: 'raw' },
+    { from: 'client', to: 'drift' },
+    { from: 'drift', to: 'bronze', label: 'pass' },
+    { from: 'robots', to: 'scrape', label: 'policy' },
+    { from: 'bronze', to: 'clean' },
+    { from: 'clean', to: 'dim' },
+    { from: 'dim', to: 'api', label: 'planned' },
+    { from: 'air', to: 'scrape', label: 'schedule' },
+    { from: 'cli', to: 'air', label: 'trigger' },
   ],
 },
 //__MORE__
