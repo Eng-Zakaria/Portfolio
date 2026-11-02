@@ -3,7 +3,6 @@
 (function () {
   var root = document.documentElement;
   var MODES = ['light', 'dark'];
-  var LABELS = { light: 'Front / Back · Light', dark: 'Front / Back · Dark' };
   var BROWSER = { light: '#f1eee6', dark: '#131316' };
 
   function currentMode() {
@@ -15,21 +14,21 @@
     var word = mode === 'dark' ? 'Dark' : 'Light';
     document.querySelectorAll('#theme-toggle, #themeBtn, #themeToggle, #t').forEach(function (button) {
       if (button.id === 'theme-toggle') {
-        button.innerHTML = '<span aria-hidden="true">' + icon + '</span> <span>Front / Back · ' + word + '</span>';
+        button.innerHTML = '<span aria-hidden="true">' + icon + '</span> <span>' + word + '</span>';
       } else if (button.classList && button.classList.contains('icon-btn')) {
         button.textContent = icon;
       } else {
         button.innerHTML = '<span aria-hidden="true">' + icon + '</span>';
       }
-      button.setAttribute('aria-label', 'Front / Back theme in ' + mode + ' mode. Activate to switch to ' + (mode === 'dark' ? 'light' : 'dark') + '.');
-      button.title = 'Front / Back · ' + word + ' — click to flip to ' + (mode === 'dark' ? 'Light' : 'Dark');
+      button.setAttribute('aria-label', 'Currently in ' + mode + ' mode. Activate to switch to ' + (mode === 'dark' ? 'light' : 'dark') + ' mode.');
+      button.title = word + ' mode — click to flip to ' + (mode === 'dark' ? 'Light' : 'Dark');
     });
 
     document.querySelectorAll('[data-theme-choice]').forEach(function (button) {
       button.setAttribute('aria-pressed', String(button.getAttribute('data-theme-choice') === mode));
     });
     var themeName = document.getElementById('sysTheme');
-    if (themeName) themeName.textContent = LABELS[mode];
+    if (themeName) themeName.textContent = word + ' mode';
   }
 
   function applyMode(mode, persist) {

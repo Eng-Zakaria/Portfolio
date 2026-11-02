@@ -51,7 +51,7 @@ img, svg { max-width: 100%; }
 .hood-front, .hood-back { position: relative; display: flex; min-width: 0; flex-direction: column; justify-content: center; }
 .hood-front { padding: clamp(2rem, 5vw, 5.4rem) clamp(5rem, 9vw, 8rem) clamp(2rem, 4vw, 4rem) clamp(2.1rem, 6vw, 6.5rem); background: var(--bg); color: var(--text); }
 .hood-back { padding: clamp(2rem, 5vw, 5.4rem) clamp(2.1rem, 6vw, 6.5rem) clamp(2rem, 4vw, 4rem) clamp(5rem, 9vw, 8rem); background: var(--work-bg); color: var(--work-ink); }
-.hood-kicker, .hood-role, .hood-section-index, .hood-console-top, .hood-console-foot, .hood-theme-picker > span, .hood-project-instruction, .hood-scroll, .hood-proofline, .hood-back-doodle, .hood-data-doodle { font-family: var(--font-mono); }
+.hood-kicker, .hood-role, .hood-section-index, .hood-console-top, .hood-console-foot, .hood-project-instruction, .hood-scroll, .hood-proofline, .hood-back-doodle, .hood-data-doodle { font-family: var(--font-mono); }
 .hood-kicker { display: flex; align-items: center; gap: 9px; margin-bottom: 24px; color: var(--text-secondary); font-size: .67rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
 .hood-back .hood-kicker { color: #b6afa3; }
 .hood-led { width: 8px; height: 8px; border-radius: 50%; background: #1c9b69; box-shadow: 0 0 0 4px rgba(28,155,105,.12); }
@@ -76,9 +76,6 @@ img, svg { max-width: 100%; }
 .hood-micro-stats div:last-child { border: 0; }
 .hood-micro-stats b { display: block; font: 700 1.13rem/1 var(--font-display); }
 .hood-micro-stats span { display: block; margin-top: 6px; color: var(--muted); font: 500 .57rem/1.2 var(--font-mono); letter-spacing: .04em; text-transform: uppercase; }
-.hood-theme-picker { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 17px; }
-.hood-theme-picker > span { margin-right: 4px; color: var(--muted); font-size: .57rem; letter-spacing: .1em; }
-.hood-theme-picker .theme-choice { gap: 5px; padding: 5px 7px; border-radius: 0; font: 500 .6rem/1 var(--font-mono); }
 .hood-data-doodle { position: absolute; right: 8%; bottom: 4%; width: 42%; max-height: 80px; fill: none; stroke: var(--accent); stroke-width: 1.4; opacity: .26; }
 .hood-data-doodle circle { fill: var(--bg); stroke-width: 2; }
 .hood-back-doodle { position: absolute; right: 6%; bottom: 4%; width: 64%; max-height: 120px; fill: none; stroke: #f0a52f; stroke-width: 1.1; opacity: .2; pointer-events: none; }
@@ -317,9 +314,6 @@ body:has(.project-header) footer { background: var(--work-bg); color: var(--work
   .hood-micro-stats { margin-top: 22px; }
   .hood-micro-stats b { font-size: .98rem; }
   .hood-micro-stats span { font-size: .5rem; }
-  .hood-theme-picker { gap: 5px; }
-  .hood-theme-picker > span { width: 100%; }
-  .hood-theme-picker .theme-choice { flex: 1 1 auto; justify-content: center; }
   .hood-console pre { min-height: 130px; font-size: .61rem; }
   .hood-console-foot { font-size: .48rem; }
   .hood-proofline { gap: 7px; font-size: .52rem; }
@@ -410,12 +404,6 @@ html[data-theme="dark"] .hood-console { box-shadow: 12px 12px 0 rgba(255,68,56,.
 .hood-pipeline-node { transition: transform .22s, border-color .22s, box-shadow .22s; }
 .hood-pipeline-node:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: var(--shadow-md), 0 0 0 1px var(--accent); }
 .hood-pipeline-link svg path { stroke-dasharray: 5 6; animation: hoodDash 6s linear infinite; }
-
-/* Theme picker pills */
-.hood-theme-picker .theme-choice { display: inline-flex; align-items: center; border: 1px solid var(--border); background: var(--surface); cursor: pointer; transition: border-color .2s, transform .2s, box-shadow .2s; }
-.hood-theme-picker .theme-choice:hover { transform: translateY(-1px); border-color: var(--accent); }
-.hood-theme-picker .theme-choice[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent); color: var(--text); }
-html[data-theme="dark"] .hood-theme-picker .theme-choice { background: #1e1f23; }
 
 /* Cards: lift + top glow */
 #skills .skill-category, #articles .article-card, #credentials .cred-card { transition: transform .22s, border-color .22s, box-shadow .22s; }
