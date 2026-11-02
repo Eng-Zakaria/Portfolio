@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Mohammed Zakaria — data and AI engineer</title>
+  <desc id="desc">A portrait split down the middle, with blue data-pipeline details on the left and violet AI network details on the right.</desc>
+  <defs>
+    <clipPath id="leftHalf"><rect x="0" y="0" width="384" height="1024"/></clipPath>
+    <clipPath id="rightHalf"><rect x="384" y="0" width="384" height="1024"/></clipPath>
+    <filter id="dataTone" color-interpolation-filters="sRGB">
+      <feColorMatrix type="saturate" values=".78"/>
+      <feComponentTransfer><feFuncR type="linear" slope="1.04"/><feFuncG type="linear" slope="1.04"/><feFuncB type="linear" slope="1.08"/></feComponentTransfer>
+    </filter>
+    <filter id="aiTone" color-interpolation-filters="sRGB">
+      <feColorMatrix type="saturate" values=".78"/>
+      <feComponentTransfer><feFuncR type="linear" slope=".92"/><feFuncG type="linear" slope=".91"/><feFuncB type="linear" slope="1.04"/></feComponentTransfer>
+    </filter>
+    <linearGradient id="dataWash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1878d1" stop-opacity=".18"/>
+      <stop offset=".48" stop-color="#1878d1" stop-opacity=".02"/>
+      <stop offset="1" stop-color="#1878d1" stop-opacity=".13"/>
+    </linearGradient>
+    <linearGradient id="aiWash" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#692bd1" stop-opacity=".24"/>
+      <stop offset=".5" stop-color="#251344" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#251344" stop-opacity=".2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Reuse the supplied portrait on both sides so the center seam stays aligned. -->
+  <g clip-path="url(#leftHalf)">
+    <image href="Profile.png" x="0" y="0" width="768" height="1024" preserveAspectRatio="xMidYMid slice" filter="url(#dataTone)"/>
+    <rect width="384" height="1024" fill="url(#dataWash)"/>
+  </g>
+  <g clip-path="url(#rightHalf)">
+    <image href="Profile.png" x="0" y="0" width="768" height="1024" preserveAspectRatio="xMidYMid slice" filter="url(#aiTone)"/>
+    <rect x="384" width="384" height="1024" fill="url(#aiWash)"/>
+  </g>
+
+  <!-- Quiet data-flow marks, kept at the edge so the portrait remains the focus. -->
+  <g fill="none" stroke="#eaf5ff" stroke-width="3" opacity=".55">
+    <path d="M28 176h55v50h44m-99 0v54h72m-72 0v51h39"/>
+    <circle cx="28" cy="176" r="7" fill="#eaf5ff"/><circle cx="83" cy="176" r="7" fill="#eaf5ff"/>
+    <circle cx="127" cy="226" r="7" fill="#eaf5ff"/><circle cx="100" cy="280" r="7" fill="#eaf5ff"/>
+    <rect x="26" y="340" width="18" height="34" rx="3"/><rect x="54" y="320" width="18" height="54" rx="3"/><rect x="82" y="294" width="18" height="80" rx="3"/>
+  </g>
+  <!-- Neural/vector marks on the AI side. -->
+  <g fill="none" stroke="#eee4ff" stroke-width="3" opacity=".56">
+    <path d="M644 168l44 34-42 42 58 35m-102-4 44-31m42-42 36-47m-36 124 10 50"/>
+    <circle cx="644" cy="168" r="8" fill="#eee4ff"/><circle cx="688" cy="202" r="8" fill="#eee4ff"/>
+    <circle cx="646" cy="244" r="8" fill="#eee4ff"/><circle cx="704" cy="279" r="8" fill="#eee4ff"/>
+    <circle cx="602" cy="275" r="7" fill="#eee4ff"/><circle cx="724" cy="155" r="7" fill="#eee4ff"/>
+    <circle cx="714" cy="329" r="7" fill="#eee4ff"/>
+  </g>
+  <path d="M384 0v1024" stroke="#fff" stroke-width="5" opacity=".92"/>
+</svg>

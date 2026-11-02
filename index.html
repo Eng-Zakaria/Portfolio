@@ -1,178 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mohammed Zakaria — Data Engineer</title>
-  <meta name="description" content="Mohammed Zakaria is a Data Engineer based in Cairo specializing in ETL pipelines, distributed systems (Spark, Kafka, Hadoop), and cloud infrastructure on AWS. Currently building production data platforms at Waffarha and NTI.">
-  <meta name="keywords" content="Data Engineer, ETL, Apache Spark, Kafka, Airflow, AWS, Python, Pipeline, Cairo, Big Data">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Mohammed Zakaria builds dependable data platforms and grounded AI systems. Data Engineer at Waffarha in Cairo, Egypt.">
+  <meta name="keywords" content="Mohammed Zakaria, Data Engineer, AI, Data Engineering, RAG, Spark, Kafka, Airflow, Waffarha">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="robots" content="index, follow">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="Mohammed Zakaria — Data Engineer">
-  <meta property="og:description" content="Data Engineer specializing in ETL pipelines, distributed systems, and cloud infrastructure. Cairo-based, currently at Waffarha and NTI.">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
+  <meta property="og:title" content="Mohammed Zakaria — Data × AI Engineer">
+  <meta property="og:description" content="Data Engineer at Waffarha building dependable data platforms and grounded AI systems.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
-  <meta property="og:locale" content="en_US">
-  <meta property="og:site_name" content="Mohammed Zakaria — Portfolio">
-
-  <!-- Twitter Card -->
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Mohammed Zakaria — Data Engineer">
-  <meta name="twitter:description" content="Data Engineer specializing in ETL pipelines, distributed systems, and cloud infrastructure.">
-
-  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Mohammed Zakaria — Data × AI Engineer</title>
+  <script src="js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <meta property="article:author" content="Mohammed Zakaria">
-  <meta name="theme-color" content="#0b1020">
-
+  <link rel="stylesheet" href="css/portfolio-themes.css">
+  <link rel="stylesheet" href="css/hood-portfolio.css">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Person",
     "name": "Mohammed Zakaria",
     "jobTitle": "Data Engineer",
+    "worksFor": { "@type": "Organization", "name": "Waffarha" },
     "address": { "@type": "PostalAddress", "addressLocality": "Cairo", "addressCountry": "EG" },
     "email": "mailto:mohamedzakaria.cs@gmail.com",
     "url": "https://eng-zakaria.github.io/Portfolio/",
-    "sameAs": [
-      "https://linkedin.com/in/eng-zakaria",
-      "https://github.com/Eng-Zakaria",
-      "https://eng-zakaria.medium.com"
-    ],
-    "knowsAbout": ["Data Engineering", "Apache Spark", "Apache Kafka", "Apache Airflow", "AWS", "ETL", "RAG", "Dimensional Modeling"]
+    "sameAs": ["https://linkedin.com/in/eng-zakaria", "https://github.com/Eng-Zakaria", "https://eng-zakaria.medium.com"],
+    "knowsAbout": ["Data Engineering", "Applied AI", "Apache Spark", "Apache Kafka", "Apache Airflow", "RAG", "ClickHouse", "AWS"]
   }
   </script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/design-bento.css">
-  <link rel="stylesheet" href="css/design-bento-dark.css">
   <script defer src="js/main.js"></script>
+  <script defer src="js/theme-controls.js"></script>
 </head>
 <body>
-
-  <!-- NAV -->
-  <nav>
-    <div class="nav-logo">~/mzakaria</div>
-    <ul class="nav-links">
-      <li><a href="#hero" class="active"><span class="nav-dot">.</span>home</a></li>
-      <li><a href="#about"><span class="nav-dot">.</span>about</a></li>
-      <li><a href="#skills"><span class="nav-dot">.</span>skills</a></li>
-      <li><a href="#projects"><span class="nav-dot">.</span>projects</a></li>
-      <li><a href="#articles"><span class="nav-dot">.</span>articles</a></li>
-      <li><a href="#experience"><span class="nav-dot">.</span>experience</a></li>
-      <li><a href="#credentials"><span class="nav-dot">.</span>credentials</a></li>
-      <li><a href="#contact"><span class="nav-dot">.</span>contact</a></li>
-      <li>
-        <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="nav-resume" target="_blank" rel="noopener">Resume ↓</a>
-      </li>
-      <li>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
-          ☀️ <span>Light</span>
-        </button>
-      </li>
-    </ul>
-    <button class="hamburger" aria-label="Toggle navigation menu">
-      <span></span><span></span><span></span>
-    </button>
-  </nav>
-
-  <!-- HERO -->
-  <section id="hero">
-    <div class="hero-grid-bg"></div>
-    <div class="hero-glow"></div>
-    <div class="container">
-      <div class="hero-split">
-        <div class="hero-content">
-          <div class="availability-badge"><span class="pulse-dot"></span> Open to Data Engineering roles — Cairo / Remote</div>
-          <div class="hero-identity">
-            <div class="avatar-frame">
-              <img src="assets/Profile.png" alt="Mohammed Zakaria — Data Engineer" class="avatar-img" loading="eager">
-              <span class="avatar-status" title="Open to work"></span>
-            </div>
-            <div class="identity-text">
-              <div class="hero-eyebrow">Hello, My Name Is</div>
-              <h1 class="hero-name">Mohammed <span>Zakaria</span></h1>
-              <p class="hero-role">Data Engineer — Batch, Streaming & RAG Systems</p>
-            </div>
-          </div>
-          <p class="hero-desc">
-            I build production data platforms that turn raw noise into decisions.
-            Customer-service agent at <strong>Waffarha</strong> over <strong>~13.7M live rows</strong>
-            (ClickHouse, 87.8% retrieval), healthcare warehouses that cut
-            reporting time 40%, and streaming pipelines with sub-second latency —
-            from Cairo to Zurich.
-          </p>
-          <div class="hero-stats">
-            <div class="hero-stat"><span class="stat-num" data-count="2">2</span><span class="stat-label">yrs production</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="25">25</span><span class="stat-label">projects shipped</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="13.7" data-decimals="1" data-suffix="M">13.7M</span><span class="stat-label">live rows served</span></div>
-            <div class="hero-stat"><span class="stat-num" data-count="5">5</span><span class="stat-label">technical articles</span></div>
-          </div>
-          <div class="hero-contact">
-            <div class="contact-item">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
-              </svg>
-              mohamedzakaria.cs@gmail.com
-            </div>
-            <div class="contact-item">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-              </svg>
-              +20 150 101 5701
-            </div>
-          </div>
-          <div class="hero-btns">
-            <a href="#projects" class="btn btn-primary">View Projects</a>
-            <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="btn btn-ghost" target="_blank" rel="noopener">Download Résumé ↓</a>
-            <a href="#contact" class="btn btn-ghost">Get In Touch</a>
-          </div>
-          <div class="hero-note">⚡ Currently at Waffarha · Usually responds within 24h · English / Arabic</div>
-        </div>
-        <aside class="hero-side">
-          <div class="terminal" aria-label="Live pipeline status">
-            <div class="terminal-bar"><span class="tdot r"></span><span class="tdot y"></span><span class="tdot g"></span><span class="terminal-title">waffarha-agent — live</span></div>
-            <div class="terminal-body"><code id="terminal-typed"></code><span class="caret">▍</span></div>
-          </div>
-          <div class="live-chips">
-            <div class="live-chip"><span class="chip-num">13.7M</span><span class="chip-label">live rows</span></div>
-            <div class="live-chip"><span class="chip-num">87.8%</span><span class="chip-label">retrieval</span></div>
-            <div class="live-chip"><span class="chip-num">225</span><span class="chip-label">eval cases</span></div>
-          </div>
-        </aside>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="#top" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Front / Back theme - switch light and dark"><span aria-hidden="true">*</span> <span>Front / Back - Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
       </div>
-    </div>
-  </section>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="#about">About</a></li>
+        <li><a href="#skills">Tools</a></li>
+        <li><a href="#projects">Project street</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#articles">Writing</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="portfolio-classic.html">Classic layout ↗</a></li>
+      </ul>
+    </nav>
+  </header>
 
-  <!-- TECH TICKER -->
-  <div class="ticker" aria-hidden="true">
-    <div class="ticker-track">
-      <span>Spark</span><i>◆</i><span>Kafka</span><i>◆</i><span>Airflow</span><i>◆</i><span>AWS</span><i>◆</i><span>ClickHouse</span><i>◆</i><span>FAISS</span><i>◆</i><span>FastAPI</span><i>◆</i><span>PostgreSQL</span><i>◆</i><span>dbt</span><i>◆</i><span>Docker</span><i>◆</i><span>Kubernetes</span><i>◆</i><span>Terraform</span><i>◆</i><span>Redis</span><i>◆</i><span>Elasticsearch</span><i>◆</i>
-      <span>Spark</span><i>◆</i><span>Kafka</span><i>◆</i><span>Airflow</span><i>◆</i><span>AWS</span><i>◆</i><span>ClickHouse</span><i>◆</i><span>FAISS</span><i>◆</i><span>FastAPI</span><i>◆</i><span>PostgreSQL</span><i>◆</i><span>dbt</span><i>◆</i><span>Docker</span><i>◆</i><span>Kubernetes</span><i>◆</i><span>Terraform</span><i>◆</i><span>Redis</span><i>◆</i><span>Elasticsearch</span><i>◆</i>
-    </div>
-  </div>
+  <main id="top">
+    <section id="hero" class="hood-hero" aria-label="Data and AI engineering, front to back">
+      <div class="hood-stage">
+        <section class="hood-front" aria-labelledby="front-title">
+          <div class="hood-kicker"><span class="hood-led"></span> 01 / THE FRONT · DATA ENGINEERING</div>
+          <p class="hood-role">DATA ENGINEER <span>·</span> WAFFARHA · CAIRO</p>
+          <h1 id="front-title">Pipelines that<br><em>pay for themselves.</em></h1>
+          <p class="hood-lede">I turn messy business data into warehouses, APIs, and dashboards teams actually trust — engineered for speed, guarded by tests, and built to survive production.</p>
+          <div class="hood-actions">
+            <a class="hood-button hood-button-red" href="#projects">See the proof <span>↓</span></a>
+            <a class="hood-button hood-button-outline" href="docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">Résumé <span>↗</span></a>
+          </div>
+          <div class="hood-micro-stats" aria-label="Selected impact">
+            <div><b>13.7M</b><span>live rows served</span></div>
+            <div><b>87.8%</b><span>retrieval accuracy</span></div>
+            <div><b>25</b><span>systems in production</span></div>
+          </div>
+          <div class="hood-theme-picker" role="group" aria-label="Switch light and dark mode">
+            <span>LIGHT / DARK</span>
+            <button class="theme-choice" type="button" data-theme-choice="light" aria-pressed="false"><i aria-hidden="true"></i>Light</button>
+            <button class="theme-choice" type="button" data-theme-choice="dark" aria-pressed="false"><i aria-hidden="true"></i>Dark</button>
+          </div>
+          <svg class="hood-data-doodle" viewBox="0 0 440 90" aria-hidden="true">
+            <path d="M4 45h80l25-25h78l28 25h62l24-25h130"/><circle cx="4" cy="45" r="5"/><circle cx="84" cy="45" r="5"/><circle cx="109" cy="20" r="5"/><circle cx="187" cy="20" r="5"/><circle cx="215" cy="45" r="5"/><circle cx="277" cy="45" r="5"/><circle cx="301" cy="20" r="5"/><circle cx="431" cy="20" r="5"/>
+          </svg>
+        </section>
 
-  <!-- ABOUT -->
-  <section id="about">
+        <aside class="hood-back" aria-labelledby="back-title">
+          <div class="hood-kicker"><span class="hood-led hood-led-amber"></span> 02 / UNDER THE HOOD · APPLIED AI</div>
+          <h2 id="back-title">AI that cites<br><em>its receipts.</em></h2>
+          <p class="hood-back-copy">At Waffarha, a bilingual assistant answers from live business data — not memory. Every claim traces to retrieved sources, gated by deterministic checks before an LLM ever speaks.</p>
+          <div class="hood-console" aria-label="Waffarha assistant pipeline status">
+            <div class="hood-console-top"><span class="console-dots"><i></i><i></i><i></i></span><span>waffarha-agent / production log</span><span class="console-live">LIVE</span></div>
+            <pre><code id="terminal-typed"></code></pre>
+            <div class="hood-console-foot"><span>DATA IN</span><span>RETRIEVAL</span><span>ANSWER OUT</span></div>
+          </div>
+          <div class="hood-proofline"><span><b>87.8%</b> grounded answers</span><i></i><span><b>225</b> eval cases</span><i></i><span><b>AR / EN</b> native bilingual</span></div>
+          <a class="hood-text-link" href="projects/waffarha-assistant.html">Open the Waffarha case study <span>↗</span></a>
+          <svg class="hood-back-doodle" viewBox="0 0 520 160" aria-hidden="true">
+            <path d="M18 78h105l32-40h89l32 40h87l30-50h109M123 78l32 44h89l32-44m87 0 30 39h109"/>
+            <circle cx="18" cy="78" r="7"/><circle cx="123" cy="78" r="7"/><circle cx="155" cy="38" r="7"/><circle cx="244" cy="38" r="7"/><circle cx="276" cy="78" r="7"/><circle cx="363" cy="78" r="7"/><circle cx="393" cy="28" r="7"/><circle cx="502" cy="28" r="7"/>
+          </svg>
+        </aside>
+
+        <div class="hood-portrait" aria-label="Mohammed Zakaria">
+          <img src="assets/Profile.png" alt="Mohammed Zakaria, Data and AI Engineer">
+          <span>DATA <b>×</b> AI</span>
+        </div>
+        <a class="hood-scroll" href="#method"><span>SCROLL TO OPEN THE STORY</span><b>↓</b></a>
+      </div>
+    </section>
+
+    <section class="hood-method" id="method" aria-labelledby="method-title">
+      <div class="hood-section-shell">
+        <div class="hood-section-index"><span>03</span><i></i><span>THE CONNECTION</span></div>
+        <div class="hood-method-heading"><h2 id="method-title">Not two skills.<br><em>One unfair advantage.</em></h2><p>Most AI fails on bad data. I own the full chain — from raw rows to an answer you can defend in front of a customer.</p></div>
+        <div class="hood-pipeline" aria-label="Data to AI pipeline">
+          <div class="hood-pipeline-node"><span>01</span><i class="fa-solid fa-database" aria-hidden="true"></i><b>Live business data</b><small>ClickHouse · 13.7M rows</small></div>
+          <div class="hood-pipeline-link"><span>INGEST · MODEL · CHECK</span><svg viewBox="0 0 100 18" aria-hidden="true"><path d="M1 9h90m-8-7 8 7-8 7"/></svg></div>
+          <div class="hood-pipeline-node"><span>02</span><i class="fa-solid fa-layer-group" aria-hidden="true"></i><b>Verified context</b><small>Airflow · SCD2 · Qdrant</small></div>
+          <div class="hood-pipeline-link"><span>RETRIEVE · EVALUATE</span><svg viewBox="0 0 100 18" aria-hidden="true"><path d="M1 9h90m-8-7 8 7-8 7"/></svg></div>
+          <div class="hood-pipeline-node hood-pipeline-final"><span>03</span><i class="fa-solid fa-message" aria-hidden="true"></i><b>Answers that hold up</b><small>Grounded · Bilingual</small></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
     <div class="container">
       <div class="about-content">
-        <div class="sec-label">// about me</div>
-        <h2>Who I Am</h2>
+        <div class="sec-label">About the builder</div>
+        <h2>Data engineer who ships AI that survives contact with customers</h2>
         <div class="about-text">
-          <p>Data Engineer with 2 years of hands-on experience building and automating end-to-end data pipelines across batch and real-time systems. I specialize in dimensional modeling, ETL/ELT pipeline development, and scalable analytics platforms including data warehouses, star schemas, and Spark/Airflow orchestration.</p>
-          <p>Production experience on AWS (EC2, S3, IAM, VPC) with exposure to Azure. Currently building production RAG pipelines at Waffarha and deepening distributed systems expertise at the National Telecommunication Institute.</p>
-          <p>Graduate of Helwan University (GPA 3.3, Graduation Project A+). Previously researched on-chain data at the University of Zurich and taught Machine Learning to 100+ students as an AI Instructor.</p>
+          <p>Data Engineer at <strong>Waffarha</strong> running production RAG and data pipelines over <strong>13.7M live rows</strong> — bilingual Arabic/English answers with <strong>87.8% retrieval accuracy</strong> on a 225-case eval harness. I own the whole loop: ingestion, dimensional modeling, orchestration, vector search, evaluation, and guardrails.</p>
+          <p>Before Waffarha I built a centralized healthcare warehouse from 10+ clinic sources that <strong>cut reporting time 40% and killed every dashboard timeout</strong>, completed Big Data training at the National Telecommunication Institute, and researched on-chain data at the <strong>University of Zurich</strong>. Helwan University graduate — graduation project graded <strong>A+</strong> for an Arabic RAG system that became the blueprint for my production work.</p>
           <div class="about-highlights">
-            <div class="highlight-item"><span>🎯</span> I care about <strong>measurable impact</strong> — every pipeline ships with quality checks, monitoring, and a latency budget.</div>
-            <div class="highlight-item"><span>🤝</span> I enjoy <strong>making data approachable</strong> — teaching 100+ students taught me to explain complex systems simply.</div>
-            <div class="highlight-item"><span>🌍</span> Based in <strong>Cairo, open to remote</strong> — English & Arabic, exempted military service, ready to start.</div>
+            <div class="highlight-item"><span>🎯</span> I ship <strong>measured outcomes, not pipelines</strong> — every build carries quality checks, monitoring, and a latency budget.</div>
+            <div class="highlight-item"><span>🤝</span> I make complex systems <strong>obvious to non-engineers</strong> — 100+ students mentored, executives and support teams onboarded to data they trust.</div>
+            <div class="highlight-item"><span>🌍</span> Based in <strong>Cairo, working worldwide</strong> — English & Arabic, async-friendly, replies within 24 hours.</div>
           </div>
         </div>
         <div class="about-links">
@@ -184,11 +155,9 @@
       </div>
     </div>
   </section>
-
-  <!-- SKILLS -->
-  <section id="skills">
+    <section id="skills">
     <div class="container">
-      <div class="sec-label">// tech stack</div>
+      <div class="sec-label">The toolbox</div>
       <h2>Skills</h2>
       <div class="skills-grid">
 
@@ -318,13 +287,12 @@
       </div>
     </div>
   </section>
-
-  <!-- PROJECTS -->
-  <section id="projects">
+    <div class="hood-street-intro"><div class="hood-section-shell"><div class="hood-section-index"><span>06</span><i></i><span>THE STREET · SELECTED BUILDS</span></div><div class="hood-street-heading"><h2>Every build ships<br><em>with receipts.</em></h2><p>Metrics first, architecture second, demo always. Open a storefront for the full engineering story.</p><div class="hood-street-count"><b id="street-count">25</b><span>builds shipped</span></div></div></div></div>
+    <section id="projects">
     <div class="container">
       <div class="sec-label">// selected work</div>
       <h2>Projects</h2>
-      <p class="projects-sub">25 shipped systems — production RAG, streaming, batch ETL, price intelligence, BIM automation, fintech, and cloud. Filter by track:</p>
+      <p class="projects-sub">25 production-grade systems — RAG that answers from live data, streaming at sub-second latency, price intelligence that protects revenue, and platforms that survive audits. Filter by track:</p>
       <div class="project-filters" role="tablist" aria-label="Filter projects">
         <button class="filter-btn active" data-filter="all">All (25)</button>
         <button class="filter-btn" data-filter="rag">RAG / AI</button>
@@ -333,13 +301,15 @@
         <button class="filter-btn" data-filter="platform">Platforms</button>
         <button class="filter-btn" data-filter="price">Price Intel</button>
       </div>
+      <div class="hood-project-instruction"><span>25 storefronts — pick a track to filter</span><span><b id="street-shown">25</b> / 25 showing</span></div>
+      <div class="hood-project-progress" aria-hidden="true"><i id="street-bar"></i></div>
       <div class="projects-grid" id="projects-grid">
 
         <div class="project-card reveal">
           <div class="project-num">01 — PRODUCTION RAG</div>
-          <div class="project-name"><i class="fas fa-comments"></i>Waffarha Assistant — Bilingual RAG Chatbot</div>
+          <div class="project-name"><i class="fas fa-comments"></i>Waffarha Assistant — Bilingual RAG at Scale</div>
           <div class="project-desc">
-            Production RAG + customer-service agent for Egypt's leading deals platform. Answers from ~13.7M live rows (ClickHouse) with 9,106 docs in a bge-m3 + Qdrant vector index — 87.8% retrieval over a 225-case eval harness. Deterministic intent gates resolve routine queries via direct answers before LLM fallback. Arabic voice STT/TTS evaluated in lab.
+            Egypt's leading deals platform, answered live: 13.7M rows across 19 ClickHouse tables + 9,106 docs in a bge-m3/Qdrant index. 87.8% grounded retrieval on a 225-case harness, deterministic gates resolve routine queries without an LLM call — Arabic voice-ready.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
@@ -357,9 +327,9 @@
 
         <div class="project-card reveal reveal-d1">
           <div class="project-num">02 — CLIENT ENGAGEMENT</div>
-          <div class="project-name"><i class="fas fa-hospital"></i>Healthcare Clinic Data Warehouse</div>
+          <div class="project-name"><i class="fas fa-hospital"></i>Clinic Network Warehouse — Zero-Timeout BI</div>
           <div class="project-desc">
-            For a healthcare client of Nexlify, built a centralized data warehouse integrating 10+ clinic sources into PostgreSQL using dimensional modeling. Processed 50+ daily customers, 200+ appointments, 1,000+ revenue records. Accelerated reporting by 40%, eliminated 100% of dashboard timeouts.
+            Unified 10+ clinic systems into one PostgreSQL warehouse with clean star schemas. Reporting cycles 40% faster, dashboard timeouts eliminated entirely — one model serves every clinic plus company-wide rollups.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -374,9 +344,9 @@
 
         <div class="project-card reveal reveal-d2">
           <div class="project-num">03 — BLOCKCHAIN FORENSICS</div>
-          <div class="project-name"><i class="fas fa-link"></i>Blockchain Analyzer — Ethereum Pipeline</div>
+          <div class="project-name"><i class="fas fa-link"></i>Ethereum Forensics — 73× Faster Traversal</div>
           <div class="project-desc">
-            Forensics platform comparing Neo4j vs. PySpark for Ethereum analysis. Bronze→Silver→Gold ETL with threat detection. Neo4j benchmarked 73x faster on multi-hop traversal. Kibana dashboards for pattern visualization.
+            Bronze→Silver→Gold pipeline for on-chain threat detection. Head-to-head benchmark: Neo4j traverses multi-hop money flows 73× faster than Spark — Kibana surfaces the patterns investigators actually chase.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> PySpark</span>
@@ -393,9 +363,9 @@
 
         <div class="project-card reveal">
           <div class="project-num">04 — MLOps</div>
-          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk Analysis — ML Pipeline</div>
+          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk — 0.88 AUC in Production</div>
           <div class="project-desc">
-            End-to-end ML platform with 0.88 AUC-ROC (Hybrid Ensemble). Airflow orchestration, MLflow tracking, FastAPI serving with Redis lookups. Synthetic data generation with BigQuery-compatible SQL marts.
+            Hybrid ensemble (XGBoost + LightGBM) at 0.88 AUC-ROC, served behind FastAPI with Redis lookups. Airflow orchestration, MLflow lineage, BigQuery marts — a full score-and-decide loop, not a notebook.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-robot"></i> XGBoost</span>
@@ -412,9 +382,9 @@
 
         <div class="project-card wide reveal">
           <div class="project-num">05 — REAL-TIME STREAMING</div>
-          <div class="project-name"><i class="fas fa-shield-alt"></i>Fraud Detection — Streaming Architecture</div>
+          <div class="project-name"><i class="fas fa-shield-alt"></i>Fraud Shield — Sub-Second Scoring</div>
           <div class="project-desc">
-            Real-time Kafka pipeline with sub-second latency for transaction scoring. Docker containerization with Plotly/Dash monitoring and multi-channel alerting (Slack/Email) for model drift and system health.
+            Kafka streaming scores every transaction in under a second. Drift-aware monitoring with Slack/email escalation, Plotly/Dash war-room, and a retraining loop — fraud caught while the payment is still warm.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -433,9 +403,9 @@
 
         <div class="project-card reveal">
           <div class="project-num">06 — STREAMING PIPELINE</div>
-          <div class="project-name"><i class="fas fa-plane"></i>Aircraft Tracking Pipeline</div>
+          <div class="project-name"><i class="fas fa-plane"></i>Live Flight Radar — ADS-B at Scale</div>
           <div class="project-desc">
-            Real-time ADS-B aircraft tracking. Dual Flume agents (HTTP→Kafka→HDFS), Spark Structured Streaming to InfluxDB. Live Grafana dashboards with geomap and per-aircraft analytics.
+            Real ADS-B feed → Kafka → Spark Structured Streaming → InfluxDB, visualized live in Grafana with geomaps and per-aircraft tracks. Dual Flume agents keep ingestion lossless when the sky gets busy.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> Spark Streaming</span>
@@ -452,9 +422,9 @@
 
         <div class="project-card reveal reveal-d1">
           <div class="project-num">07 — BATCH ETL</div>
-          <div class="project-name"><i class="fab fa-reddit-alien"></i>Reddit Spark Pipeline</div>
+          <div class="project-name"><i class="fab fa-reddit-alien"></i>Reddit Signals — Medallion at Scale</div>
           <div class="project-desc">
-            7-stage PySpark ETL with medallion architecture. Engagement scoring UDFs, window functions for ranking, broadcast joins for enrichment, partitioned Parquet output.
+            7-stage PySpark ETL in full medallion: engagement-score UDFs, windowed rankings, broadcast enrichment, partitioned Parquet. Built to answer "what's actually trending" without rescanning raw dumps.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> PySpark</span>
@@ -470,9 +440,9 @@
 
         <div class="project-card reveal">
           <div class="project-num">08 — PRICE INTELLIGENCE</div>
-          <div class="project-name"><i class="fas fa-tags"></i>Waffarha Partner Price Integrity</div>
+          <div class="project-name"><i class="fas fa-tags"></i>Partner Price Guard — Revenue Protection</div>
           <div class="project-desc">
-            Automated 7-stage Airflow pipeline detecting partner price violations. Tiered matching (code → override → fuzzy), dual scraping engine (BeautifulSoup + Playwright), HTML/Excel/MD reports.
+            7-stage Airflow pipeline catching partner price violations before they cost margin. Tiered matching (code → override → fuzzy), dual-engine scraping, and board-ready HTML/Excel evidence packs.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -487,9 +457,9 @@
 
         <div class="project-card reveal reveal-d1">
           <div class="project-num">09 — MARKET INTELLIGENCE</div>
-          <div class="project-name"><i class="fas fa-chart-line"></i>Waffarha Market Sentiment</div>
+          <div class="project-name"><i class="fas fa-chart-line"></i>Brand Radar — Reviews to Revenue Signal</div>
           <div class="project-desc">
-            Monitor public mentions across App Store, Google Play, Reddit, Google News. Multilingual sentiment designed around AraBERT/RoBERTa routing, Streamlit dashboard with trend visualization.
+            App Store, Google Play, Reddit, and News funneled into one multilingual sentiment engine (AraBERT + RoBERTa routing) with a Streamlit command view — reputation shifts become tickets, not surprises.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Streamlit</span>
@@ -503,10 +473,10 @@
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">10 — GRADUATION PROJECT</div>
-          <div class="project-name"><i class="fas fa-mosque"></i>Hadith Chat App — Arabic RAG</div>
+          <div class="project-num">10 — GRADUATION PROJECT · A+</div>
+          <div class="project-name"><i class="fas fa-mosque"></i>Hadith QA — Arabic RAG Pioneer</div>
           <div class="project-desc">
-            Arabic NLP chatbot using RAG architecture. Django backend with Qdrant vector database. Achieved 70% chatbot accuracy through data refinement and retrieval optimization.
+            Graded A+: the first Arabic RAG I shipped — Django + Qdrant over classical texts, retrieval-tuned to 70% answer accuracy. The prototype that proved grounded Arabic QA works — and became my Waffarha playbook.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-django"></i> Django</span>
@@ -522,9 +492,9 @@
 
         <div class="project-card wide reveal reveal-d2">
           <div class="project-num">11 — ENTERPRISE PLATFORM</div>
-          <div class="project-name"><i class="fas fa-network-wired"></i>Telecom Enterprise Data Platform</div>
+          <div class="project-name"><i class="fas fa-network-wired"></i>Telecom Lakehouse — 8 Domains, One Truth</div>
           <div class="project-desc">
-            Production-grade analytics platform for telecom data at enterprise scale. 8 business domains, medallion architecture (Bronze/Silver/Gold), local-cloud parity with Docker-to-Azure, MLOps with MLflow tracking and drift-triggered retraining.
+            Enterprise telecom analytics: 8 business domains in Bronze/Silver/Gold, Docker-to-Azure parity, MLflow tracking with drift-triggered retraining. The kind of platform BI teams stop fighting and start quoting.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-microsoft"></i> Azure</span>
@@ -540,10 +510,10 @@
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch streaming">
-          <div class="project-num">12 — ENERGY PLATFORM · NEW</div>
-          <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Platform — Well Monitoring + Market Intel</div>
+          <div class="project-num">12 — ENERGY PLATFORM</div>
+          <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Pulse — Wells + Markets Live</div>
           <div class="project-desc">
-            Oil & petroleum well monitoring meets live market data. Historical Volve field data + EIA / Baker Hughes scrapers → RabbitMQ → NiFi → Beam-on-Flink anomaly detection, Elasticsearch search, BigQuery/MinIO warehouse, Grafana + Prometheus observability. 3-node NiFi cluster, IaC with Terraform/Ansible/K8s.
+            Well telemetry meets market reality: historic Volve field data plus EIA/Baker Hughes feeds → RabbitMQ → Beam-on-Flink anomaly detection → Elasticsearch + warehouse. 3-node NiFi, Grafana + Prometheus, IaC with Terraform/K8s.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-water"></i> NiFi</span>
@@ -561,10 +531,10 @@
         </div>
 
         <div class="project-card wide reveal reveal-d1" data-category="price platform batch">
-          <div class="project-num">13 — PRICE INTELLIGENCE · NEW</div>
-          <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Multi-Domain Price Intelligence</div>
+          <div class="project-num">13 — PRICE INTELLIGENCE</div>
+          <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Competitor Prices on Autopilot</div>
           <div class="project-desc">
-            Production-grade e-commerce price intel across domains/regions/categories. Playwright scraping on Celery + Redis workers, Airflow 6-stage ETL (fetch → parse → load → quality → alert), raw HTML snapshots for lossless re-parsing, dimensional Postgres warehouse (fact_price_snapshot), Telegram/Email alerts, Streamlit analytics, circuit breakers + anti-bot resilience.
+            Multi-domain price intel that never sleeps: Playwright on Celery/Redis, Airflow 6-stage ETL with raw-HTML snapshots for lossless re-parsing, dimensional Postgres warehouse, Telegram/email strike alerts, Streamlit analytics — anti-bot resilient by design.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -580,10 +550,10 @@
         </div>
 
         <div class="project-card wide reveal reveal-d2" data-category="platform streaming rag">
-          <div class="project-num">14 — ENVIRONMENTAL AI · NEW</div>
-          <div class="project-name"><i class="fas fa-leaf"></i>AirSense — Urban Air Quality Intelligence</div>
+          <div class="project-num">14 — ENVIRONMENTAL AI</div>
+          <div class="project-name"><i class="fas fa-leaf"></i>AirSense — 2.8M Readings a Day, 99.95% Up</div>
           <div class="project-desc">
-            City-scale air quality monitoring + forecasting: 15k+ sensors, 2.8M daily measurements, &lt;200ms critical alerts. Kafka/NiFi → Spark + Airflow → TimescaleDB/S3 with dbt, LSTM+XGBoost ensemble (92% 6-hr AQI accuracy), FastAPI + Redis + MLflow serving, React/Mapbox dashboard, K8s on AWS with Terraform, Prometheus/Grafana, 99.95% uptime SLA.
+            City-scale air quality: 15k+ sensors, sub-200ms critical alerts, LSTM+XGBoost at 92% 6-hour forecast accuracy. Kafka/Spark/Airflow → TimescaleDB, FastAPI + Redis serving, K8s on AWS with full Prometheus/Grafana watch.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -602,9 +572,9 @@
 
         <div class="project-card wide reveal" data-category="platform streaming batch">
           <div class="project-num">15 — RETAIL ANALYTICS</div>
-          <div class="project-name"><i class="fas fa-store"></i>Retail Analytics — Streaming Pipeline</div>
+          <div class="project-name"><i class="fas fa-store"></i>Retail Command — POS to Forecast Live</div>
           <div class="project-desc">
-            Real-time retail analytics over POS, e-commerce, and inventory feeds. 15-service Docker stack: Kafka + Debezium CDC → Spark & Flink streaming → Delta Lake on MinIO + PostgreSQL 15 → FastAPI + Nginx, with ML forecasting and Prometheus/Grafana observability.
+            POS, e-commerce, and inventory streaming into one decision layer. 15-service stack: Kafka + Debezium CDC → Spark & Flink → Delta Lake + Postgres → FastAPI, with ML demand forecasts and Grafana war-boards.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -620,10 +590,10 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform streaming">
-          <div class="project-num">16 — AQUACULTURE IOT · NEW</div>
-          <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Fish-Farm Monitoring</div>
+          <div class="project-num">16 — AQUACULTURE IOT</div>
+          <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Farms That Phone Home</div>
           <div class="project-desc">
-            Closed-loop water-quality monitoring for fish farms. Python sensor sim (3 ponds × 4 params, 5-min cadence) → Airflow → TimescaleDB hypertables → Grafana dashboards with SMTP + SMS alerts on threshold breach (15-min cooldown) and a FastAPI read layer.
+            Autonomous water-quality ops for fish farms: 5-minute sensor cadence → Airflow → TimescaleDB → Grafana with SMS/email escalation and cooldown logic, plus a FastAPI read layer for the farm floor.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -638,10 +608,10 @@
         </div>
 
         <div class="project-card reveal reveal-d2" data-category="platform batch">
-          <div class="project-num">17 — COMPLIANCE PLATFORM · NEW</div>
-          <div class="project-name"><i class="fas fa-shield-alt"></i>Blockchain GDPR Aggregator</div>
+          <div class="project-num">17 — COMPLIANCE PLATFORM</div>
+          <div class="project-name"><i class="fas fa-shield-alt"></i>ChainGuard — GDPR-Native Crypto Intel</div>
           <div class="project-desc">
-            Blockchain analytics with GDPR/PCI compliance built into the pipeline. Ethereum + Bitcoin + market ingest (Binance, CoinGecko, Alpha Vantage) → regex PII masking + Fernet encryption + audit trails → Postgres, Elasticsearch, MongoDB. Celery workers, FastAPI behind Nginx, 365-day retention.
+            On-chain analytics with privacy baked in: Ethereum + Bitcoin + market feeds pass PII masking, Fernet encryption, and full audit trails before touching Postgres, Elasticsearch, or Mongo. 365-day retention, subpoena-ready.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-link"></i> web3.py</span>
@@ -657,10 +627,10 @@
         </div>
 
         <div class="project-card reveal" data-category="platform batch">
-          <div class="project-num">18 — CLIENT TOOL · NEW</div>
-          <div class="project-name"><i class="fas fa-building"></i>BIM Model Health Analyzer</div>
+          <div class="project-num">18 — CLIENT TOOL</div>
+          <div class="project-name"><i class="fas fa-building"></i>Model Health Score — Revit, Graded 0–100</div>
           <div class="project-desc">
-            Revit audit tool built for a client BIM team, with a data-quality mindset: orphaned-element detection, parameter consistency checks, view and performance profiling via the Revit API, scored 0–100 with JSON + HTML reports and a WPF dashboard. Companion samples in C# and Dynamo.
+            The audit a BIM team actually opens: orphaned-element detection, parameter consistency, and performance profiling via the Revit API — scored 0–100 with JSON + HTML evidence and a WPF command deck.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-cube"></i> pyRevit</span>
@@ -675,10 +645,10 @@
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch">
-          <div class="project-num">19 — BIM GENERATION · NEW</div>
-          <div class="project-name"><i class="fas fa-cubes"></i>Interiors Toolkit — Parametric Revit Generation</div>
+          <div class="project-num">19 — BIM GENERATION</div>
+          <div class="project-name"><i class="fas fa-cubes"></i>Interiors Engine — 10 Villas, $156K BOQ, Zero Errors</div>
           <div class="project-desc">
-            pyRevit + C# toolkit that generates 10 parametric interior projects (45 m² studio → 250 m² villa, 240 m² office) as native .RVT, with IFC4 backups, plan/3D renders and a $156,733 priced BOQ. A compiled net48 add-in makes the same build repeatable headless in Revit Batch Processor / Design Automation.
+            Parametric generation that pays: 10 full interior projects (45 m² studio → 250 m² villa) as native RVT + IFC4, rendered plans, and a priced $156,733 BOQ — with a compiled net48 add-in for headless repeat builds.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-cube"></i> pyRevit</span>
@@ -694,9 +664,9 @@
 
         <div class="project-card wide reveal" data-category="platform batch">
           <div class="project-num">20 — ENTERPRISE FINTECH</div>
-          <div class="project-name"><i class="fas fa-landmark"></i>E-Finance — Digital Banking Platform</div>
+          <div class="project-name"><i class="fas fa-landmark"></i>E-Finance — 6-Service Digital Bank</div>
           <div class="project-desc">
-            Enterprise digital-banking platform across 6 microservices: core-banking API and Java transaction service streaming through Kafka into Postgres, MongoDB, Redis, and Elasticsearch, with fraud/AML ML and BNPL scoring, 3 orchestrating Airflow DAGs, FastAPI behind Kong, and Web3 wallets.
+            A bank in containers: core-banking API + Java transaction engine streaming through Kafka into Postgres, Mongo, Redis, and Elasticsearch — with fraud/AML models, BNPL scoring, Airflow settlement DAGs, and Web3 wallets.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -712,10 +682,10 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform batch">
-          <div class="project-num">21 — LEAD INTELLIGENCE</div>
-          <div class="project-name"><i class="fas fa-phone"></i>Automative Scrapper — Wholesale Leads</div>
+          <div class="project-num">21 — MARKET INTELLIGENCE</div>
+          <div class="project-name"><i class="fas fa-phone"></i>Wholesale Radar — Egypt Apparel Map</div>
           <div class="project-desc">
-            Compliant lead-collection tool for Egyptian clothing wholesalers. Playwright governorate sweeps plus Facebook/Instagram/TikTok export parsers feed an Arabic-Indic phone extractor with WhatsApp-context filtering — buyer intent saved without phones, sellers stored in SQLite with per-governorate CSV exports.
+            Ethical market mapping for Egyptian apparel wholesale: governorate-wide discovery with WhatsApp-context filtering — real sellers saved, noise dropped, per-region CSVs ready for the sales team.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-mouse"></i> Playwright</span>
@@ -730,9 +700,9 @@
 
         <div class="project-card reveal reveal-d2" data-category="platform batch">
           <div class="project-num">22 — ESTATES ETL</div>
-          <div class="project-name"><i class="fas fa-city"></i>Digital Estates Platform</div>
+          <div class="project-name"><i class="fas fa-city"></i>Estates Warehouse — Governed by Design</div>
           <div class="project-desc">
-            Estates-data ETL with governance built in: synthetic asset/space/COBie/CAFM/BMS generators validated against Uniclass, SFG20, COBie, and HESA rules, modeled into a SQLite star schema and served through a Power BI spec with DAX measures. Runnable in plain Python, Airflow optional.
+            Asset, space, and maintenance data modeled to Uniclass/SFG20/COBie/HESA rules, served as a star schema with a Power BI spec and DAX library. Validation first, dashboards second — governance you can demo.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-python"></i> Python</span>
@@ -748,9 +718,9 @@
 
         <div class="project-card reveal" data-category="platform">
           <div class="project-num">23 — SERVERLESS CLOUD</div>
-          <div class="project-name"><i class="fab fa-aws"></i>Serverless Task Manager — AWS</div>
+          <div class="project-name"><i class="fab fa-aws"></i>Serverless Ops — AWS Blueprint, Zero Servers</div>
           <div class="project-desc">
-            Portfolio's only full-AWS serverless story: API Gateway + Lambda + DynamoDB backend with a React frontend on S3/CloudFront, TypeScript CDK infrastructure, CodePipeline/CodeBuild delivery, and CloudWatch observability.
+            Full AWS serverless in production shape: API Gateway + Lambda + DynamoDB, React on S3/CloudFront, TypeScript CDK, CodePipeline delivery, CloudWatch observability — scale to zero, deploy with confidence.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-aws"></i> Lambda</span>
@@ -765,10 +735,10 @@
         </div>
 
         <div class="project-card reveal" data-category="platform batch">
-          <div class="project-num">24 — GOVERNED PLATFORM · NEW</div>
-          <div class="project-name"><i class="fas fa-university"></i>Estates Data Portfolio — Governed Platform</div>
+          <div class="project-num">24 — GOVERNED PLATFORM</div>
+          <div class="project-name"><i class="fas fa-university"></i>Estates Lakehouse — 8/8 Sources, Zero Loss</div>
           <div class="project-desc">
-            Complete estates data portfolio rebuilt on synthetic + public data because real client data is confidential: foundation generator with ground truth → lakehouse reconciling 8/8 sources zero-loss → dbt gold marts at 196 tests and 21 contracts → 20 projects spanning Power BI dashboards, BIM/standards, IoT ingestion, digital twin and governance. Live interactive demo for every project.
+            A lakehouse that proves itself: 8/8 sources reconciled with zero loss, dbt gold marts guarded by 196 tests and 21 contracts, 20 live demos spanning Power BI, IoT, digital twin, and governance. Open it and click anything.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-table"></i> dbt</span>
@@ -786,10 +756,10 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform batch">
-          <div class="project-num">25 — INGESTION FRAMEWORK · NEW</div>
-          <div class="project-name"><i class="fas fa-microchip"></i>Component Data Pipeline — Config-Driven Ingestion</div>
+          <div class="project-num">25 — INGESTION FRAMEWORK</div>
+          <div class="project-name"><i class="fas fa-microchip"></i>Component Ingest — Config, Not Code</div>
           <div class="project-desc">
-            Reusable electronics-component ingestion where each source is a YAML file (selectors, pagination, field map), so a site redesign is a config edit instead of a code change. A schema-drift gate fails the run loudly instead of silently loading empty fields; Airflow orchestrates and a `cdp` CLI covers doctor → run → status → schedule. v1 — warehouse and analytics layers are roadmap.
+            Ingestion where a site redesign is a YAML edit, not a redeploy. Schema-drift gates fail loudly instead of loading empty fields; a `cdp` CLI runs doctor → run → status → schedule under Airflow. Built to onboard the next 50 sources in minutes.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-python"></i> Python</span>
@@ -806,13 +776,120 @@
       </div>
     </div>
   </section>
-
-  <!-- ARTICLES -->
-  <section id="articles">
+    <section id="experience">
     <div class="container">
-      <div class="sec-label">// writing</div>
+      <div class="sec-label">Work history</div>
+      <h2>Experience</h2>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">07/2026 – Present</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">Data Engineer</div>
+          <div class="exp-company">Waffarha</div>
+          <ul class="exp-bullets">
+            <li><strong>Own production RAG</strong> serving bilingual (AR/EN) answers from 13.7M live ClickHouse rows — FastAPI + Redis sessions + Streamlit for concurrent business users</li>
+            <li><strong>Won the bake-off:</strong> 4 embedding models × 5 vector stores tested; bge-m3 + Qdrant ships at <strong>87.8% grounded retrieval</strong> over 9,106 docs and 2,923 merchants on a 225-case harness</li>
+            <li><strong>Cut LLM spend with deterministic gates</strong> — greeting, injection, refusal, and FAQ/stock shortcuts resolve routine queries with zero model calls; an evidence gate blocks any answer beyond retrieved sources</li>
+            <li><strong>Shipped automatic fact-checking</strong> that extracts verifiable claims from every answer and cross-checks them against sources before delivery</li>
+            <li><strong>Automated the data loop</strong> — Airflow DAGs ingest from ClickHouse with dedup, SCD2 versioning, and incremental vector re-indexing on change</li>
+            <li><strong>Built brand radar</strong> monitoring App Store, Google Play, Reddit, and News through a pluggable connector registry feeding sentiment dashboards</li>
+            <li><strong>Proved the cost/latency curve:</strong> benchmarked local vs cloud LLMs on identical context and shipped Docker-baked offline Ollama images for zero-network deployment</li>
+            <li><strong>Extended to Arabic voice</strong> — dialect-aware STT plus Egyptian TTS selected by blind listening tests, demo-ready on demand</li>
+            <li><strong>Containerized everything</strong> — one Compose file runs API, UI, Airflow, vector DB, and Redis reproducibly from laptop to server</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">04/2026 – 07/2026</div>
+          <div class="exp-location">Smart Village, Giza</div>
+        </div>
+        <div>
+          <div class="exp-role">Big Data Engineering Intern</div>
+          <div class="exp-company">National Telecommunication Institute (NTI)</div>
+          <ul class="exp-bullets">
+            <li><strong>Shipped end-to-end ETL on Hadoop/Spark</strong> — Python + SQL pipelines orchestrated in Airflow from raw ingest to analytics-ready marts</li>
+            <li><strong>Operated the full distributed toolkit:</strong> HDFS/MapReduce/YARN, HBase, Hive, and InfluxDB for warehouse, NoSQL, and time-series workloads</li>
+            <li><strong>Moved data at ecosystem scale</strong> with Kafka, Flume, and Sqoop between relational systems and Hadoop — plus AWS (EC2/S3/IAM/VPC) and BI in Power BI, Tableau, Grafana</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">01/2025 – 01/2026</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">Data Engineer</div>
+          <div class="exp-company">Nexlify (Client Engagement: Healthcare Clinic Network)</div>
+          <ul class="exp-bullets">
+            <li><strong>Unified 10+ clinic systems</strong> (Excel + APIs) into one Airflow-driven warehouse covering customers, staff, revenue, schedules, and appointments</li>
+            <li><strong>Designed the warehouse from zero</strong> — star schemas, fact/dimension + bridge tables — and <strong>cut reporting cycles 40%</strong> across the network</li>
+            <li><strong>Rewrote legacy SQL</strong> across Postgres, SQL Server, MySQL, and SQLite with CTEs and join surgery — <strong>30% faster queries, zero dashboard timeouts</strong></li>
+            <li><strong>Standardized millions of historical rows</strong> — mixed Arabic/English, messy numerics — with Python quality gates before anything loaded</li>
+            <li><strong>One report model, every clinic:</strong> Power BI with a clinic switcher serving both per-site operators and company-wide leadership</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">06/2024 – 11/2024</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">AI Instructor</div>
+          <div class="exp-company">iSchool</div>
+          <ul class="exp-bullets">
+            <li><strong>Mentored 100+ future engineers</strong> through hands-on ML — <strong>90% shipped capstone projects</strong>, the cohort's highest finish rate</li>
+            <li><strong>Ran the lab like production:</strong> every module delivered and documented on schedule, zero slipped weeks</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">06/2023 – 08/2023</div>
+          <div class="exp-location">Zurich, Switzerland</div>
+        </div>
+        <div>
+          <div class="exp-role">Blockchain Analysis Intern</div>
+          <div class="exp-company">University of Zurich (UZH)</div>
+          <ul class="exp-bullets">
+            <li><strong>Mined Ethereum at research scale</strong> — Python pipelines over raw node data (blocks/transactions) for UZH Web3/Fintech research</li>
+            <li><strong>Certified Blockchain Deep Dive:</strong> Ethereum, Polkadot, Bitcoin + 20 protocols — consensus, contracts, and on-chain data models</li>
+            <li><strong>Hardened data integrity</strong> with automated validation/sanitization and stakeholder-grade health reports on chain quality</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">08/2021 – 09/2021</div>
+          <div class="exp-location">Cairo</div>
+        </div>
+        <div>
+          <div class="exp-role">Full Stack Intern</div>
+          <div class="exp-company">Information Technology Institute (ITI)</div>
+          <ul class="exp-bullets">
+            <li><strong>Shipped full-stack .NET end to end</strong> — schema to UI — owning the whole lifecycle in a 6-week sprint</li>
+            <li><strong>Delivered 3 demo-ready apps early</strong>, all acceptance criteria green</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </section>
+    <section id="articles">
+    <div class="container">
+      <div class="sec-label">Field notes</div>
       <h2>Articles</h2>
-      <p class="projects-sub">I write deep, practical guides on data engineering — Airflow, NoSQL, resilience, and where the field is heading. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a></p>
+      <p class="projects-sub">Code-first, production-tested: Airflow at scale, NoSQL when it wins, and the resilience patterns that keep pipelines alive at 3am. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a></p>
       <div class="articles-grid" id="articles-grid">
         <article class="article-card reveal">
           <div class="article-meta"><span class="article-date">Sep 2026</span><span class="article-tag">Airflow · Orchestration</span></div>
@@ -853,133 +930,16 @@
       </div>
     </div>
   </section>
-
-  <!-- EXPERIENCE -->
-  <section id="experience">
+    <section id="credentials">
     <div class="container">
-      <div class="sec-label">// career</div>
-      <h2>Experience</h2>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">07/2026 – Present</div>
-          <div class="exp-location">Cairo</div>
-        </div>
-        <div>
-          <div class="exp-role">Data Engineer Intern</div>
-          <div class="exp-company">Waffarha</div>
-          <ul class="exp-bullets">
-            <li>Built a bilingual (Arabic/English) RAG chatbot pipeline for offers/FAQ data with FastAPI backend, Redis session handling, and Streamlit UI supporting concurrent multi-user querying</li>
-            <li>Evaluated 4 multilingual embedding models and 5 vector store backends; production runs bge-m3 + Qdrant over 9,106 docs / 2,923 merchants with 87.8% retrieval on a 225-case, 20-category harness, answering from ~13.7M live rows across 19 ClickHouse tables</li>
-            <li>Designed a deterministic gate cascade (greeting/injection/refusal floors, FAQ-topic override, direct FAQ/stock shortcuts) that resolves routine queries without LLM calls, with an evidence gate so the agent never freeforms beyond retrieved sources</li>
-            <li>Built an automated fact-checking layer extracting verifiable claims from LLM answers and cross-checking against retrieved sources to reduce hallucination</li>
-            <li>Automated Airflow DAGs for ingestion from ClickHouse, deduplication, SCD2 versioning, and vector index updates on new or changed data</li>
-            <li>Built a market-intelligence pipeline monitoring public mentions across App Store, Google Play, Reddit, and Google News with connector-registry architecture</li>
-            <li>Benchmarked local vs cloud LLMs on the same index (qwen2.5:3b ~12s vs Gemini 2.5 Flash ~3s); evaluated qwen2.5 1.5B/3B/14B, llama3.1, aya:8b and command-r7b-arabic, shipping Docker-baked offline Ollama images</li>
-            <li>Built an Arabic voice lab around the agent — Faster-Whisper plus dialectal-Whisper STT options with Chatterbox-Egyptian TTS chosen by listening tests; kept opt-in for demos, commercial TTS/STT left unwired</li>
-            <li>Documented an Egyptian-dialect retrieval gap (dialect offer queries scoring near-zero) as tracked open work with per-category eval breakdowns</li>
-            <li>Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with Docker Compose, baking Ollama and embedding models into images for zero-runtime-network deployment</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">04/2026 – 07/2026</div>
-          <div class="exp-location">Smart Village, Giza</div>
-        </div>
-        <div>
-          <div class="exp-role">Big Data Engineering Intern</div>
-          <div class="exp-company">National Telecommunication Institute (NTI)</div>
-          <ul class="exp-bullets">
-            <li>Built and automated ETL data processing workflows using Spark, Python, and SQL, orchestrating multi-step pipelines end-to-end with Airflow</li>
-            <li>Processed large-scale datasets on Hadoop distributed systems (HDFS, MapReduce, YARN); worked with HBase (NoSQL), Hive (data warehousing), and InfluxDB (time-series)</li>
-            <li>Built data ingestion and streaming workflows using Kafka, Flume, and Sqoop, moving data between relational sources and the Hadoop ecosystem</li>
-            <li>Gained hands-on experience with AWS (EC2, S3, IAM, VPC) for cloud-based data solutions; built monitoring dashboards in Power BI, Tableau, and Grafana</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">01/2025 – 01/2026</div>
-          <div class="exp-location">Cairo</div>
-        </div>
-        <div>
-          <div class="exp-role">Data Engineer</div>
-          <div class="exp-company">Nexlify (Client Engagement: Healthcare Clinic Network)</div>
-          <ul class="exp-bullets">
-            <li>Built an ETL pipeline with Airflow to ingest data from heterogeneous sources (Excel, clinic system APIs) for a healthcare client across 10+ clinics covering customers, staff, revenue, orders, schedules, and appointments</li>
-            <li>Designed and built a centralized data warehouse from scratch using dimensional modeling with star schemas, fact/dimension tables, and bridge tables; integrated 10+ disparate sources and accelerated reporting cycles by 40%</li>
-            <li>Engineered the pipeline to reliably process daily transactional volumes (50+ new customer records, 200+ appointments, 1,000+ revenue records per day) for the client's clinic network</li>
-            <li>Refactored legacy SQL pipelines using CTEs and optimized JOIN logic across PostgreSQL, SQL Server, MySQL, and SQLite — 30% reduction in query latency, eliminated 100% of dashboard timeouts</li>
-            <li>Cleaned and standardized millions of historical records using custom Python automation scripts, handling mixed Arabic/English text and numeric formats, enforcing data quality before loading</li>
-            <li>Built Power BI reports/dashboards around business KPIs with a clinic-wise switcher so a single report model served every clinic and company-wide views</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">06/2024 – 11/2024</div>
-          <div class="exp-location">Cairo</div>
-        </div>
-        <div>
-          <div class="exp-role">AI Instructor</div>
-          <div class="exp-company">iSchool</div>
-          <ul class="exp-bullets">
-            <li>Simplified complex data and ML concepts for 100+ students, leading hands-on sessions with a 90% project completion rate</li>
-            <li>Facilitated technical labs and sessions, ensuring 100% of curriculum modules completed and documented on schedule</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">06/2023 – 08/2023</div>
-          <div class="exp-location">Zurich, Switzerland</div>
-        </div>
-        <div>
-          <div class="exp-role">Blockchain Analysis Intern</div>
-          <div class="exp-company">University of Zurich (UZH)</div>
-          <ul class="exp-bullets">
-            <li>Extracted and processed large-scale Web3/Fintech datasets from the Ethereum blockchain using Python for research</li>
-            <li>Earned a Blockchain Deep Dive certificate covering Ethereum, Polkadot, Bitcoin, and 20+ protocols — consensus, smart contracts, and on-chain data models</li>
-            <li>Developed automated validation scripts to sanitize raw node data (blocks/transactions), improving downstream data integrity</li>
-            <li>Generated on-chain data summaries and quality reports for stakeholder visibility into data health and trends</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="exp-item reveal">
-        <div>
-          <div class="exp-date">08/2021 – 09/2021</div>
-          <div class="exp-location">Cairo</div>
-        </div>
-        <div>
-          <div class="exp-role">Full Stack Intern</div>
-          <div class="exp-company">Information Technology Institute (ITI)</div>
-          <ul class="exp-bullets">
-            <li>Architected and deployed end-to-end .NET web applications, managing full dev lifecycle from database schema design to front-end UI</li>
-            <li>Delivered 3 production-ready demos ahead of schedule with all technical requirements met</li>
-          </ul>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- CREDENTIALS -->
-  <section id="credentials">
-    <div class="container">
-      <div class="sec-label">// proof, not promises</div>
+      <div class="sec-label">Proof and practice</div>
       <h2>Credentials</h2>
       <div class="cred-grid">
         <div class="cred-card reveal">
           <div class="cred-label">🎓 Education</div>
           <h3>Helwan University — Computers & AI</h3>
-          <div class="cred-meta">2020 – 2024 · Cairo · GPA 3.3 · Graduation Project A+</div>
-          <p>Arabic RAG graduation project (Hadith Chat App, Django + Qdrant, 70% accuracy) — the foundation for my production RAG work at Waffarha.</p>
+          <div class="cred-meta">Cairo · Graduation Project: A+ in Arabic RAG</div>
+          <p>A+ graduation build: an Arabic RAG over classical texts that became the prototype for Waffarha's production assistant. Theory where it counts, shipped code where it matters.</p>
         </div>
         <div class="cred-card reveal reveal-d1">
           <div class="cred-label">📜 Certifications</div>
@@ -992,8 +952,8 @@
         </div>
         <div class="cred-card reveal reveal-d2">
           <div class="cred-label">📄 Résumé</div>
-          <h3>Polished 2-page Data Engineer version</h3>
-          <p>Same impact numbers as this site, formatted for recruiters and hiring managers. Updated Sep 2026.</p>
+          <h3>One page recruiters actually finish</h3>
+          <p>Numbers-led, ATS-clean, matched to this site metric-for-metric. Updated for 2026 data + AI roles.</p>
           <div class="cred-btns">
             <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" class="btn btn-primary" target="_blank" rel="noopener">Download PDF ↓</a>
             <a href="https://linkedin.com/in/eng-zakaria" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a>
@@ -1002,13 +962,11 @@
       </div>
     </div>
   </section>
-
-  <!-- CONTACT -->
-  <section id="contact">
+    <section id="contact">
     <div class="container">
-      <div class="sec-label">// let's connect</div>
+      <div class="sec-label">Open line</div>
       <h2>Get In Touch</h2>
-      <p class="contact-sub">Open to data engineering roles, collaborations, and interesting data problems. I reply within 24 hours.</p>
+      <p class="contact-sub">Have messy data, a slow warehouse, or an AI idea that needs grounding? I reply within 24 hours — with questions worth answering.</p>
       <div class="contact-grid">
         <a href="mailto:mohamedzakaria.cs@gmail.com" class="contact-btn primary">✉ mohamedzakaria.cs@gmail.com</a>
         <button class="contact-btn" id="copy-email" type="button">⧉ Copy email</button>
@@ -1020,14 +978,14 @@
       <p class="contact-note">Prefer LinkedIn? <a href="https://linkedin.com/in/eng-zakaria" target="_blank" rel="noopener noreferrer" class="inline-link">DMs are open</a> — mention a project or article so I know you're human. Cairo (GMT+3) · English / Arabic.</p>
     </div>
   </section>
+  </main>
 
-  <button id="to-top" aria-label="Back to top">↑</button>
-  <div id="toast" role="status" aria-live="polite"></div>
-
-  <footer>
-    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span> · <a href="docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">Résumé</a> · <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer">Blog</a></div>
-    <div class="footer-right">Built with <span>♥</span> and data · <a href="#hero" class="inline-link">Back to top ↑</a></div>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="#top"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Built front to back in Cairo.</span>
+    <div class="hood-footer-links"><a href="portfolio-classic.html">Classic layout</a><a href="#top">Back to top ↑</a></div>
   </footer>
-
+  <button id="to-top" class="hood-to-top" aria-label="Back to top">↑</button>
+  <div id="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>/data — Mohammed Zakaria, Data Engineer</title>
+<meta name="color-scheme" content="light dark"/>
+<script src="js/theme-init.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root{--bg:#fff;--ink:#111;--muted:#6b7280;--line:#e8e8e8;--card:#fff;--soft:#f4f4f5;--nav-bg:rgba(255,255,255,.92)}
+[data-theme="dark"]{--bg:#0b0e14;--ink:#f3f4f6;--muted:#9ca3af;--line:#1f2937;--card:#111827;--soft:#151b26;--nav-bg:rgba(11,14,20,.9)}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,system-ui;color:var(--ink);background:var(--bg)}a{color:inherit}.wrap{max-width:1000px;margin:0 auto;padding:0 22px}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--nav-bg);z-index:10}
+.logo{font-weight:800}.links{display:flex;gap:16px;align-items:center;font-size:.93rem;flex-wrap:wrap}.links a{opacity:.8}.links a:hover,.links a.on{opacity:1;text-decoration:underline;text-underline-offset:4px}
+.btn{border:1px solid var(--ink);border-radius:999px;padding:8px 14px;font-weight:700;font-size:.85rem}.btn.dark{background:var(--ink);color:var(--bg)}
+.icon-btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;width:36px;height:36px;cursor:pointer}
+.hero{padding:38px 0 10px}.hero h1{font-size:clamp(2.4rem,5vw,3.8rem);letter-spacing:-.04em}.hero h1 span{color:#0a66c2}.hero p{color:var(--muted);margin-top:10px;line-height:1.65}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:22px 0}.card{border:1px solid var(--line);border-radius:14px;padding:18px;background:var(--card)}.card h3{font-size:1.05rem;margin-bottom:8px}.card p{color:var(--muted);font-size:.9rem;line-height:1.6}.card .meta{margin-top:12px;font-size:.84rem;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.link{font-weight:700;text-decoration:underline;text-underline-offset:4px}
+h2{margin:28px 0 12px;font-size:1.3rem}ul.clean{list-style:none;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card)}ul.clean li{padding:14px 16px;border-bottom:1px solid var(--line);font-size:.92rem;line-height:1.6}ul.clean li:last-child{border:0}ul.clean small{color:var(--muted)}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.tags span{font-size:.78rem;background:var(--soft);border:1px solid var(--line);padding:5px 10px;border-radius:999px}
+footer{border-top:1px solid var(--line);margin-top:30px;padding:20px 0 40px;color:var(--muted);font-size:.88rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style>
+<link rel="stylesheet" href="css/portfolio-themes.css">
+</head>
+<body><div class="wrap">
+<nav class="nav"><a class="logo" href="adham.html">mohammed<span style="color:var(--muted);font-weight:400">zakaria</span> <span style="color:#0a66c2">/data</span></a>
+<div class="links"><a href="adham.html">home</a><a class="on" href="data.html">/data</a><a href="ai.html">&lt;ai/&gt;</a><a href="index.html" style="font-weight:800">full portfolio →</a><button class="icon-btn" id="t">🌙</button></div></nav>
+<header class="hero"><h1><span>/data</span> engineer</h1>
+<p>Data Engineer @ Waffarha since Jul 2026. Batch, streaming & warehouses — Spark, Kafka, Airflow, ClickHouse, AWS. 13.7M live rows, 40% faster reporting, sub-second streaming.</p>
+<div class="tags"><span>Apache Spark</span><span>Kafka</span><span>Airflow</span><span>ClickHouse</span><span>PostgreSQL</span><span>Delta Lake</span><span>dbt</span><span>Docker</span><span>K8s</span><span>AWS</span></div>
+</header>
+<h2>Data projects</h2>
+<div class="grid">
+<div class="card"><h3>Partner Price Integrity — 7-stage Airflow</h3><p>Detect partner price violations. Tiered matching, dual scraper, HTML/Excel/MD reports.</p><div class="meta"><a class="link" href="projects/partner-price-integrity.html">Case study →</a><span>Airflow · Playwright</span></div></div>
+<div class="card"><h3>Healthcare Clinic DW — Star Schema</h3><p>10+ sources to PostgreSQL, 40% faster reporting, 0 dashboard timeouts.</p><div class="meta"><a class="link" href="projects/nexlify-dw.html">Case study →</a><span>Airflow · Postgres · Power BI</span></div></div>
+<div class="card"><h3>Fraud Detection — Streaming</h3><p>Real-time Kafka scoring, sub-second, drift alerting, Plotly/Dash.</p><div class="meta"><a class="link" href="projects/fraud-detection.html">Case study →</a><span>Kafka · MLflow</span></div></div>
+<div class="card"><h3>Aircraft Tracking — Spark Streaming</h3><p>ADS-B → Kafka → Spark → InfluxDB + Grafana geomap.</p><div class="meta"><a class="link" href="projects/aircraft-tracking.html">Case study →</a><span>Spark · Kafka</span></div></div>
+<div class="card"><h3>Telecom Enterprise Platform</h3><p>8 domains, medallion Bronze/Silver/Gold, Docker-to-Azure, MLflow.</p><div class="meta"><a class="link" href="projects/telecom-platform.html">Case study →</a><span>Azure · Spark</span></div></div>
+<div class="card"><h3>Watchdog — Price Intelligence</h3><p>Playwright + Celery/Redis, Airflow 6-stage ETL, Postgres marts, alerts.</p><div class="meta"><a class="link" href="projects/watchdog-prices.html">Case study →</a><span>Airflow · Postgres</span></div></div>
+</div>
+<p><a class="link" href="index.html#projects">All data projects in full portfolio →</a></p>
+<h2>Data experience</h2>
+<ul class="clean">
+<li><b>Data Engineer — Waffarha</b> <small>07/2026–Present · Cairo</small><br/>Airflow ingestion from ClickHouse, dedup, SCD2, vector-index updates; price & market pipelines.</li>
+<li><b>Big Data Engineering — NTI</b> <small>04/2026–07/2026</small><br/>Spark/Python/SQL + Airflow, HDFS/MapReduce/YARN, HBase/Hive/InfluxDB, Kafka/Flume/Sqoop, AWS.</li>
+<li><b>Data Engineer — Nexlify (Healthcare)</b> <small>01/2025–01/2026</small><br/>10+ clinic sources, star schema DW, 50+/200+/1000+ daily volumes, CTE refactor −30% latency, Power BI.</li>
+</ul>
+<h2>Data skills</h2>
+<div class="tags"><span>Python</span><span>SQL</span><span>Spark</span><span>Flink</span><span>Kafka</span><span>NiFi</span><span>Airflow</span><span>ClickHouse</span><span>Postgres</span><span>Delta Lake</span><span>dbt</span><span>Dimensional Modeling</span><span>SCD2</span><span>Power BI</span><span>Grafana</span><span>AWS</span><span>Docker</span></div>
+<footer><span>© 2026 Mohammed Zakaria · /data</span><span><a class="link" href="adham.html">home split</a> · <a class="link" href="ai.html">&lt;ai/&gt;</a> · <a class="link" href="index.html">full portfolio →</a></span></footer>
+</div>
+<script src="js/theme-controls.js"></script>
+</body></html>

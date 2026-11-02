@@ -13,45 +13,18 @@ const navLinks  = document.querySelector('.nav-links');
 
 if (hamburger && navLinks) {
   hamburger.addEventListener('click', () => {
-    hamburger.classList.toggle('active');
-    navLinks.classList.toggle('open');
+    const open = navLinks.classList.toggle('open');
+    hamburger.classList.toggle('active', open);
+    hamburger.setAttribute('aria-expanded', String(open));
+    hamburger.setAttribute('aria-label', open ? 'Close navigation' : 'Open navigation');
   });
   navLinks.querySelectorAll('a').forEach(a => {
     a.addEventListener('click', () => {
       hamburger.classList.remove('active');
       navLinks.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      hamburger.setAttribute('aria-label', 'Open navigation');
     });
-  });
-}
-
-// Theme toggle
-const themeToggle = document.getElementById('theme-toggle');
-const html = document.documentElement;
-
-function setTheme(theme) {
-  html.setAttribute('data-theme', theme);
-  // Official designs: Bento Light <-> Bento Dark follow the theme toggle
-  if (theme === 'dark') html.setAttribute('data-design', 'bento-dark');
-  else html.setAttribute('data-design', 'bento');
-  localStorage.setItem('theme', theme);
-  const icon = theme === 'dark' ? '☀️' : '🌙';
-  themeToggle.innerHTML = `${icon} <span>${theme === 'dark' ? 'Light' : 'Dark'}</span>`;
-}
-
-// Load saved theme or prefer-color-scheme (default: dark)
-const saved = localStorage.getItem('theme');
-if (saved) {
-  setTheme(saved);
-} else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-  setTheme('light');
-} else {
-  setTheme('dark');
-}
-
-if (themeToggle) {
-  themeToggle.addEventListener('click', () => {
-    const current = html.getAttribute('data-theme');
-    setTheme(current === 'dark' ? 'light' : 'dark');
   });
 }
 
@@ -93,7 +66,19 @@ function inferCategory(card) {
 }
 const filterBtns = document.querySelectorAll('.filter-btn');
 const projectCards = document.querySelectorAll('.project-card');
+function updateProjectCount() {
+  const total = projectCards.length;
+  const shown = [...projectCards].filter(c => !c.classList.contains('hidden')).length;
+  const shownEl = document.getElementById('street-shown');
+  const countEl = document.getElementById('street-count');
+  const barEl = document.getElementById('street-bar');
+  if (shownEl) shownEl.textContent = shown;
+  if (countEl) countEl.textContent = shown;
+  if (barEl) barEl.style.width = (total ? (shown / total) * 100 : 100) + '%';
+}
 if (filterBtns.length) {
+  projectCards.forEach((card, i) => card.style.setProperty('--i', Math.min(i, 12)));
+  updateProjectCount();
   filterBtns.forEach(btn => btn.addEventListener('click', () => {
     filterBtns.forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -103,6 +88,7 @@ if (filterBtns.length) {
       const show = f === 'all' || cats.includes(f);
       card.classList.toggle('hidden', !show);
     });
+    updateProjectCount();
   }));
 }
 
