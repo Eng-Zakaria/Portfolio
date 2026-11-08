@@ -522,3 +522,24 @@ body.menu-open .bottom-bar { transform: translate(-50%, calc(100% + 30px)); }
   .hood-to-top { bottom: 26px; }
 }
 @media (prefers-reduced-motion: reduce) { .bottom-bar { transition: none; } }
+
+/* ── Skills: icon + label spacing (index loads hood css, not style.css) ── */
+#skills .skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+#skills .skill-tag { display: inline-flex; align-items: center; gap: 9px; min-height: 36px; padding: 7px 12px 7px 10px; line-height: 1.2; transition: border-color .2s, color .2s, background .2s, transform .2s; }
+#skills .skill-tag i { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 1.25em; font-size: 1.05rem; line-height: 1; }
+#skills .skill-tag i:not(.colored) { color: var(--accent); }
+#skills .skill-tag span { white-space: nowrap; }
+#skills .skill-tag:hover { border-color: var(--accent); color: var(--text); background: var(--accent-light); transform: translateY(-2px); }
+#skills .skill-cat-label { display: flex; align-items: center; gap: 10px; }
+#skills .skill-cat-label i { width: 1.2em; text-align: center; color: var(--accent); }
+@media (max-width: 640px) {
+  #skills .skill-tag { gap: 8px; padding: 7px 10px 7px 9px; }
+  #skills .skill-tag span { white-space: normal; }
+}
+/* dark brand logos (black glyphs) stay visible in dark mode */
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-bash-plain,
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-apachekafka-plain,
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-linux-plain,
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-github-original,
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-flask-original,
+html[data-theme="dark"] #skills .skill-tag i.colored.devicon-influxdb-plain { color: var(--text); }
