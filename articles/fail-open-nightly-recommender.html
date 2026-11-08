@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS | Mohammed Zakaria</title>
+  <meta name="description" content="How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html">
+  <meta property="og:title" content="Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS | Mohammed Zakaria">
+  <meta property="og:description" content="How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS", "description": "How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html", "wordCount": 658, "keywords": "Data Engineering, Recommender Systems, Multi-Cloud"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Engineering</span><span class="post-tag">Recommender Systems</span><span class="post-tag">Multi-Cloud</span></div>
+        <h1>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</h1>
+        <p class="post-lede">How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>3 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem-three-systems-one-morning">The problem: three systems, one morning</a></li>
+<li><a href="#the-pipeline">The pipeline</a><ul>
+<li><a href="#similarity-you-can-explain-in-one-line">Similarity you can explain in one line</a></li>
+</ul>
+</li>
+<li><a href="#the-rule-fail-open">The rule: fail open</a></li>
+<li><a href="#make-re-runs-boring">Make re-runs boring</a></li>
+<li><a href="#whats-next">What&rsquo;s next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Every night at 00:00 Cairo time, a small service at Waffarha wakes up, reads what customers did
+yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
+opens the app in the morning, their recommendations are already there.</p>
+<p>This post walks through how that job works, and the one rule I&rsquo;d keep if I had to throw everything
+else away: <strong>fail open, never fail the night.</strong></p>
+<h2 id="the-problem-three-systems-one-morning">The problem: three systems, one morning<a class="h-anchor" href="#the-problem-three-systems-one-morning" title="Permanent link">#</a></h2>
+<p>The data needed for a recommendation lives in three places:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What customers viewed and searched</td>
+<td>MoEngage event exports on <strong>Google Cloud Storage</strong></td>
+<td>Marketing</td>
+</tr>
+<tr>
+<td>Which offers still exist</td>
+<td><strong>ClickHouse</strong></td>
+<td>Product data</td>
+</tr>
+<tr>
+<td>What the app reads</td>
+<td><strong>MySQL on AWS RDS</strong></td>
+<td>Backend</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nothing about this is exotic. What makes it tricky is that each system can be slow or down on any
+given night, and the app shows whatever is in MySQL at 8 a.m., right or wrong.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Pull</strong> the last day of JSON / NDJSON event exports from Cloud Storage and cache them locally.</li>
+<li><strong>Keep</strong> only two event types: offer views and search-result clicks on offers.</li>
+<li><strong>Build histories</strong>: sort each user&rsquo;s events by time, drop consecutive duplicates, keep the latest 50.</li>
+<li><strong>Score similarity</strong> between offers from co-views.</li>
+<li><strong>Rank</strong> each user&rsquo;s candidates with recency weights and drop offers that have expired.</li>
+<li><strong>Upsert</strong> the top picks into MySQL in batches of 5,000 rows.</li>
+</ol>
+<h3 id="similarity-you-can-explain-in-one-line">Similarity you can explain in one line<a class="h-anchor" href="#similarity-you-can-explain-in-one-line" title="Permanent link">#</a></h3>
+<p>I used item-to-item collaborative filtering because it is easy to reason about and easy to debug
+when someone asks &ldquo;why did I get this offer?&rdquo;</p>
+<div class="hl"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqrt</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cosine</span><span class="p">(</span><span class="n">co_views</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_j</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two offers are similar when the same people view both.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">co_views</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">users_i</span> <span class="o">*</span> <span class="n">users_j</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Two guards keep it honest: an offer needs a <strong>minimum number of users</strong> before it gets neighbors,
+so one shared click can&rsquo;t create a fake match, and each offer keeps only its <strong>top 200</strong> neighbors.</p>
+<h2 id="the-rule-fail-open">The rule: fail open<a class="h-anchor" href="#the-rule-fail-open" title="Permanent link">#</a></h2>
+<p>The active-offer filter depends on ClickHouse. If ClickHouse is unreachable at midnight, there are two
+choices:</p>
+<ul>
+<li><strong>Fail closed:</strong> stop the job. The app wakes up with yesterday&rsquo;s recommendations, or none at all.</li>
+<li><strong>Fail open:</strong> finish the batch without the filter and write fresh recommendations anyway.</li>
+</ul>
+<p>I chose fail open. A list built from yesterday&rsquo;s behavior beats an empty one, and on most nights
+ClickHouse is up and the filter runs.</p>
+<div class="admonition warning">
+<p class="admonition-title">The honest cost of failing open</p>
+<p>On a night the filter is skipped, some recommendations can point at offers that have expired.
+My own review of the service flagged this: fail open is right for the batch, but wrong if the app
+assumes every recommendation is active. The fix I&rsquo;d ship next is a status flag on the run, so the
+app knows when to double-check expiry itself, plus a loud alert instead of a quiet skip.</p>
+</div>
+<h2 id="make-re-runs-boring">Make re-runs boring<a class="h-anchor" href="#make-re-runs-boring" title="Permanent link">#</a></h2>
+<p>Nightly jobs get re-run, by schedulers and by tired humans. Two choices make that safe:</p>
+<ul>
+<li><strong>Upserts keyed on the user</strong>, so a second run replaces the first instead of duplicating it.</li>
+<li><strong>A &ldquo;run now&rdquo; button that refuses to start</strong> while another run is in flight.</li>
+</ul>
+<h2 id="whats-next">What&rsquo;s next<a class="h-anchor" href="#whats-next" title="Permanent link">#</a></h2>
+<p>A second generation is already code-complete: purchase-based similarity, a content boost from recent
+purchases, diversification so one merchant can&rsquo;t fill the list, and a trending fallback for new users.
+Before it replaces the nightly job it needs one thing the first version never had: a saved offline
+evaluation, so the switch is a measured decision and not a hunch.</p>
+<hr>
+<p><em>If you run nightly jobs that other teams depend on, I&rsquo;d love to hear how you handle the night
+something upstream is down. <a href="../index.html#contact">Get in touch</a>.</em></p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html" data-title="Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="partner-price-integrity-check.html"><small>← Newer</small><b>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</b></a>
+          <a class="post-pager-next" href="deterministic-gates-before-llm.html"><small>Older →</small><b>Deterministic Gates Before the LLM</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

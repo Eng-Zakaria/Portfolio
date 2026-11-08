@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping | Mohammed Zakaria</title>
+  <meta name="description" content="How a daily pipeline at Waffarha checks voucher prices against partners&#x27; own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html">
+  <meta property="og:title" content="A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping | Mohammed Zakaria">
+  <meta property="og:description" content="How a daily pipeline at Waffarha checks voucher prices against partners&#x27; own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping", "description": "How a daily pipeline at Waffarha checks voucher prices against partners' own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html", "wordCount": 1642, "keywords": "Data Quality, Web Scraping, Airflow"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Quality</span><span class="post-tag">Web Scraping</span><span class="post-tag">Airflow</span></div>
+        <h1>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</h1>
+        <p class="post-lede">How a daily pipeline at Waffarha checks voucher prices against partners&#x27; own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem-a-voucher-that-isnt-a-deal">The problem: a voucher that isn&rsquo;t a deal</a></li>
+<li><a href="#the-pipeline">The pipeline</a></li>
+<li><a href="#decision-1-a-tolerance-band-not-an-equality-check">Decision 1: a tolerance band, not an equality check</a></li>
+<li><a href="#decision-2-fuzzy-matching-with-conservative-thresholds">Decision 2: fuzzy matching with conservative thresholds</a></li>
+<li><a href="#decision-3-static-scraping-first-a-headless-browser-when-needed">Decision 3: static scraping first, a headless browser when needed</a></li>
+<li><a href="#results-and-caveats">Results and caveats</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a write-up of a production pipeline at Waffarha. It runs every day and checks whether a
+partner is selling the same product or service on its own website for the same price as our
+voucher, or less. I built it as a Data Engineer on the data team. Every number below comes from
+the project&rsquo;s code, config, or design docs. Prices in the examples are made up.</p>
+<h2 id="the-problem-a-voucher-that-isnt-a-deal">The problem: a voucher that isn&rsquo;t a deal<a class="h-anchor" href="#the-problem-a-voucher-that-isnt-a-deal" title="Permanent link">#</a></h2>
+<p>Waffarha sells vouchers for partners: gyms, restaurants, spas, retailers. The promise to the
+customer is simple. The voucher should be cheaper than walking in or buying on the partner&rsquo;s site.</p>
+<p>Sometimes it isn&rsquo;t. A partner runs a promotion on its own website, or quietly lowers a list price,
+and our voucher ends up matching or beating nothing.</p>
+<p>Checking this by hand doesn&rsquo;t work. There are hundreds of partners, and many offers have several
+price tiers (a one-month and a three-month gym pass, say), each of which has to be checked on its
+own. So the job is: for every active tier, find the equivalent item on the partner&rsquo;s site, read
+its price, and decide whether the gap is a problem.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<p>The work is split into a weekly audit (Stage 0) and six daily stages. Each stage writes its output
+to a timestamped run directory, so any stage can be re-run or inspected on its own.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it does</th>
+<th>Frequency</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Reachability audit: sort every partner into one of 5 buckets</td>
+<td>Weekly</td>
+<td><code>triage_report.json/csv</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Ingest active offers with their price tiers and coupon volumes</td>
+<td>Daily</td>
+<td><code>ingested_offers.json</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Normalize partner URLs and scope catalog pages</td>
+<td>Daily</td>
+<td>Used by Stage 4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Tiered matching: product code, then manual override, then fuzzy text</td>
+<td>Daily</td>
+<td>Match confidence scores</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Scrape partner sites (requests + BeautifulSoup, or Playwright)</td>
+<td>Daily</td>
+<td><code>scraped_data/partner_*.json</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Compare prices and classify each tier</td>
+<td>Daily</td>
+<td><code>comparisons.json</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Write HTML, Excel, and Markdown reports</td>
+<td>Daily</td>
+<td><code>reports/*</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The reachability audit runs first for a reason. It classifies partners as <code>online_catalog</code>,
+<code>online_no_prices</code>, <code>local_only</code>, <code>blocked</code>, or <code>dead_or_invalid</code>. Only <code>online_catalog</code> partners
+get scraped. Everyone else is reported as Unverifiable instead of silently failing every day.</p>
+<p>Two Airflow DAGs run it. The weekly DAG (<code>@weekly</code>, 1 retry, 10-minute delay) produces the triage
+report. The daily DAG (<code>@daily</code>, 2 retries, 15-minute delay, <code>max_active_runs=1</code>) loads the latest
+triage report and runs ingest, scrape, match-and-compare, and reporting as separate tasks.</p>
+<p>Scraping is the fragile part, so it has the most guardrails. Partners are scraped concurrently,
+5 at a time by default. Each partner gets 3 attempts with exponential backoff and jitter. A
+per-domain circuit breaker opens after 5 consecutive failures and skips that domain for 3,600
+seconds; those partners show up in the report under a sixth bucket, <code>circuit_open</code>, and their rows
+are classified Unverifiable rather than Unmatched.</p>
+<p>Each successfully scraped partner gets its own checkpoint file, <code>partner_&lt;id&gt;.json</code>. On a re-run of
+the same run directory, the pipeline loads those files, skips partners that already have one, and
+scrapes only the rest. Partners that failed are deliberately not checkpointed, so a retry picks
+them up. Failed offers also go to a <code>dead_letters.json</code> file with the stage and the last error.</p>
+<h2 id="decision-1-a-tolerance-band-not-an-equality-check">Decision 1: a tolerance band, not an equality check<a class="h-anchor" href="#decision-1-a-tolerance-band-not-an-equality-check" title="Permanent link">#</a></h2>
+<p>The core rule fits in one line:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="n">voucher_price</span><span class="p">,</span> <span class="n">site_price</span><span class="p">,</span> <span class="n">tolerance_pct</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">watch_band_pct</span><span class="o">=</span><span class="mf">5.0</span><span class="p">):</span>
+    <span class="c1"># No usable price on the partner site: nothing to compare.</span>
+    <span class="k">if</span> <span class="n">site_price</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">site_price</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;unmatched&quot;</span>
+    <span class="n">gap_pct</span> <span class="o">=</span> <span class="p">(</span><span class="n">voucher_price</span> <span class="o">-</span> <span class="n">site_price</span><span class="p">)</span> <span class="o">/</span> <span class="n">site_price</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="c1"># Violation: voucher is not at least tolerance_pct cheaper than the site.</span>
+    <span class="k">if</span> <span class="n">voucher_price</span> <span class="o">&gt;=</span> <span class="n">site_price</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">tolerance_pct</span> <span class="o">/</span> <span class="mi">100</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;violation&quot;</span>
+    <span class="c1"># Watch: cheaper, but only by a small margin.</span>
+    <span class="k">if</span> <span class="n">gap_pct</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">watch_band_pct</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;watch&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;clear&quot;</span>
+</code></pre></div>
+
+<p>A voucher that costs the same as the partner&rsquo;s site is a violation. So is one that&rsquo;s only
+marginally cheaper. The default tolerance is 2%: the voucher has to be at least 2% below the site
+price to pass.</p>
+<p>Take an illustrative partner selling a class pack for 1,000 EGP on its site. The violation line
+sits at 980. A voucher at 990 is a violation. A voucher at 960 is 4% cheaper, so it passes, but it
+lands on the Watch list because a small price cut on the partner&rsquo;s side would flip it. A voucher
+at 900 is Clear.</p>
+<p>The trade-off is that the tolerance is a business choice dressed up as a parameter. Set it to zero
+and you flag every rounding difference and every VAT-inclusive versus VAT-exclusive display. Set
+it high and you excuse real undercutting. I made it config (<code>tolerance_pct</code>, <code>watch_band_pct</code>)
+rather than code, so the commercial team can change it without a deploy.</p>
+<p>The Watch tier matters as much as the rule. A pass/fail report hides offers that are one promotion
+away from becoming a problem.</p>
+<h2 id="decision-2-fuzzy-matching-with-conservative-thresholds">Decision 2: fuzzy matching with conservative thresholds<a class="h-anchor" href="#decision-2-fuzzy-matching-with-conservative-thresholds" title="Permanent link">#</a></h2>
+<p>Matching a Waffarha offer to the right item on a partner&rsquo;s site is the riskiest step. A wrong match
+produces a wrong accusation, and that costs more with a partner than a missed check. The matcher
+tries three tiers in order:</p>
+<ol>
+<li><strong>Product code.</strong> If the offer has a code and it appears in a scraped item&rsquo;s title, that&rsquo;s a
+   match with confidence 1.0.</li>
+<li><strong>Manual override.</strong> A JSON file maps a partner and offer (optionally down to a single price
+   tier) to an exact URL. Also confidence 1.0.</li>
+<li><strong>Fuzzy text.</strong> rapidfuzz&rsquo;s token-set ratio between the offer&rsquo;s name and its English and Arabic
+   descriptions, against every scraped title.</li>
+</ol>
+<p>Token-set ratio fits this data because partner titles and our offer text share words but rarely in
+the same order or with the same filler. The thresholds are 0.85 for a confident match and 0.60 as
+the floor; anything in between is meant to be &ldquo;needs review,&rdquo; and anything below is unmatched.</p>
+<p>The trade-off is recall. With 0.85 as the bar, a lot of genuinely equivalent items won&rsquo;t match on
+text alone, especially when one side is in Arabic and the other in English. I accepted that. The
+manual override file exists for exactly those cases, and it&rsquo;s cheap to maintain for the partners
+that matter most.</p>
+<div class="admonition note">
+<p class="admonition-title">Where the code and the design disagree</p>
+<p>The design doc says only high-confidence matches feed violation detection. In the current
+matcher, a match between 0.60 and 0.85 still returns a price, so it can be classified as a
+violation. The confidence and method are written on every row, so a reviewer can see it, but
+the gate itself isn&rsquo;t enforced yet.</p>
+</div>
+<h2 id="decision-3-static-scraping-first-a-headless-browser-when-needed">Decision 3: static scraping first, a headless browser when needed<a class="h-anchor" href="#decision-3-static-scraping-first-a-headless-browser-when-needed" title="Permanent link">#</a></h2>
+<p>There are two scraping backends. The generic one fetches HTML and parses it with BeautifulSoup,
+trying schema.org JSON-LD first, then Open Graph product tags, then common HTML price patterns.
+The second one drives headless Chromium through Playwright for sites that render prices with
+JavaScript.</p>
+<p>Static fetching is fast, cheap, and easy to debug, and JSON-LD gives clean prices. Its weakness is
+single-page apps, where the downloaded HTML has no prices at all.</p>
+<p>Playwright handles those, but it costs memory, CPU, and time per page, and it&rsquo;s the first thing to
+fall over when you run many partners at once. The scraper registry picks a backend in order: a
+partner-specific adapter if one is registered, then Playwright, then the generic scraper.</p>
+<p>Here&rsquo;s the honest part. Playwright&rsquo;s handler currently claims every domain whenever it&rsquo;s enabled,
+which it is by default. So in practice the static scraper is the fallback when the browser is
+switched off, not a first attempt that escalates.</p>
+<h2 id="results-and-caveats">Results and caveats<a class="h-anchor" href="#results-and-caveats" title="Permanent link">#</a></h2>
+<p>What the pipeline does today: it runs daily on Airflow, checks every price tier of every active
+offer for partners with an online catalog, and produces one canonical result rendered as HTML,
+Excel, and Markdown. The report separates Violation, Watch, Clear, and Unverifiable, and every row
+carries the evidence URL, the match method, and the match confidence. The test suite is at 28
+tests, with ruff, black, and mypy in CI.</p>
+<p>What I can&rsquo;t claim: I don&rsquo;t have a measured violation count or a measured match precision to
+share, so I&rsquo;m not quoting one. A few gaps are written down in the project&rsquo;s own gap analysis:</p>
+<ul>
+<li>Checkpoints are written once the scraping stage finishes, not after each partner. A crash in the
+  middle of Stage 4 loses that attempt&rsquo;s progress.</li>
+<li>There&rsquo;s no golden dataset yet, so a change to the thresholds or to rapidfuzz could shift
+  classifications without a test catching it.</li>
+<li>Playwright runs a single shared browser with no memory cap or concurrency limit of its own.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Enforce the review band.</strong> Matches between 0.60 and 0.85 should go to a review list, never
+  straight to Violation.</li>
+<li><strong>Static first, then escalate.</strong> Try the generic scraper, and only launch Playwright for a
+  partner when the static pass finds no prices. Cache that decision per domain in the weekly audit.</li>
+<li><strong>Write checkpoints as partners finish.</strong> Persist each partner&rsquo;s file as soon as its scrape
+  completes, so a mid-stage crash costs one partner, not the whole stage.</li>
+<li><strong>Build the golden dataset.</strong> A versioned set of offer/listing pairs with known answers, run in
+  CI, so threshold changes show their effect before they ship.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html" data-title="A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="redacting-160k-support-chats.html"><small>← Newer</small><b>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</b></a>
+          <a class="post-pager-next" href="fail-open-nightly-recommender.html"><small>Older →</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

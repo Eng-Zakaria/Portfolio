@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Waffy: a support agent that can&#x27;t go rogue | Mohammed Zakaria</title>
+  <meta name="description" content="How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html">
+  <meta property="og:title" content="Waffy: a support agent that can&#x27;t go rogue | Mohammed Zakaria">
+  <meta property="og:description" content="How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Waffy: a support agent that can't go rogue", "description": "How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html", "wordCount": 1632, "keywords": "AI Agents, Guardrails, Python"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">AI Agents</span><span class="post-tag">Guardrails</span><span class="post-tag">Python</span></div>
+        <h1>Waffy: a support agent that can&#x27;t go rogue</h1>
+        <p class="post-lede">How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem-an-agent-with-tools-is-an-agent-with-permissions">The problem: an agent with tools is an agent with permissions</a></li>
+<li><a href="#the-design">The design</a></li>
+<li><a href="#decision-1-identity-lives-in-the-context-not-in-the-arguments">Decision 1: identity lives in the context, not in the arguments</a></li>
+<li><a href="#decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms">Decision 2: refunds and purchases are proposals, and the loop confirms</a></li>
+<li><a href="#decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model">Decision 3: a router picks the tool, and some answers skip the model</a></li>
+<li><a href="#testing-and-results-with-caveats">Testing and results, with caveats</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence label: this is a working prototype I built at Waffarha, not the production assistant. It runs against a read-only ClickHouse database and a local 3B model. Refunds and purchases are dry-run only, and nothing it does touches a customer&rsquo;s money. The test and eval numbers below come from my own progress log, and the headline eval number is a routing-only dry run, not a live run.</p>
+<h2 id="the-problem-an-agent-with-tools-is-an-agent-with-permissions">The problem: an agent with tools is an agent with permissions<a class="h-anchor" href="#the-problem-an-agent-with-tools-is-an-agent-with-permissions" title="Permanent link">#</a></h2>
+<p>Waffarha is an Egyptian deals and coupons platform. Most support questions are about data: prices, branches, coupon status, refunds. A model with tools over the database could answer most of them.</p>
+<p>That is also the risk. With tools, every weakness of the model becomes a weakness of the system. It can pass the wrong customer id, follow an instruction hidden in an offer description, or state a price it never looked up. If it can write, it can refund the wrong coupon.</p>
+<p>So I started from one question: what is the model allowed to decide? My answer was &ldquo;as little as possible&rdquo;. The model phrases answers. The code decides who the customer is, what can be queried, and whether anything happens.</p>
+<h2 id="the-design">The design<a class="h-anchor" href="#the-design" title="Permanent link">#</a></h2>
+<p>Waffy is a FastAPI service with a small web chat UI. A turn goes through three steps in a hand-written loop, with no agent framework:</p>
+<ol>
+<li><strong>Route.</strong> A deterministic router picks the tool and its arguments from the customer&rsquo;s message.</li>
+<li><strong>Act.</strong> The tool runs a fixed, parameterized query against read-only ClickHouse.</li>
+<li><strong>Answer.</strong> The model phrases the answer from the tool result. If the router finds nothing to route, such as a greeting, the model gets the tools for that caller and runs a short loop with a hard step limit.</li>
+</ol>
+<p>The answer streams back over Server-Sent Events as <code>status</code>, <code>token</code>, <code>replace</code> and <code>done</code> events. <code>replace</code> lets the server take back a streamed answer.</p>
+<p>Every tool goes through one registry. Here is how the guards line up:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool or layer</th>
+<th>Who can use it</th>
+<th>Guard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offer search, offer details, nearby offers, recommendations, FAQ, handoff</td>
+<td>Guests and customers</td>
+<td>Fixed SQL templates; the model only supplies values</td>
+</tr>
+<tr>
+<td>My coupons, coupon details, my refunds, order status</td>
+<td>Signed-in customers only</td>
+<td>Customer id comes from the server-side context, never from tool arguments</td>
+</tr>
+<tr>
+<td><code>request_refund</code>, <code>purchase_offer</code></td>
+<td>Signed-in customers only</td>
+<td>Propose only; execution needs a separate confirmation turn handled by the loop</td>
+</tr>
+<tr>
+<td>Action adapter</td>
+<td>Server config</td>
+<td>Only <code>ACTION_MODE=dry_run</code> exists; any other value fails at startup</td>
+</tr>
+<tr>
+<td>ClickHouse client</td>
+<td>Every query</td>
+<td>Read-only user, <code>readonly=2</code> session, 10 s timeout, 200-row cap</td>
+</tr>
+<tr>
+<td>Final answer</td>
+<td>Every turn</td>
+<td>Grounding check, then e-mail and mobile redaction</td>
+</tr>
+</tbody>
+</table></div>
+<p>The model never writes SQL. There are 14 query templates, and a strict renderer escapes every value through one function. It refuses a template with a missing parameter and refuses a parameter the template does not declare. Table and column names are hard-coded in the templates, so model output can change values but never the shape of a statement.</p>
+<h2 id="decision-1-identity-lives-in-the-context-not-in-the-arguments">Decision 1: identity lives in the context, not in the arguments<a class="h-anchor" href="#decision-1-identity-lives-in-the-context-not-in-the-arguments" title="Permanent link">#</a></h2>
+<p>No tool takes a customer id. The HTTP request carries a demo login key. The server checks it against an allow-list (<code>DEMO_CUSTOMER_IDS</code>), and an unknown key gets a 403. The result goes into a <code>ToolContext</code> that every tool handler receives. The model never sees it as a parameter, so it cannot change it.</p>
+<p>A simplified version of the pattern, in my own words:</p>
+<div class="hl"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ToolContext</span><span class="p">:</span>
+    <span class="n">customer_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>   <span class="c1"># set by the server, never by the model</span>
+    <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="n">tool</span> <span class="o">=</span> <span class="n">TOOLS_BY_NAME</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown tool: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">customer_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="s2">&quot;This tool needs a signed-in customer.&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span> <span class="n">timeout</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). Say you could not confirm it.&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Customer tools are filtered out of the tool list for guests, and <code>dispatch</code> checks again in case the model names one anyway. Tool errors come back to the model as data, not as a stack trace.</p>
+<p>The trade-off is that Waffy cannot help with anything outside the signed-in customer&rsquo;s own scope. For a customer-facing assistant that is the right default. A live test checks that coupon details come back empty for a coupon the customer does not own.</p>
+<h2 id="decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms">Decision 2: refunds and purchases are proposals, and the loop confirms<a class="h-anchor" href="#decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms" title="Permanent link">#</a></h2>
+<p><code>request_refund</code> and <code>purchase_offer</code> never execute anything. They call <code>propose</code> on the action adapter. The adapter reads the database, applies versioned eligibility rules, and stores a proposal with its rule version, inputs, facts and decision.</p>
+<p>The customer has to answer in a separate turn. Before any routing, the loop checks for a pending proposal for the same customer and the same session. A strict classifier reads the message. A clear yes confirms, a clear no cancels, and anything else supersedes the proposal, so a stale &ldquo;yes&rdquo; several turns later cannot run an old request. Only the loop passes <code>confirmed=True</code>. The model has no path to it.</p>
+<p>Even a confirmed action only marks the proposal <code>confirmed</code> and returns a summary that says plainly that nothing was executed in Waffarha&rsquo;s systems. The adapter factory raises at startup for any mode other than dry run. A config typo should never quietly change what the system does with money.</p>
+<p>The trade-off is that this cannot ship as a refund tool yet. Going live needs a write API, the refund policy as versioned data, a refund state machine, a payout method and a confirmation channel tied to the customer&rsquo;s account.</p>
+<h2 id="decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model">Decision 3: a router picks the tool, and some answers skip the model<a class="h-anchor" href="#decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model" title="Permanent link">#</a></h2>
+<p>The 3B local model (<code>qwen2.5:3b-instruct</code>) picked the wrong tool or answered from memory often enough that I moved tool selection into a deterministic router.</p>
+<p>For factual lists I went further. Offer search, offer details, recommendations and the customer&rsquo;s coupons stream the tool&rsquo;s own ready-made message word for word. The small model had called a used coupon &ldquo;not used&rdquo; and drifted into a different Arabic dialect.</p>
+<p>Two output guards run on whatever text is left. The grounding check blocks an answer that states a price, date, availability or coupon status when no tool ran that turn. The loop retries once with a nudge to call a tool, and then falls back to &ldquo;I can&rsquo;t confirm that&rdquo;. Redaction removes e-mail addresses, and for guests mobile numbers, from the final answer before it is stored and sent as the closing <code>done</code> event.</p>
+<div class="admonition warning">
+<p class="admonition-title">Where redaction actually happens</p>
+<p>Redaction runs on the model&rsquo;s output, not on the data going in. Tool results reach the model unredacted, and streamed tokens go out before the redacted <code>done</code> text replaces them. Moving redaction to the tool-result boundary is on my list.</p>
+</div>
+<p>The trade-off of the router is coverage. It only knows the intents I wrote rules for, in Egyptian Arabic, MSA, English and Franco-Arabic. Anything else falls through to the free loop, where the model&rsquo;s weaknesses come back.</p>
+<h2 id="testing-and-results-with-caveats">Testing and results, with caveats<a class="h-anchor" href="#testing-and-results-with-caveats" title="Permanent link">#</a></h2>
+<p>There are two layers of checks.</p>
+<p><strong>Tests.</strong> pytest covers the SQL renderer, router, guards, loop, actions and tools, plus live read-only ClickHouse tests that skip when the database is down. The latest entry in my progress log records 212 tests passing, with ruff clean.</p>
+<p><strong>Evals.</strong> <code>evals/cases.yaml</code> has 53 cases across Egyptian Arabic, MSA, Franco, English, mixed language, spelling variants, negation and actions. Ten are critical safety cases, such as another customer&rsquo;s coupons, prompt injection inside an offer description, requests for SQL, and prices without a tool. The runner prints the pass rate per category and exits non-zero on any critical failure, so it can gate a merge.</p>
+<p>The recorded results are 53/53 on the dry run and 10/10 on the critical cases. Be clear about what each means:</p>
+<ul>
+<li>The <strong>dry run</strong> checks routing only. No model is called and the text checks are skipped. It tells me the router sends each message to the right tool, not that the answers are good.</li>
+<li>The <strong>critical 10/10</strong> was run live against ClickHouse and the local model. That is the stronger number, but it is ten cases.</li>
+<li>I have not recorded a full live run of all 53 cases. On a CPU-only box a live case takes roughly 30-60 s, so I ran subsets.</li>
+</ul>
+<p>Failure paths were checked live too: with the model unreachable the agent answered from the help centre in 5.4 s, and with the database down <code>/health</code> returned 503 and the chat still answered politely.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Move redaction to the tool-result boundary</strong>, so the model never sees partner phones or other fields it does not need, and redact the token stream rather than only the final text.</li>
+<li><strong>Run the full eval live on a hosted model.</strong> The 3B local model is the main limit on latency and answer quality. I would rerun the critical subset first, then all 53 cases, and record live pass rates separately from the dry run.</li>
+<li><strong>Shared state.</strong> Sessions, proposals and the rate limiter are single-process; more workers need Redis or Postgres.</li>
+<li><strong>Live actions, only with the missing pieces.</strong> A write API, the refund policy as data and an account-tied confirmation channel come first.</li>
+</ul>
+<p>The lesson for me: keep identity, SQL and execution in plain code, where I can test them, and let the model phrase.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html" data-title="Waffy: a support agent that can&#x27;t go rogue">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="bilingual-rag-retrieval-hit-rate.html"><small>← Newer</small><b>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</b></a>
+          <span></span>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Deterministic Gates Before the LLM | Mohammed Zakaria</title>
+  <meta name="description" content="How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html">
+  <meta property="og:title" content="Deterministic Gates Before the LLM | Mohammed Zakaria">
+  <meta property="og:description" content="How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Deterministic Gates Before the LLM", "description": "How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn't.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html", "wordCount": 1592, "keywords": "RAG, Guardrails, Testing"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">RAG</span><span class="post-tag">Guardrails</span><span class="post-tag">Testing</span></div>
+        <h1>Deterministic Gates Before the LLM</h1>
+        <p class="post-lede">How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem-the-model-is-the-slowest-least-predictable-part">The problem: the model is the slowest, least predictable part</a></li>
+<li><a href="#the-gate-chain">The gate chain</a></li>
+<li><a href="#decisions-and-trade-offs">Decisions and trade-offs</a><ul>
+<li><a href="#refusal-guards-run-before-every-answer-path">Refusal guards run before every answer path</a></li>
+<li><a href="#personal-data-never-goes-near-the-embeddings">Personal data never goes near the embeddings</a></li>
+<li><a href="#check-the-claims-not-the-prose">Check the claims, not the prose</a></li>
+</ul>
+</li>
+<li><a href="#testing-and-results">Testing and results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is production work at Waffarha. I build and run the customer-service assistant for
+Waffarha&rsquo;s deals platform, which answers in Egyptian Arabic, MSA, English and Franco-Arabic.
+This post covers one part of it: the layer of plain rules that runs before any model is called.</p>
+<h2 id="the-problem-the-model-is-the-slowest-least-predictable-part">The problem: the model is the slowest, least predictable part<a class="h-anchor" href="#the-problem-the-model-is-the-slowest-least-predictable-part" title="Permanent link">#</a></h2>
+<p>A language model is the most expensive step in a support turn, the slowest, and the only one
+that can make things up. In a local-versus-cloud comparison on the same index (6 queries,
+recorded in <code>eval/EVALUATION_REPORT.md</code>), the local 3B model took about 12 seconds per generated
+answer against about 3 seconds for a cloud model. The same comparison showed the 3B model
+confabulating on weak context while the cloud model abstained.</p>
+<p>The failures I saw in logs were specific. A nonexistent brand scored 0.95+ against some unrelated
+real offer and got answered as if it existed. Gibberish scored 0.79 to 0.82 on embedding
+similarity, above the relevance floor, and got fabricated offer details. A fake <code>SYSTEM:</code> header
+in a message once got the reply &ldquo;access granted&rdquo;. A refund question matched a gym offer because
+the Arabic word for &ldquo;offer&rdquo; appeared inside the sentence, and the model then roleplayed that
+merchant and invented a phone number.</p>
+<p>None of these needed a smarter model. They needed the model not to be asked.</p>
+<h2 id="the-gate-chain">The gate chain<a class="h-anchor" href="#the-gate-chain" title="Permanent link">#</a></h2>
+<p>Every turn walks an ordered list of checks. Each gate either returns a final answer, refuses, or
+passes the turn on. The model only sees what survives all of them. In the newer pipeline, the
+first deterministic pass (code and phone extraction, dialect scoring, Arabizi expansion) is
+documented at under 2 ms with no LLM call (<code>docs/ARCHITECTURE.md</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>What it catches</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Closing / greeting</td>
+<td>&ldquo;شكرا&rdquo;, &ldquo;that&rsquo;s all&rdquo;, small talk</td>
+<td>Polite reply, no retrieval at all</td>
+</tr>
+<tr>
+<td>Empty / gibberish</td>
+<td>Blank or random input</td>
+<td>Ask to rephrase, no retrieval</td>
+</tr>
+<tr>
+<td>Injection</td>
+<td>Fake <code>CONTEXT:</code>/<code>SYSTEM:</code> headers, &ldquo;ignore instructions&rdquo;</td>
+<td>Short-circuit refusal; the text never reaches the model</td>
+</tr>
+<tr>
+<td>Unknown or inactive merchant</td>
+<td>A brand not in the catalog, or one with only expired offers</td>
+<td>Honest &ldquo;we don&rsquo;t have this&rdquo;, no nearby substitute</td>
+</tr>
+<tr>
+<td>Out of scope</td>
+<td>Weather, medicine, general knowledge</td>
+<td>Polite decline</td>
+</tr>
+<tr>
+<td>Personal / support intent</td>
+<td>&ldquo;my coupons&rdquo;, order and voucher codes</td>
+<td>Live lookup scoped to the verified user, never the vector index</td>
+</tr>
+<tr>
+<td>Branch, hours, stock, superlatives</td>
+<td>&ldquo;فروعها فين؟&rdquo;, &ldquo;cheapest&rdquo;, &ldquo;how many left&rdquo;</td>
+<td>Answered from offer metadata or a full sort, not top-k retrieval</td>
+</tr>
+<tr>
+<td>FAQ topic router</td>
+<td>Strong topic keywords (&ldquo;refund policy&rdquo;, &ldquo;كود فوري&rdquo;)</td>
+<td>Exact FAQ document, even if retrieval ranked a sibling higher</td>
+</tr>
+<tr>
+<td>Relevance floors</td>
+<td>Weak retrieval</td>
+<td>Refuse below the strict floor; LLM relevance check in the borderline band</td>
+</tr>
+<tr>
+<td>FAQ / offer direct answer</td>
+<td>One clear, high-similarity match</td>
+<td>Rendered answer from the document, no generation</td>
+</tr>
+<tr>
+<td>Evidence gate (agent path)</td>
+<td>Tool returned nothing, no offers, or offers outside the asked price range</td>
+<td>Deterministic broadening, then at most one replan, then fallback</td>
+</tr>
+<tr>
+<td>Fact check (after generation)</td>
+<td>Prices, discounts, dates, IDs, phones not in the sources</td>
+<td>One retry with critique, then a minimal factual reply</td>
+</tr>
+</tbody>
+</table></div>
+<p>The thresholds are in <code>core/config.py</code>: a soft relevance floor of 0.30, a strict refusal floor of
+0.45, and a direct-answer floor of 0.55 on raw embedding similarity. A candidate that only BM25
+found carries no embedding score, and the direct-answer shortcut skips it rather than trusting it.</p>
+<p>A simplified version of the chain, in my own words:</p>
+<div class="hl"><pre><span></span><code><span class="n">GATES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">closing_or_greeting</span><span class="p">,</span> <span class="n">empty_or_gibberish</span><span class="p">,</span> <span class="n">prompt_injection</span><span class="p">,</span>
+    <span class="n">unknown_merchant</span><span class="p">,</span> <span class="n">inactive_merchant</span><span class="p">,</span> <span class="n">out_of_scope</span><span class="p">,</span>
+    <span class="n">personal_lookup</span><span class="p">,</span> <span class="n">branch_hours_stock</span><span class="p">,</span> <span class="n">faq_topic_router</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">answer</span><span class="p">(</span><span class="n">turn</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">GATES</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>          <span class="c1"># answered or refused, no LLM</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="n">docs</span> <span class="o">=</span> <span class="n">retrieve</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_embedding_score</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">STRICT_FLOOR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span><span class="n">turn</span><span class="o">.</span><span class="n">lang</span><span class="p">)</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">direct_answer</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="n">DIRECT_FLOOR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direct</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">direct</span>
+    <span class="n">draft</span> <span class="o">=</span> <span class="n">llm_generate</span><span class="p">(</span><span class="n">turn</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fact_check</span><span class="p">(</span><span class="n">draft</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>      <span class="c1"># retry once, else minimal reply</span>
+</code></pre></div>
+
+<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
+<h3 id="refusal-guards-run-before-every-answer-path">Refusal guards run before every answer path<a class="h-anchor" href="#refusal-guards-run-before-every-answer-path" title="Permanent link">#</a></h3>
+<p>The refusal guards (unknown merchant, inactive merchant, out of scope) originally ran after the
+personal and catalog shortcuts. That meant a structured path could answer a question the main
+path would have refused outright. I moved them ahead of every path that produces an answer, so
+the same floor gates all of them.</p>
+<p>The cost is that the guards must be cheap and correct, because nothing downstream can overrule
+them. A false &ldquo;we don&rsquo;t have this merchant&rdquo; is a wrong answer delivered confidently. I accepted
+that because the alternative, a fabricated offer for a brand Waffarha doesn&rsquo;t sell, is worse for
+a support channel.</p>
+<h3 id="personal-data-never-goes-near-the-embeddings">Personal data never goes near the embeddings<a class="h-anchor" href="#personal-data-never-goes-near-the-embeddings" title="Permanent link">#</a></h3>
+<p>Questions about a customer&rsquo;s own coupons, orders and refunds go to live ClickHouse lookups scoped
+to the resolved user, not to the vector index. The index holds public FAQs and offers only
+(9,106 documents across 2,923 merchants in the case study). Personal queries are off by default
+(<code>PERSONAL_QUERIES_ENABLED=false</code>) and only run once an identity is resolved.</p>
+<p>What runs today is narrow on purpose. Queries are fixed templates in the repository. The
+renderer refuses a template with missing placeholders or undeclared parameters, escapes every
+value through one function, and never lets the model touch table or column names. The client
+runs in ClickHouse read-only mode with a row cap.</p>
+<p>The plan also describes an 8-layer guarded SQL fallback for analytical questions: lexical
+pre-filter, sqlglot AST validation, canonical re-emission, a dedicated read-only role, row-level
+security, PII scrubbing, and an audit log. That is a design in <code>docs/PLAN.md</code> and the agentic
+project&rsquo;s plan, not something I&rsquo;d claim is in the running path. The trade-off of templates is
+coverage: a question no template fits gets a handoff, not an answer.</p>
+<h3 id="check-the-claims-not-the-prose">Check the claims, not the prose<a class="h-anchor" href="#check-the-claims-not-the-prose" title="Permanent link">#</a></h3>
+<p>The fact checker does not judge whether an answer is good. It extracts the things a customer acts
+on (amounts, percentages, dates, order and voucher IDs, phone numbers, statuses) and requires
+each to appear in the turn&rsquo;s facts after normalizing Arabic-Indic digits. On failure the model
+gets one regeneration with a critique; if that fails too, the customer gets a minimal factual
+reply and a handoff offer. A separate check makes any 9+ digit phone number or email in an
+answer appear somewhere in the user text, history, sources or tool output.</p>
+<p>This misses wrong claims that contain no number, like a model describing a policy it doesn&rsquo;t
+have. Those still need the grounding gates and a judge in the eval. But numbers are where a
+wrong answer costs a customer money, so that is where I put the deterministic check.</p>
+<div class="admonition warning">
+<p class="admonition-title">Shortcuts must not inherit stale evidence</p>
+<p>Every early return skips retrieval, so the previous turn&rsquo;s offers were still sitting in the
+response. A refusal could ship with an unrelated offer card under it. Each turn now resets
+its evidence first, and refusals always carry none.</p>
+</div>
+<h2 id="testing-and-results">Testing and results<a class="h-anchor" href="#testing-and-results" title="Permanent link">#</a></h2>
+<p>The regression set is <code>eval/queries.json</code>: 225 cases across 20 categories, from offer lookups and
+FAQ answers to prompt injection, gibberish, follow-up memory and hallucination checks. The runner
+exits 0 only when every case passes and 1 otherwise, which is what lets it gate a build.</p>
+<p>The honest numbers come from one run (2026-09-24, <code>phase5_rerun</code>, reported in
+<code>eval/EVALUATION_REPORT.md</code>):</p>
+<ul>
+<li><strong>Retrieval only:</strong> 151 of 172 checked cases, 87.8%.</li>
+<li><strong>Full pipeline:</strong> 64 of 225, 28.4%.</li>
+</ul>
+<p>That gap is the point of the report. Retrieval found the right FAQ in 21 of 24 checked
+<code>faq_direct_answer</code> cases, while the full pipeline answered only 2 of 25 correctly. Prompt
+injection passed 3 of 6 end to end, out of scope 5 of 11, greeting 1 of 8. The weak spots are
+in answering and follow-up handling, not in finding the document. A strict all-must-pass exit code
+on this suite is red today, so I read it per category and treat those categories as open work.</p>
+<p>The newer pipeline has its own checks: 173 pytest tests and a share-weighted CS eval at 100% as of
+the latest pass in <code>docs/STATE.md</code>. That eval has 20 cases, so it tells me the common support
+flows don&rsquo;t regress. It does not tell me the long tail is solved.</p>
+<p>Two caveats. The full-pipeline numbers came from a local 3B model; a stronger generator changes
+them, which is why the gates sit in front of the model and not inside it. And the keyword-based
+pass checks can be fooled by a paraphrase, so a judge with frozen metric definitions now does the
+labeling, and human calibration labels are still pending.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li>Fix the categories where the full pipeline trails retrieval, starting with FAQ direct answers
+  and follow-up memory, since retrieval already finds the right document there.</li>
+<li>Add an expiry check to the evidence gate. The project summary lists expired offers leaking
+  through it as a known weakness.</li>
+<li>Build out the guarded SQL fallback from the plan only after it passes a security review, and
+  keep personal queries on fixed templates until then.</li>
+<li>Turn traced production turns into eval cases, so the suite grows from real failures and not
+  from what I think customers ask.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html" data-title="Deterministic Gates Before the LLM">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="fail-open-nightly-recommender.html"><small>← Newer</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+          <a class="post-pager-next" href="brand-radar-connector-registry.html"><small>Older →</small><b>Brand radar: one file per source and a connector registry</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

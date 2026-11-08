@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://eng-zakaria.github.io/Portfolio/</loc></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/</loc></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/projects/aircraft-tracking.html</loc></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/projects/aquawatch.html</loc></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/projects/automative-scrapper.html</loc></url>

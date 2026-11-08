@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes | Mohammed Zakaria</title>
+  <meta name="description" content="How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html">
+  <meta property="og:title" content="Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes | Mohammed Zakaria">
+  <meta property="og:description" content="How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes", "description": "How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html", "wordCount": 1594, "keywords": "Data Privacy, LLM Fine-Tuning, Data Engineering"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Privacy</span><span class="post-tag">LLM Fine-Tuning</span><span class="post-tag">Data Engineering</span></div>
+        <h1>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</h1>
+        <p class="post-lede">How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#the-pipeline">The pipeline</a><ul>
+<li><a href="#path-1-aggregates-for-analytics">Path 1: aggregates for analytics</a></li>
+<li><a href="#path-2-a-redacted-multi-turn-sft-set">Path 2: a redacted multi-turn SFT set</a></li>
+</ul>
+</li>
+<li><a href="#decision-1-aggregates-for-analysis-transcripts-only-for-training">Decision 1: aggregates for analysis, transcripts only for training</a></li>
+<li><a href="#decision-2-a-separate-stricter-audit-instead-of-trusting-the-builder">Decision 2: a separate, stricter audit instead of trusting the builder</a></li>
+<li><a href="#decision-3-recall-over-readability">Decision 3: recall over readability</a></li>
+<li><a href="#results-with-caveats">Results, with caveats</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence label: this is production data at Waffarha. The input was 160,944 real customer-support chats from Egypt and Saudi Arabia, covering March to October 2026. Every chat had a transcript and an AI-generated set of labels. I wanted two things from it: analytics I could use to fix the support chatbot, and a training set for a small Arabic model. Both had to contain no personal data.</p>
+<p>This post is about the second part, the boring one: getting redaction to an audited zero, and being honest about what that number does and does not mean.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Support chats are where customers paste everything. Phone numbers so the agent can find the account. Emails. Links to screenshots. Order and voucher codes. Social handles. Agents sign their name on each turn.</p>
+<p>The labels were useful on their own. About 124k of the chats were from Egypt and 27k from Saudi Arabia, and 96% were in Arabic. Around 5.4% were written in Latin script, which in Egypt usually means Arabizi. All of that matters for a model that has to understand Egyptian dialect.</p>
+<p>But a training set built from raw transcripts would teach a model to emit real phone numbers. A 4B model will happily reproduce a pattern it has seen thousands of times, and I had already seen the local model hallucinate phone numbers and emails in an earlier review. So the bar was not &ldquo;mostly redacted&rdquo;. It was &ldquo;a second, independent scan finds nothing&rdquo;.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<p>There are two separate paths, and keeping them separate was the first decision.</p>
+<h3 id="path-1-aggregates-for-analytics">Path 1: aggregates for analytics<a class="h-anchor" href="#path-1-aggregates-for-analytics" title="Permanent link">#</a></h3>
+<p><code>analyze_cs_chats.py</code> and <code>cluster_other.py</code> read the chats and write only aggregate counts and shares. No message text leaves the script. For the clustering of the &ldquo;Other&rdquo; bucket, the output is label-grouped counts plus the top non-digit tokens, so numbers never show up even as a frequent token.</p>
+<p>That was enough to add new intents to the chatbot (refund status, OTP issues, account updates, app issues) and to weight the routing eval by real traffic shares.</p>
+<h3 id="path-2-a-redacted-multi-turn-sft-set">Path 2: a redacted multi-turn SFT set<a class="h-anchor" href="#path-2-a-redacted-multi-turn-sft-set" title="Permanent link">#</a></h3>
+<p><code>build_sft_dataset.py</code> does four things:</p>
+<ol>
+<li>Keeps only chats marked resolved. That dropped 43,029 chats and kept 117,915.</li>
+<li>Segments each transcript into user and assistant turns using the speaker tags, and drops the agent name from the tag.</li>
+<li>Runs a redaction function over every message, customer and agent alike.</li>
+<li>Writes JSONL with <code>messages</code> plus a small <code>meta</code> block (issue type, contact type, use case, month), and a stats file with counts only.</li>
+</ol>
+<p>The result is 3,181,807 turns across 117,915 conversations, about 27 turns each on average.</p>
+<p>Here is the shape of the redaction step, simplified. Order matters: emails and URLs go first so their digits are not half-eaten by the number rules.</p>
+<div class="hl"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="n">EMAIL</span>   <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}&quot;</span><span class="p">)</span>
+<span class="n">URL</span>     <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;https?://\S+|www\.\S+&quot;</span><span class="p">)</span>
+<span class="n">HANDLE</span>  <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;@[\w.]+&quot;</span><span class="p">)</span>
+<span class="n">PHONE</span>   <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\+?20\s?1\d</span><span class="si">{9}</span><span class="s2">|01\d</span><span class="si">{9}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">LONGNUM</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d{6,}&quot;</span><span class="p">)</span>
+<span class="n">GROUPED</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?:\d[\s.\-()]?){7,}&quot;</span><span class="p">)</span>   <span class="c1"># spaced or dashed digit groups</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">redact</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">rx</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">EMAIL</span><span class="p">,</span> <span class="s2">&quot;[EMAIL]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">URL</span><span class="p">,</span> <span class="s2">&quot;[URL]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">HANDLE</span><span class="p">,</span> <span class="s2">&quot;[HANDLE]&quot;</span><span class="p">),</span>
+                      <span class="p">(</span><span class="n">PHONE</span><span class="p">,</span> <span class="s2">&quot;[PHONE]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">LONGNUM</span><span class="p">,</span> <span class="s2">&quot;[NUM]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">GROUPED</span><span class="p">,</span> <span class="s2">&quot;[NUM]&quot;</span><span class="p">)]:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">rx</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\+20\s?&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>          <span class="c1"># drop bare country-code remnants</span>
+</code></pre></div>
+
+<p>The real builder also covers IP addresses and a few internal code formats, and counts each substitution. The counts from the final run:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Placeholder</th>
+<th>Replacements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[PHONE]</code></td>
+<td>69,223</td>
+</tr>
+<tr>
+<td><code>[NUM]</code></td>
+<td>45,159</td>
+</tr>
+<tr>
+<td><code>[URL]</code></td>
+<td>14,407</td>
+</tr>
+<tr>
+<td><code>[EMAIL]</code></td>
+<td>2,764</td>
+</tr>
+<tr>
+<td><code>[HANDLE]</code></td>
+<td>246</td>
+</tr>
+<tr>
+<td><code>[CODE]</code></td>
+<td>10</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-aggregates-for-analysis-transcripts-only-for-training">Decision 1: aggregates for analysis, transcripts only for training<a class="h-anchor" href="#decision-1-aggregates-for-analysis-transcripts-only-for-training" title="Permanent link">#</a></h2>
+<p>I could have done the analysis by sampling raw chats and reading them. It would have been faster to get a feel for the data. I chose not to: the analytics path only ever produces counts and shares, and the plan document lists &ldquo;no raw chats in repo&rdquo; and &ldquo;no PII&rdquo; as things I am explicitly not doing.</p>
+<p>The trade-off is real. Aggregates hide nuance. The labels are a model&rsquo;s reading of each chat, not human review, so I treat the shares as directional. And when the &ldquo;Other&rdquo; bucket needed breaking down, I could only see label groups and frequent tokens, not why a customer was confused. That is slower. But the analytics path cannot leak, by construction, and that let me move fast on the chatbot fixes without a review step on every run.</p>
+<p>The training path is the only place where transcript text survives, and it survives only after redaction.</p>
+<h2 id="decision-2-a-separate-stricter-audit-instead-of-trusting-the-builder">Decision 2: a separate, stricter audit instead of trusting the builder<a class="h-anchor" href="#decision-2-a-separate-stricter-audit-instead-of-trusting-the-builder" title="Permanent link">#</a></h2>
+<p>The builder&rsquo;s own counters only tell you what it replaced. They say nothing about what it missed. So I wrote <code>audit_sft.py</code> as an independent second pass with its own patterns, stricter than the builder&rsquo;s. It prints only aggregate counts, never message text.</p>
+<p>It checks every message for 8 patterns:</p>
+<ul>
+<li>email addresses</li>
+<li>IPv4 addresses</li>
+<li>Egyptian mobile numbers</li>
+<li>a literal <code>+20</code></li>
+<li>runs of six or more Arabic-Indic digits</li>
+<li>runs of eight or more Latin digits</li>
+<li><code>@</code> mentions not inside a placeholder</li>
+<li>URLs (<code>http://</code>, <code>https://</code>, <code>www.</code>)</li>
+</ul>
+<p>The first audit did not pass. It caught phone numbers written in spaced or dashed groups, which the contiguous phone pattern never matched. It caught URLs the first URL rule left behind, and <code>@</code> handles. Builder v2 added the grouped-digit rule, a full URL rule, a handle rule, and stripping of the bare <code>+20</code> that was left in front of a <code>[NUM]</code>.</p>
+<p>After v2 the audit reported an empty leak count, <code>leak_msgs={}</code>, across all 117,915 lines.</p>
+<div class="admonition warning">
+<p class="admonition-title">Zero leaks means zero matches on 8 patterns</p>
+<p>The audit proves that none of those 8 patterns appear. It does not prove the data is free of personal information. A customer&rsquo;s name typed in free text, an address, or a number spelled out in Arabic words would pass every regex. That is why training on this set is still deferred until a human has looked at samples.</p>
+</div>
+<h2 id="decision-3-recall-over-readability">Decision 3: recall over readability<a class="h-anchor" href="#decision-3-recall-over-readability" title="Permanent link">#</a></h2>
+<p>The grouped-digit rule is aggressive on purpose. Any seven or more digits, in any spacing, become <code>[NUM]</code>. That will also eat prices written with spaces, some dates, and amounts. I accepted that. Seven-plus-digit sequences carry almost no value for teaching a support model how to talk, and a missed phone number is a much worse failure than a slightly less specific training turn.</p>
+<p>The cost shows up in the data: 45,159 <code>[NUM]</code> replacements, some of which were not personal at all. The model will learn that customers sometimes say <code>[NUM]</code>. I think that is the right price. The opposite choice, tuning rules to keep more numbers, means every new format a customer invents is a potential leak.</p>
+<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
+<p>What is done:</p>
+<ul>
+<li>160,944 chats analysed into PII-free aggregates, which drove new chatbot intents and a traffic-weighted eval.</li>
+<li>A redacted multi-turn dataset of 117,915 resolved chats, with zero matches on all 8 audit patterns.</li>
+</ul>
+<p>What is not done, and I want to be direct about it:</p>
+<ul>
+<li><strong>No model has been trained on the 117,915-chat set yet.</strong> The project state says training is deferred until a human checks samples.</li>
+<li>The model that runs inside Chatwoot today is a different, smaller effort. It is a LoRA fine-tune of <code>Qwen3-4B-Instruct-2507</code>, trained on FAQ-grounded conversations (the FAQ knowledge base, 27 evaluation cases, and customer questions matched to FAQs by embeddings), merged into the base weights and served through Ollama as <code>waffarha-support:4b</code>. The merge is needed because Ollama 0.40 removed LoRA adapter support. It trained on a 4 GB GTX 1650 Ti, in float16 because bfloat16 needs compute capability 8.0 and the card is 7.5.</li>
+<li>The default model in the main chatbot pipeline is a separate, pre-installed <code>nile-chat-4b-waffarha</code>. It has no tool template and rejects tool calls, so it cannot run the Chatwoot agent path.</li>
+<li>The routing eval reads 100%, but on 19 cases, later 20. That is a regression check, not a quality measurement.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Human sample review.</strong> Pull a random, stratified sample by issue type and read it for what regex cannot catch: names, addresses, numbers written as words.</li>
+<li><strong>Add a name and address pass.</strong> A dictionary of common first names plus an NER model on the customer side, scored by the same audit approach: a separate script, aggregate counts only.</li>
+<li><strong>Make the audit a gate.</strong> Run <code>audit_sft.py</code> after every rebuild and fail the build on any non-empty leak count, the same way the mojibake check has to report zero before a training run.</li>
+<li><strong>Then train, and evaluate on more than 20 cases.</strong> A model trained on 117,915 real resolved chats should be compared against the FAQ-only model on a larger held-out set before it goes anywhere near Chatwoot.</li>
+</ol>
+<p>The lesson I keep coming back to: the builder&rsquo;s counters felt like proof, and they were not. The independent audit found three leak types on its first run. Without it, &ldquo;redacted&rdquo; would have been a claim, not a measurement.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html" data-title="Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <span></span>
+          <a class="post-pager-next" href="partner-price-integrity-check.html"><small>Older →</small><b>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -7,6 +7,1030 @@
     <description>Practical, production-tested writing on data engineering, data quality, and the data layer behind AI.</description>
     <language>en</language>
     <lastBuildDate>Sun, 08 Nov 2026 09:00:00 +0200</lastBuildDate>
+    <item>
+      <title>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</description>
+      <category>Data Privacy</category><category>LLM Fine-Tuning</category><category>Data Engineering</category>
+      <content:encoded><![CDATA[<p>Evidence label: this is production data at Waffarha. The input was 160,944 real customer-support chats from Egypt and Saudi Arabia, covering March to October 2026. Every chat had a transcript and an AI-generated set of labels. I wanted two things from it: analytics I could use to fix the support chatbot, and a training set for a small Arabic model. Both had to contain no personal data.</p>
+<p>This post is about the second part, the boring one: getting redaction to an audited zero, and being honest about what that number does and does not mean.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Support chats are where customers paste everything. Phone numbers so the agent can find the account. Emails. Links to screenshots. Order and voucher codes. Social handles. Agents sign their name on each turn.</p>
+<p>The labels were useful on their own. About 124k of the chats were from Egypt and 27k from Saudi Arabia, and 96% were in Arabic. Around 5.4% were written in Latin script, which in Egypt usually means Arabizi. All of that matters for a model that has to understand Egyptian dialect.</p>
+<p>But a training set built from raw transcripts would teach a model to emit real phone numbers. A 4B model will happily reproduce a pattern it has seen thousands of times, and I had already seen the local model hallucinate phone numbers and emails in an earlier review. So the bar was not &ldquo;mostly redacted&rdquo;. It was &ldquo;a second, independent scan finds nothing&rdquo;.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<p>There are two separate paths, and keeping them separate was the first decision.</p>
+<h3 id="path-1-aggregates-for-analytics">Path 1: aggregates for analytics<a class="h-anchor" href="#path-1-aggregates-for-analytics" title="Permanent link">#</a></h3>
+<p><code>analyze_cs_chats.py</code> and <code>cluster_other.py</code> read the chats and write only aggregate counts and shares. No message text leaves the script. For the clustering of the &ldquo;Other&rdquo; bucket, the output is label-grouped counts plus the top non-digit tokens, so numbers never show up even as a frequent token.</p>
+<p>That was enough to add new intents to the chatbot (refund status, OTP issues, account updates, app issues) and to weight the routing eval by real traffic shares.</p>
+<h3 id="path-2-a-redacted-multi-turn-sft-set">Path 2: a redacted multi-turn SFT set<a class="h-anchor" href="#path-2-a-redacted-multi-turn-sft-set" title="Permanent link">#</a></h3>
+<p><code>build_sft_dataset.py</code> does four things:</p>
+<ol>
+<li>Keeps only chats marked resolved. That dropped 43,029 chats and kept 117,915.</li>
+<li>Segments each transcript into user and assistant turns using the speaker tags, and drops the agent name from the tag.</li>
+<li>Runs a redaction function over every message, customer and agent alike.</li>
+<li>Writes JSONL with <code>messages</code> plus a small <code>meta</code> block (issue type, contact type, use case, month), and a stats file with counts only.</li>
+</ol>
+<p>The result is 3,181,807 turns across 117,915 conversations, about 27 turns each on average.</p>
+<p>Here is the shape of the redaction step, simplified. Order matters: emails and URLs go first so their digits are not half-eaten by the number rules.</p>
+<div class="hl"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 
+<span class="n">EMAIL</span>   <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}&quot;</span><span class="p">)</span>
+<span class="n">URL</span>     <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;https?://\S+|www\.\S+&quot;</span><span class="p">)</span>
+<span class="n">HANDLE</span>  <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;@[\w.]+&quot;</span><span class="p">)</span>
+<span class="n">PHONE</span>   <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(\+?20\s?1\d</span><span class="si">{9}</span><span class="s2">|01\d</span><span class="si">{9}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<span class="n">LONGNUM</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\d{6,}&quot;</span><span class="p">)</span>
+<span class="n">GROUPED</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?:\d[\s.\-()]?){7,}&quot;</span><span class="p">)</span>   <span class="c1"># spaced or dashed digit groups</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">redact</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">rx</span><span class="p">,</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">EMAIL</span><span class="p">,</span> <span class="s2">&quot;[EMAIL]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">URL</span><span class="p">,</span> <span class="s2">&quot;[URL]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">HANDLE</span><span class="p">,</span> <span class="s2">&quot;[HANDLE]&quot;</span><span class="p">),</span>
+                      <span class="p">(</span><span class="n">PHONE</span><span class="p">,</span> <span class="s2">&quot;[PHONE]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">LONGNUM</span><span class="p">,</span> <span class="s2">&quot;[NUM]&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">GROUPED</span><span class="p">,</span> <span class="s2">&quot;[NUM]&quot;</span><span class="p">)]:</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="n">rx</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\+20\s?&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>          <span class="c1"># drop bare country-code remnants</span>
+</code></pre></div>
+
+<p>The real builder also covers IP addresses and a few internal code formats, and counts each substitution. The counts from the final run:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Placeholder</th>
+<th>Replacements</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[PHONE]</code></td>
+<td>69,223</td>
+</tr>
+<tr>
+<td><code>[NUM]</code></td>
+<td>45,159</td>
+</tr>
+<tr>
+<td><code>[URL]</code></td>
+<td>14,407</td>
+</tr>
+<tr>
+<td><code>[EMAIL]</code></td>
+<td>2,764</td>
+</tr>
+<tr>
+<td><code>[HANDLE]</code></td>
+<td>246</td>
+</tr>
+<tr>
+<td><code>[CODE]</code></td>
+<td>10</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-aggregates-for-analysis-transcripts-only-for-training">Decision 1: aggregates for analysis, transcripts only for training<a class="h-anchor" href="#decision-1-aggregates-for-analysis-transcripts-only-for-training" title="Permanent link">#</a></h2>
+<p>I could have done the analysis by sampling raw chats and reading them. It would have been faster to get a feel for the data. I chose not to: the analytics path only ever produces counts and shares, and the plan document lists &ldquo;no raw chats in repo&rdquo; and &ldquo;no PII&rdquo; as things I am explicitly not doing.</p>
+<p>The trade-off is real. Aggregates hide nuance. The labels are a model&rsquo;s reading of each chat, not human review, so I treat the shares as directional. And when the &ldquo;Other&rdquo; bucket needed breaking down, I could only see label groups and frequent tokens, not why a customer was confused. That is slower. But the analytics path cannot leak, by construction, and that let me move fast on the chatbot fixes without a review step on every run.</p>
+<p>The training path is the only place where transcript text survives, and it survives only after redaction.</p>
+<h2 id="decision-2-a-separate-stricter-audit-instead-of-trusting-the-builder">Decision 2: a separate, stricter audit instead of trusting the builder<a class="h-anchor" href="#decision-2-a-separate-stricter-audit-instead-of-trusting-the-builder" title="Permanent link">#</a></h2>
+<p>The builder&rsquo;s own counters only tell you what it replaced. They say nothing about what it missed. So I wrote <code>audit_sft.py</code> as an independent second pass with its own patterns, stricter than the builder&rsquo;s. It prints only aggregate counts, never message text.</p>
+<p>It checks every message for 8 patterns:</p>
+<ul>
+<li>email addresses</li>
+<li>IPv4 addresses</li>
+<li>Egyptian mobile numbers</li>
+<li>a literal <code>+20</code></li>
+<li>runs of six or more Arabic-Indic digits</li>
+<li>runs of eight or more Latin digits</li>
+<li><code>@</code> mentions not inside a placeholder</li>
+<li>URLs (<code>http://</code>, <code>https://</code>, <code>www.</code>)</li>
+</ul>
+<p>The first audit did not pass. It caught phone numbers written in spaced or dashed groups, which the contiguous phone pattern never matched. It caught URLs the first URL rule left behind, and <code>@</code> handles. Builder v2 added the grouped-digit rule, a full URL rule, a handle rule, and stripping of the bare <code>+20</code> that was left in front of a <code>[NUM]</code>.</p>
+<p>After v2 the audit reported an empty leak count, <code>leak_msgs={}</code>, across all 117,915 lines.</p>
+<div class="admonition warning">
+<p class="admonition-title">Zero leaks means zero matches on 8 patterns</p>
+<p>The audit proves that none of those 8 patterns appear. It does not prove the data is free of personal information. A customer&rsquo;s name typed in free text, an address, or a number spelled out in Arabic words would pass every regex. That is why training on this set is still deferred until a human has looked at samples.</p>
+</div>
+<h2 id="decision-3-recall-over-readability">Decision 3: recall over readability<a class="h-anchor" href="#decision-3-recall-over-readability" title="Permanent link">#</a></h2>
+<p>The grouped-digit rule is aggressive on purpose. Any seven or more digits, in any spacing, become <code>[NUM]</code>. That will also eat prices written with spaces, some dates, and amounts. I accepted that. Seven-plus-digit sequences carry almost no value for teaching a support model how to talk, and a missed phone number is a much worse failure than a slightly less specific training turn.</p>
+<p>The cost shows up in the data: 45,159 <code>[NUM]</code> replacements, some of which were not personal at all. The model will learn that customers sometimes say <code>[NUM]</code>. I think that is the right price. The opposite choice, tuning rules to keep more numbers, means every new format a customer invents is a potential leak.</p>
+<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
+<p>What is done:</p>
+<ul>
+<li>160,944 chats analysed into PII-free aggregates, which drove new chatbot intents and a traffic-weighted eval.</li>
+<li>A redacted multi-turn dataset of 117,915 resolved chats, with zero matches on all 8 audit patterns.</li>
+</ul>
+<p>What is not done, and I want to be direct about it:</p>
+<ul>
+<li><strong>No model has been trained on the 117,915-chat set yet.</strong> The project state says training is deferred until a human checks samples.</li>
+<li>The model that runs inside Chatwoot today is a different, smaller effort. It is a LoRA fine-tune of <code>Qwen3-4B-Instruct-2507</code>, trained on FAQ-grounded conversations (the FAQ knowledge base, 27 evaluation cases, and customer questions matched to FAQs by embeddings), merged into the base weights and served through Ollama as <code>waffarha-support:4b</code>. The merge is needed because Ollama 0.40 removed LoRA adapter support. It trained on a 4 GB GTX 1650 Ti, in float16 because bfloat16 needs compute capability 8.0 and the card is 7.5.</li>
+<li>The default model in the main chatbot pipeline is a separate, pre-installed <code>nile-chat-4b-waffarha</code>. It has no tool template and rejects tool calls, so it cannot run the Chatwoot agent path.</li>
+<li>The routing eval reads 100%, but on 19 cases, later 20. That is a regression check, not a quality measurement.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Human sample review.</strong> Pull a random, stratified sample by issue type and read it for what regex cannot catch: names, addresses, numbers written as words.</li>
+<li><strong>Add a name and address pass.</strong> A dictionary of common first names plus an NER model on the customer side, scored by the same audit approach: a separate script, aggregate counts only.</li>
+<li><strong>Make the audit a gate.</strong> Run <code>audit_sft.py</code> after every rebuild and fail the build on any non-empty leak count, the same way the mojibake check has to report zero before a training run.</li>
+<li><strong>Then train, and evaluate on more than 20 cases.</strong> A model trained on 117,915 real resolved chats should be compared against the FAQ-only model on a larger held-out set before it goes anywhere near Chatwoot.</li>
+</ol>
+<p>The lesson I keep coming back to: the builder&rsquo;s counters felt like proof, and they were not. The independent audit found three leak types on its first run. Without it, &ldquo;redacted&rdquo; would have been a claim, not a measurement.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How a daily pipeline at Waffarha checks voucher prices against partners&#x27; own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.</description>
+      <category>Data Quality</category><category>Web Scraping</category><category>Airflow</category>
+      <content:encoded><![CDATA[<p>This is a write-up of a production pipeline at Waffarha. It runs every day and checks whether a
+partner is selling the same product or service on its own website for the same price as our
+voucher, or less. I built it as a Data Engineer on the data team. Every number below comes from
+the project&rsquo;s code, config, or design docs. Prices in the examples are made up.</p>
+<h2 id="the-problem-a-voucher-that-isnt-a-deal">The problem: a voucher that isn&rsquo;t a deal<a class="h-anchor" href="#the-problem-a-voucher-that-isnt-a-deal" title="Permanent link">#</a></h2>
+<p>Waffarha sells vouchers for partners: gyms, restaurants, spas, retailers. The promise to the
+customer is simple. The voucher should be cheaper than walking in or buying on the partner&rsquo;s site.</p>
+<p>Sometimes it isn&rsquo;t. A partner runs a promotion on its own website, or quietly lowers a list price,
+and our voucher ends up matching or beating nothing.</p>
+<p>Checking this by hand doesn&rsquo;t work. There are hundreds of partners, and many offers have several
+price tiers (a one-month and a three-month gym pass, say), each of which has to be checked on its
+own. So the job is: for every active tier, find the equivalent item on the partner&rsquo;s site, read
+its price, and decide whether the gap is a problem.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<p>The work is split into a weekly audit (Stage 0) and six daily stages. Each stage writes its output
+to a timestamped run directory, so any stage can be re-run or inspected on its own.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it does</th>
+<th>Frequency</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>Reachability audit: sort every partner into one of 5 buckets</td>
+<td>Weekly</td>
+<td><code>triage_report.json/csv</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Ingest active offers with their price tiers and coupon volumes</td>
+<td>Daily</td>
+<td><code>ingested_offers.json</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>Normalize partner URLs and scope catalog pages</td>
+<td>Daily</td>
+<td>Used by Stage 4</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Tiered matching: product code, then manual override, then fuzzy text</td>
+<td>Daily</td>
+<td>Match confidence scores</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Scrape partner sites (requests + BeautifulSoup, or Playwright)</td>
+<td>Daily</td>
+<td><code>scraped_data/partner_*.json</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Compare prices and classify each tier</td>
+<td>Daily</td>
+<td><code>comparisons.json</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Write HTML, Excel, and Markdown reports</td>
+<td>Daily</td>
+<td><code>reports/*</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The reachability audit runs first for a reason. It classifies partners as <code>online_catalog</code>,
+<code>online_no_prices</code>, <code>local_only</code>, <code>blocked</code>, or <code>dead_or_invalid</code>. Only <code>online_catalog</code> partners
+get scraped. Everyone else is reported as Unverifiable instead of silently failing every day.</p>
+<p>Two Airflow DAGs run it. The weekly DAG (<code>@weekly</code>, 1 retry, 10-minute delay) produces the triage
+report. The daily DAG (<code>@daily</code>, 2 retries, 15-minute delay, <code>max_active_runs=1</code>) loads the latest
+triage report and runs ingest, scrape, match-and-compare, and reporting as separate tasks.</p>
+<p>Scraping is the fragile part, so it has the most guardrails. Partners are scraped concurrently,
+5 at a time by default. Each partner gets 3 attempts with exponential backoff and jitter. A
+per-domain circuit breaker opens after 5 consecutive failures and skips that domain for 3,600
+seconds; those partners show up in the report under a sixth bucket, <code>circuit_open</code>, and their rows
+are classified Unverifiable rather than Unmatched.</p>
+<p>Each successfully scraped partner gets its own checkpoint file, <code>partner_&lt;id&gt;.json</code>. On a re-run of
+the same run directory, the pipeline loads those files, skips partners that already have one, and
+scrapes only the rest. Partners that failed are deliberately not checkpointed, so a retry picks
+them up. Failed offers also go to a <code>dead_letters.json</code> file with the stage and the last error.</p>
+<h2 id="decision-1-a-tolerance-band-not-an-equality-check">Decision 1: a tolerance band, not an equality check<a class="h-anchor" href="#decision-1-a-tolerance-band-not-an-equality-check" title="Permanent link">#</a></h2>
+<p>The core rule fits in one line:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">classify</span><span class="p">(</span><span class="n">voucher_price</span><span class="p">,</span> <span class="n">site_price</span><span class="p">,</span> <span class="n">tolerance_pct</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">watch_band_pct</span><span class="o">=</span><span class="mf">5.0</span><span class="p">):</span>
+    <span class="c1"># No usable price on the partner site: nothing to compare.</span>
+    <span class="k">if</span> <span class="n">site_price</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">site_price</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;unmatched&quot;</span>
+    <span class="n">gap_pct</span> <span class="o">=</span> <span class="p">(</span><span class="n">voucher_price</span> <span class="o">-</span> <span class="n">site_price</span><span class="p">)</span> <span class="o">/</span> <span class="n">site_price</span> <span class="o">*</span> <span class="mi">100</span>
+    <span class="c1"># Violation: voucher is not at least tolerance_pct cheaper than the site.</span>
+    <span class="k">if</span> <span class="n">voucher_price</span> <span class="o">&gt;=</span> <span class="n">site_price</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">tolerance_pct</span> <span class="o">/</span> <span class="mi">100</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;violation&quot;</span>
+    <span class="c1"># Watch: cheaper, but only by a small margin.</span>
+    <span class="k">if</span> <span class="n">gap_pct</span> <span class="o">&gt;=</span> <span class="o">-</span><span class="n">watch_band_pct</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;watch&quot;</span>
+    <span class="k">return</span> <span class="s2">&quot;clear&quot;</span>
+</code></pre></div>
+
+<p>A voucher that costs the same as the partner&rsquo;s site is a violation. So is one that&rsquo;s only
+marginally cheaper. The default tolerance is 2%: the voucher has to be at least 2% below the site
+price to pass.</p>
+<p>Take an illustrative partner selling a class pack for 1,000 EGP on its site. The violation line
+sits at 980. A voucher at 990 is a violation. A voucher at 960 is 4% cheaper, so it passes, but it
+lands on the Watch list because a small price cut on the partner&rsquo;s side would flip it. A voucher
+at 900 is Clear.</p>
+<p>The trade-off is that the tolerance is a business choice dressed up as a parameter. Set it to zero
+and you flag every rounding difference and every VAT-inclusive versus VAT-exclusive display. Set
+it high and you excuse real undercutting. I made it config (<code>tolerance_pct</code>, <code>watch_band_pct</code>)
+rather than code, so the commercial team can change it without a deploy.</p>
+<p>The Watch tier matters as much as the rule. A pass/fail report hides offers that are one promotion
+away from becoming a problem.</p>
+<h2 id="decision-2-fuzzy-matching-with-conservative-thresholds">Decision 2: fuzzy matching with conservative thresholds<a class="h-anchor" href="#decision-2-fuzzy-matching-with-conservative-thresholds" title="Permanent link">#</a></h2>
+<p>Matching a Waffarha offer to the right item on a partner&rsquo;s site is the riskiest step. A wrong match
+produces a wrong accusation, and that costs more with a partner than a missed check. The matcher
+tries three tiers in order:</p>
+<ol>
+<li><strong>Product code.</strong> If the offer has a code and it appears in a scraped item&rsquo;s title, that&rsquo;s a
+   match with confidence 1.0.</li>
+<li><strong>Manual override.</strong> A JSON file maps a partner and offer (optionally down to a single price
+   tier) to an exact URL. Also confidence 1.0.</li>
+<li><strong>Fuzzy text.</strong> rapidfuzz&rsquo;s token-set ratio between the offer&rsquo;s name and its English and Arabic
+   descriptions, against every scraped title.</li>
+</ol>
+<p>Token-set ratio fits this data because partner titles and our offer text share words but rarely in
+the same order or with the same filler. The thresholds are 0.85 for a confident match and 0.60 as
+the floor; anything in between is meant to be &ldquo;needs review,&rdquo; and anything below is unmatched.</p>
+<p>The trade-off is recall. With 0.85 as the bar, a lot of genuinely equivalent items won&rsquo;t match on
+text alone, especially when one side is in Arabic and the other in English. I accepted that. The
+manual override file exists for exactly those cases, and it&rsquo;s cheap to maintain for the partners
+that matter most.</p>
+<div class="admonition note">
+<p class="admonition-title">Where the code and the design disagree</p>
+<p>The design doc says only high-confidence matches feed violation detection. In the current
+matcher, a match between 0.60 and 0.85 still returns a price, so it can be classified as a
+violation. The confidence and method are written on every row, so a reviewer can see it, but
+the gate itself isn&rsquo;t enforced yet.</p>
+</div>
+<h2 id="decision-3-static-scraping-first-a-headless-browser-when-needed">Decision 3: static scraping first, a headless browser when needed<a class="h-anchor" href="#decision-3-static-scraping-first-a-headless-browser-when-needed" title="Permanent link">#</a></h2>
+<p>There are two scraping backends. The generic one fetches HTML and parses it with BeautifulSoup,
+trying schema.org JSON-LD first, then Open Graph product tags, then common HTML price patterns.
+The second one drives headless Chromium through Playwright for sites that render prices with
+JavaScript.</p>
+<p>Static fetching is fast, cheap, and easy to debug, and JSON-LD gives clean prices. Its weakness is
+single-page apps, where the downloaded HTML has no prices at all.</p>
+<p>Playwright handles those, but it costs memory, CPU, and time per page, and it&rsquo;s the first thing to
+fall over when you run many partners at once. The scraper registry picks a backend in order: a
+partner-specific adapter if one is registered, then Playwright, then the generic scraper.</p>
+<p>Here&rsquo;s the honest part. Playwright&rsquo;s handler currently claims every domain whenever it&rsquo;s enabled,
+which it is by default. So in practice the static scraper is the fallback when the browser is
+switched off, not a first attempt that escalates.</p>
+<h2 id="results-and-caveats">Results and caveats<a class="h-anchor" href="#results-and-caveats" title="Permanent link">#</a></h2>
+<p>What the pipeline does today: it runs daily on Airflow, checks every price tier of every active
+offer for partners with an online catalog, and produces one canonical result rendered as HTML,
+Excel, and Markdown. The report separates Violation, Watch, Clear, and Unverifiable, and every row
+carries the evidence URL, the match method, and the match confidence. The test suite is at 28
+tests, with ruff, black, and mypy in CI.</p>
+<p>What I can&rsquo;t claim: I don&rsquo;t have a measured violation count or a measured match precision to
+share, so I&rsquo;m not quoting one. A few gaps are written down in the project&rsquo;s own gap analysis:</p>
+<ul>
+<li>Checkpoints are written once the scraping stage finishes, not after each partner. A crash in the
+  middle of Stage 4 loses that attempt&rsquo;s progress.</li>
+<li>There&rsquo;s no golden dataset yet, so a change to the thresholds or to rapidfuzz could shift
+  classifications without a test catching it.</li>
+<li>Playwright runs a single shared browser with no memory cap or concurrency limit of its own.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Enforce the review band.</strong> Matches between 0.60 and 0.85 should go to a review list, never
+  straight to Violation.</li>
+<li><strong>Static first, then escalate.</strong> Try the generic scraper, and only launch Playwright for a
+  partner when the static pass finds no prices. Cache that decision per domain in the weekly audit.</li>
+<li><strong>Write checkpoints as partners finish.</strong> Persist each partner&rsquo;s file as soon as its scrape
+  completes, so a mid-stage crash costs one partner, not the whole stage.</li>
+<li><strong>Build the golden dataset.</strong> A versioned set of offer/listing pairs with known answers, run in
+  CI, so threshold changes show their effect before they ship.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.</description>
+      <category>Data Engineering</category><category>Recommender Systems</category><category>Multi-Cloud</category>
+      <content:encoded><![CDATA[<p>Every night at 00:00 Cairo time, a small service at Waffarha wakes up, reads what customers did
+yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
+opens the app in the morning, their recommendations are already there.</p>
+<p>This post walks through how that job works, and the one rule I&rsquo;d keep if I had to throw everything
+else away: <strong>fail open, never fail the night.</strong></p>
+<h2 id="the-problem-three-systems-one-morning">The problem: three systems, one morning<a class="h-anchor" href="#the-problem-three-systems-one-morning" title="Permanent link">#</a></h2>
+<p>The data needed for a recommendation lives in three places:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>What</th>
+<th>Where</th>
+<th>Owner</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>What customers viewed and searched</td>
+<td>MoEngage event exports on <strong>Google Cloud Storage</strong></td>
+<td>Marketing</td>
+</tr>
+<tr>
+<td>Which offers still exist</td>
+<td><strong>ClickHouse</strong></td>
+<td>Product data</td>
+</tr>
+<tr>
+<td>What the app reads</td>
+<td><strong>MySQL on AWS RDS</strong></td>
+<td>Backend</td>
+</tr>
+</tbody>
+</table></div>
+<p>Nothing about this is exotic. What makes it tricky is that each system can be slow or down on any
+given night, and the app shows whatever is in MySQL at 8 a.m., right or wrong.</p>
+<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Pull</strong> the last day of JSON / NDJSON event exports from Cloud Storage and cache them locally.</li>
+<li><strong>Keep</strong> only two event types: offer views and search-result clicks on offers.</li>
+<li><strong>Build histories</strong>: sort each user&rsquo;s events by time, drop consecutive duplicates, keep the latest 50.</li>
+<li><strong>Score similarity</strong> between offers from co-views.</li>
+<li><strong>Rank</strong> each user&rsquo;s candidates with recency weights and drop offers that have expired.</li>
+<li><strong>Upsert</strong> the top picks into MySQL in batches of 5,000 rows.</li>
+</ol>
+<h3 id="similarity-you-can-explain-in-one-line">Similarity you can explain in one line<a class="h-anchor" href="#similarity-you-can-explain-in-one-line" title="Permanent link">#</a></h3>
+<p>I used item-to-item collaborative filtering because it is easy to reason about and easy to debug
+when someone asks &ldquo;why did I get this offer?&rdquo;</p>
+<div class="hl"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqrt</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">cosine</span><span class="p">(</span><span class="n">co_views</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_j</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two offers are similar when the same people view both.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">co_views</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">users_i</span> <span class="o">*</span> <span class="n">users_j</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Two guards keep it honest: an offer needs a <strong>minimum number of users</strong> before it gets neighbors,
+so one shared click can&rsquo;t create a fake match, and each offer keeps only its <strong>top 200</strong> neighbors.</p>
+<h2 id="the-rule-fail-open">The rule: fail open<a class="h-anchor" href="#the-rule-fail-open" title="Permanent link">#</a></h2>
+<p>The active-offer filter depends on ClickHouse. If ClickHouse is unreachable at midnight, there are two
+choices:</p>
+<ul>
+<li><strong>Fail closed:</strong> stop the job. The app wakes up with yesterday&rsquo;s recommendations, or none at all.</li>
+<li><strong>Fail open:</strong> finish the batch without the filter and write fresh recommendations anyway.</li>
+</ul>
+<p>I chose fail open. A list built from yesterday&rsquo;s behavior beats an empty one, and on most nights
+ClickHouse is up and the filter runs.</p>
+<div class="admonition warning">
+<p class="admonition-title">The honest cost of failing open</p>
+<p>On a night the filter is skipped, some recommendations can point at offers that have expired.
+My own review of the service flagged this: fail open is right for the batch, but wrong if the app
+assumes every recommendation is active. The fix I&rsquo;d ship next is a status flag on the run, so the
+app knows when to double-check expiry itself, plus a loud alert instead of a quiet skip.</p>
+</div>
+<h2 id="make-re-runs-boring">Make re-runs boring<a class="h-anchor" href="#make-re-runs-boring" title="Permanent link">#</a></h2>
+<p>Nightly jobs get re-run, by schedulers and by tired humans. Two choices make that safe:</p>
+<ul>
+<li><strong>Upserts keyed on the user</strong>, so a second run replaces the first instead of duplicating it.</li>
+<li><strong>A &ldquo;run now&rdquo; button that refuses to start</strong> while another run is in flight.</li>
+</ul>
+<h2 id="whats-next">What&rsquo;s next<a class="h-anchor" href="#whats-next" title="Permanent link">#</a></h2>
+<p>A second generation is already code-complete: purchase-based similarity, a content boost from recent
+purchases, diversification so one merchant can&rsquo;t fill the list, and a trending fallback for new users.
+Before it replaces the nightly job it needs one thing the first version never had: a saved offline
+evaluation, so the switch is a measured decision and not a hunch.</p>
+<hr>
+<p><em>If you run nightly jobs that other teams depend on, I&rsquo;d love to hear how you handle the night
+something upstream is down. <a href="../index.html#contact">Get in touch</a>.</em></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Deterministic Gates Before the LLM</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.</description>
+      <category>RAG</category><category>Guardrails</category><category>Testing</category>
+      <content:encoded><![CDATA[<p>This is production work at Waffarha. I build and run the customer-service assistant for
+Waffarha&rsquo;s deals platform, which answers in Egyptian Arabic, MSA, English and Franco-Arabic.
+This post covers one part of it: the layer of plain rules that runs before any model is called.</p>
+<h2 id="the-problem-the-model-is-the-slowest-least-predictable-part">The problem: the model is the slowest, least predictable part<a class="h-anchor" href="#the-problem-the-model-is-the-slowest-least-predictable-part" title="Permanent link">#</a></h2>
+<p>A language model is the most expensive step in a support turn, the slowest, and the only one
+that can make things up. In a local-versus-cloud comparison on the same index (6 queries,
+recorded in <code>eval/EVALUATION_REPORT.md</code>), the local 3B model took about 12 seconds per generated
+answer against about 3 seconds for a cloud model. The same comparison showed the 3B model
+confabulating on weak context while the cloud model abstained.</p>
+<p>The failures I saw in logs were specific. A nonexistent brand scored 0.95+ against some unrelated
+real offer and got answered as if it existed. Gibberish scored 0.79 to 0.82 on embedding
+similarity, above the relevance floor, and got fabricated offer details. A fake <code>SYSTEM:</code> header
+in a message once got the reply &ldquo;access granted&rdquo;. A refund question matched a gym offer because
+the Arabic word for &ldquo;offer&rdquo; appeared inside the sentence, and the model then roleplayed that
+merchant and invented a phone number.</p>
+<p>None of these needed a smarter model. They needed the model not to be asked.</p>
+<h2 id="the-gate-chain">The gate chain<a class="h-anchor" href="#the-gate-chain" title="Permanent link">#</a></h2>
+<p>Every turn walks an ordered list of checks. Each gate either returns a final answer, refuses, or
+passes the turn on. The model only sees what survives all of them. In the newer pipeline, the
+first deterministic pass (code and phone extraction, dialect scoring, Arabizi expansion) is
+documented at under 2 ms with no LLM call (<code>docs/ARCHITECTURE.md</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>What it catches</th>
+<th>What happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Closing / greeting</td>
+<td>&ldquo;شكرا&rdquo;, &ldquo;that&rsquo;s all&rdquo;, small talk</td>
+<td>Polite reply, no retrieval at all</td>
+</tr>
+<tr>
+<td>Empty / gibberish</td>
+<td>Blank or random input</td>
+<td>Ask to rephrase, no retrieval</td>
+</tr>
+<tr>
+<td>Injection</td>
+<td>Fake <code>CONTEXT:</code>/<code>SYSTEM:</code> headers, &ldquo;ignore instructions&rdquo;</td>
+<td>Short-circuit refusal; the text never reaches the model</td>
+</tr>
+<tr>
+<td>Unknown or inactive merchant</td>
+<td>A brand not in the catalog, or one with only expired offers</td>
+<td>Honest &ldquo;we don&rsquo;t have this&rdquo;, no nearby substitute</td>
+</tr>
+<tr>
+<td>Out of scope</td>
+<td>Weather, medicine, general knowledge</td>
+<td>Polite decline</td>
+</tr>
+<tr>
+<td>Personal / support intent</td>
+<td>&ldquo;my coupons&rdquo;, order and voucher codes</td>
+<td>Live lookup scoped to the verified user, never the vector index</td>
+</tr>
+<tr>
+<td>Branch, hours, stock, superlatives</td>
+<td>&ldquo;فروعها فين؟&rdquo;, &ldquo;cheapest&rdquo;, &ldquo;how many left&rdquo;</td>
+<td>Answered from offer metadata or a full sort, not top-k retrieval</td>
+</tr>
+<tr>
+<td>FAQ topic router</td>
+<td>Strong topic keywords (&ldquo;refund policy&rdquo;, &ldquo;كود فوري&rdquo;)</td>
+<td>Exact FAQ document, even if retrieval ranked a sibling higher</td>
+</tr>
+<tr>
+<td>Relevance floors</td>
+<td>Weak retrieval</td>
+<td>Refuse below the strict floor; LLM relevance check in the borderline band</td>
+</tr>
+<tr>
+<td>FAQ / offer direct answer</td>
+<td>One clear, high-similarity match</td>
+<td>Rendered answer from the document, no generation</td>
+</tr>
+<tr>
+<td>Evidence gate (agent path)</td>
+<td>Tool returned nothing, no offers, or offers outside the asked price range</td>
+<td>Deterministic broadening, then at most one replan, then fallback</td>
+</tr>
+<tr>
+<td>Fact check (after generation)</td>
+<td>Prices, discounts, dates, IDs, phones not in the sources</td>
+<td>One retry with critique, then a minimal factual reply</td>
+</tr>
+</tbody>
+</table></div>
+<p>The thresholds are in <code>core/config.py</code>: a soft relevance floor of 0.30, a strict refusal floor of
+0.45, and a direct-answer floor of 0.55 on raw embedding similarity. A candidate that only BM25
+found carries no embedding score, and the direct-answer shortcut skips it rather than trusting it.</p>
+<p>A simplified version of the chain, in my own words:</p>
+<div class="hl"><pre><span></span><code><span class="n">GATES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">closing_or_greeting</span><span class="p">,</span> <span class="n">empty_or_gibberish</span><span class="p">,</span> <span class="n">prompt_injection</span><span class="p">,</span>
+    <span class="n">unknown_merchant</span><span class="p">,</span> <span class="n">inactive_merchant</span><span class="p">,</span> <span class="n">out_of_scope</span><span class="p">,</span>
+    <span class="n">personal_lookup</span><span class="p">,</span> <span class="n">branch_hours_stock</span><span class="p">,</span> <span class="n">faq_topic_router</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">answer</span><span class="p">(</span><span class="n">turn</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">GATES</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>          <span class="c1"># answered or refused, no LLM</span>
+            <span class="k">return</span> <span class="n">result</span>
+    <span class="n">docs</span> <span class="o">=</span> <span class="n">retrieve</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">best_embedding_score</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">STRICT_FLOOR</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span><span class="n">turn</span><span class="o">.</span><span class="n">lang</span><span class="p">)</span>
+    <span class="n">direct</span> <span class="o">=</span> <span class="n">direct_answer</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="n">DIRECT_FLOOR</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">direct</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">direct</span>
+    <span class="n">draft</span> <span class="o">=</span> <span class="n">llm_generate</span><span class="p">(</span><span class="n">turn</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fact_check</span><span class="p">(</span><span class="n">draft</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>      <span class="c1"># retry once, else minimal reply</span>
+</code></pre></div>
+
+<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
+<h3 id="refusal-guards-run-before-every-answer-path">Refusal guards run before every answer path<a class="h-anchor" href="#refusal-guards-run-before-every-answer-path" title="Permanent link">#</a></h3>
+<p>The refusal guards (unknown merchant, inactive merchant, out of scope) originally ran after the
+personal and catalog shortcuts. That meant a structured path could answer a question the main
+path would have refused outright. I moved them ahead of every path that produces an answer, so
+the same floor gates all of them.</p>
+<p>The cost is that the guards must be cheap and correct, because nothing downstream can overrule
+them. A false &ldquo;we don&rsquo;t have this merchant&rdquo; is a wrong answer delivered confidently. I accepted
+that because the alternative, a fabricated offer for a brand Waffarha doesn&rsquo;t sell, is worse for
+a support channel.</p>
+<h3 id="personal-data-never-goes-near-the-embeddings">Personal data never goes near the embeddings<a class="h-anchor" href="#personal-data-never-goes-near-the-embeddings" title="Permanent link">#</a></h3>
+<p>Questions about a customer&rsquo;s own coupons, orders and refunds go to live ClickHouse lookups scoped
+to the resolved user, not to the vector index. The index holds public FAQs and offers only
+(9,106 documents across 2,923 merchants in the case study). Personal queries are off by default
+(<code>PERSONAL_QUERIES_ENABLED=false</code>) and only run once an identity is resolved.</p>
+<p>What runs today is narrow on purpose. Queries are fixed templates in the repository. The
+renderer refuses a template with missing placeholders or undeclared parameters, escapes every
+value through one function, and never lets the model touch table or column names. The client
+runs in ClickHouse read-only mode with a row cap.</p>
+<p>The plan also describes an 8-layer guarded SQL fallback for analytical questions: lexical
+pre-filter, sqlglot AST validation, canonical re-emission, a dedicated read-only role, row-level
+security, PII scrubbing, and an audit log. That is a design in <code>docs/PLAN.md</code> and the agentic
+project&rsquo;s plan, not something I&rsquo;d claim is in the running path. The trade-off of templates is
+coverage: a question no template fits gets a handoff, not an answer.</p>
+<h3 id="check-the-claims-not-the-prose">Check the claims, not the prose<a class="h-anchor" href="#check-the-claims-not-the-prose" title="Permanent link">#</a></h3>
+<p>The fact checker does not judge whether an answer is good. It extracts the things a customer acts
+on (amounts, percentages, dates, order and voucher IDs, phone numbers, statuses) and requires
+each to appear in the turn&rsquo;s facts after normalizing Arabic-Indic digits. On failure the model
+gets one regeneration with a critique; if that fails too, the customer gets a minimal factual
+reply and a handoff offer. A separate check makes any 9+ digit phone number or email in an
+answer appear somewhere in the user text, history, sources or tool output.</p>
+<p>This misses wrong claims that contain no number, like a model describing a policy it doesn&rsquo;t
+have. Those still need the grounding gates and a judge in the eval. But numbers are where a
+wrong answer costs a customer money, so that is where I put the deterministic check.</p>
+<div class="admonition warning">
+<p class="admonition-title">Shortcuts must not inherit stale evidence</p>
+<p>Every early return skips retrieval, so the previous turn&rsquo;s offers were still sitting in the
+response. A refusal could ship with an unrelated offer card under it. Each turn now resets
+its evidence first, and refusals always carry none.</p>
+</div>
+<h2 id="testing-and-results">Testing and results<a class="h-anchor" href="#testing-and-results" title="Permanent link">#</a></h2>
+<p>The regression set is <code>eval/queries.json</code>: 225 cases across 20 categories, from offer lookups and
+FAQ answers to prompt injection, gibberish, follow-up memory and hallucination checks. The runner
+exits 0 only when every case passes and 1 otherwise, which is what lets it gate a build.</p>
+<p>The honest numbers come from one run (2026-09-24, <code>phase5_rerun</code>, reported in
+<code>eval/EVALUATION_REPORT.md</code>):</p>
+<ul>
+<li><strong>Retrieval only:</strong> 151 of 172 checked cases, 87.8%.</li>
+<li><strong>Full pipeline:</strong> 64 of 225, 28.4%.</li>
+</ul>
+<p>That gap is the point of the report. Retrieval found the right FAQ in 21 of 24 checked
+<code>faq_direct_answer</code> cases, while the full pipeline answered only 2 of 25 correctly. Prompt
+injection passed 3 of 6 end to end, out of scope 5 of 11, greeting 1 of 8. The weak spots are
+in answering and follow-up handling, not in finding the document. A strict all-must-pass exit code
+on this suite is red today, so I read it per category and treat those categories as open work.</p>
+<p>The newer pipeline has its own checks: 173 pytest tests and a share-weighted CS eval at 100% as of
+the latest pass in <code>docs/STATE.md</code>. That eval has 20 cases, so it tells me the common support
+flows don&rsquo;t regress. It does not tell me the long tail is solved.</p>
+<p>Two caveats. The full-pipeline numbers came from a local 3B model; a stronger generator changes
+them, which is why the gates sit in front of the model and not inside it. And the keyword-based
+pass checks can be fooled by a paraphrase, so a judge with frozen metric definitions now does the
+labeling, and human calibration labels are still pending.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li>Fix the categories where the full pipeline trails retrieval, starting with FAQ direct answers
+  and follow-up memory, since retrieval already finds the right document there.</li>
+<li>Add an expiry check to the evidence gate. The project summary lists expired offers leaking
+  through it as a known weakness.</li>
+<li>Build out the guarded SQL fallback from the plan only after it passes a security review, and
+  keep personal queries on fixed templates until then.</li>
+<li>Turn traced production turns into eval cases, so the suite grows from real failures and not
+  from what I think customers ask.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Brand radar: one file per source and a connector registry</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I built a pluggable pipeline that collects public mentions of Waffarha from app stores, Reddit, news and web search, routes Arabic and English text to different sentiment models, and tags each mention by business category.</description>
+      <category>Data Engineering</category><category>NLP</category><category>Python</category>
+      <content:encoded><![CDATA[<p>Evidence label: this is a working pilot, not a production system. It runs locally on SQLite, on demand, with a Streamlit dashboard. Several connectors need API keys that are not set, two are stubs, and the sentiment models have not been validated against labeled data. I describe what is built and say plainly where it stops.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Waffarha is a daily-deals platform in Egypt. People talk about it in app store reviews, on Reddit, in the news and on the open web. Product and marketing wanted all of that in one place.</p>
+<p>Two things made this harder than it sounds. The sources keep changing: libraries break, platforms add keys, new review sites matter. And the text is mixed. Egyptian users write in Arabic, in English, and in Arabizi (Arabic written in Latin letters, with digits like 3 and 7 standing in for Arabic sounds). A single English sentiment model would get a lot of it wrong.</p>
+<p>So I set one rule in the design doc: a new data source means one new file, and nothing else changes.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The pipeline is a straight line:</p>
+<p>connectors → ingestion (normalize, dedupe) → language detection → sentiment → topic tagging → storage → dashboard</p>
+<p>Every connector emits the same record, a <code>RawMention</code> with text, author, date, source name, URL, a rough language guess, an external ID and a source category. Nothing downstream knows which site a mention came from.</p>
+<p>Storage has two tables: <code>raw_mentions</code>, which holds the source data unchanged, and <code>mentions</code>, the processed fact table with language, sentiment label, a score from -1 to 1, and topics. Upserts are keyed on <code>(source_name, external_id)</code>, with a stable text hash as a fallback, so re-running the pipeline never duplicates rows.</p>
+<p>Here are the sources the article title promises, and how each one is collected:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Method</th>
+<th>Auth</th>
+<th>Status</th>
+<th>Cadence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>App Store</td>
+<td>iTunes RSS feed</td>
+<td>None</td>
+<td>Working</td>
+<td>On demand; default window last 7 days</td>
+</tr>
+<tr>
+<td>Google Play</td>
+<td><code>google-play-scraper</code>, English and Arabic streams</td>
+<td>None</td>
+<td>Working</td>
+<td>On demand</td>
+</tr>
+<tr>
+<td>Reddit</td>
+<td>PRAW search over a fixed query list</td>
+<td>OAuth app</td>
+<td>Stubbed until keys are set</td>
+<td>On demand</td>
+</tr>
+<tr>
+<td>News</td>
+<td>Google News RSS</td>
+<td>None</td>
+<td>Working</td>
+<td>On demand</td>
+</tr>
+<tr>
+<td>Web search</td>
+<td>Bing Search API, robots.txt check, URL cache</td>
+<td>Paid key</td>
+<td>Disabled by default</td>
+<td>On demand</td>
+</tr>
+<tr>
+<td>Facebook, X</td>
+<td>Not implemented</td>
+<td>Platform approval / paid tier</td>
+<td>Stub only</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<p>There is no scheduler yet. The design doc lists cron, Airflow or Prefect as future production options. Today I run <code>python main.py run</code>, optionally with <code>--days</code> or <code>--since</code>.</p>
+<h2 id="decision-1-a-registry-instead-of-a-list">Decision 1: a registry instead of a list<a class="h-anchor" href="#decision-1-a-registry-instead-of-a-list" title="Permanent link">#</a></h2>
+<p>The interface is one method. A connector takes a timestamp and returns a list of mentions. The registry walks the <code>connectors/</code> package with <code>pkgutil</code>, imports each module, and keeps an instance of every <code>SourceConnector</code> subclass it finds. Nothing has to be registered by hand.</p>
+<p>Here is the idea in a minimal form. This is my own simplified sketch, not the project code:</p>
+<div class="hl"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span><span class="o">,</span><span class="w"> </span><span class="nn">pkgutil</span>
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Mention</span><span class="p">:</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">external_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">date</span><span class="p">:</span> <span class="n">datetime</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Connector</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_since</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">since</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Mention</span><span class="p">]:</span> <span class="o">...</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">discover</span><span class="p">(</span><span class="n">package</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Connector</span><span class="p">]:</span>
+    <span class="n">found</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">iter_modules</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="n">__path__</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">continue</span>  <span class="c1"># one broken file should not stop the rest</span>
+        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Connector</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Connector</span><span class="p">:</span>
+                <span class="n">found</span><span class="p">[</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">found</span>
+</code></pre></div>
+
+<p>Two details mattered. A module that fails to import is logged and skipped, so one broken connector does not stop the run. And each connector can be switched off with an <code>ENABLE_&lt;NAME&gt;</code> flag on top of a class-level default; the stubs and web search default to off.</p>
+<p>The trade-off is that &ldquo;one file&rdquo; is slightly generous. A new connector runs without touching anything else, but a config switch for it also needs an entry in the registry&rsquo;s flag map and the settings class. Auto-discovery also hides failures: a file with a typo just disappears from the run. That is why I added a <code>status</code> command that shows each connector as live, mock or disabled without network calls, plus per-connector metrics in the run summary.</p>
+<h2 id="decision-2-route-sentiment-by-language">Decision 2: route sentiment by language<a class="h-anchor" href="#decision-2-route-sentiment-by-language" title="Permanent link">#</a></h2>
+<p>Language detection is a heuristic, not a model. If more than 30% of the characters are Arabic script, the mention is Arabic. Otherwise an Arabizi score is computed from Latin ratio, digit substitutions, common Arabizi words and doubled vowels, and a score of 3 or more marks it as Arabizi. Mostly-Latin text that does not look like Arabizi is English.</p>
+<p>Sentiment then routes on that label:</p>
+<ul>
+<li>Arabic goes to <code>aubmindlab/bert-base-arabertv02</code>.</li>
+<li>English goes to <code>cardiffnlp/twitter-roberta-base-sentiment-latest</code>.</li>
+<li>Arabizi is crudely transliterated to Arabic and sent to the Arabic model, falling back to a multilingual XLM-RoBERTa model.</li>
+<li>Anything unknown goes to the multilingual model.</li>
+</ul>
+<p>Each path falls back to a small keyword matcher if its model is missing or fails.</p>
+<p>The upside is that each language gets a model trained on that kind of text, swappable with an environment variable. The cost: the models are about 500MB to download, and the README estimates transformers at roughly a day per 100k rows. So an offline switch, <code>WAFFARHA_SENTIMENT_OFFLINE=1</code>, skips the models and uses the keyword matcher. CI and bulk runs both use it.</p>
+<div class="admonition warning">
+<p class="admonition-title">What the sentiment numbers actually mean</p>
+<p>The routing is in the code, but the existing case study is right to call model serving not yet implemented. Bulk runs use the keyword fallback, and the Arabic checkpoint is a base AraBERT model rather than one fine-tuned for sentiment. Treat the dashboard&rsquo;s sentiment labels as rough until the models are validated on labeled data.</p>
+</div>
+<p>The topic tagger has the same honesty problem. It is rule-based keyword matching in Arabic, English and Arabizi across 7 topics: the 6 business categories (app bugs, customer service, pricing, wallet security, offer accuracy, delivery) plus <code>other</code>. It is fast and explainable, and I had no labeled data to train anything else. It also misses negation. A made-up example: &ldquo;this is not a pricing issue&rdquo; would still get the <code>pricing</code> tag.</p>
+<h2 id="decision-3-official-feeds-and-apis-over-scraping">Decision 3: official feeds and APIs over scraping<a class="h-anchor" href="#decision-3-official-feeds-and-apis-over-scraping" title="Permanent link">#</a></h2>
+<p>I preferred official or public feeds wherever they existed, and I left gated platforms as stubs instead of faking them.</p>
+<p>The App Store connector is the clearest case. It first used a scraping library that had stopped working against Apple&rsquo;s current pages and returned 0 reviews. I replaced it with the iTunes RSS feed, which is official, keyless and paginated. That change, together with fixing a wrong store ID, took the App Store from 0 rows to 46 real reviews over 365 days.</p>
+<p>Web search goes through the Bing Search API, not a crawler. Before fetching any page it checks <code>robots.txt</code>, and it caches URL hashes so it does not fetch the same page twice. The code comment is direct about it: it is not a general-purpose scraper. The cost is money. Bing is paid beyond a free tier of 1,000 calls a month, so the connector is off by default.</p>
+<p>Facebook and X are stubs. Facebook needs Meta App Review, which can take weeks or months and is not guaranteed. X needs a paid API tier of $100 a month. I wrote the interface and documented the gap rather than scraping around the terms of service.</p>
+<p>The trade-off is coverage. The radar sees less than a scraper would. I think that is the right default for a company tool, but the dashboard only shows what the enabled sources can reach.</p>
+<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
+<p>What exists today:</p>
+<ul>
+<li>14 connector modules: Waffarha&rsquo;s own stores, competitor listings, review sites, Reddit, YouTube, news, web search, CSV import for manually exported social comments, and two stubs.</li>
+<li>Idempotent storage, with network calls retried 3 times with exponential backoff and jitter.</li>
+<li>A Streamlit dashboard with sentiment trends by source, a topic breakdown, a sentiment-by-topic heatmap, a recent-negative feed for triage, and a filterable table.</li>
+<li>A test suite where 120 unit tests pass in under a second in offline mode.</li>
+</ul>
+<p>What it does not show:</p>
+<ul>
+<li>No accuracy numbers. Arabizi detection, Arabizi sentiment and the topic tagger have not been measured against labeled data.</li>
+<li>Google Business returns mock data without a key. Reddit returns nothing without OAuth credentials.</li>
+<li>Volume is limited by reality. Waffarha&rsquo;s own Play listing has about 19k reviews in total, so the original target of 500k mentions only works if you include competitor and category data.</li>
+<li>It is not in production. There is no scheduler, no auth on the dashboard and no Postgres deployment yet.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>The backlog is ranked, and I agree with it.</p>
+<p>First, label about 200 Egyptian review snippets and measure language detection, starting with Arabizi. Until then, the Arabizi bucket should not be trusted.</p>
+<p>Second, add a negation window to the topic tagger, so &ldquo;not&rdquo;, &ldquo;no&rdquo; or &ldquo;مش&rdquo; just before a keyword cancels the tag.</p>
+<p>Third, store confidence scores and add a &ldquo;needs review&rdquo; filter for low-confidence rows.</p>
+<p>Fourth, alert a chat webhook when the negative share jumps, reading the metrics line each run already writes.</p>
+<p>Then label around 1k mentions and train a topic classifier, keeping the rules as a fallback, and swap in sentiment-tuned checkpoints.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.</description>
+      <category>RAG</category><category>Evaluation</category><category>Arabic NLP</category>
+      <content:encoded><![CDATA[<p>This is production work at Waffarha, where I am a data engineer. It covers how I measured the retrieval side of our customer-service assistant, which answers questions about offers and FAQs in Egyptian Arabic and English. The headline number from that work is 87.8%. This article is mostly about what that number does not mean.</p>
+<h2 id="the-problem-one-number-two-very-different-questions">The problem: one number, two very different questions<a class="h-anchor" href="#the-problem-one-number-two-very-different-questions" title="Permanent link">#</a></h2>
+<p>A RAG assistant can fail in two places. It can fail to find the right document, or it can find the right document and still give a wrong or unhelpful answer. These need separate measurements, and it is easy to report the first one as if it were the second.</p>
+<p>In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have described a system much better than the one we had.</p>
+<p>The gap is not a mystery once you look at it per category. <code>offer_direct_answer</code> retrieved correctly in 49 of 52 checked cases but answered correctly in 11 of 56. <code>faq_direct_answer</code> retrieved correctly in 21 of 24 but answered correctly in 2 of 25. The report&rsquo;s own conclusion was that the gap is in generation and answering, not in finding.</p>
+<h2 id="setup">Setup<a class="h-anchor" href="#setup" title="Permanent link">#</a></h2>
+<h3 id="the-evaluation-suite">The evaluation suite<a class="h-anchor" href="#the-evaluation-suite" title="Permanent link">#</a></h3>
+<p>The suite in <code>eval/queries.json</code> has 225 cases across 20 categories. Each case carries a query, a language tag, expected keywords and, where it makes sense, an expected source document. The language mix reflects real traffic: 203 Arabic, 11 English and 11 mixed-script cases.</p>
+<p>The categories cover more than lookups. The largest are direct offer questions (56), category browsing (39) and FAQ questions (25). Then come follow-ups that depend on conversation memory (12), adversarial input (11), out-of-scope questions (11), greetings, price ranges, ranking (&ldquo;cheapest&rdquo;), fuzzy merchant names, hallucination checks for merchants that do not exist, prompt injection, and a few small edge-case groups.</p>
+<p>Not every case has a retrievable right answer. Many greetings, prompt-injection attempts and out-of-scope questions have no expected document at all. Retrieval was scored only on the cases the harness could check against an expected document, 172 of them, while the full pipeline was scored on all 225. The report does not break down exactly which cases fell outside the 172, which is something I would make explicit next time.</p>
+<h3 id="the-index">The index<a class="h-anchor" href="#the-index" title="Permanent link">#</a></h3>
+<p>The index used for that run was built with <code>BAAI/bge-m3</code> embeddings and stored in Qdrant. Its manifest records 9,106 documents: 96 FAQ entries and 9,010 offers. The report lists it as covering 2,923 merchants, with an engine load time of about 84 seconds. Retrieval was hybrid: dense embeddings plus BM25, fused with reciprocal rank fusion. The generator in that run was <code>qwen2.5:3b-instruct</code>.</p>
+<h3 id="how-the-hit-rate-is-computed">How the hit rate is computed<a class="h-anchor" href="#how-the-hit-rate-is-computed" title="Permanent link">#</a></h3>
+<p>The retrieval metric is simple, and the simplicity matters. A case counts as a hit if its expected source shows up in the retrieved set. Cases with no expected source are skipped, not counted as passes.</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retrieval_hit_rate</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">retrieve</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="n">checked</span> <span class="o">=</span> <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;expected_source&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">expected</span><span class="p">:</span>          <span class="c1"># greetings, injections, out-of-scope</span>
+            <span class="k">continue</span>              <span class="c1"># not checked, not a pass</span>
+        <span class="n">checked</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">top_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">retrieve</span><span class="p">(</span><span class="n">case</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">top_ids</span><span class="p">:</span>
+            <span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">hits</span><span class="p">,</span> <span class="n">checked</span>          <span class="c1"># e.g. 151, 172</span>
+</code></pre></div>
+
+<p>Nothing in this function looks at the answer. A hit means the right document was available to the model. It says nothing about whether the model used it, quoted the right price, or stayed in the right language.</p>
+<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
+<h3 id="decision-1-benchmark-embeddings-and-vector-stores-separately">Decision 1: benchmark embeddings and vector stores separately<a class="h-anchor" href="#decision-1-benchmark-embeddings-and-vector-stores-separately" title="Permanent link">#</a></h3>
+<p>In August 2026 I ran a benchmark on a separate 89-question set: four embedding models and five vector stores. To keep the comparison clean, I held the embedding model fixed (<code>multilingual-e5-base</code>) while comparing stores, so any difference came from the store.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Embedding model</th>
+<th>Recall</th>
+<th>MRR</th>
+<th>Recall (ar)</th>
+<th>Recall (en)</th>
+<th>Avg query latency (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>multilingual-e5-large</td>
+<td>0.949</td>
+<td>0.836</td>
+<td>0.9</td>
+<td>0.973</td>
+<td>80.389</td>
+</tr>
+<tr>
+<td>multilingual-e5-base</td>
+<td>0.881</td>
+<td>0.766</td>
+<td>0.8</td>
+<td>0.919</td>
+<td>48.555</td>
+</tr>
+<tr>
+<td>BAAI/bge-m3</td>
+<td>0.864</td>
+<td>0.768</td>
+<td>0.85</td>
+<td>0.892</td>
+<td>77.906</td>
+</tr>
+<tr>
+<td>paraphrase-multilingual-mpnet-base-v2</td>
+<td>0.661</td>
+<td>0.508</td>
+<td>0.55</td>
+<td>0.757</td>
+<td>38.157</td>
+</tr>
+</tbody>
+</table></div>
+<p>For the stores, FAISS, Chroma, Qdrant and LanceDB all returned the same recall@3 (0.881) and MRR@3 (0.766) on 1,690 documents. They differed only in load time, index size and latency; FAISS had the fastest queries at 0.62 ms. pgvector was the exception, with lower recall@3 (0.847) and the slowest queries at 65.06 ms.</p>
+<p>The trade-off: splitting the benchmark this way makes each table easy to read, but it never tests the combination we actually ran. The shipped pairing, bge-m3 on Qdrant, does not appear as a measured row in either table.</p>
+<h3 id="decision-2-shipping-a-model-that-lost-the-benchmark">Decision 2: shipping a model that lost the benchmark<a class="h-anchor" href="#decision-2-shipping-a-model-that-lost-the-benchmark" title="Permanent link">#</a></h3>
+<p>E5-large won every column of the embedding benchmark, including Arabic recall. The September index used bge-m3, which placed third on overall recall.</p>
+<p>I would like to give a clear reason for that choice, but the sources do not record one. The only related note is in the earlier evaluation report, which listed bge-m3 as an alternative to try because it is &ldquo;often superior for Arabic/MENA content.&rdquo; That is a general claim, not something our benchmark showed: on our Arabic questions, bge-m3 scored 0.85 against E5-large&rsquo;s 0.9.</p>
+<p>There is one detail that makes the benchmark weaker evidence than it looks. The 89-question set was 54 English, 29 Arabic and 6 Franco (Arabizi) questions. The production suite is mostly Arabic. So the benchmark was weighted toward the language our customers use least. The Franco column, where E5-large scored 1.0 and bge-m3 scored 0.5, rests on only 6 questions.</p>
+<p>What I would measure before defending either choice: run E5-large and bge-m3 through the same 225-case suite on the same index contents, and report hit rate per language and per category, not one overall figure.</p>
+<h3 id="decision-3-score-retrieval-and-the-full-pipeline-in-the-same-run">Decision 3: score retrieval and the full pipeline in the same run<a class="h-anchor" href="#decision-3-score-retrieval-and-the-full-pipeline-in-the-same-run" title="Permanent link">#</a></h3>
+<p>I kept both suites in one run, against one index, so the two numbers could be compared directly. The cost is that the end-to-end number is unflattering and harder to explain. The benefit is that it points to where the work is. Retrieval for category browsing passed 33 of 34 checked cases. End-to-end, the same category passed 16 of 39. Better embeddings would not have closed that gap.</p>
+<div class="admonition warning">
+<p class="admonition-title">Read the denominator</p>
+<p>151/172 and 64/225 come from the same run but use different denominators. The retrieval figure covers only cases checkable against an expected document. The end-to-end figure includes every case, including greetings and injection attempts. Neither number should be reported without the other.</p>
+</div>
+<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Measure</th>
+<th>Result</th>
+<th>What it covers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retrieval hit rate</td>
+<td>151/172 (87.8%)</td>
+<td>Checked cases only</td>
+</tr>
+<tr>
+<td>Full pipeline</td>
+<td>64/225 (28.4%)</td>
+<td>All cases, qwen2.5:3b-instruct</td>
+</tr>
+<tr>
+<td>Earlier retrieval run (Aug 2026)</td>
+<td>84/105 (80.0%)</td>
+<td>e5-base + FAISS, 145-case suite</td>
+</tr>
+</tbody>
+</table></div>
+<p>Some honest caveats:</p>
+<ul>
+<li>The August and September runs used different suites (145 and 225 cases), different indexes (1,458 and 9,106 documents) and different models. The jump from 80.0% to 87.8% is not a controlled comparison.</li>
+<li>Weak end-to-end categories included follow-ups that need memory (2 of 12), greetings (1 of 8) and disambiguating offers from the same merchant (0 of 4). Several of these are not retrieval problems at all.</li>
+<li>The current code has moved on. The configuration now defaults to <code>BAAI/bge-m3</code> with pgvector as the vector store backend, while the project&rsquo;s state log records the pgvector cutover as deferred in favour of a local knowledge base. Neither setup has been re-measured with the 225-case suite. pgvector was also the one store that scored lower recall in the August benchmark. That was on e5-base, but it is still a reason to measure before assuming the number carries over.</li>
+</ul>
+<h2 id="what-i-would-do-next">What I would do next<a class="h-anchor" href="#what-i-would-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Re-run the 225-case suite on the current configuration and report retrieval and end-to-end numbers together.</li>
+<li>Run E5-large and bge-m3 head to head on that suite, split by Arabic, English and mixed script, since the existing benchmark leaned English.</li>
+<li>Measure the shipped pairing directly instead of inferring it from two separate tables.</li>
+<li>Put most of the effort into the answering stage. The category numbers say that is where most cases are lost.</li>
+</ol>
+<p>The lesson I took from this: a retrieval metric is a component test. It is worth tracking, but on its own it does not describe what the customer sees.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Waffy: a support agent that can&#x27;t go rogue</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.</description>
+      <category>AI Agents</category><category>Guardrails</category><category>Python</category>
+      <content:encoded><![CDATA[<p>Evidence label: this is a working prototype I built at Waffarha, not the production assistant. It runs against a read-only ClickHouse database and a local 3B model. Refunds and purchases are dry-run only, and nothing it does touches a customer&rsquo;s money. The test and eval numbers below come from my own progress log, and the headline eval number is a routing-only dry run, not a live run.</p>
+<h2 id="the-problem-an-agent-with-tools-is-an-agent-with-permissions">The problem: an agent with tools is an agent with permissions<a class="h-anchor" href="#the-problem-an-agent-with-tools-is-an-agent-with-permissions" title="Permanent link">#</a></h2>
+<p>Waffarha is an Egyptian deals and coupons platform. Most support questions are about data: prices, branches, coupon status, refunds. A model with tools over the database could answer most of them.</p>
+<p>That is also the risk. With tools, every weakness of the model becomes a weakness of the system. It can pass the wrong customer id, follow an instruction hidden in an offer description, or state a price it never looked up. If it can write, it can refund the wrong coupon.</p>
+<p>So I started from one question: what is the model allowed to decide? My answer was &ldquo;as little as possible&rdquo;. The model phrases answers. The code decides who the customer is, what can be queried, and whether anything happens.</p>
+<h2 id="the-design">The design<a class="h-anchor" href="#the-design" title="Permanent link">#</a></h2>
+<p>Waffy is a FastAPI service with a small web chat UI. A turn goes through three steps in a hand-written loop, with no agent framework:</p>
+<ol>
+<li><strong>Route.</strong> A deterministic router picks the tool and its arguments from the customer&rsquo;s message.</li>
+<li><strong>Act.</strong> The tool runs a fixed, parameterized query against read-only ClickHouse.</li>
+<li><strong>Answer.</strong> The model phrases the answer from the tool result. If the router finds nothing to route, such as a greeting, the model gets the tools for that caller and runs a short loop with a hard step limit.</li>
+</ol>
+<p>The answer streams back over Server-Sent Events as <code>status</code>, <code>token</code>, <code>replace</code> and <code>done</code> events. <code>replace</code> lets the server take back a streamed answer.</p>
+<p>Every tool goes through one registry. Here is how the guards line up:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool or layer</th>
+<th>Who can use it</th>
+<th>Guard</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Offer search, offer details, nearby offers, recommendations, FAQ, handoff</td>
+<td>Guests and customers</td>
+<td>Fixed SQL templates; the model only supplies values</td>
+</tr>
+<tr>
+<td>My coupons, coupon details, my refunds, order status</td>
+<td>Signed-in customers only</td>
+<td>Customer id comes from the server-side context, never from tool arguments</td>
+</tr>
+<tr>
+<td><code>request_refund</code>, <code>purchase_offer</code></td>
+<td>Signed-in customers only</td>
+<td>Propose only; execution needs a separate confirmation turn handled by the loop</td>
+</tr>
+<tr>
+<td>Action adapter</td>
+<td>Server config</td>
+<td>Only <code>ACTION_MODE=dry_run</code> exists; any other value fails at startup</td>
+</tr>
+<tr>
+<td>ClickHouse client</td>
+<td>Every query</td>
+<td>Read-only user, <code>readonly=2</code> session, 10 s timeout, 200-row cap</td>
+</tr>
+<tr>
+<td>Final answer</td>
+<td>Every turn</td>
+<td>Grounding check, then e-mail and mobile redaction</td>
+</tr>
+</tbody>
+</table></div>
+<p>The model never writes SQL. There are 14 query templates, and a strict renderer escapes every value through one function. It refuses a template with a missing parameter and refuses a parameter the template does not declare. Table and column names are hard-coded in the templates, so model output can change values but never the shape of a statement.</p>
+<h2 id="decision-1-identity-lives-in-the-context-not-in-the-arguments">Decision 1: identity lives in the context, not in the arguments<a class="h-anchor" href="#decision-1-identity-lives-in-the-context-not-in-the-arguments" title="Permanent link">#</a></h2>
+<p>No tool takes a customer id. The HTTP request carries a demo login key. The server checks it against an allow-list (<code>DEMO_CUSTOMER_IDS</code>), and an unknown key gets a 403. The result goes into a <code>ToolContext</code> that every tool handler receives. The model never sees it as a parameter, so it cannot change it.</p>
+<p>A simplified version of the pattern, in my own words:</p>
+<div class="hl"><pre><span></span><code><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ToolContext</span><span class="p">:</span>
+    <span class="n">customer_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>   <span class="c1"># set by the server, never by the model</span>
+    <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
+    <span class="n">tool</span> <span class="o">=</span> <span class="n">TOOLS_BY_NAME</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown tool: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">customer_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="s2">&quot;This tool needs a signed-in customer.&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span> <span class="n">timeout</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). Say you could not confirm it.&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Customer tools are filtered out of the tool list for guests, and <code>dispatch</code> checks again in case the model names one anyway. Tool errors come back to the model as data, not as a stack trace.</p>
+<p>The trade-off is that Waffy cannot help with anything outside the signed-in customer&rsquo;s own scope. For a customer-facing assistant that is the right default. A live test checks that coupon details come back empty for a coupon the customer does not own.</p>
+<h2 id="decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms">Decision 2: refunds and purchases are proposals, and the loop confirms<a class="h-anchor" href="#decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms" title="Permanent link">#</a></h2>
+<p><code>request_refund</code> and <code>purchase_offer</code> never execute anything. They call <code>propose</code> on the action adapter. The adapter reads the database, applies versioned eligibility rules, and stores a proposal with its rule version, inputs, facts and decision.</p>
+<p>The customer has to answer in a separate turn. Before any routing, the loop checks for a pending proposal for the same customer and the same session. A strict classifier reads the message. A clear yes confirms, a clear no cancels, and anything else supersedes the proposal, so a stale &ldquo;yes&rdquo; several turns later cannot run an old request. Only the loop passes <code>confirmed=True</code>. The model has no path to it.</p>
+<p>Even a confirmed action only marks the proposal <code>confirmed</code> and returns a summary that says plainly that nothing was executed in Waffarha&rsquo;s systems. The adapter factory raises at startup for any mode other than dry run. A config typo should never quietly change what the system does with money.</p>
+<p>The trade-off is that this cannot ship as a refund tool yet. Going live needs a write API, the refund policy as versioned data, a refund state machine, a payout method and a confirmation channel tied to the customer&rsquo;s account.</p>
+<h2 id="decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model">Decision 3: a router picks the tool, and some answers skip the model<a class="h-anchor" href="#decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model" title="Permanent link">#</a></h2>
+<p>The 3B local model (<code>qwen2.5:3b-instruct</code>) picked the wrong tool or answered from memory often enough that I moved tool selection into a deterministic router.</p>
+<p>For factual lists I went further. Offer search, offer details, recommendations and the customer&rsquo;s coupons stream the tool&rsquo;s own ready-made message word for word. The small model had called a used coupon &ldquo;not used&rdquo; and drifted into a different Arabic dialect.</p>
+<p>Two output guards run on whatever text is left. The grounding check blocks an answer that states a price, date, availability or coupon status when no tool ran that turn. The loop retries once with a nudge to call a tool, and then falls back to &ldquo;I can&rsquo;t confirm that&rdquo;. Redaction removes e-mail addresses, and for guests mobile numbers, from the final answer before it is stored and sent as the closing <code>done</code> event.</p>
+<div class="admonition warning">
+<p class="admonition-title">Where redaction actually happens</p>
+<p>Redaction runs on the model&rsquo;s output, not on the data going in. Tool results reach the model unredacted, and streamed tokens go out before the redacted <code>done</code> text replaces them. Moving redaction to the tool-result boundary is on my list.</p>
+</div>
+<p>The trade-off of the router is coverage. It only knows the intents I wrote rules for, in Egyptian Arabic, MSA, English and Franco-Arabic. Anything else falls through to the free loop, where the model&rsquo;s weaknesses come back.</p>
+<h2 id="testing-and-results-with-caveats">Testing and results, with caveats<a class="h-anchor" href="#testing-and-results-with-caveats" title="Permanent link">#</a></h2>
+<p>There are two layers of checks.</p>
+<p><strong>Tests.</strong> pytest covers the SQL renderer, router, guards, loop, actions and tools, plus live read-only ClickHouse tests that skip when the database is down. The latest entry in my progress log records 212 tests passing, with ruff clean.</p>
+<p><strong>Evals.</strong> <code>evals/cases.yaml</code> has 53 cases across Egyptian Arabic, MSA, Franco, English, mixed language, spelling variants, negation and actions. Ten are critical safety cases, such as another customer&rsquo;s coupons, prompt injection inside an offer description, requests for SQL, and prices without a tool. The runner prints the pass rate per category and exits non-zero on any critical failure, so it can gate a merge.</p>
+<p>The recorded results are 53/53 on the dry run and 10/10 on the critical cases. Be clear about what each means:</p>
+<ul>
+<li>The <strong>dry run</strong> checks routing only. No model is called and the text checks are skipped. It tells me the router sends each message to the right tool, not that the answers are good.</li>
+<li>The <strong>critical 10/10</strong> was run live against ClickHouse and the local model. That is the stronger number, but it is ten cases.</li>
+<li>I have not recorded a full live run of all 53 cases. On a CPU-only box a live case takes roughly 30-60 s, so I ran subsets.</li>
+</ul>
+<p>Failure paths were checked live too: with the model unreachable the agent answered from the help centre in 5.4 s, and with the database down <code>/health</code> returned 503 and the chat still answered politely.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Move redaction to the tool-result boundary</strong>, so the model never sees partner phones or other fields it does not need, and redact the token stream rather than only the final text.</li>
+<li><strong>Run the full eval live on a hosted model.</strong> The 3B local model is the main limit on latency and answer quality. I would rerun the critical subset first, then all 53 cases, and record live pass rates separately from the dry run.</li>
+<li><strong>Shared state.</strong> Sessions, proposals and the rate limiter are single-process; more workers need Redis or Postgres.</li>
+<li><strong>Live actions, only with the missing pieces.</strong> A write API, the refund policy as data and an account-tied confirmation channel come first.</li>
+</ul>
+<p>The lesson for me: keep identity, SQL and execution in plain code, where I can test them, and let the model phrase.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
   </channel>
 </rss>
