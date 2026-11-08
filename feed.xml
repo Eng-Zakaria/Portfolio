@@ -274,6 +274,115 @@
 </ul>]]></content:encoded>
     </item>
     <item>
+      <title>GCP, AWS, Azure, Huawei: what multi-cloud means day to day</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.</description>
+      <category>Cloud</category><category>AWS</category><category>GCP</category>
+      <content:encoded><![CDATA[<p>&ldquo;Multi-cloud&rdquo; sounds like an architecture decision. Most days it is something smaller: two sets of credentials in one process, a network path that only exists through a jump host, and two clocks that disagree about when &ldquo;tonight&rdquo; is. Evidence: drawn from my production work at Waffarha (a nightly recommender that spans GCP and AWS, and the customer-service assistant on Huawei Cloud) and three portfolio builds for AWS and Azure, each labelled below.</p>
+<h2 id="what-i-use-each-cloud-for">What I use each cloud for<a class="h-anchor" href="#what-i-use-each-cloud-for" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Cloud</th>
+<th>What runs there in the work below</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GCP</td>
+<td>Cloud Storage: daily MoEngage event exports the recommender reads</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>AWS</td>
+<td>EC2 as an SSH jump host, MySQL on RDS that the app reads recommendations from</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>Huawei Cloud</td>
+<td>The assistant: ECS/CCE compute, OBS storage, GaussDB/RDS plus a DWS warehouse</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>AWS</td>
+<td>API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront in TypeScript CDK</td>
+<td>Tutorial build, never deployed</td>
+</tr>
+<tr>
+<td>Azure</td>
+<td>Terraform modules (Key Vault, Blob, Event Hubs, Data Factory, Databricks, Fabric)</td>
+<td>Portfolio design, never applied</td>
+</tr>
+<tr>
+<td>Azure</td>
+<td><code>cloudkit</code>: one SDK layer for Azure emulators or real Azure, plus a Bicep template</td>
+<td>Portfolio lab</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="two-clouds-one-nightly-job">Two clouds, one nightly job<a class="h-anchor" href="#two-clouds-one-nightly-job" title="Permanent link">#</a></h2>
+<p>The recommender is the clearest example of two clouds in one job (<a href="../articles/fail-open-nightly-recommender.html">full write-up</a>). At 00:00 Cairo time it pulls the last day of event exports from a GCS bucket, builds item-to-item similarity, and upserts each user&rsquo;s picks into MySQL on AWS RDS in batches of 5,000 rows.</p>
+<p>The GCS side authenticates with a service account whose JSON lives in an environment variable, not a key file on disk:</p>
+<div class="hl"><pre><span></span><code><span class="n">sa_info</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GCP_SA_JSON&quot;</span><span class="p">])</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">service_account</span><span class="o">.</span><span class="n">Credentials</span><span class="o">.</span><span class="n">from_service_account_info</span><span class="p">(</span><span class="n">sa_info</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">credentials</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">creds</span><span class="o">.</span><span class="n">project_id</span><span class="p">)</span>
+<span class="n">cutoff</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The AWS side is different in kind. RDS is not reachable from where the job runs, so every write goes through an SSH tunnel to an EC2 host, and MySQL connects to a local port the tunnel picks:</p>
+<div class="hl"><pre><span></span><code><span class="k">with</span> <span class="n">SSHTunnelForwarder</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">EC2_HOST</span><span class="p">,</span> <span class="n">EC2_PORT</span><span class="p">),</span>
+    <span class="n">ssh_username</span><span class="o">=</span><span class="n">EC2_USER</span><span class="p">,</span>
+    <span class="n">ssh_pkey</span><span class="o">=</span><span class="n">EC2_KEY_PATH</span><span class="p">,</span>
+    <span class="n">remote_bind_address</span><span class="o">=</span><span class="p">(</span><span class="n">RDS_HOST</span><span class="p">,</span> <span class="n">RDS_PORT</span><span class="p">),</span>
+    <span class="n">local_bind_address</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>   <span class="c1"># pick a free local port</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">tunnel</span><span class="p">:</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">tunnel</span><span class="o">.</span><span class="n">local_bind_port</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Before opening anything, <code>validate_db_env()</code> checks that every host, user and key path is set and that the key file exists. It is a small check with a big payoff: a missing variable fails in the first second with its name, not later as a timeout from the wrong cloud.</p>
+<h3 id="what-day-to-day-actually-means-here">What &ldquo;day to day&rdquo; actually means here<a class="h-anchor" href="#what-day-to-day-actually-means-here" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Two credential stories.</strong> GCP gets a service-account JSON; AWS gets an SSH key plus a database user. They rotate on different schedules and fail with different errors. I keep them in separate env vars and validate both at startup.</li>
+<li><strong>Two failure domains.</strong> GCS can be fine while the tunnel is down, and the other way round. A third system, ClickHouse, supplies the active-offer filter. When it is unreachable, the job fails open and writes recommendations without the filter, which the write-up covers in detail, including the honest cost.</li>
+<li><strong>Two clocks.</strong> The schedule is Cairo time (<code>TZ_NAME = "Africa/Cairo"</code>), the GCS cutoff is UTC, and <code>generated_at</code> is written to MySQL as naive UTC. That is fine as long as everyone reading the table knows it. I&rsquo;d put the time zone in the column comment, because &ldquo;naive&rdquo; means &ldquo;someone will guess&rdquo;.</li>
+</ul>
+<h2 id="huawei-cloud-where-the-assistant-lives">Huawei Cloud: where the assistant lives<a class="h-anchor" href="#huawei-cloud-where-the-assistant-lives" title="Permanent link">#</a></h2>
+<p>Waffarha&rsquo;s bilingual customer-service assistant runs on Huawei Cloud: compute on ECS and CCE, files on OBS, relational data on GaussDB/RDS, and a DWS warehouse. On the data side, offer cards in the assistant show product photos served from OBS through a CDN.</p>
+<p>The reason Huawei comes up in design work is location. When we costed self-hosted GPU options for the assistant, the cost report described a Huawei Cairo GPU quote as the only route that keeps data in Egypt with zero ops. It was also the most expensive option in that report, and the quote itself is marked unverified there, so I treat it as a placeholder until it&rsquo;s confirmed. The lesson that carried over: for some workloads the region is the requirement, and the provider follows from it.</p>
+<p>I also hold the Huawei HCIP Big Data certification (H13-723).</p>
+<h2 id="aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying">AWS beyond EC2 and RDS: a CDK build I reviewed before deploying<a class="h-anchor" href="#aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying" title="Permanent link">#</a></h2>
+<p>I built a serverless task API in TypeScript CDK as a guided learning project: API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront (<a href="../articles/aws-serverless-blueprint.html">write-up</a>). It has never been deployed, and reading it carefully found two problems a deploy would have hit. The table uses <code>taskId</code> as the partition key and <code>userId</code> as the sort key, so the main &ldquo;list my tasks&rdquo; query can&rsquo;t run as written. And <code>cdk synth</code> would fail on a syntax error in an imported pipeline stack the app doesn&rsquo;t even use.</p>
+<p>The habit I took from it: run <code>cdk synth</code> and a CDK assertions test before anything else, and design DynamoDB keys from the queries backwards.</p>
+<h2 id="azure-infrastructure-code-and-a-local-twin">Azure: infrastructure code and a local twin<a class="h-anchor" href="#azure-infrastructure-code-and-a-local-twin" title="Permanent link">#</a></h2>
+<p>Two portfolio projects carry my Azure infrastructure work.</p>
+<p>The telecom lakehouse design has Terraform modules for Key Vault, VNet, Blob, Event Hubs, Data Factory, Databricks and a Fabric capacity across four environments, every Azure resource gated on one <code>use_local_dev</code> flag (<a href="../articles/telecom-lakehouse-8-domains.html">write-up</a>). It has never been applied, and the write-up lists what a <code>terraform validate</code> with the flag off would catch.</p>
+<p>The Azure local lab is the layer I&rsquo;d put under any Azure data project. Code uses the official Azure SDKs; one environment variable decides whether they reach Microsoft&rsquo;s emulators in Docker Compose (Azurite, the Event Hubs and Service Bus emulators, Cosmos DB) or real resources over Entra ID with no keys:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">blob_service</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlobServiceClient</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="ow">or</span> <span class="n">Settings</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_local</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BlobServiceClient</span><span class="o">.</span><span class="n">from_connection_string</span><span class="p">(</span><span class="n">blob_connection_string</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;storage_account&quot;</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">storage_account</span><span class="si">}</span><span class="s2">.blob.core.windows.net&quot;</span>
+    <span class="k">return</span> <span class="n">BlobServiceClient</span><span class="p">(</span><span class="n">account_url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">credential</span><span class="o">=</span><span class="n">credential</span><span class="p">())</span>
+</code></pre></div>
+
+<p><code>credential()</code> is <code>DefaultAzureCredential</code>: <code>az login</code> on a laptop, managed identity in Azure. The cloud side is a Bicep template, and the README tells you to set a budget alert before the first deploy and tags every resource <code>ttl: delete-same-day</code>. Services with no emulator, such as Data Factory and Fabric, sit behind an interface and each project says so in its README.</p>
+<h2 id="mistakes-i-made-and-what-i-do-now">Mistakes I made, and what I do now<a class="h-anchor" href="#mistakes-i-made-and-what-i-do-now" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>A local flag that skips the cloud path tests nothing.</strong> In the telecom Terraform, the local path is mostly &ldquo;create nothing&rdquo;, so undeclared references and provider resources that don&rsquo;t exist in the pinned version went unnoticed. The fix is to run <code>terraform validate</code> with the cloud flag on in CI, even when nothing gets applied.</li>
+<li><strong>Code-complete is not deployed.</strong> The CDK build looked finished and couldn&rsquo;t synthesise. A plan or synth artifact is the minimum before I call infrastructure done.</li>
+<li><strong>A tunnel per run is a dependency you don&rsquo;t see.</strong> The recommender&rsquo;s path to RDS depends on one EC2 host and one key. It works, but it&rsquo;s the first thing I&rsquo;d move to a private network route, and until then it&rsquo;s the first thing the startup check verifies.</li>
+<li><strong>Fail open needs a flag.</strong> Writing recommendations without the active-offer filter is right for the batch, but the app should know it happened. The fix I want is a run-status flag and a loud alert.</li>
+</ul>
+<h2 id="when-multi-cloud-is-worth-it">When multi-cloud is worth it<a class="h-anchor" href="#when-multi-cloud-is-worth-it" title="Permanent link">#</a></h2>
+<p>I don&rsquo;t pick multi-cloud on purpose. It happens because data already lives somewhere: the marketing tool exports to GCS, the backend lives on AWS, the assistant has to sit in a Cairo region. When that&rsquo;s the situation, my rules are short. Move files, not connections, across clouds where possible. Validate every credential at startup. Write down the time zone of every timestamp. And make each cloud&rsquo;s failure a separate, named branch in the code, not one generic exception.</p>
+<p><em>If you run jobs that cross clouds, I&rsquo;d like to hear how you handle the network path. <a href="../index.html#contact">Get in touch</a>.</em></p>]]></content:encoded>
+    </item>
+    <item>
       <title>A telecom lakehouse for 8 domains: the blueprint, and what runs today</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</guid>
@@ -394,6 +503,171 @@
 <ul>
 <li>Case study: <a href="../projects/telecom-platform.html">Telecom lakehouse</a></li>
 </ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>Spark and Hadoop in practice: what NTI taught and where I used it</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.</description>
+      <category>Spark</category><category>Hadoop</category><category>Big Data</category>
+      <content:encoded><![CDATA[<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), plus the portfolio projects and write-ups linked below. The portfolio Spark jobs quoted here run on one machine, over a few hundred to about a thousand rows per run, which keeps them easy to rerun and inspect.</p>
+<h2 id="where-this-skill-comes-from">Where this skill comes from<a class="h-anchor" href="#where-this-skill-comes-from" title="Permanent link">#</a></h2>
+<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. The internship code isn&rsquo;t part of this portfolio, so the examples below come from what I built afterwards to apply the same ideas to real or synthetic feeds:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Engine</th>
+<th>Status</th>
+<th>Scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../articles/reddit-medallion-pyspark.html">Reddit medallion</a></td>
+<td>PySpark batch, <code>local[*]</code></td>
+<td>Portfolio, live public data</td>
+<td>up to ~1,000 posts per run</td>
+</tr>
+<tr>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a></td>
+<td>Spark Structured Streaming <code>local[2]</code>, HDFS archive</td>
+<td>Portfolio, live public data, ran in Docker</td>
+<td>capped at 300 aircraft per 10 s poll</td>
+</tr>
+<tr>
+<td><a href="../articles/retail-cdc-debezium.html">Retail streaming</a></td>
+<td>Spark windowed aggregates + a PyFlink job</td>
+<td>Portfolio, synthetic data</td>
+<td>simulator at 2-5 transactions/s</td>
+</tr>
+<tr>
+<td><a href="../articles/telecom-lakehouse-8-domains.html">Telecom lakehouse</a></td>
+<td>PySpark + Delta MERGE</td>
+<td>Written, never run</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a></td>
+<td>Apache Beam aimed at the Flink runner</td>
+<td>Scaffold, never ran on Flink</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two notes on that table. I practised Hive and MapReduce during my NTI internship; none of these five projects uses them. And the <a href="../articles/ethereum-neo4j-vs-spark.html">Ethereum benchmark harness</a> has a Spark side, but in the default run it is a pandas wrapper with a Spark-like API, not Spark.</p>
+<h2 id="how-i-use-spark">How I use Spark<a class="h-anchor" href="#how-i-use-spark" title="Permanent link">#</a></h2>
+<h3 id="pattern-1-fix-the-schema-at-the-boundary">Pattern 1: fix the schema at the boundary<a class="h-anchor" href="#pattern-1-fix-the-schema-at-the-boundary" title="Permanent link">#</a></h3>
+<p>The first thing I do in any Spark job is stop Spark from guessing types. In the Reddit pipeline, bronze is written with a hand-written schema:</p>
+<div class="hl"><pre><span></span><code><span class="n">POST_SCHEMA</span> <span class="o">=</span> <span class="n">StructType</span><span class="p">([</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># ... 13 more</span>
+<span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">all_records</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">POST_SCHEMA</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Inference on Python dicts can change a column&rsquo;s type between runs when a field happens to be null in the sample. A fixed schema makes every bronze file the same shape. The retail stream does the same thing for Kafka JSON: it parses the value against an explicit schema before any aggregation.</p>
+<p>The lesson I took from writing it up: putting the schema in bronze means bronze isn&rsquo;t raw. Fields I didn&rsquo;t list are gone for good. Next time I&rsquo;d land the JSON as-is and apply the schema in silver.</p>
+<h3 id="pattern-2-built-in-expressions-before-udfs">Pattern 2: built-in expressions before UDFs<a class="h-anchor" href="#pattern-2-built-in-expressions-before-udfs" title="Permanent link">#</a></h3>
+<p>The engagement score and tier in Reddit silver are plain <code>F.when</code> chains, not the Python UDF that sits unused in <code>src/udfs.py</code>. Built-ins stay inside the JVM, so Spark can optimise them and no Python worker starts. Where I did use a UDF (the keyword topic tagger), it was both slower in principle and wrong in practice: substring matching tagged &ldquo;software&rdquo; as <code>war</code>. Word-boundary <code>rlike</code> would fix both problems.</p>
+<h3 id="pattern-3-event-time-a-watermark-and-append-mode-for-anything-stored">Pattern 3: event time, a watermark, and append mode for anything stored<a class="h-anchor" href="#pattern-3-event-time-a-watermark-and-append-mode-for-anything-stored" title="Permanent link">#</a></h3>
+<p>In the retail job, product metrics use event time with a 10-minute watermark and 5-minute windows, and go to a Delta path in <code>append</code> mode:</p>
+<div class="hl"><pre><span></span><code><span class="n">parsed_df</span> <span class="o">=</span> <span class="n">parsed_df</span><span class="o">.</span><span class="n">withWatermark</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;10 minutes&quot;</span><span class="p">)</span>
+<span class="n">product_metrics</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;item&quot;</span><span class="p">,</span> <span class="n">explode</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;items&quot;</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="n">window</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">),</span> <span class="s2">&quot;5 minutes&quot;</span><span class="p">),</span>
+             <span class="n">col</span><span class="p">(</span><span class="s2">&quot;item.product_id&quot;</span><span class="p">),</span> <span class="n">col</span><span class="p">(</span><span class="s2">&quot;store_id&quot;</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="s2">&quot;item.quantity&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;total_quantity_sold&quot;</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Append mode on a watermarked aggregation writes each window once, after the watermark passes it, so the stored table never needs a window rewritten. The price is latency: a window lands about ten minutes after it closes. I chose correctness of the stored table over freshness.</p>
+<h3 id="pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink<a class="h-anchor" href="#pattern-4-foreachbatch-when-theres-no-sink" title="Permanent link">#</a></h3>
+<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code>:</p>
+<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
+    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>It&rsquo;s short and readable. It also hides costs, which brings me to the mistakes.</p>
+<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
+<p>These all come from re-reading my own code for the published write-ups.</p>
+<ul>
+<li><strong>Processing time dressed as event time.</strong> The flight radar&rsquo;s window and watermark use <code>current_timestamp()</code>, Spark&rsquo;s clock, not the <code>ingested_at</code> field the poller writes. Its &ldquo;1-minute window&rdquo; really means &ldquo;rows Spark read in that minute&rdquo;. The retail job got this right; the radar didn&rsquo;t.</li>
+<li><strong><code>collect()</code> to the driver.</strong> Each radar micro-batch is collected on the driver and written through a new InfluxDB client. Fine at 300 rows, wrong at real volume. <code>foreachPartition</code> with batched writes from the executors is the fix.</li>
+<li><strong>Unbounded series.</strong> Tagging aggregate points with <code>batch_id</code> creates a new InfluxDB series every 30 seconds.</li>
+<li><strong>Names that overpromise.</strong> Reddit&rsquo;s <code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>, which is the last three posts, not three hours. <code>rangeBetween</code> on a timestamp is what the name needed.</li>
+<li><strong>A broadcast join that proves nothing.</strong> Broadcasting a 10-row lookup onto about 1,000 posts shows the <code>BroadcastHashJoin</code> plan in <code>explain()</code>. It says nothing about performance.</li>
+<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture would have caught it.</li>
+<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. It&rsquo;s a design that still needs its first run.</li>
+</ul>
+<h2 id="hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio<a class="h-anchor" href="#hadoop-and-hive-in-the-portfolio" title="Permanent link">#</a></h2>
+<p>In the portfolio, Hadoop shows up as HDFS in the flight radar. A Hadoop namenode and datanode run in Docker Compose, and a Flume agent drains Kafka into HDFS:</p>
+<div class="hl"><pre><span></span><code>Kafka &quot;aircraft-states&quot; -&gt; Flume (Kafka source, file channel, HDFS sink)
+                        -&gt; HDFS /aircraft-states/dt=YYYY-MM-DD/hr=HH/states-*.json
+                           roll every 120 s or 10,000 events
+</code></pre></div>
+
+<p>Partitioning by date and hour in the path is the same habit Hive teaches: lay files out so a query can skip what it doesn&rsquo;t need. The radar repo doesn&rsquo;t put a Hive table over that archive yet; that&rsquo;s on the list at the end.</p>
+<h2 id="flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it<a class="h-anchor" href="#flink-one-job-written-one-job-aimed-at-it" title="Permanent link">#</a></h2>
+<p>The retail project has a PyFlink job that reads <code>retail_transactions</code> from Kafka, keys by customer, and runs two <code>KeyedProcessFunction</code>s, with output to a Kafka topic and a JDBC sink into Postgres. The environment enables 60-second checkpoints and parallelism 4. The petroleum project took a different route: an Apache Beam pipeline meant to run on the Flink runner, with Flink configured for exactly-once checkpoints on incremental RocksDB.</p>
+<p>Neither has run logs, and re-reading them taught me more than writing them did.</p>
+<ul>
+<li><strong>State in a Python dict.</strong> The retail fraud function keeps each customer&rsquo;s recent transactions in <code>self.transaction_history</code>, a plain dict on the operator. Flink doesn&rsquo;t checkpoint that, so the 60-second checkpoints protect nothing that matters. The right tool is Flink keyed state (<code>ListState</code> or <code>MapState</code>) plus a timer to expire old entries.</li>
+<li><strong>Time types.</strong> The same function subtracts a <code>timedelta</code> from <code>ctx.timer_service().current_processing_time()</code>, which returns epoch milliseconds as an integer. Reading it now, I expect that line to raise on the first event.</li>
+<li><strong>Portability that cost the source.</strong> The Beam job&rsquo;s Flink branch reads from Google Pub/Sub, which the stack doesn&rsquo;t have, because the Beam Python SDK has no RabbitMQ source and I never wrote one.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What I&rsquo;d say in an interview</p>
+<p>I design and write Flink jobs around keyed state, checkpoints and watermarks. These two portfolio jobs don&rsquo;t have a long run behind them yet. The next step is a PyFlink job with real keyed state and a <code>TestStream</code>-style test, run against a local Kafka.</p>
+</div>
+<h2 id="when-id-pick-something-else">When I&rsquo;d pick something else<a class="h-anchor" href="#when-id-pick-something-else" title="Permanent link">#</a></h2>
+<p>A lot of real data fits on one machine: at Nexlify the clinic feeds came to about 1,000 revenue and ledger records a day. For my estates portfolio platform I used <a href="../articles/estates-lakehouse-zero-loss.html">DuckDB, Parquet and dbt</a> and never felt a need for Spark. My rule of thumb:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>What I&rsquo;d reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data fits in memory on one machine, batch</td>
+<td>DuckDB or pandas, plus dbt for SQL models</td>
+</tr>
+<tr>
+<td>Data or joins outgrow one machine, or the team already runs Databricks/EMR</td>
+<td>Spark batch with Delta or Parquet</td>
+</tr>
+<tr>
+<td>Micro-batch latency (seconds) is fine, team knows Spark</td>
+<td>Spark Structured Streaming</td>
+</tr>
+<tr>
+<td>Per-event stateful logic, timers, low latency</td>
+<td>Flink with keyed state</td>
+</tr>
+<tr>
+<td>Existing Hadoop estate with Hive tables</td>
+<td>Spark SQL over the Hive metastore, not new MapReduce</td>
+</tr>
+</tbody>
+</table></div>
+<p>The table is opinion, not benchmark. None of the portfolio Spark jobs above has been benchmarked, and the published posts say so.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Run one Spark job at a size that hurts: point the radar at a global endpoint, raise the cap, and log <code>processedRowsPerSecond</code> and batch duration until the single node bends.</li>
+<li>Rewrite the retail Flink function with keyed state and timers, and add a test.</li>
+<li>Put a Hive external table over the radar&rsquo;s HDFS archive, so the radar archive can be queried from Hive.</li>
+</ol>]]></content:encoded>
     </item>
     <item>
       <title>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</title>
@@ -1190,6 +1464,287 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
     </item>
     <item>
+      <title>RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha&#x27;s bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking.</description>
+      <category>RAG</category><category>LLM</category><category>Vector Databases</category>
+      <content:encoded><![CDATA[<p>This is a working guide to the retrieval-and-serving half of my skill set: vector stores, local LLMs, FastAPI, Redis, speech-to-text and experiment tracking. Evidence: drawn from my production work at Waffarha (the bilingual customer-service assistant and the nightly recommender), my graduation project, and two portfolio ML projects, all linked below. Where a number appears, it comes from an eval report or a source file, and I say what it measures.</p>
+<h2 id="choosing-a-vector-store-measure-first-then-pick-for-operations">Choosing a vector store: measure first, then pick for operations<a class="h-anchor" href="#choosing-a-vector-store-measure-first-then-pick-for-operations" title="Permanent link">#</a></h2>
+<p>In August 2026 I benchmarked five vector stores on the same 1,690 documents, holding the embedding model fixed (<code>multilingual-e5-base</code>) so any difference came from the store.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Load time (s)</th>
+<th>Index size (MB)</th>
+<th>Recall@3</th>
+<th>Avg query latency (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FAISS</td>
+<td>0.071</td>
+<td>4.95</td>
+<td>0.881</td>
+<td>0.62</td>
+</tr>
+<tr>
+<td>Chroma</td>
+<td>2.206</td>
+<td>17.48</td>
+<td>0.881</td>
+<td>7.59</td>
+</tr>
+<tr>
+<td>Qdrant</td>
+<td>2.728</td>
+<td>13.93</td>
+<td>0.881</td>
+<td>22.53</td>
+</tr>
+<tr>
+<td>LanceDB</td>
+<td>4.193</td>
+<td>5.61</td>
+<td>0.881</td>
+<td>26.99</td>
+</tr>
+<tr>
+<td>pgvector</td>
+<td>0.126</td>
+<td>0.66</td>
+<td>0.847</td>
+<td>65.06</td>
+</tr>
+</tbody>
+</table></div>
+<p>The first lesson is in the recall column. Four stores returned identical recall, most likely because at a few thousand documents they all end up doing near-exact cosine search over the same vectors. At that scale the store does not decide quality; the embedding model and the chunking do. The store decides how you deploy, back up and filter. pgvector was the exception, with lower recall and the slowest queries in that run, which is exactly why I would re-measure before trusting it.</p>
+<p>What actually shipped in September 2026 was <code>BAAI/bge-m3</code> embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don&rsquo;t record why, and I&rsquo;ve written that up honestly in <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>. The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.</p>
+<h3 id="pattern-one-interface-every-backend-behind-it">Pattern: one interface, every backend behind it<a class="h-anchor" href="#pattern-one-interface-every-backend-behind-it" title="Permanent link">#</a></h3>
+<p>The way I keep that choice reversible is a small abstract class that every store implements, plus a factory:</p>
+<div class="hl"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FaissStore</span><span class="p">(</span><span class="n">VectorStore</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;faiss&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">docs</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">faiss</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># IndexFlatIP on normalized vectors == cosine similarity, exact (no ANN</span>
+        <span class="c1"># approximation) -- the right default at FAQ+offer corpus scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexFlatIP</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">embeddings</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">))</span>
+</code></pre></div>
+
+<p><code>get_store(name, persist_path)</code> returns FAISS, Chroma, Qdrant, LanceDB, pgvector or a BM25 index, and the config line <code>VECTOR_STORE_BACKEND: str = "pgvector"  # faiss | chroma | pgvector | qdrant</code> is the only thing that changes between them. That is what made the five-way benchmark cheap to run, and it is why moving the default from Qdrant to pgvector was a config change rather than a rewrite.</p>
+<h3 id="mistakes-i-made-with-qdrant">Mistakes I made with Qdrant<a class="h-anchor" href="#mistakes-i-made-with-qdrant" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>One collection name for every model.</strong> Qdrant in server mode is shared across builds. With a fixed collection name, each embedding model silently overwrote the last one. The fix was to derive the collection name from the index path, so every <code>data/index/&lt;model&gt;/qdrant/</code> build gets its own collection.</li>
+<li><strong>Embedded mode is single-process.</strong> <code>QdrantClient(path=...)</code> locks the folder, and a second client on the same path fails with &ldquo;already accessed by another instance&rdquo;. Scripts and the API can&rsquo;t share an embedded index; use server mode for that.</li>
+<li><strong>Filters need to be planned at index time.</strong> I wanted a native &ldquo;offer is still live&rdquo; filter. The payload stored expiry as a string, the client version&rsquo;s range filter only accepts floats, and there was no datetime payload index. Rather than reindex, every backend over-fetches and drops expired offers before scoring. It works, but it is the kind of decision to make before the first build.</li>
+</ul>
+<h2 id="measuring-a-rag-two-numbers-never-one">Measuring a RAG: two numbers, never one<a class="h-anchor" href="#measuring-a-rag-two-numbers-never-one" title="Permanent link">#</a></h2>
+<p>My rule is to score retrieval and the full pipeline in the same run, on the same index. In September 2026 retrieval passed 151 of 172 checkable cases (an 87.8% hit rate), while the full pipeline passed 64 of 225. The hit rate says the right document reached the model. It says nothing about whether the answer was right, which is why I never report it as accuracy.</p>
+<p>Most of the gap was in answering, not finding, and that is what pushed me toward <a href="../articles/deterministic-gates-before-llm.html">deterministic gates before the LLM</a>: plain rules that answer or refuse many questions before any model call, plus checks on every price and date the model writes. An older harness on the earlier FAISS + <code>qwen2.5:1.5b</code> version scored 106 of 110, but that suite was smaller and has been superseded by the 225-case, 20-category suite, so I don&rsquo;t lead with it.</p>
+<h2 id="local-llms-through-ollama">Local LLMs through Ollama<a class="h-anchor" href="#local-llms-through-ollama" title="Permanent link">#</a></h2>
+<p>I reach for Ollama when the model has to run on hardware we control and when I want to swap models with a tag change. The same August benchmark compared eight local models on keyword coverage and speed:</p>
+<div class="hl"><pre><span></span><code>model                      coverage  tok/s   (Arabic coverage)
+qwen2.5:3b-instruct          0.650    50.0     0.455
+aya-expanse:8b               0.644     5.0     0.477
+granite3.1-moe:3b            0.606    88.8     0.455
+llama3.2                     0.573    45.6     0.386
+</code></pre></div>
+
+<p>(Four of the eight rows shown; the full table is in the eval report.) Two things stood out. The compact MoE model was the fastest by a wide margin with only a small coverage loss, and no model passed 0.48 coverage on Arabic. That second point is a reason to put effort into retrieval, rules and fact-checking rather than hoping a bigger local model fixes Arabic.</p>
+<p>The model now serving inside Chatwoot is a LoRA fine-tune of <code>Qwen3-4B-Instruct-2507</code> on FAQ-grounded data, merged into the base weights and served through Ollama as <code>waffarha-support:4b</code>. The merge was needed because Ollama dropped LoRA adapter support, as described in <a href="../articles/redacting-160k-support-chats.html">Redacting 160k support chats</a>. Its only evaluation so far is a 19-20 case routing check, so I describe it as deployed, not as measured.</p>
+<p>In the Compose stack, two Ollama settings do most of the work: <code>OLLAMA_MAX_LOADED_MODELS=1</code> so a second model can&rsquo;t push the first out of memory, and <code>OLLAMA_KEEP_ALIVE=-1</code> so the model stays loaded between requests instead of paying the load time on the first message after a quiet spell.</p>
+<h2 id="serving-fastapi-in-front-redis-for-state">Serving: FastAPI in front, Redis for state<a class="h-anchor" href="#serving-fastapi-in-front-redis-for-state" title="Permanent link">#</a></h2>
+<p>FastAPI is my default service layer: the assistant streams answers over server-sent events, the <a href="../articles/agent-that-cant-go-rogue.html">Waffy agent prototype</a> is a FastAPI service, and the <a href="../articles/fail-open-nightly-recommender.html">nightly recommender</a> exposes <code>/status</code>, <code>/run-now</code> and <code>/recommend</code> behind a Google OAuth dashboard.</p>
+<p>Redis holds session memory: the last ten turns and the last few offers shown, keyed per session with a one-hour TTL. The design rule I follow is that Redis improves answers but is never required to give one:</p>
+<div class="hl"><pre><span></span><code>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">memory_store</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_memory_store_async</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">RedisError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Session memory is a nice-to-have (better follow-up resolution),</span>
+        <span class="c1"># not required to answer</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Redis unavailable, continuing without session memory: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">memory_store</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>The same pattern wraps the read before generation and the write after it, so a Redis outage costs follow-up quality (&ldquo;how much was it before the discount?&rdquo;) but never drops an answer that was already generated. Redis calls go through <code>asyncio.to_thread</code> so blocking network I/O stays off the event loop, and <code>MEMORY_BACKEND=local</code> swaps in an in-process dict for tests.</p>
+<div class="admonition note">
+<p class="admonition-title">Two serving mistakes worth naming</p>
+<p><code>remember_turns</code> reads the list, then deletes and rewrites it in a pipeline. Two concurrent requests on one session can lose a turn; the code says so in a comment, and an atomic <code>LPUSH</code> + <code>LTRIM</code> would fix it. In the recommender, the nightly scheduler is a <code>time.sleep</code> loop started from the FastAPI lifespan, so running more than one worker would run the night twice. The project&rsquo;s own status notes flag it and suggest moving the schedule out to Jenkins or cron.</p>
+</div>
+<p>My graduation project shows the other side of serving. The Django app my team built called a teammate&rsquo;s hosted model through <code>gradio_client</code>, synchronously, with a new client per request and no timeout, and it only ever received one answer string. Since then I always want the retrieved passages back alongside the answer, and a timeout on every model call. The full write-up is in <a href="../articles/arabic-rag-graduation-project.html">My graduation-project Arabic QA app</a>.</p>
+<h2 id="speech-to-text-what-lab-means">Speech-to-text: what &ldquo;(lab)&rdquo; means<a class="h-anchor" href="#speech-to-text-what-lab-means" title="Permanent link">#</a></h2>
+<p>The Whisper work is a voice lab I built for Waffarha: a FastAPI test bench on port 8002 that lazy-loads one model at a time so it fits a 4 GB GPU. On the STT side it loads Faster-Whisper <code>small</code> in int8 as the baseline, two community Arabic fine-tunes (a dialectal Whisper-small and an Egyptian Whisper-medium) and Qwen3-ASR 0.6B, next to a set of Egyptian and Saudi TTS voices. It is a listening bench, not a benchmark: the notes recorded so far are TTS ratings, and there are no word-error-rate results for the Whisper models.</p>
+<p>The assistant&rsquo;s voice channel takes a different route. Its code sends audio to Deepgram (or ElevenLabs) for transcription, and sherpa-onnx is there as the offline text-to-speech fallback when cloud TTS is unavailable, not as a speech recogniser. The research note behind it makes the point I agree with most: vendor WER figures don&rsquo;t transfer to your own phone audio, so the choice should be gated on a set of about 200 of your own clips.</p>
+<h2 id="mlflow-tracking-in-the-portfolio-ml-projects">MLflow: tracking in the portfolio ML projects<a class="h-anchor" href="#mlflow-tracking-in-the-portfolio-ml-projects" title="Permanent link">#</a></h2>
+<p>I use MLflow for experiment tracking in two portfolio projects on synthetic data. In the <a href="../articles/credit-risk-mlops-loop.html">credit-risk pipeline</a>, each candidate model gets its own run:</p>
+<div class="hl"><pre><span></span><code><span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;train_size&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span>
+    <span class="o">...</span>
+    <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="n">metric_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The <a href="../articles/fraud-scoring-kafka.html">fraud-scoring project</a> logs the same way. Neither repo contains saved runs, and both save models with joblib rather than the registry, so I don&rsquo;t quote model scores from them. One small mistake: the credit-risk Compose service runs <code>pip install mlflow</code> unpinned every time the container starts. A pinned image would make the tracking server reproducible.</p>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Under ~10k documents, exact search is enough.</strong> FAISS <code>IndexFlatIP</code> or pgvector inside an existing Postgres, chosen for operations, not recall.</li>
+<li><strong>When filters matter</strong>, Qdrant with payload indexes designed at build time, or pgvector so filters are plain SQL <code>WHERE</code> clauses next to the relational data.</li>
+<li><strong>When Arabic quality matters more than latency</strong>, a hosted model behind the same interface, kept only after it passes the same 225-case suite.</li>
+<li><strong>When state must be exact</strong> (proposals, rate limits across workers), Redis with atomic commands or Postgres, not a read-modify-write on a list.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>The Python and SQL I actually use: CTEs, join tuning, Pandas cleansing</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/python-sql-for-data-engineers.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/python-sql-for-data-engineers.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A practical guide to the SQL and Python patterns I rely on as a data engineer: shrink-then-join CTEs, templates a model can&#x27;t reshape, keyed upserts, and pandas as a careful reader of messy Excel. With the mistakes my own pipelines taught me.</description>
+      <category>SQL</category><category>Python</category><category>Data Engineering</category>
+      <content:encoded><![CDATA[<p>Most of my working day is Python and SQL. Not Spark, not a new framework: plain queries and plain scripts that move data between systems without losing or duplicating it. This guide is the set of habits I actually use, with the places they came from and the places they failed. Evidence: drawn from my production work at Waffarha (the support assistant&rsquo;s ClickHouse layer and the nightly recommender), a paying freelance client&rsquo;s clinic warehouse, reported outcomes from my Nexlify engagement, and one portfolio project on synthetic data.</p>
+<h2 id="where-the-evidence-comes-from">Where the evidence comes from<a class="h-anchor" href="#where-the-evidence-comes-from" title="Permanent link">#</a></h2>
+<p>I want to be exact about status, because &ldquo;I know SQL&rdquo; means nothing without it.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Work</th>
+<th>Status</th>
+<th>What the SQL and Python did</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Waffarha support assistant</td>
+<td>Production</td>
+<td>Fixed SQL templates over a read-only, row-capped ClickHouse client</td>
+</tr>
+<tr>
+<td>Waffarha nightly recommender</td>
+<td>Production</td>
+<td>Python event processing, ClickHouse active-offer filter, MySQL batch upserts</td>
+</tr>
+<tr>
+<td>Waffarha price-integrity check</td>
+<td>Production</td>
+<td>Python pipeline: config-driven price rules, rapidfuzz matching, resumable checkpoints</td>
+</tr>
+<tr>
+<td>Clinic warehouse (freelance client)</td>
+<td>Client</td>
+<td>pandas Excel reader, quality scan, diff, PostgreSQL upserts</td>
+</tr>
+<tr>
+<td>Nexlify clinic warehouse</td>
+<td>Client, production</td>
+<td>SQL refactor across four dialects; reported outcomes only, no code on disk</td>
+</tr>
+<tr>
+<td>Estates portfolio</td>
+<td>Portfolio, synthetic data</td>
+<td>DuckDB validation SQL with window functions</td>
+</tr>
+</tbody>
+</table></div>
+<p>The Nexlify numbers (about 30% lower query latency, zero dashboard timeouts) are outcomes I report on my CV. The benchmark logs and query plans stayed with the client, so I treat them as reported results, not something I can reproduce here. The full story is in <a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>.</p>
+<h2 id="ctes-shrink-first-then-join">CTEs: shrink first, then join<a class="h-anchor" href="#ctes-shrink-first-then-join" title="Permanent link">#</a></h2>
+<p>At Nexlify, legacy reporting SQL was timing out. Daily volumes were in the hundreds to low thousands of rows, so I treated it as a query-shape problem, not a hardware one. I broke large queries into CTEs, reworked the joins and added missing indexes, across PostgreSQL, SQL Server, MySQL and SQLite.</p>
+<p>The main value of CTEs was not speed. It was that I could run each step on its own, check its row count, and see where a join was fanning out. Faster plans came after that.</p>
+<p>The habit I carried forward is: reduce the rows in a CTE, then do the fan-out joins on the small set. Here is the shape of the recommendation-candidates query in the Waffarha assistant, trimmed to the structure (the real file selects about 30 columns):</p>
+<div class="hl"><pre><span></span><code><span class="k">WITH</span><span class="w"> </span><span class="n">top_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">part_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_brief_ar</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">title_ar</span><span class="p">,</span>
+<span class="w">           </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">offer_sold_coponos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ifNull</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">rate</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">popularity</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
+<span class="w">    </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">dim_partners</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">part_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">part_id</span>
+<span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span>
+<span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">deleted_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">offer_expire_date</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_expire_date</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">now</span><span class="p">())</span>
+<span class="w">    </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">popularity</span><span class="w"> </span><span class="k">DESC</span>
+<span class="w">    </span><span class="k">LIMIT</span><span class="w"> </span><span class="err">{{</span><span class="k">limit</span><span class="err">}}</span>
+<span class="p">)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">title_ar</span><span class="p">,</span>
+<span class="w">       </span><span class="n">countIf</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">active_branches</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">top_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">t</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">dim_partner_login</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">partner_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">part_id</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">title_ar</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">popularity</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">popularity</span><span class="w"> </span><span class="k">DESC</span>
+</code></pre></div>
+
+<p>An offer can have many partner branches. If I joined branches first and limited afterwards, the engine would build the branch rows for every active offer and then throw most of them away. Limiting inside the CTE means the branch join only ever sees the shortlist.</p>
+<p>For analytical questions I lean on window functions. In the estates portfolio (synthetic data, DuckDB), mean time between failures per asset is a <code>LAG</code> over each asset&rsquo;s completed reactive jobs:</p>
+<div class="hl"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">asset_id</span><span class="p">,</span>
+<span class="w">       </span><span class="n">DATE_DIFF</span><span class="p">(</span><span class="s1">&#39;day&#39;</span><span class="p">,</span>
+<span class="w">         </span><span class="n">LAG</span><span class="p">(</span><span class="n">completed_ts</span><span class="p">)</span><span class="w"> </span><span class="n">OVER</span><span class="w"> </span><span class="p">(</span><span class="n">PARTITION</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">asset_id</span><span class="w"> </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">completed_ts</span><span class="p">),</span>
+<span class="w">         </span><span class="n">completed_ts</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">gap_days</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">main</span><span class="p">.</span><span class="n">fct_work_order</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">wo_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Reactive&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Complete&#39;</span>
+</code></pre></div>
+
+<h2 id="sql-a-model-cant-reshape">SQL a model can&rsquo;t reshape<a class="h-anchor" href="#sql-a-model-cant-reshape" title="Permanent link">#</a></h2>
+<p>The Waffarha assistant answers questions about a customer&rsquo;s own coupons and orders from live ClickHouse data. The model never writes SQL. Queries are fixed <code>.sql</code> templates in the repository, and a strict renderer fills them. From <code>sql.py</code>:</p>
+<div class="hl"><pre><span></span><code><span class="n">rendered</span> <span class="o">=</span> <span class="n">PLACEHOLDER_RE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">substitute</span><span class="p">,</span> <span class="n">template</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SqlRenderError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing SQL parameters: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">missing</span><span class="p">)))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">unused</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="n">used</span>
+<span class="k">if</span> <span class="n">unused</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SqlRenderError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unused SQL parameters: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unused</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Every value goes through one escaping function. Table and column names are hard-coded in the template, so a value can change what a query returns but never what the statement is. The client opens its session with <code>readonly=2</code>, a server-side execution timeout and a result-row cap, so even a bad template can&rsquo;t write or run away.</p>
+<p>The cost is coverage. A question no template fits gets a handoff to a human, not an answer. An &ldquo;8-layer guarded SQL&rdquo; fallback for open analytical questions exists only as a design in the project plan; I don&rsquo;t count it as built. More on this in <a href="../articles/deterministic-gates-before-llm.html">Deterministic gates before the LLM</a> and <a href="../articles/agent-that-cant-go-rogue.html">Waffy</a>.</p>
+<h2 id="keys-make-re-runs-boring">Keys make re-runs boring<a class="h-anchor" href="#keys-make-re-runs-boring" title="Permanent link">#</a></h2>
+<p>Every batch job gets re-run, by a scheduler or by a tired person. My rule is that a second run must replace the first, never add to it. Three versions of that rule from my own code:</p>
+<p><strong>Upsert on the natural key.</strong> The nightly recommender writes to MySQL on AWS RDS in 5,000-row batches with <code>INSERT ... ON DUPLICATE KEY UPDATE</code>, keyed on the user, committing per batch (<code>db_access.py</code>). See <a href="../articles/fail-open-nightly-recommender.html">Fail open, never fail the night</a>.</p>
+<p><strong>Make a key when the source has none.</strong> The clinic client re-sends the whole Excel workbook every day. I added an <code>Entry_ID</code> column and fall back to a SHA-256 of phone, date, time and sequence when it is missing. <code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so reloading the same sheet updates rows instead of duplicating them.</p>
+<p><strong>Version instead of overwrite.</strong> In an earlier RAG prototype at Waffarha, the offer store kept SCD2-style history in SQLite: hash the content fields, and if the hash or status changed, close the current row and insert a new one. Records that vanish upstream become a <code>deleted</code> version, not a silent drop:</p>
+<div class="hl"><pre><span></span><code><span class="k">elif</span> <span class="n">cur</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new_hash</span> <span class="ow">or</span> <span class="n">cur</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status</span><span class="p">:</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE record_versions SET is_current=0, system_valid_to=? WHERE version_id=?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">now_iso</span><span class="p">,</span> <span class="n">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="p">)</span>
+    <span class="n">_insert_version</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">new_hash</span><span class="p">,</span> <span class="n">now_iso</span><span class="p">)</span>
+</code></pre></div>
+
+<p>That store lives in an archived prototype, and its MySQL source view didn&rsquo;t expose offer validity dates, so <code>valid_from</code>/<code>valid_to</code> stayed empty for that source. The pattern held up; the source didn&rsquo;t give it everything it needed.</p>
+<h2 id="pandas-a-careful-reader-not-a-calculator">Pandas: a careful reader, not a calculator<a class="h-anchor" href="#pandas-a-careful-reader-not-a-calculator" title="Permanent link">#</a></h2>
+<p>In my client work, pandas does less than people expect. In the clinic ETL (<a href="../articles/six-stage-client-etl.html">the six-stage write-up</a>) its main job is to read the workbook without guessing:</p>
+<div class="hl"><pre><span></span><code><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">excel_path</span><span class="p">,</span> <span class="n">sheet_name</span><span class="o">=</span><span class="n">sheet_name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+<span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">REQUIRED_COLUMNS</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+</code></pre></div>
+
+<p><code>dtype=object</code> stops pandas from turning phone numbers into floats or dates into whatever it infers. Then small, boring functions do the cleansing, one field type each: <code>clean_str</code> turns blanks and NaN into <code>None</code>, <code>clean_phone</code> keeps digits only, <code>split_multivalue</code> splits <code>Department</code> on <code>/</code> and services on <code>|</code>. The quality scan and the diff walk the rows and report problems; the database load comes after.</p>
+<p>The diff is the stage I&rsquo;d keep if I could keep only one. It compares the file to <code>fact_orders</code> and reports new, changed, unchanged and in-the-database-but-not-in-the-file rows. The ETL never deletes that last bucket. A row disappearing from a hand-edited sheet might be a real removal or an accident, and a person should decide.</p>
+<p>At Nexlify the cleansing was bigger: mixed Arabic and English text across millions of historical records, normalised in Python before load. The Waffarha assistant does the same kind of normalisation inside ClickHouse (alef variants, taa marbuta, Arabic-Indic digits) as a trusted SQL fragment, so offer search isn&rsquo;t thrown off by spelling variants.</p>
+<h2 id="mistakes-my-own-pipelines-showed-me">Mistakes my own pipelines showed me<a class="h-anchor" href="#mistakes-my-own-pipelines-showed-me" title="Permanent link">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Quality checks that don&rsquo;t mirror the schema</p>
+<p>In the clinic ETL&rsquo;s first real run, 1,041 rows failed on a <code>CHECK</code> constraint for patient status. The quality scan never looked at that column, so it reported nothing and the database rejected rows one at a time. Every constraint in the DDL now needs a matching rule in the scan.</p>
+</div>
+<ul>
+<li><strong>One bad row rolled back the batch.</strong> The load ran in one transaction and called <code>rollback()</code> on a row error, with no savepoint. Earlier rows were thrown away while the counters kept counting them. The fix is a savepoint per row or batch commits, and counting only after commit.</li>
+<li><strong>A diff that looks at too few columns.</strong> The clinic diff compares four fields. A change that touches only a comment or a staff name is reported as &ldquo;nothing to write&rdquo;.</li>
+<li><strong>Silent defaults.</strong> <code>clean_amount</code> returns <code>0.0</code> for a blank cell. That keeps the load moving, but it makes &ldquo;unknown&rdquo; and &ldquo;zero&rdquo; the same number in a revenue report.</li>
+<li><strong>No receipts.</strong> I can&rsquo;t show Nexlify&rsquo;s before-and-after timings because I didn&rsquo;t keep them in a form I own. Now I save query timings and plans next to any performance change.</li>
+<li><strong>Row-by-row pandas.</strong> The scan uses <code>iterrows</code>. At 4,925 rows that is fine. At a few hundred thousand I&rsquo;d vectorise the checks or move them into SQL.</li>
+</ul>
+<h2 id="when-i-reach-for-something-else">When I reach for something else<a class="h-anchor" href="#when-i-reach-for-something-else" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>Data fits on one machine, logic is per row, source is messy files  -&gt; Python + pandas, then SQL load
+Question is a join or aggregate over warehouse tables              -&gt; SQL in the database, CTEs first
+Same checks must run on every build, documented                    -&gt; dbt tests or Great Expectations
+Local analytics over Parquet, no server                            -&gt; DuckDB
+Volume no longer fits one machine                                  -&gt; Spark
+A model needs data from a database                                 -&gt; fixed templates, read-only client
+</code></pre></div>
+
+<p>The common thread is that I push work to where it is easiest to check. SQL that I can run step by step, Python functions small enough to test one at a time, and keys that make a second run harmless.</p>]]></content:encoded>
+    </item>
+    <item>
       <title>Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</guid>
@@ -1894,6 +2449,303 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 <p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>]]></content:encoded>
     </item>
     <item>
+      <title>One BI model, many sites: how I design Power BI models for multi-site data</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.</description>
+      <category>Power BI</category><category>Data Modeling</category><category>BI</category>
+      <content:encoded><![CDATA[<p>Every multi-site reporting job I have had starts with the same temptation: build a report per site, then roll them up. I now do the opposite. One model, the site as a dimension, and every page filtered by it. <strong>Evidence:</strong> this comes from the clinic-network warehouse at Nexlify (production client work; I can only describe the design, the code stayed with the client), a freelance clinic warehouse (client work, the design notes are mine), and two estates portfolio projects on synthetic data, where the Power BI work is a documented handoff (model, Power Query, DAX, wireframes, tie-out SQL) and not a published report. The Grafana and Matplotlib parts come from portfolio projects linked below.</p>
+<h2 id="when-one-shared-model-is-the-right-call">When one shared model is the right call<a class="h-anchor" href="#when-one-shared-model-is-the-right-call" title="Permanent link">#</a></h2>
+<p>At Nexlify the client had more than ten clinics, each with its own spreadsheets, APIs and database engine. The warehouse mapped all of them into one star schema where clinic is just a dimension. On top of it sat one Power BI model with a clinic switcher, serving each clinic&rsquo;s own view and the company-wide view. The reported outcomes were reporting cycles about 40% faster and zero dashboard timeouts after the SQL refactor. Those are reported results; I have no benchmark logs to publish. The full write-up is in <a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>.</p>
+<p>The reason I go this way is simple. If the network total and a single clinic&rsquo;s number come from the same tables and the same measures, they cannot disagree. With a model per site, every rollup is a reconciliation problem waiting to happen.</p>
+<p>The cost is paid in the warehouse, not in Power BI. Every source has to be mapped to the shared schema before it loads. In the freelance clinic warehouse I put <code>clinic_id</code> on every fact, bridge and dimension table from day one, so that a second floor could load into the same database later &ldquo;by pointing a second ETL config at the same database — no schema changes required&rdquo; (from my design notes). See <a href="../articles/six-stage-client-etl.html">the six-stage ETL post</a> for the load side.</p>
+<div class="hl"><pre><span></span><code>            dim_clinic ──────────────► fact_orders ◄─────── dim_date
+                                         │  │   (order_date active,
+            dim_staff ── salesperson ────┘  │    conversation_date via
+               │  └──── reception (inactive)│    USERELATIONSHIP)
+               │                            ▼
+               ├──── fact_order_performer   fact_order_upsell ──┐
+               └────────────────────────────────────────────────┘
+   No dim_staff → dim_clinic relationship: clinic filtering flows only
+   through fact_orders[clinic_id]. Staff are scoped per clinic in the
+   database with UNIQUE(clinic_id, staff_name), not in the model.
+</code></pre></div>
+
+<h2 id="pattern-1-the-site-filter-gets-exactly-one-path">Pattern 1: the site filter gets exactly one path<a class="h-anchor" href="#pattern-1-the-site-filter-gets-exactly-one-path" title="Permanent link">#</a></h2>
+<p>The rule I wrote into the clinic model notes is the one I would give anyone building a multi-site model: do not create a <code>dim_staff -&gt; dim_clinic</code> relationship. <code>fact_orders[clinic_id] -&gt; dim_clinic</code> already carries all the filtering, and a second path through staff creates an ambiguous loop.</p>
+<p>It is tempting to add it, because staff really do belong to a clinic. But that fact is enforced in the database with <code>UNIQUE(clinic_id, staff_name)</code>. Power BI does not need to know it. One site filter, one path, and the switcher behaves the same on every page.</p>
+<h2 id="pattern-2-one-staff-dimension-many-roles">Pattern 2: one staff dimension, many roles<a class="h-anchor" href="#pattern-2-one-staff-dimension-many-roles" title="Permanent link">#</a></h2>
+<p>In clinic data the same person can be the salesperson on one order, the upseller on another and the performer on a third. The model needs one staff table so per-person totals add up, but several relationships into it. Only one can be active, so the others are switched on per measure. From the freelance design:</p>
+<div class="hl"><pre><span></span><code>Reception Handled Count :=
+<span class="nf">CALCULATE</span><span class="p">(</span>
+<span class="w">    </span><span class="nf">COUNTROWS</span><span class="p">(</span>fact_orders),
+<span class="w">    </span><span class="nf">USERELATIONSHIP</span><span class="p">(</span><span class="na">fact_orders[reception_id]</span><span class="p">,</span><span class="w"> </span><span class="na">dim_staff[staff_id]</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The same design handles two date roles (conversation date and order date) against one <code>dim_date</code>. Where <code>RELATED</code> can&rsquo;t follow an inactive relationship, the patient-journey drillthrough page in the design uses <code>LOOKUPVALUE</code> in calculated columns to build a one-line story per order. That drillthrough page is a design in the documentation, and I describe it as one.</p>
+<div class="admonition note">
+<p class="admonition-title">The mistake that led to this pattern</p>
+<p>An earlier iteration of the MySQL version gave upsells and visits their own staff views (<code>upsell_staff</code>, <code>visit_staff</code>) instead of inactive relationships. I abandoned it. Those views were disconnected from <code>staff</code>, so Power BI could not tell that the upseller and the performer were the same person, and combined per-person totals broke. If your model has a dimension copied per role, that is the first thing I would check.</p>
+</div>
+<p>Bridge tables need the same care. At Nexlify, staff with several roles across several clinics went into bridge tables. That gives correct attribution, but a careless measure that crosses a bridge still double counts. I now write down which measures may cross a bridge next to the model, not just in my head.</p>
+<h2 id="pattern-3-per-site-access-with-row-level-security">Pattern 3: per-site access with row-level security<a class="h-anchor" href="#pattern-3-per-site-access-with-row-level-security" title="Permanent link">#</a></h2>
+<p>A clinic switcher is a slicer: everyone can see every site. When each site manager should only see their own site, I move the same idea into RLS. The estates asset-maintenance project (P07, synthetic data) specifies a role filter on the building dimension, driven by a mapping table:</p>
+<div class="hl"><pre><span></span><code><span class="c1">-- Role building_manager, filter on dim_building</span>
+<span class="na">[building_id]</span><span class="w"> </span><span class="ow">IN</span>
+<span class="w">    </span><span class="nf">CALCULATETABLE</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nf">VALUES</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="na">rlsusers[building_id]</span><span class="w"> </span><span class="p">),</span>
+<span class="w">                     </span><span class="na">rlsusers[principal]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">USERPRINCIPALNAME</span><span class="p">()</span><span class="w"> </span><span class="p">)</span>
+</code></pre></div>
+
+<p>The handoff lists four &ldquo;View as&rdquo; test cases: a manager sees only their building and the totals tie to the validation SQL filtered to that building; the analyst role sees all 8 buildings; an unmapped user gets a blank report; and the asset-health mart is scoped through the building path, with no filter of its own. That last test is the one-path rule from Pattern 1 again.</p>
+<div class="admonition warning">
+<p class="admonition-title">Status</p>
+<p>The P07 RLS design and test cases are written down and the gold tables they run on exist. The <code>.pbix</code> is meant to be saved outside the repo and the screenshots folder is empty, so I can&rsquo;t show a run of those tests in Power BI Desktop. A Streamlit app mirrors three of the five pages from the same gold tables.</p>
+</div>
+<p>Power Query stays thin in these handoffs. Each table is one query against a Parquet file, with the folder as a parameter:</p>
+<div class="hl"><pre><span></span><code>let
+    Source = Parquet.Document(File.Contents(GoldFolder &amp; &quot;\fct_work_order.parquet&quot;))
+in
+    Source
+</code></pre></div>
+
+<p>All shaping happens in dbt before Power BI sees it. That keeps the logic testable and leaves Power BI with relationships and measures.</p>
+<h2 id="pattern-4-put-a-data-quality-page-in-the-report">Pattern 4: put a data-quality page in the report<a class="h-anchor" href="#pattern-4-put-a-data-quality-page-in-the-report" title="Permanent link">#</a></h2>
+<p>A multi-site model mixes sources of different quality, so I give the report a page that shows it. In the freelance design that is a reconciliation measure:</p>
+<div class="hl"><pre><span></span><code>Total Amount Check (reconciliation) :=
+<span class="nb">VAR</span><span class="w"> </span>Computed = SUM(fact_orders[paid_amount]) + SUM(fact_order_upsell[amount])
+<span class="nb">VAR</span><span class="w"> </span>Stored = SUM(fact_orders[total_amount])
+<span class="nb">RETURN</span><span class="w"> </span>Computed - Stored
+</code></pre></div>
+
+<p>Any non-zero result points at a row where the typed total doesn&rsquo;t match paid plus upsells, which is usually a data-entry slip. In the digital-estates showcase, one of its 10 DAX measures, <code>COBie Completeness %</code>, divides the clean rows by clean plus quarantined rows. That puts the quarantine count in the report itself. The estates P07 handoff goes one step further. Every KPI card has an expected value in a build guide (for example PPM completion 93.0%, MTTR 3.17 days) that comes from a SQL file run against the same gold tables, so whoever builds the report can check each card against a number.</p>
+<h2 id="grafana-matplotlib-and-the-rest">Grafana, Matplotlib and the rest<a class="h-anchor" href="#grafana-matplotlib-and-the-rest" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Where I used it</th>
+<th>Status</th>
+<th>When I pick it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Power BI (DAX, Power Query, RLS)</td>
+<td>Nexlify clinic network; freelance clinic; estates handoffs</td>
+<td>Client work; estates is spec plus SQL tie-outs</td>
+<td>Business reporting over a star schema, many sites, per-user security</td>
+</tr>
+<tr>
+<td>Grafana</td>
+<td>Flight radar: provisioned dashboard, 6 panels, 10 s refresh over InfluxDB</td>
+<td>Portfolio, ran against live data</td>
+<td>Time series and live operational views</td>
+</tr>
+<tr>
+<td>Streamlit</td>
+<td>Estates projects mirror Power BI pages</td>
+<td>Portfolio</td>
+<td>When the reviewer has no Power BI licence</td>
+</tr>
+<tr>
+<td>Matplotlib</td>
+<td>Static PNG charts in estates scripts (e.g. net-zero intensity)</td>
+<td>Portfolio</td>
+<td>A chart that ships as a file in a pipeline output</td>
+</tr>
+</tbody>
+</table></div>
+<p>I have also built dashboards in Tableau, including during my NTI internship. The patterns in this article are tool-neutral, but the snippets here are all Power BI.</p>
+<p>Grafana taught me the most about the gap between a file and a dashboard. The <a href="../articles/adsb-flight-radar-streaming.html">flight radar</a> dashboard is provisioned and was tuned against live data. Elsewhere, the retail project has one dashboard JSON with 9 panels but no provisioning folder, so Grafana never loads it (<a href="../articles/retail-cdc-debezium.html">retail write-up</a>). AquaWatch runs a Grafana container with no dashboards checked in. The petroleum scaffold has dashboards that query metrics no service exports. A dashboard JSON in a repo proves nothing until the datasource and provisioning are in the repo too.</p>
+<h2 id="mistakes-id-warn-you-about">Mistakes I&rsquo;d warn you about<a class="h-anchor" href="#mistakes-id-warn-you-about" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>A panel title that lies.</strong> The flight radar&rsquo;s &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft. Check what a count actually counts before you name the visual.</li>
+<li><strong>Copying a dimension per role.</strong> Covered above. It breaks per-person totals silently.</li>
+<li><strong>A second filter path to the site.</strong> It feels like more correct modelling, and it gives you an ambiguous model.</li>
+<li><strong>Calling a spec a report.</strong> The estates handoffs are complete as specs, and I label them that way. The clinic documentation also points to a measures file (<code>powerbi/dax_measures.md</code>) that isn&rsquo;t in the project folder. The example measures in the documentation itself are what I can stand behind.</li>
+</ul>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<p>If each site really is a separate business with no shared questions, separate models are simpler and I would not force a shared schema. If the users need second-level freshness, I reach for Grafana over a time-series store, not Power BI. And if the audience has no Power BI licence, a Streamlit page over the same gold tables answers the same questions. In every case the model underneath stays the same: facts, conformed dimensions, and the site as one more dimension.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.</description>
+      <category>Data Ingestion</category><category>Kafka</category><category>Streaming</category>
+      <content:encoded><![CDATA[<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), where I practised Kafka, Flume and Sqoop ingestion, plus the portfolio projects and write-ups linked below. The busiest feed in those projects is a flight radar capped at 300 aircraft every 10 seconds, on one broker in Docker Compose. Treat this as a guide to choosing between the tools, built from wiring each of them up and then re-reading my own configs looking for the holes.</p>
+<h2 id="the-tools-and-where-ive-used-them">The tools, and where I&rsquo;ve used them<a class="h-anchor" href="#the-tools-and-where-ive-used-them" title="Permanent link">#</a></h2>
+<p>The first question I ask is not &ldquo;which tool is best&rdquo; but &ldquo;what shape is the source&rdquo;. A database table, a log or HTTP feed, a stream of business events, and a pile of files each pull towards a different tool.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it&rsquo;s for</th>
+<th>Where I&rsquo;ve used it</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kafka</td>
+<td>Durable, replayable event log between producers and many consumers</td>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a>, <a href="../articles/fraud-scoring-kafka.html">fraud scoring</a>, <a href="../articles/retail-cdc-debezium.html">retail streaming</a>; NTI internship</td>
+<td>Portfolio; radar ran in Docker</td>
+</tr>
+<tr>
+<td>Flume</td>
+<td>Moving log or HTTP events into Kafka or HDFS through a source, channel and sink</td>
+<td>Flight radar (two agents); NTI internship</td>
+<td>Portfolio, ran in Docker</td>
+</tr>
+<tr>
+<td>Sqoop</td>
+<td>Bulk copy between relational databases and HDFS/Hive</td>
+<td>NTI internship</td>
+<td>See the Sqoop section below</td>
+</tr>
+<tr>
+<td>NiFi</td>
+<td>Visual flows with routing, provenance and back-pressure</td>
+<td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a>, two process groups created by a REST script</td>
+<td>Scaffold, routing never built</td>
+</tr>
+<tr>
+<td>RabbitMQ</td>
+<td>Work queues with per-message routing, TTLs and length limits</td>
+<td>Petroleum platform, 3 exchanges and 8 bounded queues</td>
+<td>Scaffold, hops don&rsquo;t connect</td>
+</tr>
+<tr>
+<td>Debezium</td>
+<td>Change data capture from a database log into Kafka</td>
+<td>Retail streaming, Postgres connector config</td>
+<td>Configured, never registered</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="how-i-choose">How I choose<a class="h-anchor" href="#how-i-choose" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>What is the source?
+ |
+ +-- a relational table, copied in bulk on a schedule
+ |      -&gt; Sqoop on a Hadoop estate; otherwise a scheduled extract (Airflow + SQL)
+ |
+ +-- a relational table, and consumers need every change in order
+ |      -&gt; Debezium into Kafka (needs logical replication on the database)
+ |
+ +-- logs or an HTTP feed that must land in HDFS
+ |      -&gt; Flume (file channel if the data matters)
+ |
+ +-- business events that several consumers read, or that you may replay
+ |      -&gt; Kafka, keyed on whatever must stay in order
+ |
+ +-- tasks for workers, routing by key, &quot;process once then gone&quot;
+ |      -&gt; RabbitMQ with publisher confirms
+ |
+ +-- many small sources, format conversion, and people who want to see the flow
+        -&gt; NiFi, with the flow exported to version control
+</code></pre></div>
+
+<p>The rule underneath: Kafka is a log you can re-read, RabbitMQ is a queue you drain, Flume and Sqoop are movers into Hadoop, and Debezium is how a database becomes a Kafka producer without touching its application code.</p>
+<h2 id="kafka-three-settings-i-now-check-first">Kafka: three settings I now check first<a class="h-anchor" href="#kafka-three-settings-i-now-check-first" title="Permanent link">#</a></h2>
+<h3 id="the-producer-acks-and-keys">The producer: acks and keys<a class="h-anchor" href="#the-producer-acks-and-keys" title="Permanent link">#</a></h3>
+<p>In the retail project the POS producer favours durability:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">producer_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;acks&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;retries&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16384</span><span class="p">,</span>
+    <span class="s1">&#39;linger_ms&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;compression_type&#39;</span><span class="p">:</span> <span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>It keys by <code>transaction_id</code>, and every send waits on <code>future.get(timeout=10)</code>. The fraud project&rsquo;s producer also uses <code>acks='all'</code> with retries. The flight radar is the opposite: its Flume Kafka sink uses <code>acks=1</code> on a single broker with replication factor 1, three partitions. For a radar that refreshes every 10 seconds, losing a poll is harmless. For transactions it wouldn&rsquo;t be.</p>
+<p>What I&rsquo;d change: waiting on each send means <code>linger_ms</code> has nothing to batch, because the next record isn&rsquo;t sent until the previous one is acknowledged. At 2-5 simulated transactions a second it costs nothing. At real volume I&rsquo;d use async sends with a delivery callback. And the key decides ordering: keying by transaction ID gives up per-store order, so if I needed ordered per-store aggregates, <code>store_id</code> would be the key.</p>
+<h3 id="the-consumer-what-gets-committed">The consumer: what gets committed<a class="h-anchor" href="#the-consumer-what-gets-committed" title="Permanent link">#</a></h3>
+<p>This is the fraud consumer&rsquo;s setup and loop, trimmed:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">consumer</span> <span class="o">=</span> <span class="n">KafkaConsumer</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">KAFKA_TOPIC_TRANSACTIONS</span><span class="p">,</span>
+    <span class="n">group_id</span><span class="o">=</span><span class="s1">&#39;fraud_detection_group&#39;</span><span class="p">,</span>
+    <span class="n">auto_offset_reset</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span>
+    <span class="n">enable_auto_commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">auto_commit_interval_ms</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+<span class="c1"># in the poll loop</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">consumer</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Re-reading it, three things stand out. Auto-commit is on and the loop also commits by hand, so two mechanisms decide the offset. A message that throws is logged and then committed past, so a failure is dropped, not retried: that&rsquo;s at-most-once for the messages that matter most. And <code>latest</code> means a new consumer group skips everything already in the topic. Today I&rsquo;d turn auto-commit off, commit only after a successful write, and send failures to a dead-letter topic.</p>
+<h3 id="topics-nobody-reads">Topics nobody reads<a class="h-anchor" href="#topics-nobody-reads" title="Permanent link">#</a></h3>
+<p>The fraud project publishes alerts to <code>fraud_alerts</code>; nothing consumes it. The retail Debezium connector would write to <code>inventory</code> and friends; no job subscribes. Before I add a topic now, I write down its consumer.</p>
+<h2 id="flume-two-agents-two-channel-choices">Flume: two agents, two channel choices<a class="h-anchor" href="#flume-two-agents-two-channel-choices" title="Permanent link">#</a></h2>
+<p>The flight radar is my Flume portfolio project. The Python poller POSTs to a Flume HTTP source instead of talking to Kafka, and a second agent drains Kafka into HDFS. The agents are deliberately different:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Source</th>
+<th>Channel</th>
+<th>Sink</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>producer</td>
+<td>HTTP, port 44444</td>
+<td>memory, capacity 10,000</td>
+<td>Kafka, <code>acks=1</code></td>
+</tr>
+<tr>
+<td>consumer</td>
+<td>Kafka, batch 1,000</td>
+<td>file, capacity 100,000</td>
+<td>HDFS, roll every 120 s or 10,000 events</td>
+</tr>
+</tbody>
+</table></div>
+<p>The channel is the whole durability story in Flume. A memory channel loses what it holds if the agent dies; a file channel survives a restart. So only the archive side of my radar is durable. On the way in there are three places to lose data: the poller doesn&rsquo;t retry a failed POST, the memory channel, and <code>acks=1</code> on one unreplicated broker.</p>
+<p>Would I use Flume again? On an existing Hadoop estate that needs files in HDFS, yes. For a new pipeline I&rsquo;d let the producer write to Kafka directly with retries, and keep Flume, or Kafka Connect, only for the HDFS sink.</p>
+<h2 id="nifi-and-rabbitmq-limits-that-only-work-with-confirms">NiFi and RabbitMQ: limits that only work with confirms<a class="h-anchor" href="#nifi-and-rabbitmq-limits-that-only-work-with-confirms" title="Permanent link">#</a></h2>
+<p>The petroleum platform puts RabbitMQ in front of everything so a fast replay can&rsquo;t overwhelm a consumer. The queue arguments show the idea:</p>
+<div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
+<span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;x-message-ttl&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">86400000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-max-length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-overflow&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reject-publish&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><code>reject-publish</code> refuses new messages when the queue is full instead of silently dropping the oldest. But that only helps a producer that uses publisher confirms, and mine call <code>basic_publish</code> on a plain channel, so a refused message looks like a success. The definitions file is also mounted but never loaded, so the queues exist only if a client declares them. And when I mapped every queue to its publisher and consumer, nothing moved messages from the <code>raw</code> queues to the <code>validated</code> ones.</p>
+<p>NiFi was meant to be that validation hop. A script calls the NiFi REST API to create two process groups (<code>ConsumeAMQP</code>, <code>ValidateJson</code>, <code>UpdateAttribute</code> on the sensor side) and then prints that routing should be configured in the UI. That routing was never built or exported, and the script hasn&rsquo;t been tested against a live NiFi 2.0. The lesson is about NiFi in general: a flow that lives only on the canvas disappears with <code>docker compose down -v</code>. If I use NiFi, the flow goes into version control as an exported definition from day one.</p>
+<h2 id="debezium-and-sqoop-two-ways-to-read-a-database">Debezium and Sqoop: two ways to read a database<a class="h-anchor" href="#debezium-and-sqoop-two-ways-to-read-a-database" title="Permanent link">#</a></h2>
+<p>Sqoop is the batch answer: copy a table, or the rows changed since a last value, into HDFS or Hive on a schedule. I practised it during my NTI internship, where it was the database leg of the Hadoop ingestion stack.</p>
+<p>Debezium is the streaming answer, and my retail config shows both what I understood and what I missed. It uses the built-in <code>pgoutput</code> plugin, an initial snapshot, a filtered publication, and a <code>RegexRouter</code> that shortens topic names to the table name. Then, from the published review of my own project:</p>
+<ul>
+<li>the connector JSON is mounted into the container, but nothing POSTs it to the Connect REST API, so it is never registered;</li>
+<li>Postgres doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> needs;</li>
+<li>the config uses <code>database.server.name</code> where Debezium 2.x expects <code>topic.prefix</code>;</li>
+<li>short topic names would collide if a second schema had a table with the same name.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Configured versus running</p>
+<p>The retail repo has a configured Debezium Postgres connector; it doesn&rsquo;t yet run CDC end to end. Those are different claims, and the second one needs a registered connector, logical replication on, and a consumer that MERGEs the changes into a table.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Re-run the flight radar with the producer writing straight to Kafka, <code>acks=all</code>, and a replication factor above 1, then count what reaches HDFS against what was polled.</li>
+<li>Fix the fraud consumer&rsquo;s commit logic and add a dead-letter topic.</li>
+<li>Make the retail CDC real: logical replication on, <code>topic.prefix</code>, a <code>curl</code> registration step, and a Spark job that merges <code>inventory</code> changes into a Delta table.</li>
+<li>Add publisher confirms to the petroleum producers and export one NiFi flow.</li>
+</ol>]]></content:encoded>
+    </item>
+    <item>
       <title>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</guid>
@@ -2143,937 +2995,6 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 <li>Case study: <a href="../projects/fraud-detection.html">Fraud Detection</a></li>
 <li>Code: <a href="https://github.com/Eng-Zakaria/Fraud_Detection">github.com/Eng-Zakaria/Fraud_Detection</a></li>
 </ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.</description>
-      <category>Data Engineering</category><category>Recommender Systems</category><category>Multi-Cloud</category>
-      <content:encoded><![CDATA[<p>Every night at 00:00 Cairo time, a small service at Waffarha wakes up, reads what customers did
-yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
-opens the app in the morning, their recommendations are already there.</p>
-<p>This post walks through how that job works, and the one rule I&rsquo;d keep if I had to throw everything
-else away: <strong>fail open, never fail the night.</strong></p>
-<h2 id="the-problem-three-systems-one-morning">The problem: three systems, one morning<a class="h-anchor" href="#the-problem-three-systems-one-morning" title="Permanent link">#</a></h2>
-<p>The data needed for a recommendation lives in three places:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>What</th>
-<th>Where</th>
-<th>Owner</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>What customers viewed and searched</td>
-<td>MoEngage event exports on <strong>Google Cloud Storage</strong></td>
-<td>Marketing</td>
-</tr>
-<tr>
-<td>Which offers still exist</td>
-<td><strong>ClickHouse</strong></td>
-<td>Product data</td>
-</tr>
-<tr>
-<td>What the app reads</td>
-<td><strong>MySQL on AWS RDS</strong></td>
-<td>Backend</td>
-</tr>
-</tbody>
-</table></div>
-<p>Nothing about this is exotic. What makes it tricky is that each system can be slow or down on any
-given night, and the app shows whatever is in MySQL at 8 a.m., right or wrong.</p>
-<h2 id="the-pipeline">The pipeline<a class="h-anchor" href="#the-pipeline" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Pull</strong> the last day of JSON / NDJSON event exports from Cloud Storage and cache them locally.</li>
-<li><strong>Keep</strong> only two event types: offer views and search-result clicks on offers.</li>
-<li><strong>Build histories</strong>: sort each user&rsquo;s events by time, drop consecutive duplicates, keep the latest 50.</li>
-<li><strong>Score similarity</strong> between offers from co-views.</li>
-<li><strong>Rank</strong> each user&rsquo;s candidates with recency weights and drop offers that have expired.</li>
-<li><strong>Upsert</strong> the top picks into MySQL in batches of 5,000 rows.</li>
-</ol>
-<h3 id="similarity-you-can-explain-in-one-line">Similarity you can explain in one line<a class="h-anchor" href="#similarity-you-can-explain-in-one-line" title="Permanent link">#</a></h3>
-<p>I used item-to-item collaborative filtering because it is easy to reason about and easy to debug
-when someone asks &ldquo;why did I get this offer?&rdquo;</p>
-<div class="hl"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">sqrt</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">cosine</span><span class="p">(</span><span class="n">co_views</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">users_j</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Two offers are similar when the same people view both.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">co_views</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">users_i</span> <span class="o">*</span> <span class="n">users_j</span><span class="p">)</span>
-</code></pre></div>
-
-<p>Two guards keep it honest: an offer needs a <strong>minimum number of users</strong> before it gets neighbors,
-so one shared click can&rsquo;t create a fake match, and each offer keeps only its <strong>top 200</strong> neighbors.</p>
-<h2 id="the-rule-fail-open">The rule: fail open<a class="h-anchor" href="#the-rule-fail-open" title="Permanent link">#</a></h2>
-<p>The active-offer filter depends on ClickHouse. If ClickHouse is unreachable at midnight, there are two
-choices:</p>
-<ul>
-<li><strong>Fail closed:</strong> stop the job. The app wakes up with yesterday&rsquo;s recommendations, or none at all.</li>
-<li><strong>Fail open:</strong> finish the batch without the filter and write fresh recommendations anyway.</li>
-</ul>
-<p>I chose fail open. A list built from yesterday&rsquo;s behavior beats an empty one, and on most nights
-ClickHouse is up and the filter runs.</p>
-<div class="admonition warning">
-<p class="admonition-title">The honest cost of failing open</p>
-<p>On a night the filter is skipped, some recommendations can point at offers that have expired.
-My own review of the service flagged this: fail open is right for the batch, but wrong if the app
-assumes every recommendation is active. The fix I&rsquo;d ship next is a status flag on the run, so the
-app knows when to double-check expiry itself, plus a loud alert instead of a quiet skip.</p>
-</div>
-<h2 id="make-re-runs-boring">Make re-runs boring<a class="h-anchor" href="#make-re-runs-boring" title="Permanent link">#</a></h2>
-<p>Nightly jobs get re-run, by schedulers and by tired humans. Two choices make that safe:</p>
-<ul>
-<li><strong>Upserts keyed on the user</strong>, so a second run replaces the first instead of duplicating it.</li>
-<li><strong>A &ldquo;run now&rdquo; button that refuses to start</strong> while another run is in flight.</li>
-</ul>
-<h2 id="whats-next">What&rsquo;s next<a class="h-anchor" href="#whats-next" title="Permanent link">#</a></h2>
-<p>A second generation is already code-complete: purchase-based similarity, a content boost from recent
-purchases, diversification so one merchant can&rsquo;t fill the list, and a trending fallback for new users.
-Before it replaces the nightly job it needs one thing the first version never had: a saved offline
-evaluation, so the switch is a measured decision and not a hunch.</p>
-<hr>
-<p><em>If you run nightly jobs that other teams depend on, I&rsquo;d love to hear how you handle the night
-something upstream is down. <a href="../index.html#contact">Get in touch</a>.</em></p>]]></content:encoded>
-    </item>
-    <item>
-      <title>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.</description>
-      <category>Graph Databases</category><category>Spark</category><category>Blockchain</category>
-      <content:encoded><![CDATA[<p><em>Evidence: Portfolio project. The benchmark run used synthetic transactions; the code can also pull recent public Ethereum mainnet blocks through Infura. Neo4j, Spark and Elasticsearch are local stand-ins in the default run.</em></p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Tracing money on Ethereum is a graph problem. A wallet sends to a wallet, which sends to two more, which peel off a little value at each step. The questions an investigator asks are relationship questions: where did these funds go within three hops, which wallets fan out to dozens of recipients in a day, which chains of transfers shrink in value as they move.</p>
-<p>There are two common ways to answer them. A graph database such as Neo4j stores wallets and transfers as nodes and edges and walks them directly. A batch engine such as Spark keeps transactions in a table and answers multi-hop questions with repeated self-joins. The usual intuition is that the graph database wins on traversal and the batch engine wins on wide aggregations. I wanted a project that would test that intuition on Ethereum data rather than assume it.</p>
-<p>This post describes what I built: the pipeline, the detectors, and the timing harness. It also covers what the harness measures today, because the interesting part of a benchmark is whether it is fair.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The entry point is <code>main.py</code>. It picks a data source, runs a three-layer ETL, loads a graph, runs three timed comparisons and writes a Kibana dashboard config.</p>
-<div class="hl"><pre><span></span><code> SimpleBlockchainClient (1,000 synthetic txs, 100 wallets)
-   or RealBlockchainClient (Infura JSON-RPC, last 3 mainnet blocks)
-                 |
-                 v
- ETLPipeline  (pandas-backed &quot;SimpleDataFrame&quot;)
-   Bronze  -&gt; drop rows without hash/from, lowercase addresses
-   Silver  -&gt; dedupe on hash, wei-&gt;ETH, gas cost, tx_type
-   Gold    -&gt; per-wallet sent/received stats, risk_tier 0-4
-                 |
-        +--------+-----------------+
-        v                          v
- MockNeo4jClient            PerformanceTester
- (Neo4jClient exists,       wallet_degree / multi_hop_3 /
-  not wired in)             suspicious_detection
-        |                          |
-        v                          v
- Mock Elasticsearch  -&gt;  kibana_dashboard.json (config only)
-</code></pre></div>
-
-<p>Separately, <code>src/detection/</code> holds three detectors and a scoring module that work on plain lists of transaction dicts:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Rule in code</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>chain_hopping.detect</code></td>
-<td>sender reaches at least 10 unique recipients within 24 h of the latest timestamp</td>
-</tr>
-<tr>
-<td><code>smurfing.detect</code></td>
-<td>sender has at least 50 transactions and some below 1 ETH; &ldquo;high&rdquo; when over 80% are small</td>
-</tr>
-<tr>
-<td><code>peel_chains.detect</code></td>
-<td>2- and 3-hop paths where each forwarded value is lower than the last; top 50 returned</td>
-</tr>
-<tr>
-<td><code>scoring.score_wallets</code></td>
-<td>additive points for ETH volume, transaction count, unique counterparties and detector hits</td>
-</tr>
-</tbody>
-</table></div>
-<p>These detectors are covered by unit tests but are not yet called from <code>main.py</code>.</p>
-<h2 id="decision-1-build-against-stand-ins-first">Decision 1: build against stand-ins first<a class="h-anchor" href="#decision-1-build-against-stand-ins-first" title="Permanent link">#</a></h2>
-<p>I did not want local development to depend on a running JVM, a Spark cluster, a Neo4j server and an Elasticsearch node. So the project has local stand-ins for all of them:</p>
-<ul>
-<li><code>SimpleSparkClient</code> and <code>SimpleDataFrame</code> wrap pandas behind a Spark-like API (<code>select</code>, <code>groupBy().count()</code>, <code>dropDuplicates</code>, <code>withColumn</code>, <code>collect</code>).</li>
-<li><code>MockNeo4jClient</code> accepts Cypher text and returns canned rows by keyword.</li>
-<li>The Elasticsearch client keeps documents in a Python list; parquet writes only log.</li>
-</ul>
-<div class="hl"><pre><span></span><code><span class="c1"># src/core/mock_neo4j.py</span>
-<span class="k">if</span> <span class="s2">&quot;degree&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;degree&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}]</span>
-<span class="k">elif</span> <span class="s2">&quot;suspicious&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;total_tx&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">}]</span>
-<span class="k">elif</span> <span class="s2">&quot;path&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
-    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x456...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x789...&quot;</span><span class="p">]}]</span>
-</code></pre></div>
-
-<p><strong>Trade-off.</strong> The whole pipeline runs from <code>python main.py</code> with only pandas installed, and the 25 unit tests run in a few seconds. The cost is that anything timed in this mode is timing the stand-in. The Spark-like wrapper also hides real Spark costs such as job scheduling, shuffles and serialization, which are exactly what matters when comparing against a graph database.</p>
-<h2 id="decision-2-model-the-transaction-as-a-node">Decision 2: model the transaction as a node<a class="h-anchor" href="#decision-2-model-the-transaction-as-a-node" title="Permanent link">#</a></h2>
-<p>The real <code>Neo4jClient.ingest_transactions</code> uses <code>UNWIND</code> batches of 100 and <code>MERGE</code>s three things per transaction:</p>
-<div class="hl"><pre><span></span><code><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SENT</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">:</span><span class="n">Transaction</span><span class="w"> </span><span class="p">{</span><span class="n">hash</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">RECEIVED</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">receiver</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span>
-</code></pre></div>
-
-<p>Uniqueness constraints sit on <code>Wallet.address</code> and <code>Transaction.hash</code>, with relationship indexes on <code>block_number</code> and <code>value</code>.</p>
-<p><strong>Trade-off.</strong> Making the transaction a node keeps per-transaction properties (gas used, timestamp) in one place and lets a transaction later link to contracts or token transfers. The cost is that every wallet-to-wallet hop becomes two relationships, so traversal queries have to be written as alternating <code>SENT</code>/<code>RECEIVED</code> steps. The multi-hop query in the harness currently uses <code>(:Wallet)-[:SENT*1..3]-&gt;(:Wallet)</code>, which assumes direct wallet-to-wallet <code>SENT</code> edges. Against this schema it would not return paths. One of the two has to change before the comparison is run on a real Neo4j instance. The other option is a direct <code>(:Wallet)-[:SENT {hash, value}]-&gt;(:Wallet)</code> model, which makes hop queries simpler but puts transaction data on the edge.</p>
-<h2 id="decision-3-detectors-as-plain-python-over-transaction-lists">Decision 3: detectors as plain Python over transaction lists<a class="h-anchor" href="#decision-3-detectors-as-plain-python-over-transaction-lists" title="Permanent link">#</a></h2>
-<p>The first versions of the detectors were GraphFrames motif queries and PySpark aggregations. I rewrote them as plain functions over lists of dicts. For example, peel-chain detection builds an adjacency list and walks two and three hops looking for decreasing values:</p>
-<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="n">edge2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver1</span><span class="p">]:</span>
-    <span class="k">if</span> <span class="n">value2</span> <span class="o">&gt;=</span> <span class="n">value1</span> <span class="ow">or</span> <span class="n">value1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">continue</span>          <span class="c1"># not peeling</span>
-    <span class="o">...</span>
-    <span class="k">if</span> <span class="n">receiver2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver2</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="n">value3</span> <span class="o">&lt;</span> <span class="n">value2</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># 3-hop chain, risk &quot;high&quot;</span>
-</code></pre></div>
-
-<p><strong>Trade-off.</strong> The rules are easy to read and test, and they do not need Spark or Neo4j. They are also engine-neutral, so the same logic can be ported to Cypher or to Spark joins and the results compared row for row. The cost is scale: nested loops over an in-memory adjacency list are fine for a few thousand transactions, not for a day of mainnet. The chain-hopping rule also measures fan-out from one wallet in a time window. It does not look across chains, so the name promises more than the rule does.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What I can verify from the repository:</p>
-<ul>
-<li><strong>Tests:</strong> 25 unit tests pass (12 for the detectors and scoring, 13 for the DataFrame wrapper).</li>
-<li><strong>Pipeline:</strong> with no Infura key, <code>main.py</code> generates 1,000 synthetic transactions across 100 random wallets and runs them through Bronze, Silver and Gold. With a key, it fetches the last three mainnet blocks over JSON-RPC and falls back to 500 synthetic rows if that fails.</li>
-<li><strong>Dashboard:</strong> the Kibana dashboard config is generated as JSON. Indexing goes to the in-memory Elasticsearch stand-in.</li>
-</ul>
-<p>The README table records one run of the timing harness on the 1,000 synthetic transactions. It reports Neo4j winning multi-hop by 73.42x and suspicious detection by 18.88x, with Spark ahead on wallet degree. These ratios do not compare Neo4j with Spark:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Row</th>
-<th>&ldquo;Neo4j&rdquo; side</th>
-<th>&ldquo;Spark&rdquo; side</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>multi_hop_3</td>
-<td><code>MockNeo4jClient</code> returning a fixed 3-item list</td>
-<td>pandas <code>select("to_address").collect()</code> over all 1,000 rows</td>
-</tr>
-<tr>
-<td>suspicious_detection</td>
-<td>mock returning an empty list</td>
-<td>pandas group-by on <code>from_address</code></td>
-</tr>
-<tr>
-<td>wallet_degree</td>
-<td>mock returning <code>{"degree": 42}</code></td>
-<td>row count</td>
-</tr>
-</tbody>
-</table></div>
-<p>Every timing was below 10 ms, measured once with <code>time.time()</code>, with no warm-up, no repetitions and no recorded hardware. No log of that run is saved in the repository. Since then, <code>main.py</code> no longer passes a client to <code>PerformanceTester</code>, so the Neo4j side returns an inline literal and the Spark-side multi-hop does one hop rather than three.</p>
-<div class="admonition note">
-<p class="admonition-title">What the numbers support</p>
-<p>The harness, the timing code and the report generator work end to end. The repository has no measured Neo4j-vs-Spark result yet: no run against a real Neo4j server or a real SparkSession, and no saved output.</p>
-</div>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Wire in the real engines.</strong> Pass <code>Neo4jClient</code> to the tester and run real PySpark (the version is already pinned at 3.5.0) instead of the pandas wrapper. Load the same snapshot into both.</li>
-<li><strong>Fix the queries.</strong> Make the multi-hop Cypher match the Wallet→Transaction→Wallet schema. Rewrite the suspicious-wallet query with <code>COUNT { (w)-[:SENT]-&gt;() }</code>, because Neo4j 5 no longer accepts pattern expressions inside <code>size()</code>. On the Spark side, implement a real 3-hop traversal as iterative self-joins or a GraphFrames BFS.</li>
-<li><strong>Use real data at a real size.</strong> Run <code>scripts/etl/bulk_fetcher.py</code> over a fixed block range so both engines see the same mainnet transactions, and record the transaction count, wallet count and edge count.</li>
-<li><strong>Measure properly.</strong> Warm up, repeat each query 10 or more times, report the median and p95, and log hardware, memory settings and engine versions next to the results. Count Spark session start-up separately from query time, and count Neo4j ingest separately from traversal.</li>
-<li><strong>Connect the detectors.</strong> Call <code>run_all_detections</code> from <code>main.py</code> and send the flagged wallets to the dashboard index. That is the path from &ldquo;benchmark&rdquo; to &ldquo;forensics tool&rdquo;.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case study: <a href="../projects/blockchain-analyzer.html">Blockchain Analyzer</a></li>
-<li>Code: <a href="https://github.com/Eng-Zakaria/blockchain-analyzer">github.com/Eng-Zakaria/blockchain-analyzer</a></li>
-</ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Modeling estates data to Uniclass, COBie and SFG20</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.</description>
-      <category>Data Modeling</category><category>Data Warehousing</category><category>SQL</category>
-      <content:encoded><![CDATA[<p>This is a portfolio project, and every row in it is synthetic. Two seeded Python scripts generate the buildings, rooms, assets, handover records, work orders and meter readings. No real estate or university data is involved. What I wanted to work through was a modeling question: if the people sending you facilities data are expected to follow industry standards, how much of that can a pipeline actually enforce, and what should it do with the rows that don&rsquo;t comply?</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>An estates team (the people who run a campus&rsquo;s buildings) gets data from several systems that were never designed to agree with each other:</p>
-<ul>
-<li>an <strong>asset register</strong>, listing every boiler, air handling unit and fire detector;</li>
-<li>a <strong>space register</strong>, listing rooms and what they are used for;</li>
-<li><strong>COBie</strong> sheets, delivered by contractors when a building is handed over;</li>
-<li><strong>CAFM</strong> work orders (Computer-Aided Facilities Management, the ticketing system for maintenance jobs);</li>
-<li><strong>BMS</strong> extracts (Building Management System, the meter and sensor feed).</li>
-</ul>
-<p>Three UK standards come up again and again in this world. Here is a short version for data engineers:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Standard</th>
-<th>What it is</th>
-<th>Data-engineering analogy</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Uniclass 2015</td>
-<td>A hierarchical classification of construction things. Codes look like <code>Ss_32_12_20</code>, where <code>Ss</code> is the Systems table.</td>
-<td>A controlled taxonomy key, like a product category code</td>
-</tr>
-<tr>
-<td>COBie</td>
-<td>A spreadsheet schema for handing over building data (Type, Component, serial number and so on) at the end of a project, used for ISO 19650 information handover</td>
-<td>A data contract between the contractor and the owner</td>
-</tr>
-<tr>
-<td>SFG20</td>
-<td>The industry library of planned maintenance schedules: which task, how often, for which kind of asset</td>
-<td>A reference table of SLAs per asset class</td>
-</tr>
-</tbody>
-</table></div>
-<p>I also used HESA EMR space categories. HESA is the UK higher-education statistics agency, and its Estate Management Record is the annual return universities file about their buildings.</p>
-<p>The failure mode is easy to describe. One bad classification code or an incomplete handover row gets into the warehouse, and every dashboard measure that groups by it quietly goes wrong.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The repo is plain Python, pandas and SQLite. An optional Airflow DAG wraps the same three steps.</p>
-<div class="hl"><pre><span></span><code>generators/generate_synthetic.py  ─┐   9 raw CSVs (seeded, random.seed(42) / seed(7))
-generators/generate_surveys.py    ─┘
-            │
-            ▼
-ingest/bronze_ingest.py      + ingestion_timestamp, batch_id, source_file
-            │
-            ▼
-validate/checks.py           Uniclass regex · SFG20 present · COBie mandatory
-            │                HESA whitelist · orphan keys · range checks
-      ┌─────┴──────┐
-      ▼            ▼
-data/silver/   data/quarantine/*.csv
-      │
-      ▼
-transform/build_silver_gold.py + sql/schema.sql
-      │
-      ▼
-estates.db   3 dims + 5 facts + ref_cobie + 6 views ──► Power BI spec (9 pages, 10 DAX measures)
-      │
-      ▼
-analytics/netzero.py         HDD baseline, BMS anomalies, fault → SFG20 asset
-</code></pre></div>
-
-<p>The Airflow DAG <code>estates_daily</code> runs <code>bronze_ingest &gt;&gt; validate_quarantine &gt;&gt; build_warehouse</code> on <code>@daily</code>. The net zero analytics script is a separate manual step.</p>
-<p>The warehouse has <code>dim_building</code>, <code>dim_space</code> and <code>dim_asset</code>, plus five facts: <code>fact_workorder</code>, <code>fact_energy</code>, <code>fact_space_use</code>, <code>fact_condition</code> and <code>fact_compliance</code>. <code>ref_cobie</code> holds the handover components. Six views sit on top for reporting: EMR summary, open compliance work, energy intensity, space utilisation, compliance RAG and backlog.</p>
-<h2 id="how-the-standards-are-actually-used">How the standards are actually used<a class="h-anchor" href="#how-the-standards-are-actually-used" title="Permanent link">#</a></h2>
-<p>I want to be exact here, because &ldquo;modeled to Uniclass, COBie and SFG20&rdquo; can mean much more than this project does.</p>
-<p><strong>Uniclass</strong> is a column on <code>dim_asset</code> and on the COBie components. The pipeline checks the shape of the code with a regex. Nothing more.</p>
-<div class="hl"><pre><span></span><code><span class="n">UNICLASS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^Ss_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">(-\d+)?$&quot;</span><span class="p">)</span>
-
-<span class="n">m</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">UNICLASS_RE</span><span class="p">)</span>
-<span class="n">bad_uni</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span>
-<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_uni</span><span class="p">):</span>
-    <span class="n">bad_uni</span> <span class="o">=</span> <span class="n">bad_uni</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;quarantine_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bad_uniclass:&quot;</span> <span class="o">+</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span>
-    <span class="n">bad_uni</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">QUAR</span> <span class="o">/</span> <span class="s2">&quot;assets_bad_uniclass.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</code></pre></div>
-
-<p>The repo has no Uniclass lookup table. A code like <code>Ss_99_99_99</code> would pass, because it has the right shape even though it isn&rsquo;t a real entry. Only the Systems (<code>Ss</code>) table is accepted. The generator draws from five fixed sample codes, and I haven&rsquo;t checked them against the published Uniclass tables.</p>
-<p><strong>COBie</strong> is treated as a completeness contract. A component row must have <code>cobie_type</code>, <code>component_id</code> and <code>serial_number</code> filled in, and a well-formed Uniclass code. Passing rows go to <code>ref_cobie</code>, which keeps <code>asset_id</code> but isn&rsquo;t declared as a foreign key in the schema. The project ingests one flat Component-style CSV, not a full COBie workbook with its Facility, Floor, Space, Type and Component sheets.</p>
-<p><strong>SFG20</strong> is the thinnest of the three. <code>dim_asset.sfg20_schedule</code> is a text column with values like <code>AHU-01</code> or <code>LIFT-03</code>, and the only rule is that it isn&rsquo;t empty:</p>
-<div class="hl"><pre><span></span><code><span class="n">m</span> <span class="o">&amp;=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;sfg20_schedule&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">len</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
-</code></pre></div>
-
-<p>These are invented identifiers, not real SFG20 schedule references. The repo stores no task frequencies and computes no due dates from SFG20. The column is used downstream: <code>vw_compliance_open</code> groups open work orders by it, and the anomaly script lists the SFG20 schedule of each suspect HVAC asset. In practice it works as a label, not a reference to a maintenance regime.</p>
-<p><strong>HESA</strong> space types are a whitelist in Python, <code>{"OFF", "LAB", "LEC", "LIB", "STO"}</code>. In <code>schema.sql</code> the column is just <code>TEXT NOT NULL</code>, with no CHECK constraint.</p>
-<h2 id="decision-1-quarantine-dont-crash">Decision 1: quarantine, don&rsquo;t crash<a class="h-anchor" href="#decision-1-quarantine-dont-crash" title="Permanent link">#</a></h2>
-<p><code>validate/checks.py</code> always exits 0. Each rule splits a table into a pass set, which goes to <code>data/silver/</code>, and a fail set, which goes to <code>data/quarantine/</code>. The warehouse is built only from silver.</p>
-<p>I chose this because in estates data a broken row is usually a conversation with a contractor, not a bug. Stopping the whole daily load because 8 assets have a bad code would hold back 107 good ones. The rejected rows stay as CSVs that someone can send back.</p>
-<p>The trade-off is that a pipeline that never fails can hide a bad day. Nothing in the repo alerts when the quarantine count jumps, and the Power BI spec only plans a &ldquo;quarantined rows by batch_id&rdquo; trend after two or more runs. I also found a bug while writing this. The two dedicated asset files (<code>assets_bad_uniclass.csv</code>, <code>assets_orphan_space.csv</code>) fill in <code>quarantine_reason</code>, but the generic <code>*_fails.csv</code> files written by <code>_split()</code> leave that column empty, because the code writes a placeholder:</p>
-<div class="hl"><pre><span></span><code><span class="n">fails</span><span class="p">[</span><span class="n">reason_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">fails</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reason_col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>  <span class="c1"># placeholder</span>
-</code></pre></div>
-
-<p>So <code>cobie_components_fails.csv</code> tells you which rows failed but not why.</p>
-<h2 id="decision-2-validate-in-dependency-order">Decision 2: validate in dependency order<a class="h-anchor" href="#decision-2-validate-in-dependency-order" title="Permanent link">#</a></h2>
-<p>Rules run in key order: spaces first, then assets against <em>surviving</em> spaces, then work orders against <em>surviving</em> assets.</p>
-<div class="hl"><pre><span></span><code><span class="n">asset_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">assets_ok</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">])</span>
-<span class="n">m</span> <span class="o">=</span> <span class="n">wo</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">asset_ids</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">wo</span><span class="p">[</span><span class="s2">&quot;cost_gbp&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
-</code></pre></div>
-
-<p>This means the star schema can&rsquo;t contain a work order pointing at a quarantined asset, so joins in Power BI won&rsquo;t drop rows silently. The cost is that rejections cascade. One bad asset takes all its work orders with it. In this run, 13 assets were quarantined and 13 work orders followed them. Losing the asset is the right result. Losing the maintenance history may not be, and a real team would probably want those work orders held, not dropped.</p>
-<h2 id="decision-3-sqlite-and-a-flat-star-not-a-full-bim-model">Decision 3: SQLite and a flat star, not a full BIM model<a class="h-anchor" href="#decision-3-sqlite-and-a-flat-star-not-a-full-bim-model" title="Permanent link">#</a></h2>
-<p>I loaded into SQLite with a hand-written <code>schema.sql</code>, and the comment says it is &ldquo;SQLite + Postgres compatible&rdquo;. Standards codes are plain attributes on <code>dim_asset</code>, not dimensions of their own. That keeps the model small enough to open in DB Browser or connect to Power BI over ODBC, and it means everything runs on a laptop.</p>
-<p>The trade-offs are real:</p>
-<ul>
-<li>There is no <code>dim_uniclass</code> or <code>dim_sfg20</code>, so there are no descriptions, no hierarchy roll-up (system → subgroup → object) and no maintenance frequencies to report against.</li>
-<li>There is no date dimension. Dates are text columns, and <code>vw_energy_intensity</code> takes the day with <code>substr(e.timestamp, 1, 10)</code>.</li>
-<li>SQLite doesn&rsquo;t enforce the <code>REFERENCES</code> clauses unless foreign keys are turned on, and the build script doesn&rsquo;t turn them on. Integrity rests on the Python checks.</li>
-</ul>
-<p>The views use correlated subqueries rather than joins on purpose, so asset counts don&rsquo;t fan out across spaces:</p>
-<div class="hl"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_name</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">floor_area_m2</span><span class="p">,</span>
-<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_space</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rooms</span><span class="p">,</span>
-<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_asset</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">condition_grade</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="s1">&#39;D&#39;</span><span class="p">))</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">backlog_assets</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">dim_building</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
-</code></pre></div>
-
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>These are the counts from the committed run, read from the CSVs and <code>estates.db</code>. The generator injects bad rows on purpose, for example <code>"BAD-CODE" if i % 17 == 0</code> and orphan space <code>S9999</code> every 20th asset.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Source</th>
-<th>Raw rows</th>
-<th>Loaded</th>
-<th>Quarantined</th>
-<th>Main reason</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>assets → <code>dim_asset</code></td>
-<td>120</td>
-<td>107</td>
-<td>13</td>
-<td>8 bad Uniclass, 6 orphan space (1 overlap)</td>
-</tr>
-<tr>
-<td>COBie components → <code>ref_cobie</code></td>
-<td>60</td>
-<td>56</td>
-<td>4</td>
-<td>missing serial number</td>
-</tr>
-<tr>
-<td>work orders → <code>fact_workorder</code></td>
-<td>150</td>
-<td>137</td>
-<td>13</td>
-<td>asset not in silver</td>
-</tr>
-<tr>
-<td>space surveys → <code>fact_space_use</code></td>
-<td>600</td>
-<td>595</td>
-<td>5</td>
-<td>occupied &gt; booked hours</td>
-</tr>
-<tr>
-<td>statutory tests → <code>fact_compliance</code></td>
-<td>16</td>
-<td>15</td>
-<td>1</td>
-<td>unparseable due date</td>
-</tr>
-<tr>
-<td>spaces / buildings / condition / BMS</td>
-<td>60 / 3 / 15 / 1,008</td>
-<td>all</td>
-<td>0</td>
-<td></td>
-</tr>
-</tbody>
-</table></div>
-<p>COBie completeness comes out at 93.3% (56 of 60). The SFG20 and condition-grade rules rejected nothing, because the generator always fills those fields in. They exist, but this data never exercises them. The net zero step produces 42 building-days of HDD-baselined energy, 1 anomaly (the injected 220 kWh spike in B02) and 3 candidate HVAC assets for it.</p>
-<div class="admonition note">
-<p class="admonition-title">Testing is thin</p>
-<p><code>tests/test_checks.py</code> holds one smoke test. It regenerates data, runs ingest and validation, and asserts that at least one asset was quarantined and that COBie completeness is below 100%. It shows the pipeline runs end to end. It doesn&rsquo;t test each rule on its own.</p>
-</div>
-<p>When I queried the warehouse, I also found a gap the rules don&rsquo;t cover. The generator gives each asset a random <code>building_id</code> that doesn&rsquo;t depend on its space, and 65 of the 107 loaded assets sit in a space that belongs to a different building. No check compares <code>dim_asset.building_id</code> with <code>dim_space.building_id</code>, so building-level counts in <code>vw_emr_summary</code> aren&rsquo;t consistent with the space hierarchy.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Reference tables instead of regexes.</strong> Load the published Uniclass Ss table and a real SFG20 schedule extract as <code>dim_uniclass</code> and <code>dim_sfg20</code>, then validate by lookup. That gives descriptions, hierarchy roll-ups and task frequencies, so SFG20 compliance becomes &ldquo;PPM done within its interval&rdquo; and not &ldquo;column not empty&rdquo;.</li>
-<li><strong>Fix the quarantine reasons.</strong> Every rule should write its own reason code, so each fail file can be sent back to whoever supplied it.</li>
-<li><strong>Derive, don&rsquo;t duplicate.</strong> Take <code>building_id</code> for an asset from its space, or add a consistency rule. Turn on <code>PRAGMA foreign_keys</code> so SQLite enforces the schema too.</li>
-<li><strong>One unit test per rule</strong>, with small hand-built fixtures, plus an alert when the quarantine rate goes over a threshold.</li>
-<li><strong>Full COBie ingest.</strong> Read a multi-sheet COBie workbook and check cross-sheet references (Component → Type → Space), which is where real handover data tends to break.</li>
-</ol>
-<p>The case page with the architecture diagram is here: <a href="../projects/digital-estates.html">Digital Estates Platform case study</a>. The case page doesn&rsquo;t link a public repository yet.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>8/8 sources, zero loss: a lakehouse that proves itself</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.</description>
-      <category>Lakehouse</category><category>Data Quality</category><category>Python</category>
-      <content:encoded><![CDATA[<p>This is a portfolio project, and every row in it is synthetic. The inputs come from <code>campus_synth</code>, a generator I wrote that produces deliberately messy campus estates exports (merged Excel title rows, mixed date formats, duplicate rows, stuck sensors) along with a known ground truth. No real client, building or person is involved. The question I wanted the lakehouse to answer is simple: can I prove that every raw row either reached the clean layer or was put aside with a reason, so none were silently dropped?</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Estates data shows up as a pile of unrelated extracts. In this project there are eight: a space register (multi-sheet XLSX), CAFM work orders, two suppliers&rsquo; half-hourly meter files (one long, one wide), BMS trend logs (wide), statutory inspections (XLSX), a timetable, and 15-minute occupancy sensors (Parquet).</p>
-<p>Each one breaks in its own way. Dates come as <code>dd/mm/yyyy</code>, ISO strings or Excel serials. Meter data is in UK local time, so the clocks-change days have 46 or 50 half-hours instead of 48. Building names don&rsquo;t match between systems. A normal cleaning script deals with all this by filtering, and filtering is where rows vanish. If a dashboard total later looks wrong, nobody can say whether the source was short or the pipeline lost something.</p>
-<p>So I set myself one rule for P01: every row has to be accounted for, and a test has to show it.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The design is a two-layer medallion with a quarantine next to silver:</p>
-<div class="hl"><pre><span></span><code>data/raw/*  (xlsx / csv / parquet, local time)
-    |
-    |  load_bronze(): sha256 the file; skip if already loaded
-    v
-bronze/&lt;source&gt;/ingest_date=YYYY-MM-DD/*.parquet
-    all columns as strings + _ingest_id, _source_system, _source_file,
-    _loaded_at, _row_number, _row_hash
-    |
-    |  silver_&lt;source&gt;.py: parse, type, UTC, dedupe, map refs
-    +----------------------------+
-    v                            v
-silver/&lt;source&gt;/silver.parquet   quarantine/&lt;source&gt;/quarantine.parquet
-typed, UTC, deduped              original values + _reject_reason
-    |
-    v
-reconciliation.json   raw == bronze  AND  silver + quarantine == bronze
-    |
-    v
-DuckDB queries, dbt gold marts (P04)
-</code></pre></div>
-
-<p>Bronze never changes a value. It reads everything as text, adds six audit columns and writes Parquet partitioned by ingest date. Silver handles the typing. Any row that fails a rule is moved into quarantine with a reason string, never deleted. Storage is local, MinIO or S3 behind one <code>STORAGE</code> switch, and Terraform for an S3/Glue/Athena deployment is in the repo, though I never applied it.</p>
-<h2 id="decision-1-quarantine-not-filter">Decision 1: quarantine, not filter<a class="h-anchor" href="#decision-1-quarantine-not-filter" title="Permanent link">#</a></h2>
-<p>Silver code is only allowed to drop a row by moving it to quarantine. All the transforms share one helper:</p>
-<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">quarantine</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split valid/quarantine. Quarantine gets _reject_reason; valid drops the mask.&quot;&quot;&quot;</span>
-    <span class="n">m</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
-    <span class="n">q</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-    <span class="n">q</span><span class="p">[</span><span class="s2">&quot;_reject_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reason</span>
-    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">q</span>
-</code></pre></div>
-
-<p>Duplicates go through the same path (<code>duplicate:meter_id+local_time</code>, for example), and so do nulls, unparseable or future dates, negative readings, unmapped categories and buildings (with rapidfuzz suggestions at a score of 60 or more), orphan references, and work orders whose completion date is on or before the raised date.</p>
-<p>The trade-off is that you end up with two tables per source instead of one, and quarantine is stored as strings because rows rejected at different stages carry different types. What you get back is that the loss check comes down to addition. It also gave me a rule for dates: an ambiguous or nonexistent London local time becomes <code>NaT</code> and goes to quarantine. I never guess which side of the clock change a reading belonged to.</p>
-<h2 id="decision-2-reconcile-at-the-grain-the-data-actually-has">Decision 2: reconcile at the grain the data actually has<a class="h-anchor" href="#decision-2-reconcile-at-the-grain-the-data-actually-has" title="Permanent link">#</a></h2>
-<p>The check itself is short:</p>
-<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reconcile_counts</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">bronze</span><span class="p">,</span> <span class="n">silver</span><span class="p">,</span> <span class="n">quarantine</span><span class="p">,</span> <span class="n">grain</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">):</span>
-    <span class="n">ok_raw</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">==</span> <span class="n">bronze</span>
-    <span class="n">ok_sq</span> <span class="o">=</span> <span class="n">silver</span> <span class="o">+</span> <span class="n">quarantine</span> <span class="o">==</span> <span class="n">bronze</span>
-    <span class="k">return</span> <span class="p">{</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;unexplained&quot;</span><span class="p">:</span> <span class="n">bronze</span> <span class="o">-</span> <span class="n">silver</span> <span class="o">-</span> <span class="n">quarantine</span><span class="p">,</span>
-            <span class="s2">&quot;pass&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ok_raw</span> <span class="ow">and</span> <span class="n">ok_sq</span><span class="p">)}</span>
-</code></pre></div>
-
-<p>&ldquo;Raw&rdquo; means counting the source file independently of the loader. For CSV that&rsquo;s data lines minus the header. For XLSX it&rsquo;s rows per sheet minus three for the space register (two merged title rows and a header) and minus one for the others. For Parquet it&rsquo;s <code>len()</code>.</p>
-<p>That works until a source changes shape. Supplier B&rsquo;s meter file has one row per meter per day with columns <code>HH01</code>, <code>HH02</code> and so on, and silver unpivots it to one row per half-hour. Comparing rows there would always fail. So for the two wide sources (supplier B and BMS trends) the check compares cells: bronze rows times value columns against silver plus quarantine rows.</p>
-<p>That&rsquo;s a real trade-off. A cell-level check is only as good as the code that counts the cells, and I come back to that below.</p>
-<h2 id="decision-3-idempotency-by-file-hash">Decision 3: idempotency by file hash<a class="h-anchor" href="#decision-3-idempotency-by-file-hash" title="Permanent link">#</a></h2>
-<p><code>load_bronze</code> hashes each raw file with SHA-256 and checks it against a bronze manifest. If the same source and hash are already there, the file is skipped and nothing new is written. A corrected file has a new hash, so it gets a new <code>_ingest_id</code>. Without this, running the ingest twice would double bronze, and the raw-equals-bronze check would fail for a reason that has nothing to do with data quality. The cost is that bronze state is cumulative. Whatever sits in the bronze folder counts toward the totals, and that turned out to matter.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>The acceptance run on 4 October 2026 (small profile, seed 42, recorded in <code>docs/ACCEPTANCE_P01.md</code>) produced this <code>reconciliation.json</code>, with every source at <code>pass: true</code>:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Source</th>
-<th>Grain</th>
-<th style="text-align: right;">Raw</th>
-<th style="text-align: right;">Bronze</th>
-<th style="text-align: right;">Silver</th>
-<th style="text-align: right;">Quarantine</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>space_register</td>
-<td>row</td>
-<td style="text-align: right;">501</td>
-<td style="text-align: right;">501</td>
-<td style="text-align: right;">495</td>
-<td style="text-align: right;">6</td>
-</tr>
-<tr>
-<td>cafm_workorders</td>
-<td>row</td>
-<td style="text-align: right;">6,039</td>
-<td style="text-align: right;">6,039</td>
-<td style="text-align: right;">4,171</td>
-<td style="text-align: right;">1,868</td>
-</tr>
-<tr>
-<td>meter_hh_supplierA</td>
-<td>row</td>
-<td style="text-align: right;">34,419</td>
-<td style="text-align: right;">34,419</td>
-<td style="text-align: right;">33,866</td>
-<td style="text-align: right;">553</td>
-</tr>
-<tr>
-<td>meter_hh_supplierB</td>
-<td>cell</td>
-<td style="text-align: right;">732 rows</td>
-<td style="text-align: right;">35,136 cells</td>
-<td style="text-align: right;">34,349</td>
-<td style="text-align: right;">787</td>
-</tr>
-<tr>
-<td>bms_trends</td>
-<td>cell</td>
-<td style="text-align: right;">8,640 rows</td>
-<td style="text-align: right;">172,800 cells</td>
-<td style="text-align: right;">172,780</td>
-<td style="text-align: right;">20</td>
-</tr>
-<tr>
-<td>statutory_inspections</td>
-<td>row</td>
-<td style="text-align: right;">41</td>
-<td style="text-align: right;">41</td>
-<td style="text-align: right;">40</td>
-<td style="text-align: right;">1</td>
-</tr>
-<tr>
-<td>timetable</td>
-<td>row</td>
-<td style="text-align: right;">12,566</td>
-<td style="text-align: right;">12,566</td>
-<td style="text-align: right;">12,347</td>
-<td style="text-align: right;">219</td>
-</tr>
-<tr>
-<td>sensors</td>
-<td>row</td>
-<td style="text-align: right;">779,933</td>
-<td style="text-align: right;">779,933</td>
-<td style="text-align: right;">773,974</td>
-<td style="text-align: right;">5,959</td>
-</tr>
-</tbody>
-</table></div>
-<p>That&rsquo;s eight out of eight with zero unexplained rows or cells. The ingest took 34–35 seconds. A second <code>run-all</code> reported all eight bronze files as <code>skipped</code> and the silver counts didn&rsquo;t change. On the clocks-change day, 2026-03-29, each meter produced 46 unique UTC periods. The platform tests (7 of them) cover bronze idempotency, silver rules, cumulative-register rollover, DST, reconciliation, and a check that planted invalid rows land in quarantine with a reason.</p>
-<p>Strictly, this proves that nothing went missing. It does not prove the rows are correct. Correctness is handled downstream: P03 runs 133 YAML data-quality checks against the planted ground truth, and P04 reconciles silver to the dbt marts. In the P04 acceptance doc, for example, space went 495 to 495, and meter half-hours went 68,119 to 67,822 (Δ −297, the defect meters).</p>
-<div class="admonition note">
-<p class="admonition-title">What the current working copy says</p>
-<p>When I reopened the lakehouse folder while writing this, the <code>reconciliation.json</code> on disk was from a later run on 17 October, and it shows <strong>6/8</strong>, not 8/8. Both failures trace back to the check, not to lost data.</p>
-<p><code>meter_hh_supplierA</code>: raw 34,419 vs bronze 34,420. Bronze also contains a one-row <code>_corrupt</code> file left over from the P02 Airflow schema-drift demo, and that file isn&rsquo;t in <code>data/raw</code>. Silver plus quarantine still equals bronze (33,866 + 554).</p>
-<p><code>bms_trends</code>: a second BMS file (288 rows, 294 points, exported by the P15 IoT project) now sits next to the original (8,640 rows, 20 points). The counter concatenates the two bronze frames and multiplies all 8,928 rows by the 314 point columns in the union, which gives 2,803,392 &ldquo;cells&rdquo; when most of them never existed. The real total is 8,640 × 20 + 288 × 294 = 257,472, which is exactly silver plus quarantine (257,215 + 257).</p>
-</div>
-<p>So the headline holds for the acceptance run, but the check has two weak points I hadn&rsquo;t tested. Cell counting assumes every bronze file for a source has the same columns. And the reconciliation reads whatever bronze happens to contain, including state left behind by other demos.</p>
-<p>I also found that <code>ingest.cli reconcile</code> writes the JSON and prints it, but always exits with code 0. The README says <code>make ci</code> fails on unexplained loss. In practice CI runs the reconciliation and keeps going whatever the result. The data-quality gate after it is what actually fails builds.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ul>
-<li><strong>Make reconciliation a gate.</strong> Exit non-zero when any source has <code>pass: false</code>, and add a CI step that asserts on <code>reconciliation.json</code> rather than just generating it.</li>
-<li><strong>Count cells per file.</strong> Compute value cells for each bronze file before concatenating, or count only non-null cells, so a new wide schema can&rsquo;t inflate the expected total.</li>
-<li><strong>Reconcile per file, not per folder.</strong> Key the check on the bronze manifest (file, sha256, rows) so a stray demo file shows up as its own line and doesn&rsquo;t skew the source total.</li>
-<li><strong>Add a hash-level check.</strong> Bronze already stores a <code>_row_hash</code>. The next step is to carry it into silver and quarantine, so each source row can be traced to exactly one destination row. Counts can balance even when one row is lost and another is duplicated. Hashes can&rsquo;t.</li>
-<li><strong>Replace the truth-based crosswalk.</strong> The building crosswalk reads the generator&rsquo;s truth table at ingest. A real deployment would read a master-data table instead.</li>
-</ul>
-<p>The full project, including the dbt marts, data-quality framework and the other demos, is on the <a href="../projects/estates-data-platform.html">Estates Data Portfolio case page</a>, and the code is on <a href="https://github.com/Eng-Zakaria/estates-data-portfolio">GitHub</a>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>E-Finance: a six-service digital bank scaffold, and where the money logic lives</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.</description>
-      <category>Microservices</category><category>Docker</category><category>Data Engineering</category>
-      <content:encoded><![CDATA[<p>This is a portfolio project with no production deployment and no real customer data. E-Finance is a scaffold for a digital bank: six backend services, a React web app, a Postgres schema and three Airflow DAGs, all declared in one Docker Compose file. The core-banking API holds most of the real logic. The other services are thinner, and several still run on in-memory dictionaries or generated sample data. Below I cover what the code does, the decisions behind it, and what is left before the stack runs end to end.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>A bank has two kinds of work that pull against each other. On the request path it has to move money correctly: a transfer debits one account and credits another, or neither happens. Off the request path it needs batch jobs: interest accrual, daily summaries, and fraud review over recent activity. I wanted one repository that showed both sides. That meant a service split I could defend, a schema that stores money safely, and a data layer that Airflow could run batch jobs against.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>Docker Compose declares six backend services, plus the frontend, Postgres, MongoDB, Redis, ZooKeeper and Kafka, an Airflow webserver and scheduler, Prometheus and Grafana.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Service</th>
-<th>Stack</th>
-<th>What the code does today</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>core-banking-api</td>
-<td>FastAPI, SQLAlchemy async</td>
-<td>Auth, users, accounts, cards, transactions: 44 routes over Postgres. Deposits, withdrawals and internal transfers update balances.</td>
-</tr>
-<tr>
-<td>transaction-service</td>
-<td>Spring Boot, JPA</td>
-<td>10 REST routes. Saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>.</td>
-</tr>
-<tr>
-<td>fraud-detection</td>
-<td>FastAPI, scikit-learn</td>
-<td>Scores a transaction on request: 8 hand-written rules blended with a random forest and an isolation forest.</td>
-</tr>
-<tr>
-<td>bnpl-service</td>
-<td>FastAPI</td>
-<td>Credit score from 300 to 850, built from four weighted factors. Orders and merchants live in in-memory dicts.</td>
-</tr>
-<tr>
-<td>web3-service</td>
-<td>FastAPI, web3.py</td>
-<td>Creates wallets and encrypts their keys with Fernet. Wallets are held in memory.</td>
-</tr>
-<tr>
-<td>analytics-service</td>
-<td>FastAPI, PySpark</td>
-<td>Daily volume, account summaries, moving averages and segments, computed over five hard-coded sample rows.</td>
-</tr>
-</tbody>
-</table></div>
-<p>This is how data moves in the code as it stands:</p>
-<div class="hl"><pre><span></span><code>React app ──HTTP──&gt; core-banking-api ──&gt; Postgres: efinance_core
-                                           (users, accounts, transactions,
-                                            cards, fraud_alerts, audit_logs,
-                                            daily_transaction_summary,
-                                            user_velocity_metrics)
-                                                 ^
-Airflow (LocalExecutor) ──PostgresHook──────────┘
-  transaction_etl     02:00 daily   extract -&gt; transform -&gt; load / velocity upsert
-  interest_calc       00:00 daily   accrue -&gt; credit on the 1st of the month
-  fraud_detection     every 15 min  flagged txns -&gt; fraud_alerts
-
-transaction-service ──&gt; Postgres: efinance_transactions (separate table)
-        └──produce──&gt; Kafka topic &quot;transactions&quot;   (no consumer in the repo)
-
-fraud / bnpl / web3 / analytics: called directly on their own ports;
-no service calls another over HTTP today.
-</code></pre></div>
-
-<p>The README draws an API gateway (Kong), Elasticsearch and a notification service. None of them are in the Compose file or the code. Elasticsearch shows up only as a config field and a pinned client library.</p>
-<h2 id="decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit">Decision 1: store money as integer minor units, and write both legs of a transfer in one commit<a class="h-anchor" href="#decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit" title="Permanent link">#</a></h2>
-<p>Every balance and amount column in the schema is <code>BIGINT</code> in the smallest currency unit, and the ORM maps them to <code>Integer</code>. The account model formats them by dividing by 100, or by 10^8 for crypto. That keeps floating-point rounding out of the ledger. The cost is that every caller has to agree on the unit, and the Java service&rsquo;s <code>Long</code> fields depend on the same convention without anything enforcing it.</p>
-<p>An internal transfer in <code>account_service.py</code> writes two transaction rows: a <code>TRANSFER_OUT</code> on the source account and a <code>TRANSFER_IN</code> on the destination. Each row records <code>balance_before</code> and <code>balance_after</code>. Both balances change, and then a single commit runs:</p>
-<div class="hl"><pre><span></span><code><span class="n">from_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
-<span class="n">from_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
-<span class="n">to_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
-<span class="n">to_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
-
-<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">debit_tx</span><span class="p">)</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">credit_tx</span><span class="p">)</span>
-<span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-</code></pre></div>
-
-<p>The two legs and both balance updates sit in one database transaction, so a failure part-way leaves no half-transfer behind. Same-currency transfers only: cross-currency requests are rejected. Ownership, account status, daily and monthly limits and minimum balance are checked before any write.</p>
-<p>The design is two-leg, but it is not a full double-entry ledger. There is no separate journal, and nothing checks that debits and credits sum to zero. Balances are a read-modify-write on the account row with no <code>SELECT ... FOR UPDATE</code> and no version column. Two transfers running at once from the same account can therefore both pass the balance check. The API also takes no idempotency key. Reference numbers come from a timestamp plus six random characters, and the schema has a <code>UNIQUE</code> constraint on them, but a client that retries a transfer creates a second one.</p>
-<h2 id="decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge">Decision 2: a separate Java service for transaction records, with Kafka as the outbound edge<a class="h-anchor" href="#decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge" title="Permanent link">#</a></h2>
-<p>I put a Spring Boot transaction service next to the Python API. It writes transaction records and emits events, and the idea was that downstream consumers (fraud scoring, search, analytics) would read the <code>transactions</code> topic and leave the core API&rsquo;s database alone. <code>processTransaction</code> saves a record as <code>PENDING</code>, sets it to <code>PROCESSING</code>, and publishes it with the reference number as the Kafka key, which keeps the events for one transaction in order on a single partition.</p>
-<p>Three things limit this today. First, the Kafka send runs inside the <code>@Transactional</code> method, before the database commit. If the commit fails, an event may already be out; if the send fails, the error is logged and swallowed. An outbox table would close that gap. Second, nothing in the repo consumes the topic. Third, the Java service has its own <code>efinance_transactions</code> database and its own transactions table, separate from the one the core API writes. It takes <code>balanceBefore</code> and <code>balanceAfter</code> from the request body and never touches an account balance. The fraud call in <code>FraudCheckService</code> is built but commented out, so no service scores a transaction on the money path.</p>
-<h2 id="decision-3-put-batch-work-in-airflow-against-the-same-postgres">Decision 3: put batch work in Airflow, against the same Postgres<a class="h-anchor" href="#decision-3-put-batch-work-in-airflow-against-the-same-postgres" title="Permanent link">#</a></h2>
-<p>Daily jobs run as Airflow DAGs that use <code>PostgresHook</code>, not as background tasks inside the API. That keeps scheduling, retries and run history in one place, and it keeps the API process free of cron logic.</p>
-<ul>
-<li><strong>transaction_etl</strong> (02:00): pulls the day&rsquo;s completed transactions, then upserts into <code>daily_transaction_summary</code> with <code>ON CONFLICT (date) DO UPDATE</code> and into <code>user_velocity_metrics</code> with <code>ON CONFLICT (user_id, date)</code>. These upserts make re-runs safe: running a day again overwrites its rows instead of duplicating them. The velocity step is a real aggregate join across users, accounts and transactions.</li>
-<li><strong>interest_calculation</strong> (midnight): accrues <code>balance × rate / 365</code> into <code>interest_accrued</code> for savings and fixed-deposit accounts. On the 1st of the month it writes an <code>interest</code> transaction and moves the accrued amount into the balance.</li>
-<li><strong>fraud_detection</strong> (every 15 minutes): reads unreviewed suspicious transactions from the last hour, groups them by account, and writes <code>fraud_alerts</code>.</li>
-</ul>
-<p>The trade-off is that DAGs write straight to the operational tables. That is fine at this size, but it couples the jobs to the API&rsquo;s schema.</p>
-<div class="admonition note">
-<p class="admonition-title">Gaps in the DAGs</p>
-<p>The ETL <code>transform</code> step returns a fixed dictionary (<code>total_volume: 1000000</code>, <code>transaction_count: 500</code>), not an aggregate of the extracted rows. The load step points at an <code>efinance_warehouse</code> connection, and the init scripts create no warehouse database. The extract filters <code>status = 'COMPLETED'</code> while the interest DAG writes <code>'completed'</code>. The interest DAG runs each statement as its own <code>hook.run</code>, so the transaction insert and the balance update are not atomic. Daily accrual sets <code>last_interest_calculated</code> but never checks it, so re-running a date accrues interest twice.</p>
-</div>
-<h2 id="security-as-written">Security as written<a class="h-anchor" href="#security-as-written" title="Permanent link">#</a></h2>
-<p>The core API has the most complete auth. JWTs are HS256, with 30-minute access tokens and 7-day refresh tokens checked by type. Passwords are hashed with bcrypt. Five failed logins lock the account for 30 minutes. TOTP 2FA can be enabled and disabled, and admin and super-admin routes check roles. Every account route checks that the caller owns the account before it reads or moves money.</p>
-<p>The weak points are configuration and the other services. <code>config.py</code> ships default values for the app and JWT secrets. The Compose file and <code>application.yml</code> hold plaintext database passwords, the Airflow Fernet key is a placeholder string, and Grafana uses a default admin password. Fraud, BNPL, web3 and analytics have no authentication, and fraud-detection allows CORS from any origin. The web3 service derives its encryption key with a fixed salt, and its RPC default points at an Ethereum mainnet URL placeholder. For a local scaffold that is acceptable. Before anything else it would need a secrets store and service-to-service auth.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>Here is what I can verify from the repository, without running it:</p>
-<ul>
-<li>6 backend services; about 5,400 lines in the core API and about 14,200 lines across services, DAGs, schema and frontend.</li>
-<li>93 FastAPI routes across the Python services (44 in core banking) and 10 Spring routes.</li>
-<li>A 320-line Postgres schema with 10 tables, indexes and <code>updated_at</code> triggers.</li>
-<li>3 Airflow DAGs with idempotent upserts in the ETL load and velocity steps.</li>
-<li>Prometheus scrape config for all six services.</li>
-<li>The Java service has compiled classes under <code>target/</code>. There are no automated tests in the repo.</li>
-</ul>
-<p>The stack does not come up as committed. Only three of the six services have a Dockerfile (core banking, fraud and transaction), so <code>docker compose up</code> fails to build the other three. The core API imports <code>app.middleware</code> and <code>app.events</code>, and neither exists. MongoDB and Redis connect at startup, but no code path uses them yet. The fraud models are fitted on <code>np.random.rand</code> placeholder data until real models are saved, so their scores carry no signal.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li>Make the stack boot: add the three missing Dockerfiles, restore or remove the missing middleware imports, and add one smoke test per service.</li>
-<li>Lock balances during transfers with <code>SELECT ... FOR UPDATE</code> or a version column, and accept an <code>Idempotency-Key</code> header that is stored with a unique constraint.</li>
-<li>Keep one transaction store. Either the core API calls the Java service, or the Java service owns all writes and the core API reads from it. Then publish through an outbox table and add a real Kafka consumer.</li>
-<li>Fix the ETL transform so it aggregates the extracted rows, create the warehouse database, normalise status casing, and make interest accrual atomic and guarded by <code>last_interest_calculated</code>.</li>
-<li>Move secrets into environment files kept out of git, and put the gateway in front of the services that have no auth today.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case page: <a href="../projects/e-finance.html">E-Finance case study</a></li>
-</ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Deterministic Gates Before the LLM</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.</description>
-      <category>RAG</category><category>Guardrails</category><category>Testing</category>
-      <content:encoded><![CDATA[<p>This is production work at Waffarha. I build and run the customer-service assistant for
-Waffarha&rsquo;s deals platform, which answers in Egyptian Arabic, MSA, English and Franco-Arabic.
-This post covers one part of it: the layer of plain rules that runs before any model is called.</p>
-<h2 id="the-problem-the-model-is-the-slowest-least-predictable-part">The problem: the model is the slowest, least predictable part<a class="h-anchor" href="#the-problem-the-model-is-the-slowest-least-predictable-part" title="Permanent link">#</a></h2>
-<p>A language model is the most expensive step in a support turn, the slowest, and the only one
-that can make things up. In a local-versus-cloud comparison on the same index (6 queries,
-recorded in <code>eval/EVALUATION_REPORT.md</code>), the local 3B model took about 12 seconds per generated
-answer against about 3 seconds for a cloud model. The same comparison showed the 3B model
-confabulating on weak context while the cloud model abstained.</p>
-<p>The failures I saw in logs were specific. A nonexistent brand scored 0.95+ against some unrelated
-real offer and got answered as if it existed. Gibberish scored 0.79 to 0.82 on embedding
-similarity, above the relevance floor, and got fabricated offer details. A fake <code>SYSTEM:</code> header
-in a message once got the reply &ldquo;access granted&rdquo;. A refund question matched a gym offer because
-the Arabic word for &ldquo;offer&rdquo; appeared inside the sentence, and the model then roleplayed that
-merchant and invented a phone number.</p>
-<p>None of these needed a smarter model. They needed the model not to be asked.</p>
-<h2 id="the-gate-chain">The gate chain<a class="h-anchor" href="#the-gate-chain" title="Permanent link">#</a></h2>
-<p>Every turn walks an ordered list of checks. Each gate either returns a final answer, refuses, or
-passes the turn on. The model only sees what survives all of them. In the newer pipeline, the
-first deterministic pass (code and phone extraction, dialect scoring, Arabizi expansion) is
-documented at under 2 ms with no LLM call (<code>docs/ARCHITECTURE.md</code>).</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Gate</th>
-<th>What it catches</th>
-<th>What happens</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Closing / greeting</td>
-<td>&ldquo;شكرا&rdquo;, &ldquo;that&rsquo;s all&rdquo;, small talk</td>
-<td>Polite reply, no retrieval at all</td>
-</tr>
-<tr>
-<td>Empty / gibberish</td>
-<td>Blank or random input</td>
-<td>Ask to rephrase, no retrieval</td>
-</tr>
-<tr>
-<td>Injection</td>
-<td>Fake <code>CONTEXT:</code>/<code>SYSTEM:</code> headers, &ldquo;ignore instructions&rdquo;</td>
-<td>Short-circuit refusal; the text never reaches the model</td>
-</tr>
-<tr>
-<td>Unknown or inactive merchant</td>
-<td>A brand not in the catalog, or one with only expired offers</td>
-<td>Honest &ldquo;we don&rsquo;t have this&rdquo;, no nearby substitute</td>
-</tr>
-<tr>
-<td>Out of scope</td>
-<td>Weather, medicine, general knowledge</td>
-<td>Polite decline</td>
-</tr>
-<tr>
-<td>Personal / support intent</td>
-<td>&ldquo;my coupons&rdquo;, order and voucher codes</td>
-<td>Live lookup scoped to the verified user, never the vector index</td>
-</tr>
-<tr>
-<td>Branch, hours, stock, superlatives</td>
-<td>&ldquo;فروعها فين؟&rdquo;, &ldquo;cheapest&rdquo;, &ldquo;how many left&rdquo;</td>
-<td>Answered from offer metadata or a full sort, not top-k retrieval</td>
-</tr>
-<tr>
-<td>FAQ topic router</td>
-<td>Strong topic keywords (&ldquo;refund policy&rdquo;, &ldquo;كود فوري&rdquo;)</td>
-<td>Exact FAQ document, even if retrieval ranked a sibling higher</td>
-</tr>
-<tr>
-<td>Relevance floors</td>
-<td>Weak retrieval</td>
-<td>Refuse below the strict floor; LLM relevance check in the borderline band</td>
-</tr>
-<tr>
-<td>FAQ / offer direct answer</td>
-<td>One clear, high-similarity match</td>
-<td>Rendered answer from the document, no generation</td>
-</tr>
-<tr>
-<td>Evidence gate (agent path)</td>
-<td>Tool returned nothing, no offers, or offers outside the asked price range</td>
-<td>Deterministic broadening, then at most one replan, then fallback</td>
-</tr>
-<tr>
-<td>Fact check (after generation)</td>
-<td>Prices, discounts, dates, IDs, phones not in the sources</td>
-<td>One retry with critique, then a minimal factual reply</td>
-</tr>
-</tbody>
-</table></div>
-<p>The thresholds are in <code>core/config.py</code>: a soft relevance floor of 0.30, a strict refusal floor of
-0.45, and a direct-answer floor of 0.55 on raw embedding similarity. A candidate that only BM25
-found carries no embedding score, and the direct-answer shortcut skips it rather than trusting it.</p>
-<p>A simplified version of the chain, in my own words:</p>
-<div class="hl"><pre><span></span><code><span class="n">GATES</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">closing_or_greeting</span><span class="p">,</span> <span class="n">empty_or_gibberish</span><span class="p">,</span> <span class="n">prompt_injection</span><span class="p">,</span>
-    <span class="n">unknown_merchant</span><span class="p">,</span> <span class="n">inactive_merchant</span><span class="p">,</span> <span class="n">out_of_scope</span><span class="p">,</span>
-    <span class="n">personal_lookup</span><span class="p">,</span> <span class="n">branch_hours_stock</span><span class="p">,</span> <span class="n">faq_topic_router</span><span class="p">,</span>
-<span class="p">]</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">answer</span><span class="p">(</span><span class="n">turn</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">gate</span> <span class="ow">in</span> <span class="n">GATES</span><span class="p">:</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">gate</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>          <span class="c1"># answered or refused, no LLM</span>
-            <span class="k">return</span> <span class="n">result</span>
-    <span class="n">docs</span> <span class="o">=</span> <span class="n">retrieve</span><span class="p">(</span><span class="n">turn</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">best_embedding_score</span><span class="p">(</span><span class="n">docs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">STRICT_FLOOR</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span><span class="n">turn</span><span class="o">.</span><span class="n">lang</span><span class="p">)</span>
-    <span class="n">direct</span> <span class="o">=</span> <span class="n">direct_answer</span><span class="p">(</span><span class="n">docs</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="n">DIRECT_FLOOR</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">direct</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">direct</span>
-    <span class="n">draft</span> <span class="o">=</span> <span class="n">llm_generate</span><span class="p">(</span><span class="n">turn</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">fact_check</span><span class="p">(</span><span class="n">draft</span><span class="p">,</span> <span class="n">docs</span><span class="p">)</span>      <span class="c1"># retry once, else minimal reply</span>
-</code></pre></div>
-
-<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
-<h3 id="refusal-guards-run-before-every-answer-path">Refusal guards run before every answer path<a class="h-anchor" href="#refusal-guards-run-before-every-answer-path" title="Permanent link">#</a></h3>
-<p>The refusal guards (unknown merchant, inactive merchant, out of scope) originally ran after the
-personal and catalog shortcuts. That meant a structured path could answer a question the main
-path would have refused outright. I moved them ahead of every path that produces an answer, so
-the same floor gates all of them.</p>
-<p>The cost is that the guards must be cheap and correct, because nothing downstream can overrule
-them. A false &ldquo;we don&rsquo;t have this merchant&rdquo; is a wrong answer delivered confidently. I accepted
-that because the alternative, a fabricated offer for a brand Waffarha doesn&rsquo;t sell, is worse for
-a support channel.</p>
-<h3 id="personal-data-never-goes-near-the-embeddings">Personal data never goes near the embeddings<a class="h-anchor" href="#personal-data-never-goes-near-the-embeddings" title="Permanent link">#</a></h3>
-<p>Questions about a customer&rsquo;s own coupons, orders and refunds go to live ClickHouse lookups scoped
-to the resolved user, not to the vector index. The index holds public FAQs and offers only
-(9,106 documents across 2,923 merchants in the case study). Personal queries are off by default
-(<code>PERSONAL_QUERIES_ENABLED=false</code>) and only run once an identity is resolved.</p>
-<p>What runs today is narrow on purpose. Queries are fixed templates in the repository. The
-renderer refuses a template with missing placeholders or undeclared parameters, escapes every
-value through one function, and never lets the model touch table or column names. The client
-runs in ClickHouse read-only mode with a row cap.</p>
-<p>The plan also describes an 8-layer guarded SQL fallback for analytical questions: lexical
-pre-filter, sqlglot AST validation, canonical re-emission, a dedicated read-only role, row-level
-security, PII scrubbing, and an audit log. That is a design in <code>docs/PLAN.md</code> and the agentic
-project&rsquo;s plan, not something I&rsquo;d claim is in the running path. The trade-off of templates is
-coverage: a question no template fits gets a handoff, not an answer.</p>
-<h3 id="check-the-claims-not-the-prose">Check the claims, not the prose<a class="h-anchor" href="#check-the-claims-not-the-prose" title="Permanent link">#</a></h3>
-<p>The fact checker does not judge whether an answer is good. It extracts the things a customer acts
-on (amounts, percentages, dates, order and voucher IDs, phone numbers, statuses) and requires
-each to appear in the turn&rsquo;s facts after normalizing Arabic-Indic digits. On failure the model
-gets one regeneration with a critique; if that fails too, the customer gets a minimal factual
-reply and a handoff offer. A separate check makes any 9+ digit phone number or email in an
-answer appear somewhere in the user text, history, sources or tool output.</p>
-<p>This misses wrong claims that contain no number, like a model describing a policy it doesn&rsquo;t
-have. Those still need the grounding gates and a judge in the eval. But numbers are where a
-wrong answer costs a customer money, so that is where I put the deterministic check.</p>
-<div class="admonition warning">
-<p class="admonition-title">Shortcuts must not inherit stale evidence</p>
-<p>Every early return skips retrieval, so the previous turn&rsquo;s offers were still sitting in the
-response. A refusal could ship with an unrelated offer card under it. Each turn now resets
-its evidence first, and refusals always carry none.</p>
-</div>
-<h2 id="testing-and-results">Testing and results<a class="h-anchor" href="#testing-and-results" title="Permanent link">#</a></h2>
-<p>The regression set is <code>eval/queries.json</code>: 225 cases across 20 categories, from offer lookups and
-FAQ answers to prompt injection, gibberish, follow-up memory and hallucination checks. The runner
-exits 0 only when every case passes and 1 otherwise, which is what lets it gate a build.</p>
-<p>The honest numbers come from one run (2026-09-24, <code>phase5_rerun</code>, reported in
-<code>eval/EVALUATION_REPORT.md</code>):</p>
-<ul>
-<li><strong>Retrieval only:</strong> 151 of 172 checked cases, 87.8%.</li>
-<li><strong>Full pipeline:</strong> 64 of 225, 28.4%.</li>
-</ul>
-<p>That gap is the point of the report. Retrieval found the right FAQ in 21 of 24 checked
-<code>faq_direct_answer</code> cases, while the full pipeline answered only 2 of 25 correctly. Prompt
-injection passed 3 of 6 end to end, out of scope 5 of 11, greeting 1 of 8. The weak spots are
-in answering and follow-up handling, not in finding the document. A strict all-must-pass exit code
-on this suite is red today, so I read it per category and treat those categories as open work.</p>
-<p>The newer pipeline has its own checks: 173 pytest tests and a share-weighted CS eval at 100% as of
-the latest pass in <code>docs/STATE.md</code>. That eval has 20 cases, so it tells me the common support
-flows don&rsquo;t regress. It does not tell me the long tail is solved.</p>
-<p>Two caveats. The full-pipeline numbers came from a local 3B model; a stronger generator changes
-them, which is why the gates sit in front of the model and not inside it. And the keyword-based
-pass checks can be fooled by a paraphrase, so a judge with frozen metric definitions now does the
-labeling, and human calibration labels are still pending.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ul>
-<li>Fix the categories where the full pipeline trails retrieval, starting with FAQ direct answers
-  and follow-up memory, since retrieval already finds the right document there.</li>
-<li>Add an expiry check to the evidence gate. The project summary lists expired offers leaking
-  through it as a known weakness.</li>
-<li>Build out the guarded SQL fallback from the plan only after it passes a security review, and
-  keep personal queries on fixed templates until then.</li>
-<li>Turn traced production turns into eval cases, so the suite grows from real failures and not
-  from what I think customers ask.</li>
-</ul>
-<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
     </item>
   </channel>
 </rss>

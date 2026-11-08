@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume | Mohammed Zakaria</title>
+  <meta name="description" content="How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html">
+  <meta property="og:title" content="Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume | Mohammed Zakaria">
+  <meta property="og:description" content="How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume", "description": "How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html", "wordCount": 1538, "keywords": "Data Ingestion, Kafka, Streaming"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Ingestion</span><span class="post-tag">Kafka</span><span class="post-tag">Streaming</span></div>
+        <h1>Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</h1>
+        <p class="post-lede">How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-tools-and-where-ive-used-them">The tools, and where I&rsquo;ve used them</a></li>
+<li><a href="#how-i-choose">How I choose</a></li>
+<li><a href="#kafka-three-settings-i-now-check-first">Kafka: three settings I now check first</a><ul>
+<li><a href="#the-producer-acks-and-keys">The producer: acks and keys</a></li>
+<li><a href="#the-consumer-what-gets-committed">The consumer: what gets committed</a></li>
+<li><a href="#topics-nobody-reads">Topics nobody reads</a></li>
+</ul>
+</li>
+<li><a href="#flume-two-agents-two-channel-choices">Flume: two agents, two channel choices</a></li>
+<li><a href="#nifi-and-rabbitmq-limits-that-only-work-with-confirms">NiFi and RabbitMQ: limits that only work with confirms</a></li>
+<li><a href="#debezium-and-sqoop-two-ways-to-read-a-database">Debezium and Sqoop: two ways to read a database</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), where I practised Kafka, Flume and Sqoop ingestion, plus the portfolio projects and write-ups linked below. The busiest feed in those projects is a flight radar capped at 300 aircraft every 10 seconds, on one broker in Docker Compose. Treat this as a guide to choosing between the tools, built from wiring each of them up and then re-reading my own configs looking for the holes.</p>
+<h2 id="the-tools-and-where-ive-used-them">The tools, and where I&rsquo;ve used them<a class="h-anchor" href="#the-tools-and-where-ive-used-them" title="Permanent link">#</a></h2>
+<p>The first question I ask is not &ldquo;which tool is best&rdquo; but &ldquo;what shape is the source&rdquo;. A database table, a log or HTTP feed, a stream of business events, and a pile of files each pull towards a different tool.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>What it&rsquo;s for</th>
+<th>Where I&rsquo;ve used it</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kafka</td>
+<td>Durable, replayable event log between producers and many consumers</td>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a>, <a href="../articles/fraud-scoring-kafka.html">fraud scoring</a>, <a href="../articles/retail-cdc-debezium.html">retail streaming</a>; NTI internship</td>
+<td>Portfolio; radar ran in Docker</td>
+</tr>
+<tr>
+<td>Flume</td>
+<td>Moving log or HTTP events into Kafka or HDFS through a source, channel and sink</td>
+<td>Flight radar (two agents); NTI internship</td>
+<td>Portfolio, ran in Docker</td>
+</tr>
+<tr>
+<td>Sqoop</td>
+<td>Bulk copy between relational databases and HDFS/Hive</td>
+<td>NTI internship</td>
+<td>See the Sqoop section below</td>
+</tr>
+<tr>
+<td>NiFi</td>
+<td>Visual flows with routing, provenance and back-pressure</td>
+<td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a>, two process groups created by a REST script</td>
+<td>Scaffold, routing never built</td>
+</tr>
+<tr>
+<td>RabbitMQ</td>
+<td>Work queues with per-message routing, TTLs and length limits</td>
+<td>Petroleum platform, 3 exchanges and 8 bounded queues</td>
+<td>Scaffold, hops don&rsquo;t connect</td>
+</tr>
+<tr>
+<td>Debezium</td>
+<td>Change data capture from a database log into Kafka</td>
+<td>Retail streaming, Postgres connector config</td>
+<td>Configured, never registered</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="how-i-choose">How I choose<a class="h-anchor" href="#how-i-choose" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>What is the source?
+ |
+ +-- a relational table, copied in bulk on a schedule
+ |      -&gt; Sqoop on a Hadoop estate; otherwise a scheduled extract (Airflow + SQL)
+ |
+ +-- a relational table, and consumers need every change in order
+ |      -&gt; Debezium into Kafka (needs logical replication on the database)
+ |
+ +-- logs or an HTTP feed that must land in HDFS
+ |      -&gt; Flume (file channel if the data matters)
+ |
+ +-- business events that several consumers read, or that you may replay
+ |      -&gt; Kafka, keyed on whatever must stay in order
+ |
+ +-- tasks for workers, routing by key, &quot;process once then gone&quot;
+ |      -&gt; RabbitMQ with publisher confirms
+ |
+ +-- many small sources, format conversion, and people who want to see the flow
+        -&gt; NiFi, with the flow exported to version control
+</code></pre></div>
+
+<p>The rule underneath: Kafka is a log you can re-read, RabbitMQ is a queue you drain, Flume and Sqoop are movers into Hadoop, and Debezium is how a database becomes a Kafka producer without touching its application code.</p>
+<h2 id="kafka-three-settings-i-now-check-first">Kafka: three settings I now check first<a class="h-anchor" href="#kafka-three-settings-i-now-check-first" title="Permanent link">#</a></h2>
+<h3 id="the-producer-acks-and-keys">The producer: acks and keys<a class="h-anchor" href="#the-producer-acks-and-keys" title="Permanent link">#</a></h3>
+<p>In the retail project the POS producer favours durability:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">producer_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;acks&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;retries&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16384</span><span class="p">,</span>
+    <span class="s1">&#39;linger_ms&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;compression_type&#39;</span><span class="p">:</span> <span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>It keys by <code>transaction_id</code>, and every send waits on <code>future.get(timeout=10)</code>. The fraud project&rsquo;s producer also uses <code>acks='all'</code> with retries. The flight radar is the opposite: its Flume Kafka sink uses <code>acks=1</code> on a single broker with replication factor 1, three partitions. For a radar that refreshes every 10 seconds, losing a poll is harmless. For transactions it wouldn&rsquo;t be.</p>
+<p>What I&rsquo;d change: waiting on each send means <code>linger_ms</code> has nothing to batch, because the next record isn&rsquo;t sent until the previous one is acknowledged. At 2-5 simulated transactions a second it costs nothing. At real volume I&rsquo;d use async sends with a delivery callback. And the key decides ordering: keying by transaction ID gives up per-store order, so if I needed ordered per-store aggregates, <code>store_id</code> would be the key.</p>
+<h3 id="the-consumer-what-gets-committed">The consumer: what gets committed<a class="h-anchor" href="#the-consumer-what-gets-committed" title="Permanent link">#</a></h3>
+<p>This is the fraud consumer&rsquo;s setup and loop, trimmed:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">consumer</span> <span class="o">=</span> <span class="n">KafkaConsumer</span><span class="p">(</span>
+    <span class="n">config</span><span class="o">.</span><span class="n">KAFKA_TOPIC_TRANSACTIONS</span><span class="p">,</span>
+    <span class="n">group_id</span><span class="o">=</span><span class="s1">&#39;fraud_detection_group&#39;</span><span class="p">,</span>
+    <span class="n">auto_offset_reset</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span>
+    <span class="n">enable_auto_commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">auto_commit_interval_ms</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+<span class="c1"># in the poll loop</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="o">...</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">consumer</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Re-reading it, three things stand out. Auto-commit is on and the loop also commits by hand, so two mechanisms decide the offset. A message that throws is logged and then committed past, so a failure is dropped, not retried: that&rsquo;s at-most-once for the messages that matter most. And <code>latest</code> means a new consumer group skips everything already in the topic. Today I&rsquo;d turn auto-commit off, commit only after a successful write, and send failures to a dead-letter topic.</p>
+<h3 id="topics-nobody-reads">Topics nobody reads<a class="h-anchor" href="#topics-nobody-reads" title="Permanent link">#</a></h3>
+<p>The fraud project publishes alerts to <code>fraud_alerts</code>; nothing consumes it. The retail Debezium connector would write to <code>inventory</code> and friends; no job subscribes. Before I add a topic now, I write down its consumer.</p>
+<h2 id="flume-two-agents-two-channel-choices">Flume: two agents, two channel choices<a class="h-anchor" href="#flume-two-agents-two-channel-choices" title="Permanent link">#</a></h2>
+<p>The flight radar is my Flume portfolio project. The Python poller POSTs to a Flume HTTP source instead of talking to Kafka, and a second agent drains Kafka into HDFS. The agents are deliberately different:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Source</th>
+<th>Channel</th>
+<th>Sink</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>producer</td>
+<td>HTTP, port 44444</td>
+<td>memory, capacity 10,000</td>
+<td>Kafka, <code>acks=1</code></td>
+</tr>
+<tr>
+<td>consumer</td>
+<td>Kafka, batch 1,000</td>
+<td>file, capacity 100,000</td>
+<td>HDFS, roll every 120 s or 10,000 events</td>
+</tr>
+</tbody>
+</table></div>
+<p>The channel is the whole durability story in Flume. A memory channel loses what it holds if the agent dies; a file channel survives a restart. So only the archive side of my radar is durable. On the way in there are three places to lose data: the poller doesn&rsquo;t retry a failed POST, the memory channel, and <code>acks=1</code> on one unreplicated broker.</p>
+<p>Would I use Flume again? On an existing Hadoop estate that needs files in HDFS, yes. For a new pipeline I&rsquo;d let the producer write to Kafka directly with retries, and keep Flume, or Kafka Connect, only for the HDFS sink.</p>
+<h2 id="nifi-and-rabbitmq-limits-that-only-work-with-confirms">NiFi and RabbitMQ: limits that only work with confirms<a class="h-anchor" href="#nifi-and-rabbitmq-limits-that-only-work-with-confirms" title="Permanent link">#</a></h2>
+<p>The petroleum platform puts RabbitMQ in front of everything so a fast replay can&rsquo;t overwhelm a consumer. The queue arguments show the idea:</p>
+<div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
+<span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;x-message-ttl&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">86400000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-max-length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-overflow&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reject-publish&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><code>reject-publish</code> refuses new messages when the queue is full instead of silently dropping the oldest. But that only helps a producer that uses publisher confirms, and mine call <code>basic_publish</code> on a plain channel, so a refused message looks like a success. The definitions file is also mounted but never loaded, so the queues exist only if a client declares them. And when I mapped every queue to its publisher and consumer, nothing moved messages from the <code>raw</code> queues to the <code>validated</code> ones.</p>
+<p>NiFi was meant to be that validation hop. A script calls the NiFi REST API to create two process groups (<code>ConsumeAMQP</code>, <code>ValidateJson</code>, <code>UpdateAttribute</code> on the sensor side) and then prints that routing should be configured in the UI. That routing was never built or exported, and the script hasn&rsquo;t been tested against a live NiFi 2.0. The lesson is about NiFi in general: a flow that lives only on the canvas disappears with <code>docker compose down -v</code>. If I use NiFi, the flow goes into version control as an exported definition from day one.</p>
+<h2 id="debezium-and-sqoop-two-ways-to-read-a-database">Debezium and Sqoop: two ways to read a database<a class="h-anchor" href="#debezium-and-sqoop-two-ways-to-read-a-database" title="Permanent link">#</a></h2>
+<p>Sqoop is the batch answer: copy a table, or the rows changed since a last value, into HDFS or Hive on a schedule. I practised it during my NTI internship, where it was the database leg of the Hadoop ingestion stack.</p>
+<p>Debezium is the streaming answer, and my retail config shows both what I understood and what I missed. It uses the built-in <code>pgoutput</code> plugin, an initial snapshot, a filtered publication, and a <code>RegexRouter</code> that shortens topic names to the table name. Then, from the published review of my own project:</p>
+<ul>
+<li>the connector JSON is mounted into the container, but nothing POSTs it to the Connect REST API, so it is never registered;</li>
+<li>Postgres doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> needs;</li>
+<li>the config uses <code>database.server.name</code> where Debezium 2.x expects <code>topic.prefix</code>;</li>
+<li>short topic names would collide if a second schema had a table with the same name.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Configured versus running</p>
+<p>The retail repo has a configured Debezium Postgres connector; it doesn&rsquo;t yet run CDC end to end. Those are different claims, and the second one needs a registered connector, logical replication on, and a consumer that MERGEs the changes into a table.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Re-run the flight radar with the producer writing straight to Kafka, <code>acks=all</code>, and a replication factor above 1, then count what reaches HDFS against what was polled.</li>
+<li>Fix the fraud consumer&rsquo;s commit logic and add a dead-letter topic.</li>
+<li>Make the retail CDC real: logical replication on, <code>topic.prefix</code>, a <code>curl</code> registration step, and a Spark job that merges <code>inventory</code> changes into a Delta table.</li>
+<li>Add publisher confirms to the petroleum producers and export one NiFi flow.</li>
+</ol>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html" data-title="Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="one-power-bi-model.html"><small>← Newer</small><b>One BI model, many sites: how I design Power BI models for multi-site data</b></a>
+          <a class="post-pager-next" href="gdpr-native-chain-analytics.html"><small>Older →</small><b>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

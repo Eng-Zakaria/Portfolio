@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Airflow patterns that survive a rerun: idempotency, watermarks, SCD2 | Mohammed Zakaria</title>
+  <meta name="description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html">
+  <meta property="og:title" content="Airflow patterns that survive a rerun: idempotency, watermarks, SCD2 | Mohammed Zakaria">
+  <meta property="og:description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Airflow patterns that survive a rerun: idempotency, watermarks, SCD2", "description": "How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html", "wordCount": 1664, "keywords": "Airflow, Data Pipelines, Data Quality"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Airflow</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Data Quality</span></div>
+        <h1>Airflow patterns that survive a rerun: idempotency, watermarks, SCD2</h1>
+        <p class="post-lede">How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#when-i-reach-for-airflow-and-when-i-dont">When I reach for Airflow, and when I don&rsquo;t</a></li>
+<li><a href="#pattern-1-a-rerun-should-change-nothing">Pattern 1: a rerun should change nothing</a></li>
+<li><a href="#pattern-2-a-watermark-that-is-allowed-to-be-wrong">Pattern 2: a watermark that is allowed to be wrong</a></li>
+<li><a href="#pattern-3-scd2-with-a-content-hash">Pattern 3: SCD2 with a content hash</a></li>
+<li><a href="#mistakes-i-made">Mistakes I made</a></li>
+<li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Airflow is the orchestrator I reach for most, and the one I have made the most mistakes with. Evidence: drawn from the price-integrity DAGs I run at Waffarha (production), the client clinic warehouse at Nexlify (production, no code I can show), an archived prototype of the Waffarha assistant&rsquo;s ingestion, and two portfolio projects. Every snippet below is copied from those files, trimmed, with no hostnames or data.</p>
+<p>Here is what each one is, so nothing below reads as bigger than it is:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>DAGs</th>
+<th>Where</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>waffarha_reachability_audit</code> (weekly) + <code>waffarha_price_integrity</code> (daily)</td>
+<td>Waffarha partner price check</td>
+<td>Production (<a href="../articles/partner-price-integrity-check.html">write-up</a>)</td>
+</tr>
+<tr>
+<td>Clinic intake into a star-schema warehouse</td>
+<td>Nexlify client, 10+ clinics</td>
+<td>Production, client-owned code (<a href="../articles/one-warehouse-ten-clinics.html">write-up</a>)</td>
+</tr>
+<tr>
+<td><code>waffarha_mysql_offers_sync</code>, <code>pdf_kb_ingestion</code></td>
+<td>Early assistant prototype, now in an archive folder</td>
+<td>Dev only: <code>airflow standalone</code>, a testing database</td>
+</tr>
+<tr>
+<td>7 DAGs with watermarks, assets, mapped tasks</td>
+<td>Estates lakehouse</td>
+<td>Portfolio, synthetic data (<a href="../articles/estates-lakehouse-zero-loss.html">write-up</a>)</td>
+</tr>
+<tr>
+<td><code>component_pipeline_dag.py</code></td>
+<td>Component ingest</td>
+<td>Skeleton, never deployed (<a href="../articles/config-not-code-ingestion.html">write-up</a>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="when-i-reach-for-airflow-and-when-i-dont">When I reach for Airflow, and when I don&rsquo;t<a class="h-anchor" href="#when-i-reach-for-airflow-and-when-i-dont" title="Permanent link">#</a></h2>
+<p>I use Airflow when a job has more than one stage, a stage can fail on its own, and someone needs to see which one failed. The price check is the clearest case. Seven tasks run in a line: create a run directory, load the weekly triage report, ingest, scrape, match and compare, report, log a summary. The scrape is the fragile part, so it gets its own 4-hour <code>execution_timeout</code>. The daily DAG has 2 retries with a 15-minute delay and <code>max_active_runs=1</code>.</p>
+<p>I don&rsquo;t use it everywhere. The nightly recommender at Waffarha is one job with one output, so it runs as a thread inside its FastAPI service that sleeps until midnight Cairo time, with a &ldquo;run now&rdquo; button that refuses to start while a run is in flight (<a href="../articles/fail-open-nightly-recommender.html">write-up</a>). Adding Airflow there would mean a second system to keep alive for one task.</p>
+<p>The prototype&rsquo;s API sync went the same way. Its docstring says it runs standalone, &ldquo;no Airflow needed for now&rdquo;, and that wrapping it later is a thin DAG file around one function. I still like that rule: keep the logic in a plain module, and let the DAG be a few lines that call it.</p>
+<h2 id="pattern-1-a-rerun-should-change-nothing">Pattern 1: a rerun should change nothing<a class="h-anchor" href="#pattern-1-a-rerun-should-change-nothing" title="Permanent link">#</a></h2>
+<p>Retries, backfills and a tired human pressing &ldquo;Clear&rdquo; all rerun tasks. I design for that first.</p>
+<p>In the price check, every output goes into a directory named after the Airflow run, so a retry of the same run writes to the same place instead of starting a second copy:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">create_run_dir</span><span class="p">(</span><span class="o">**</span><span class="n">context</span><span class="p">):</span>
+    <span class="n">run_id</span> <span class="o">=</span> <span class="n">context</span><span class="p">[</span><span class="s2">&quot;dag_run&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">run_id</span>
+    <span class="n">run_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">base_dir</span><span class="p">)</span> <span class="o">/</span> <span class="n">run_id</span>
+    <span class="n">run_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">run_dir</span> <span class="o">/</span> <span class="s2">&quot;reports&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">(</span><span class="n">run_dir</span> <span class="o">/</span> <span class="s2">&quot;scraped_data&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">run_dir</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Inside that directory, each scraped partner gets its own checkpoint file, and a rerun skips partners that already have one. Failed partners are not checkpointed, so a retry picks them up.</p>
+<p>In the estates lakehouse, idempotency lives one level down. Bronze hashes each landing file with SHA-256 and skips it if that source and hash are already in the manifest, and the Airflow task only re-runs silver when bronze actually loaded something:</p>
+<div class="hl"><pre><span></span><code><span class="n">dest</span><span class="p">,</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">load_bronze</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">root</span> <span class="o">/</span> <span class="s2">&quot;bronze&quot;</span><span class="p">)</span>
+<span class="n">silver_n</span><span class="p">,</span> <span class="n">quar_n</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">entry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">&quot;skipped&quot;</span><span class="p">:</span>
+    <span class="n">silver_n</span><span class="p">,</span> <span class="n">quar_n</span> <span class="o">=</span> <span class="n">_run_silver_one</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">root</span><span class="p">,</span> <span class="n">truth</span> <span class="o">/</span> <span class="s2">&quot;buildings.parquet&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>A second full ingest run reported all eight bronze files as skipped and the silver counts didn&rsquo;t move. That is the behaviour I want from every task: the second run is boring.</p>
+<h2 id="pattern-2-a-watermark-that-is-allowed-to-be-wrong">Pattern 2: a watermark that is allowed to be wrong<a class="h-anchor" href="#pattern-2-a-watermark-that-is-allowed-to-be-wrong" title="Permanent link">#</a></h2>
+<p>The hourly CAFM work-order DAG in the lakehouse only processes files it hasn&rsquo;t seen. Its watermark is not a timestamp. It is the set of file names already processed, stored as JSON:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">new_files_since</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">watermark</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">landing</span><span class="p">:</span> <span class="n">Path</span> <span class="o">=</span> <span class="n">LANDING</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">watermark</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;files&quot;</span><span class="p">,</span> <span class="p">[]))</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">list_landing_files</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">landing</span><span class="p">)</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">]</span>
+</code></pre></div>
+
+<p>I chose names over a &ldquo;last modified&rdquo; time because late files are normal and clocks lie. A file that lands late with an old timestamp is still a new name.</p>
+<p>The more important choice is that the watermark is not the only defence. The DAG&rsquo;s own docstring says it: bronze checksums make reruns safe &ldquo;even if the watermark lags&rdquo;. The watermark is saved after the ingest loop, so a crash in the middle leaves it behind, and the next run re-offers files that bronze then skips. A watermark that can only be too old, never too new, plus an idempotent load, means a crash costs time, not data.</p>
+<p>The meter DAG doesn&rsquo;t use a watermark at all. It sweeps the whole landing zone every run and lets checksums skip what&rsquo;s loaded, with one mapped task per file. Downstream, <code>transform_and_test</code> is scheduled on four silver assets, so dbt runs when all four have fresh events, and a dbt failure blocks publishing but never the ingest DAGs.</p>
+<h2 id="pattern-3-scd2-with-a-content-hash">Pattern 3: SCD2 with a content hash<a class="h-anchor" href="#pattern-3-scd2-with-a-content-hash" title="Permanent link">#</a></h2>
+<p>The assistant prototype synced public offers into a vector index. I didn&rsquo;t want to re-embed every offer every 15 minutes, and I wanted to answer &ldquo;what happened to offer X?&rdquo; after it expired. So the sync keeps an SCD2 history in SQLite and only re-embeds when something changed.</p>
+<p>Change detection is a hash over the fields that matter, not over the whole row, so a field that changes every sync doesn&rsquo;t create a fake version:</p>
+<div class="hl"><pre><span></span><code><span class="n">CONTENT_FIELDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;title_en&quot;</span><span class="p">,</span> <span class="s2">&quot;title_ar&quot;</span><span class="p">,</span> <span class="s2">&quot;description_en&quot;</span><span class="p">,</span> <span class="s2">&quot;description_ar&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;price&quot;</span><span class="p">,</span> <span class="s2">&quot;original_price&quot;</span><span class="p">,</span> <span class="s2">&quot;discount_pct&quot;</span><span class="p">,</span> <span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="s2">&quot;merchant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;valid_from&quot;</span><span class="p">,</span> <span class="s2">&quot;valid_to&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_content_hash</span><span class="p">(</span><span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">CONTENT_FIELDS</span><span class="p">},</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+</code></pre></div>
+
+<p>When the hash or the derived status (active, upcoming, expired) differs from the current row, the old row is closed and a new one inserted. Nothing is overwritten:</p>
+<div class="hl"><pre><span></span><code><span class="k">elif</span> <span class="n">cur</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new_hash</span> <span class="ow">or</span> <span class="n">cur</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status</span><span class="p">:</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE record_versions SET is_current=0, system_valid_to=? WHERE version_id=?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">now_iso</span><span class="p">,</span> <span class="n">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="p">)</span>
+    <span class="n">_insert_version</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">new_hash</span><span class="p">,</span> <span class="n">now_iso</span><span class="p">)</span>
+</code></pre></div>
+
+<p>An offer that disappears from the source gets a &ldquo;deleted&rdquo; version instead of vanishing. If the sync reports zero new, updated and deleted rows, the indexing step returns early and embeds nothing.</p>
+<div class="admonition note">
+<p class="admonition-title">What this was</p>
+<p>These DAGs ran in a single-container <code>airflow standalone</code> setup with a SQLite metadata database, against a testing database. They live in an archive folder now. The consolidated assistant repository has no DAGs in it, so I don&rsquo;t present this as production SCD2.</p>
+</div>
+<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
+<p>Reading these DAGs again for this article turned up more than I expected.</p>
+<ul>
+<li><strong>The SCD2 delete never stops.</strong> The &ldquo;deleted&rdquo; version is inserted with <code>is_current=1</code>. On the next sync the offer is still missing, so it is still &ldquo;current but not seen&rdquo;, and it gets closed and deleted again. Every 15 minutes, one more deleted row per missing offer. The fix is to skip rows whose current status is already <code>deleted</code>.</li>
+<li><strong>The source view couldn&rsquo;t feed the history.</strong> The MySQL view had no expiry dates, prices or Arabic titles; the sync file lists them as known gaps. With no <code>valid_to</code>, every offer derives as &ldquo;active&rdquo;, so the expiry part of the SCD2 logic never fired on that source.</li>
+<li><strong>XCom keys that nobody pushed.</strong> In the repo copy of the daily price DAG, tasks pull <code>xcom_pull(key="run_dir", task_ids="create_run_dir")</code>, but <code>create_run_dir</code> returns its path, which Airflow stores under <code>return_value</code>. The weekly DAG pulls from <code>task_ids="run_audit"</code>, while the task is named <code>run_reachability_audit</code>. The first fails loudly. The second is worse: the copy step quietly returns <code>None</code>, and the daily DAG can go on reading an old triage file. A DAG-level test that runs the handoff, not just a DagBag import, would catch both.</li>
+<li><strong>A file as the contract between two DAGs.</strong> The weekly audit hands the daily run a JSON file at a shared path. Nothing records how old it is. An Airflow asset, or at least a freshness check on the file, would make that dependency visible.</li>
+<li><strong>Alerting that stops at email.</strong> The project&rsquo;s gap analysis notes that the only alert is <code>email_on_failure</code>, with no SLA on the 4-hour scrape. The lakehouse DAGs are better here: shared defaults with exponential backoff, a 30-minute timeout, and callbacks that write every run to <code>ops.pipeline_runs</code>.</li>
+<li><strong>Two schedulers for one job.</strong> The price-check repo also ships Kubernetes CronJobs for the same stages, and the component skeleton has both a cron command and a DAG that don&rsquo;t share code. Two paths drift. One scheduler per project, and delete the other.</li>
+</ul>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>What I&rsquo;d use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One task, one output, owned by one service</td>
+<td>An in-process scheduler or cron, like the recommender</td>
+</tr>
+<tr>
+<td>A single container job with no inter-stage visibility needed</td>
+<td>A Kubernetes CronJob with <code>concurrencyPolicy: Forbid</code></td>
+</tr>
+<tr>
+<td>Multi-stage batch, retries per stage, people reading the UI</td>
+<td>Airflow</td>
+</tr>
+<tr>
+<td>Transforms that are mostly SQL with tests</td>
+<td>dbt, triggered by Airflow, as in <code>transform_and_test</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Airflow&rsquo;s value for me is per-stage retries and a UI someone else can read at 3 a.m. If a job doesn&rsquo;t need those, I leave Airflow out.</p>
+<p>I wrote a shorter, more general take on this, also on Medium: <a href="https://eng-zakaria.medium.com/airflow-orchestration-best-practices-lessons-from-building-production-grade-data-pipelines-0dc2a4d829e9">Airflow Orchestration Best Practices</a>.</p>
+<p><em>If you have a cleaner way to hand state between two DAGs on different schedules, I&rsquo;d like to hear it. <a href="../index.html#contact">Get in touch</a>.</em></p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html" data-title="Airflow patterns that survive a rerun: idempotency, watermarks, SCD2">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="aquawatch-iot-alerts.html"><small>← Newer</small><b>AquaWatch: sensor alerts with cooldown logic</b></a>
+          <a class="post-pager-next" href="agent-that-cant-go-rogue.html"><small>Older →</small><b>Waffy: a support agent that can&#x27;t go rogue</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>BIM automation for data people: pyRevit, Revit API, Dynamo | Mohammed Zakaria</title>
+  <meta name="description" content="How I treat a Revit model like a database: collectors as queries, parameters as columns, validation as data quality. Patterns and mistakes from two pyRevit portfolio tools, a C# add-in, a Dynamo graph and the IFC/COBie work in my estates lakehouse.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html">
+  <meta property="og:title" content="BIM automation for data people: pyRevit, Revit API, Dynamo | Mohammed Zakaria">
+  <meta property="og:description" content="How I treat a Revit model like a database: collectors as queries, parameters as columns, validation as data quality. Patterns and mistakes from two pyRevit portfolio tools, a C# add-in, a Dynamo graph and the IFC/COBie work in my estates lakehouse.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "BIM automation for data people: pyRevit, Revit API, Dynamo", "description": "How I treat a Revit model like a database: collectors as queries, parameters as columns, validation as data quality. Patterns and mistakes from two pyRevit portfolio tools, a C# add-in, a Dynamo graph and the IFC/COBie work in my estates lakehouse.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html", "wordCount": 1949, "keywords": "BIM, Python, Automation"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">BIM</span><span class="post-tag">Python</span><span class="post-tag">Automation</span></div>
+        <h1>BIM automation for data people: pyRevit, Revit API, Dynamo</h1>
+        <p class="post-lede">How I treat a Revit model like a database: collectors as queries, parameters as columns, validation as data quality. Patterns and mistakes from two pyRevit portfolio tools, a C# add-in, a Dynamo graph and the IFC/COBie work in my estates lakehouse.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#a-revit-model-is-a-database">A Revit model is a database</a></li>
+<li><a href="#the-tools-and-when-i-reach-for-each">The tools, and when I reach for each</a></li>
+<li><a href="#pattern-1-turn-elements-into-plain-dicts-at-the-boundary">Pattern 1: turn elements into plain dicts at the boundary</a></li>
+<li><a href="#pattern-2-validation-is-data-quality-with-the-same-trade-offs">Pattern 2: validation is data quality, with the same trade-offs</a></li>
+<li><a href="#pattern-3-one-transaction-per-element-failures-logged">Pattern 3: one transaction per element, failures logged</a></li>
+<li><a href="#mistakes-i-made-ironpython-27-and-the-revit-api">Mistakes I made: IronPython 2.7 and the Revit API</a></li>
+<li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
+<li><a href="#where-this-stands">Where this stands</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: two portfolio BIM tools (an <a href="../articles/parametric-interiors-boq.html">interiors generator</a> that built nine Revit models from JSON, and a <a href="../articles/revit-model-health-score.html">model health auditor</a> that has never run on a live model), plus the IFC and COBie projects in my estates lakehouse and the <a href="../articles/estates-warehouse-governed.html">estates warehouse</a>. These projects use synthetic or demo data.</p>
+<p>I&rsquo;m a data engineer, not an architect. I came to Revit because the problems inside it are ones I already knew: missing values, inconsistent categories, numbers that drift between two systems. This guide is about how I approach BIM automation with a data engineer&rsquo;s habits, what I got wrong, and when I reach for which tool.</p>
+<h2 id="a-revit-model-is-a-database">A Revit model is a database<a class="h-anchor" href="#a-revit-model-is-a-database" title="Permanent link">#</a></h2>
+<p>The mental model that made the Revit API click for me:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Revit concept</th>
+<th>Data engineering equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Element (wall, door, chair)</td>
+<td>Row</td>
+</tr>
+<tr>
+<td>Category (Walls, Furniture)</td>
+<td>Table</td>
+</tr>
+<tr>
+<td>Parameter (&ldquo;Fire Rating&rdquo;, &ldquo;Price&rdquo;)</td>
+<td>Column</td>
+</tr>
+<tr>
+<td>Type vs instance parameter</td>
+<td>Dimension attribute vs fact attribute</td>
+</tr>
+<tr>
+<td><code>FilteredElementCollector</code></td>
+<td><code>SELECT ... WHERE</code></td>
+</tr>
+<tr>
+<td><code>Transaction</code> / <code>TransactionGroup</code></td>
+<td>Database transaction / batch</td>
+</tr>
+<tr>
+<td>Model checks</td>
+<td>Data quality rules</td>
+</tr>
+<tr>
+<td>IFC property set</td>
+<td>Entity-attribute-value table</td>
+</tr>
+</tbody>
+</table></div>
+<p>Once you see it this way, most BIM automation is ETL. You query elements, turn them into records, check them against rules, and write a few values back inside a transaction. The two differences that matter are that the &ldquo;database&rdquo; only exists inside a running Revit process, and that its query language is a .NET API.</p>
+<h2 id="the-tools-and-when-i-reach-for-each">The tools, and when I reach for each<a class="h-anchor" href="#the-tools-and-when-i-reach-for-each" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>                 needs live Revit?   iterate speed   who edits it
+pyRevit script   yes                 fast            me (Python)
+C# add-in        yes (or headless)   slow            me (compiled)
+Dynamo graph     yes                 medium          a BIM team (visual)
+ifcopenshell     no                  fast            me (CPython)
+</code></pre></div>
+
+<p><strong>pyRevit</strong> is my default. It adds ribbon buttons to Revit and runs a Python script against the open document. Both of my BIM tools are pyRevit extensions. In the interiors project, <code>pyrevit run</code> opened a template, built each project from its JSON spec and saved a <code>.rvt</code>. Nine of ten specs have a Revit build behind them, and every build log ends with <code>"errors": []</code>.</p>
+<p><strong>C#</strong> is for when the code has to run where nobody can click a dialog: Revit Batch Processor or Design Automation. I wrote <code>Interiors.Batch</code> (net48) for that. <code>ResizeChairsCmd</code> is complete in code: it finds furniture whose family name matches a filter, duplicates each chair type once, sets Width and Depth, and swaps the instances. <code>BatchBuildCmd</code> is a skeleton. Its own comment says it &ldquo;validates + logs the plan&rdquo; but &ldquo;does not create elements yet&rdquo;. CI doesn&rsquo;t build the C# project, and the repo has no log of either command running inside Revit.</p>
+<p><strong>Dynamo</strong> is for when a BIM team, not a developer, should own the logic. I&rsquo;ve written two graphs: a furniture resize graph that reads a JSON plan, and a fire-rating consistency sample for the health auditor. Neither has a recorded run in a live Revit session. The resize plan they consume was produced headless: 14 updates and 22 skips across the first five specs.</p>
+<p><strong>ifcopenshell</strong> is what I use when I don&rsquo;t need Revit at all. In the interiors project, the IFC4 files for all ten specs were written straight from the JSON with ifcopenshell, not exported from Revit. In the estates lakehouse, an IFC file goes to ten Parquet tables with no Revit anywhere.</p>
+<p><strong>WPF</strong> is behind the health auditor&rsquo;s six-tab dashboard, built in code through <code>clr.AddReference('PresentationFramework')</code> with no XAML. That auditor has never run, so the dashboard has never been on screen.</p>
+<h2 id="pattern-1-turn-elements-into-plain-dicts-at-the-boundary">Pattern 1: turn elements into plain dicts at the boundary<a class="h-anchor" href="#pattern-1-turn-elements-into-plain-dicts-at-the-boundary" title="Permanent link">#</a></h2>
+<p>The most useful decision I made was to keep Revit objects out of my rules. In the interiors toolkit, one function converts an element into the plain dict that the audit and BOQ modules use. Every field is read defensively:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">element_to_dict</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a Revit element to the plain dict used by audit/BOQ core.</span>
+
+<span class="sd">    Every field is wrapped in try/except: one corrupt element must never</span>
+<span class="sd">    break a batch of thousands. ...</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="s2">&quot;Unknown&quot;</span><span class="p">,</span> <span class="s2">&quot;family&quot;</span><span class="p">:</span> <span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;?&quot;</span><span class="p">,</span>
+         <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;room&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;host_id&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{},</span>
+         <span class="s2">&quot;point&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;workset&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eid_value</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">Id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+</code></pre></div>
+
+<p>After that line, nothing downstream knows Revit exists. Validation, audit and BOQ grouping work on lists of dicts, so they run under ordinary pytest. The repo has 54 tests in 12 files, and all of them pass on a machine with no Revit. CI runs them on <code>windows-latest</code>.</p>
+<p>This is the same idea as a staging layer in a warehouse. Extract once into a neutral shape, then test the transforms on fixtures.</p>
+<p>The health auditor shows what happens without it. Every check calls the Revit API directly, so none of it can run without Revit, and it has no tests at all. That&rsquo;s the main reason it carries defects I only found by reading the code.</p>
+<h2 id="pattern-2-validation-is-data-quality-with-the-same-trade-offs">Pattern 2: validation is data quality, with the same trade-offs<a class="h-anchor" href="#pattern-2-validation-is-data-quality-with-the-same-trade-offs" title="Permanent link">#</a></h2>
+<p>Model checks are data quality rules with a different vocabulary. The health auditor&rsquo;s parameter check is a profiling rule: group a category by value, call the most common value &ldquo;expected&rdquo;, and flag any group that holds less than 80% of the elements. The interiors audit flags elements with no Manufacturer, Model or Price, or with an invalid price. On the estates side, the COBie validator reads a 19-sheet spec and scores a workbook. The clean synthetic workbook scores 100.0. The seeded one scores 39.0 with 34 blocking and 20 warning issues, and exits 1, so it can gate CI. The loader is idempotent: a second load of the same workbook gives <code>inserted=0 ... unchanged=8</code>.</p>
+<p>The trade-offs are the ones you&rsquo;d expect from data quality work:</p>
+<ul>
+<li><strong>Majority vote is cheap but noisy.</strong> If a parameter splits 60/40, the 80% rule flags every element, majority included. My Dynamo sample adds an optional expected value. That&rsquo;s the better design: explicit rules where the team has a standard, majority vote only as a fallback.</li>
+<li><strong>Format checks are not lookups.</strong> In the estates warehouse, Uniclass is a regex on the code&rsquo;s shape, so <code>Ss_99_99_99</code> passes. The Uniclass mapper in the estates lakehouse goes further (hybrid matching at 97.81% top-1 against 21.49% for fuzzy alone), but it still runs on placeholder tables, because the project doesn&rsquo;t have the official NBS ones yet.</li>
+<li><strong>A single score hides scale.</strong> The auditor&rsquo;s <code>100 - 10×critical - 2×warnings</code> hits zero after ten missing Fire Ratings, whatever the model size. A ratio of findings per checked element is the fix.</li>
+</ul>
+<p>IFC fits the same mould. The estates IFC extractor writes property sets as a long table, one row per element, property set and property:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">by_type</span><span class="p">(</span><span class="s2">&quot;IfcRelDefinesByProperties&quot;</span><span class="p">):</span>
+    <span class="n">defn</span> <span class="o">=</span> <span class="n">rel</span><span class="o">.</span><span class="n">RelatingPropertyDefinition</span>
+    <span class="k">if</span> <span class="n">defn</span> <span class="ow">and</span> <span class="n">defn</span><span class="o">.</span><span class="n">is_a</span><span class="p">(</span><span class="s2">&quot;IfcPropertySet&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">defn</span><span class="o">.</span><span class="n">HasProperties</span> <span class="ow">or</span> <span class="p">[]:</span>
+            <span class="o">...</span>
+            <span class="k">for</span> <span class="n">rel_obj</span> <span class="ow">in</span> <span class="n">rel</span><span class="o">.</span><span class="n">RelatedObjects</span> <span class="ow">or</span> <span class="p">[]:</span>
+                <span class="n">prop_rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;global_id&quot;</span><span class="p">:</span> <span class="n">rel_obj</span><span class="o">.</span><span class="n">GlobalId</span><span class="p">,</span>
+                                  <span class="s2">&quot;pset&quot;</span><span class="p">:</span> <span class="n">defn</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span> <span class="s2">&quot;property&quot;</span><span class="p">:</span> <span class="n">p</span><span class="o">.</span><span class="n">Name</span><span class="p">,</span>
+                                  <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">val</span><span class="p">,</span> <span class="s2">&quot;unit&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+</code></pre></div>
+
+<p>That&rsquo;s an entity-attribute-value table, and anyone who has pivoted one in SQL knows what to do next. Against a synthetic model with planted defects, the QA report found every one, and the extract of 32 spaces and 5 elements took 0.49 s.</p>
+<h2 id="pattern-3-one-transaction-per-element-failures-logged">Pattern 3: one transaction per element, failures logged<a class="h-anchor" href="#pattern-3-one-transaction-per-element-failures-logged" title="Permanent link">#</a></h2>
+<p>Writes go through transactions. In both the pyRevit builder and <code>ResizeChairsCmd</code>, I wrap the whole job in one <code>TransactionGroup</code> and give each element its own <code>Transaction</code> inside a try/except. One bad family rolls back one element and is added to an error list. The batch continues. It&rsquo;s the same as quarantining a bad row instead of failing the load.</p>
+<p>The C# collector reads like a query with a WHERE clause:</p>
+<div class="hl"><pre><span></span><code><span class="n">IList</span><span class="o">&lt;</span><span class="n">Element</span><span class="o">&gt;</span><span class="w"> </span><span class="n">all</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">FilteredElementCollector</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">OfCategory</span><span class="p">(</span><span class="n">BuiltInCategory</span><span class="p">.</span><span class="n">OST_Furniture</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="n">WhereElementIsNotElementType</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="n">ToElements</span><span class="p">();</span>
+</code></pre></div>
+
+<p><code>WhereElementIsNotElementType()</code> matters. Without it you get type definitions mixed in with placed instances, which is like joining a dimension table into your fact table by accident.</p>
+<h2 id="mistakes-i-made-ironpython-27-and-the-revit-api">Mistakes I made: IronPython 2.7 and the Revit API<a class="h-anchor" href="#mistakes-i-made-ironpython-27-and-the-revit-api" title="Permanent link">#</a></h2>
+<p>pyRevit&rsquo;s default engine is IronPython 2.7, not CPython 3. Reading the health auditor&rsquo;s code, I found it would fail before its first check:</p>
+<ul>
+<li><strong>f-strings and <code>os.makedirs(..., exist_ok=True)</code></strong> are Python 3 only. IronPython 2.7 rejects both, and the scripts have no <code>#! python3</code> marker to switch engines.</li>
+<li><strong>Wrong object.</strong> <code>doc.Application.ActiveUIDocument</code> doesn&rsquo;t exist. <code>ActiveUIDocument</code> belongs to <code>UIApplication</code>, not the database <code>Application</code>.</li>
+<li><strong>Unfiltered collector.</strong> <code>GetElementCount()</code> on a collector with no filter isn&rsquo;t allowed. The API wants a filter first.</li>
+<li><strong>Wrong attribute name.</strong> I tested <code>hasattr(family, 'FamilySymbol')</code>, but a family instance exposes <code>Symbol</code>. Because <code>hasattr</code> doesn&rsquo;t raise, the check just never fires. Silent failures like this are the worst kind.</li>
+<li><strong>Braces in templates.</strong> The HTML report fills a template with <code>str.format</code>, and the inline CSS braces make it raise <code>KeyError(' font-family')</code>.</li>
+</ul>
+<p>The interiors toolkit is where I applied the lessons. Its core modules avoid f-strings, dataclasses and pathlib, use only the standard library, and start with <code>from __future__ import print_function, division</code>, so <code>/</code> behaves the same under 2.7 and 3. Revit imports happen lazily inside functions, so the modules import cleanly in tests.</p>
+<p>Version drift in the API itself is the other trap. Revit 2024 made <code>ElementId</code> 64-bit, and <code>.IntegerValue</code> stops working there. So the toolkit reads ids through one helper:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">eid_value</span><span class="p">(</span><span class="n">eid</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">eid</span><span class="o">.</span><span class="n">Value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">eid</span><span class="o">.</span><span class="n">IntegerValue</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+</code></pre></div>
+
+<p>Units are the same story. Revit stores lengths in feet. The Dynamo graph tries <code>DisplayUnitType.DUT_MILLIMETERS</code> (Revit 2021 and earlier), then <code>UnitTypeId.Millimeters</code> (2022 and later), then falls back to dividing by 304.8.</p>
+<div class="admonition note">
+<p class="admonition-title">Spec versus model</p>
+<p>The interiors BOQ ($156,733 at demo prices, across nine projects) is built from the JSON specs, not read back from the saved models. It proves the spec is consistent. The Revit build logs show the same element counts, but the project doesn&rsquo;t yet diff a model-derived BOQ against the spec one. In data terms, I reconciled counts, not values.</p>
+</div>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Don&rsquo;t need live geometry or views?</strong> Skip Revit and work on IFC with ifcopenshell. It runs in CPython, tests are easy, and CI needs no licence.</li>
+<li><strong>Running unattended on many models?</strong> Use a compiled C# add-in that reads settings from environment variables and never opens a dialog. <code>ResizeChairsCmd</code> does this. Mine still needs a real build against <code>RevitAPI.dll</code> and a run.</li>
+<li><strong>A BIM team will maintain it?</strong> Dynamo, with the rules in a JSON plan rather than in node defaults.</li>
+<li><strong>Prototyping a check?</strong> pyRevit, but with the extract-to-dicts boundary from day one, and with one engine chosen on purpose.</li>
+</ul>
+<h2 id="where-this-stands">Where this stands<a class="h-anchor" href="#where-this-stands" title="Permanent link">#</a></h2>
+<ul>
+<li>Interiors toolkit: portfolio. Nine Revit builds, IFC4 for all ten specs, 54 passing tests, demo prices.</li>
+<li>Health auditor: portfolio, never run on a live model. The defects above block a first run.</li>
+<li>C# add-in: <code>ResizeChairsCmd</code> complete in code, <code>BatchBuildCmd</code> a skeleton, no recorded Revit run.</li>
+<li>Dynamo graphs: authored, no recorded live run.</li>
+<li>Estates IFC and COBie work: portfolio, synthetic data, with acceptance docs and tests (6 for IFC, 17 for COBie).</li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html" data-title="BIM automation for data people: pyRevit, Revit API, Dynamo">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="brand-radar-connector-registry.html"><small>← Newer</small><b>Brand radar: one file per source and a connector registry</b></a>
+          <a class="post-pager-next" href="bilingual-rag-retrieval-hit-rate.html"><small>Older →</small><b>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

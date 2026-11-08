@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>My data quality toolkit: Great Expectations, dbt tests, contracts, reconciliation | Mohammed Zakaria</title>
+  <meta name="description" content="The checks I put into a pipeline and where each one sits: ingest gates, quarantine and count reconciliation, declarative YAML checks run on Great Expectations and DuckDB, dbt tests and contracts, change detection, and business-rule controls in production. With real snippets and the gaps my own runs exposed.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html">
+  <meta property="og:title" content="My data quality toolkit: Great Expectations, dbt tests, contracts, reconciliation | Mohammed Zakaria">
+  <meta property="og:description" content="The checks I put into a pipeline and where each one sits: ingest gates, quarantine and count reconciliation, declarative YAML checks run on Great Expectations and DuckDB, dbt tests and contracts, change detection, and business-rule controls in production. With real snippets and the gaps my own runs exposed.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "My data quality toolkit: Great Expectations, dbt tests, contracts, reconciliation", "description": "The checks I put into a pipeline and where each one sits: ingest gates, quarantine and count reconciliation, declarative YAML checks run on Great Expectations and DuckDB, dbt tests and contracts, change detection, and business-rule controls in production. With real snippets and the gaps my own runs exposed.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html", "wordCount": 1775, "keywords": "Data Quality, Great Expectations, dbt"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Quality</span><span class="post-tag">Great Expectations</span><span class="post-tag">dbt</span></div>
+        <h1>My data quality toolkit: Great Expectations, dbt tests, contracts, reconciliation</h1>
+        <p class="post-lede">The checks I put into a pipeline and where each one sits: ingest gates, quarantine and count reconciliation, declarative YAML checks run on Great Expectations and DuckDB, dbt tests and contracts, change detection, and business-rule controls in production. With real snippets and the gaps my own runs exposed.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#where-each-check-sits">Where each check sits</a></li>
+<li><a href="#gate-at-the-door">Gate at the door</a></li>
+<li><a href="#quarantine-then-prove-nothing-went-missing">Quarantine, then prove nothing went missing</a></li>
+<li><a href="#declarative-checks-yaml-in-great-expectations-and-sql-out">Declarative checks: YAML in, Great Expectations and SQL out</a></li>
+<li><a href="#dbt-tests-and-contracts">dbt tests and contracts</a></li>
+<li><a href="#change-detection-and-history">Change detection and history</a></li>
+<li><a href="#business-rules-valid-is-not-the-same-as-right">Business rules: valid is not the same as right</a></li>
+<li><a href="#mistakes-my-own-runs-exposed">Mistakes my own runs exposed</a></li>
+<li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Most bad numbers I have seen were not caused by a broken pipeline. They came from a pipeline that ran fine and quietly loaded something wrong. My data quality work is about making that hard: every row accounted for, every rule written down, and a check that fails loudly when a source changes. <strong>Evidence:</strong> production controls at Waffarha (a price-integrity check, an eval suite that gates builds, an audited PII redaction), a client clinic ETL, and two portfolio projects on synthetic data: an estates lakehouse with Great Expectations, dbt tests and contracts, and a component-ingest scaffold. Status is marked per project below.</p>
+<h2 id="where-each-check-sits">Where each check sits<a class="h-anchor" href="#where-each-check-sits" title="Permanent link">#</a></h2>
+<p>I don&rsquo;t pick one tool. I put a different kind of check at each hand-off, because each one catches a different failure.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it catches</th>
+<th>How I build it</th>
+<th>Where</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingest gate</td>
+<td>A source changed shape</td>
+<td>Null-rate and zero-record checks, schema compare</td>
+<td>Component ingest; clinic ETL</td>
+<td>Portfolio; client</td>
+</tr>
+<tr>
+<td>Quarantine + reconciliation</td>
+<td>Rows lost or invented</td>
+<td>Reject with a reason; <code>silver + quarantine == bronze</code></td>
+<td>Estates lakehouse</td>
+<td>Portfolio, synthetic</td>
+</tr>
+<tr>
+<td>Declarative checks</td>
+<td>Invalid, duplicate, orphan, late data</td>
+<td>YAML specs run on Great Expectations or DuckDB SQL</td>
+<td>Estates lakehouse</td>
+<td>Portfolio, synthetic</td>
+</tr>
+<tr>
+<td>dbt tests + contracts</td>
+<td>Broken models and changed column types</td>
+<td>Generic, singular and unit tests; enforced contracts</td>
+<td>Estates lakehouse</td>
+<td>Portfolio, synthetic</td>
+</tr>
+<tr>
+<td>Change detection</td>
+<td>Silent updates and deletions</td>
+<td>Content hashes, diff buckets, versioned history</td>
+<td>Waffarha; clinic ETL</td>
+<td>Production; client</td>
+</tr>
+<tr>
+<td>Business rules</td>
+<td>Data that is valid but wrong</td>
+<td>Tolerance bands, eval suites, leak audits</td>
+<td>Waffarha</td>
+<td>Production</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="gate-at-the-door">Gate at the door<a class="h-anchor" href="#gate-at-the-door" title="Permanent link">#</a></h2>
+<p>The cheapest check runs before anything lands. In the component-ingest scaffold (a portfolio project) each scraper ends with a drift gate:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">required_fields</span><span class="p">:</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">required</span><span class="p">))</span>
+    <span class="n">null_rate</span> <span class="o">=</span> <span class="n">missing</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">null_rate</span> <span class="o">&gt;</span> <span class="n">null_rate_threshold</span><span class="p">:</span>   <span class="c1"># default 0.5</span>
+        <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+<p>On the only live run, 7 August 2026, it blocked SparkFun: <code>product_name</code> was null in 64% of 791 records. Nothing reached the landing zone. That is the gate working, and it also means the project has no working live source yet. A null-rate threshold is blunt. It catches a selector that broke completely, not one that now picks up the wrong price. More in <a href="../articles/config-not-code-ingestion.html">Config, not code</a>.</p>
+<p>The clinic ETL (paying client) has a preflight for the file&rsquo;s 29 required columns, then a schema check that compares live <code>information_schema.columns</code> with the tables and columns the script depends on. That one logs a warning and carries on, which is a choice I come back to below. See <a href="../articles/six-stage-client-etl.html">the six-stage ETL</a>.</p>
+<h2 id="quarantine-then-prove-nothing-went-missing">Quarantine, then prove nothing went missing<a class="h-anchor" href="#quarantine-then-prove-nothing-went-missing" title="Permanent link">#</a></h2>
+<p>In the estates lakehouse, silver code may only drop a row by moving it to quarantine with a reason string. That makes loss a matter of addition:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reconcile_counts</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">bronze</span><span class="p">,</span> <span class="n">silver</span><span class="p">,</span> <span class="n">quarantine</span><span class="p">,</span> <span class="n">grain</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">):</span>
+    <span class="n">ok_raw</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="n">ok_sq</span> <span class="o">=</span> <span class="n">silver</span> <span class="o">+</span> <span class="n">quarantine</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;unexplained&quot;</span><span class="p">:</span> <span class="n">bronze</span> <span class="o">-</span> <span class="n">silver</span> <span class="o">-</span> <span class="n">quarantine</span><span class="p">,</span>
+            <span class="s2">&quot;pass&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ok_raw</span> <span class="ow">and</span> <span class="n">ok_sq</span><span class="p">)}</span>
+</code></pre></div>
+
+<p>For the two wide meter and BMS sources the grain is cells, not rows, because silver unpivots them. The acceptance run on 4 October 2026 passed 8 of 8 sources with zero unexplained rows or cells. A later working copy shows 6 of 8. Both failures trace to the check (a leftover demo file in bronze, and a cell counter that assumes every file has the same columns), not to lost data. The full story is in <a href="../articles/estates-lakehouse-zero-loss.html">8/8 sources, zero loss</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">What count reconciliation does not prove</p>
+<p>Counts balance even when one row is lost and another is duplicated. Reconciliation proves nothing went missing at an aggregate level. It does not prove the rows are right, and it is not compared against the generator&rsquo;s ground truth. That is what the next layer is for.</p>
+</div>
+<h2 id="declarative-checks-yaml-in-great-expectations-and-sql-out">Declarative checks: YAML in, Great Expectations and SQL out<a class="h-anchor" href="#declarative-checks-yaml-in-great-expectations-and-sql-out" title="Permanent link">#</a></h2>
+<p>The estates quality framework (P03) has 133 checks over 10 datasets, written as YAML. Each check has a dimension, a severity, a threshold, an owner and a reason, and names its engine. 58 run on Great Expectations 1.23.2, 41 run as SQL on DuckDB, and 34 are recall checks against the planted defects.</p>
+<div class="hl"><pre><span></span><code><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">wo_id_unique</span>
+<span class="w">  </span><span class="nt">dataset</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">work_orders</span>
+<span class="w">  </span><span class="nt">dimension</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">uniqueness</span>
+<span class="w">  </span><span class="nt">severity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">error</span>
+<span class="w">  </span><span class="nt">threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100.0</span>
+<span class="w">  </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">estates-analytics</span>
+<span class="w">  </span><span class="nt">why_it_matters</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Duplicate orders inflate reactive counts and spend.</span>
+<span class="w">  </span><span class="nt">engine</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">gx</span>
+<span class="w">  </span><span class="nt">expectation</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ExpectColumnValuesToBeUnique</span>
+<span class="w">  </span><span class="nt">kwargs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">column</span><span class="p">:</span><span class="w"> </span><span class="nv">WO_Number</span><span class="p p-Indicator">}</span>
+</code></pre></div>
+
+<p>A SQL check carries two queries: one counts the rows checked, the other returns the failing rows, so a failure comes with the evidence attached. I use Great Expectations where a built-in expectation says exactly what I mean (not null, unique, regex), and SQL where the rule spans columns, like a completion date before the raised date.</p>
+<p>Scores follow a written policy: <code>score = 100 * sum(w * pass_rate) / sum(w)</code>, with error weighted 3 and warn 2. Any failing <code>error</code> check writes an alert row and turns CI red, and a dataset score that drops more than 5 points against its trailing 7-run mean raises a score-drop alert. On the acceptance run, every planted defect type was detected (100% recall per type), and 51 tests pass. One gap is written down in the acceptance doc: the clean, zero-defect profile has not been regenerated, so &ldquo;no false alarms on clean data&rdquo; is still unproven.</p>
+<div class="admonition warning">
+<p class="admonition-title">The Great Expectations rules I can&rsquo;t count</p>
+<p>The telecom portfolio design also has GE rules for CDRs, network KPIs and billing, plus a schema-drift check that marks new columns as blocking. They are not runnable. The validator calls methods that aren&rsquo;t in the Great Expectations API, nothing calls the drift check, and GE isn&rsquo;t installed by default. I list them as a design, not as checks I have run. See <a href="../articles/telecom-lakehouse-8-domains.html">the telecom write-up</a>.</p>
+</div>
+<h2 id="dbt-tests-and-contracts">dbt tests and contracts<a class="h-anchor" href="#dbt-tests-and-contracts" title="Permanent link">#</a></h2>
+<p>The estates dbt project (P04) has 160 tests: 147 data tests, 2 unit tests and 11 singular tests. All 21 marts have enforced contracts, so a model that changes a column&rsquo;s name or type fails the build. The small-profile build finished <code>PASS=196 WARN=0 ERROR=0</code>, where 196 counts every node that passed, not just tests. The full-volume profile has not been run.</p>
+<p>Generic tests (<code>not_null</code>, <code>unique</code>, relationships) cover keys. Singular tests cover what generic ones can&rsquo;t. This one fails if any fact row has no matching cleaned input row, which means a join invented it:</p>
+<div class="hl"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">meter_id</span><span class="p">,</span><span class="w"> </span><span class="n">f</span><span class="p">.</span><span class="n">ts_utc</span>
+<span class="k">FROM</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;fct_meter_hh&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">f</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="err">{{</span><span class="w"> </span><span class="k">ref</span><span class="p">(</span><span class="s1">&#39;int_meter_hh_cleaned&#39;</span><span class="p">)</span><span class="w"> </span><span class="err">}}</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="k">USING</span><span class="w"> </span><span class="p">(</span><span class="n">meter_id</span><span class="p">,</span><span class="w"> </span><span class="n">ts_utc</span><span class="p">)</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">i</span><span class="p">.</span><span class="n">meter_id</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
+</code></pre></div>
+
+<p>The acceptance doc also reconciles silver to marts and explains every gap. For example, meter half-hours go from 68,119 to 67,822, and all 297 dropped rows belong to defect meters that were never in the register.</p>
+<h2 id="change-detection-and-history">Change detection and history<a class="h-anchor" href="#change-detection-and-history" title="Permanent link">#</a></h2>
+<p>Full re-sends and silent edits are where trust goes. In the clinic ETL, each row gets a stable key (<code>Entry_ID</code>, or a SHA-256 fallback), and a diff puts every row in one of four buckets: new, changed, unchanged, or in the database but missing from today&rsquo;s file. The ETL never deletes that last bucket. A human decides.</p>
+<p>At Waffarha, the assistant&rsquo;s incremental index build hashes each document&rsquo;s text and metadata and re-embeds only new or changed documents:</p>
+<div class="hl"><pre><span></span><code><span class="n">content_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ensure_ascii</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">content_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span>
+</code></pre></div>
+
+<p>For offer records I keep SCD2-style history. The version I can quote is from an earlier iteration of that work (<code>versioned_store.py</code>, on SQLite): a changed content hash closes the current version and inserts a new one, and a record missing from the API is versioned as <code>deleted</code> instead of vanishing.</p>
+<div class="hl"><pre><span></span><code><span class="k">elif</span> <span class="n">cur</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new_hash</span> <span class="ow">or</span> <span class="n">cur</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status</span><span class="p">:</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE record_versions SET is_current=0, system_valid_to=? WHERE version_id=?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">now_iso</span><span class="p">,</span> <span class="n">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+    <span class="p">)</span>
+    <span class="n">_insert_version</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">new_hash</span><span class="p">,</span> <span class="n">now_iso</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The deleted-upstream case is the one people skip. Without it, &ldquo;what happened to offer X?&rdquo; has no answer.</p>
+<h2 id="business-rules-valid-is-not-the-same-as-right">Business rules: valid is not the same as right<a class="h-anchor" href="#business-rules-valid-is-not-the-same-as-right" title="Permanent link">#</a></h2>
+<p>Some of the most useful checks look at data that passes every schema test. All three below run at Waffarha.</p>
+<ul>
+<li><strong>Price integrity.</strong> A daily 6-stage pipeline (ingest, normalise, match, scrape, compare, report) flags a voucher as a violation unless it is at least 2% cheaper than the partner&rsquo;s own site, with a 5% watch band. Both numbers are config, so the commercial team can change them without a deploy. <a href="../articles/partner-price-integrity-check.html">Write-up</a>.</li>
+<li><strong>An eval suite as a gate.</strong> 225 bilingual cases across 20 categories. The runner exits 0 only when every case passes. Today it is red (64 of 225 end to end), and I read it per category rather than hiding behind the retrieval number. <a href="../articles/deterministic-gates-before-llm.html">Write-up</a>.</li>
+<li><strong>An independent leak audit.</strong> For 117,915 redacted support chats, a second script with its own, stricter patterns checks 8 PII patterns. Its first run failed and found three leak types the builder missed. After the fix it reported zero matches. That means zero matches on 8 patterns, not &ldquo;no personal data&rdquo;, so training on the set is still deferred. <a href="../articles/redacting-160k-support-chats.html">Write-up</a>.</li>
+</ul>
+<h2 id="mistakes-my-own-runs-exposed">Mistakes my own runs exposed<a class="h-anchor" href="#mistakes-my-own-runs-exposed" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>A quality stage that doesn&rsquo;t mirror the schema.</strong> The clinic ETL&rsquo;s quality scan never checked <code>Patient_Status</code>, so 1,041 rows failed one by one against a <code>CHECK</code> constraint in the first run. Now I write one rule per constraint.</li>
+<li><strong>Warnings where a gate was needed.</strong> The clinic backup &ldquo;skipped&rdquo; but left 0-byte <code>.sql</code> files, and a row error rolled back without a savepoint while the counters kept counting.</li>
+<li><strong>A check that can&rsquo;t fail the build.</strong> The lakehouse reconciliation writes its JSON but always exits 0. The quality gate after it is what actually fails CI.</li>
+<li><strong>A gate the code doesn&rsquo;t enforce.</strong> The price check&rsquo;s design says only high-confidence matches feed violations, but matches between 0.60 and 0.85 can still be classified as one.</li>
+</ul>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<p>For a dbt project, I start with dbt tests and contracts and add Great Expectations only where I need profiling, Data Docs or checks on data dbt doesn&rsquo;t own, such as raw files before bronze. For a small one-off ETL, plain SQL rules and a diff report go further than a framework. And whatever the tool, I make it exit non-zero. A check that only writes a report is documentation, not a control.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html" data-title="My data quality toolkit: Great Expectations, dbt tests, contracts, reconciliation">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="deterministic-gates-before-llm.html"><small>← Newer</small><b>Deterministic Gates Before the LLM</b></a>
+          <a class="post-pager-next" href="credit-risk-mlops-loop.html"><small>Older →</small><b>A score-and-decide credit-risk pipeline on synthetic data</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

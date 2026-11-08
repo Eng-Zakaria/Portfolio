@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>One BI model, many sites: how I design Power BI models for multi-site data | Mohammed Zakaria</title>
+  <meta name="description" content="How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html">
+  <meta property="og:title" content="One BI model, many sites: how I design Power BI models for multi-site data | Mohammed Zakaria">
+  <meta property="og:description" content="How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "One BI model, many sites: how I design Power BI models for multi-site data", "description": "How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html", "wordCount": 1646, "keywords": "Power BI, Data Modeling, BI"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Power BI</span><span class="post-tag">Data Modeling</span><span class="post-tag">BI</span></div>
+        <h1>One BI model, many sites: how I design Power BI models for multi-site data</h1>
+        <p class="post-lede">How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#when-one-shared-model-is-the-right-call">When one shared model is the right call</a></li>
+<li><a href="#pattern-1-the-site-filter-gets-exactly-one-path">Pattern 1: the site filter gets exactly one path</a></li>
+<li><a href="#pattern-2-one-staff-dimension-many-roles">Pattern 2: one staff dimension, many roles</a></li>
+<li><a href="#pattern-3-per-site-access-with-row-level-security">Pattern 3: per-site access with row-level security</a></li>
+<li><a href="#pattern-4-put-a-data-quality-page-in-the-report">Pattern 4: put a data-quality page in the report</a></li>
+<li><a href="#grafana-matplotlib-and-the-rest">Grafana, Matplotlib and the rest</a></li>
+<li><a href="#mistakes-id-warn-you-about">Mistakes I&rsquo;d warn you about</a></li>
+<li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Every multi-site reporting job I have had starts with the same temptation: build a report per site, then roll them up. I now do the opposite. One model, the site as a dimension, and every page filtered by it. <strong>Evidence:</strong> this comes from the clinic-network warehouse at Nexlify (production client work; I can only describe the design, the code stayed with the client), a freelance clinic warehouse (client work, the design notes are mine), and two estates portfolio projects on synthetic data, where the Power BI work is a documented handoff (model, Power Query, DAX, wireframes, tie-out SQL) and not a published report. The Grafana and Matplotlib parts come from portfolio projects linked below.</p>
+<h2 id="when-one-shared-model-is-the-right-call">When one shared model is the right call<a class="h-anchor" href="#when-one-shared-model-is-the-right-call" title="Permanent link">#</a></h2>
+<p>At Nexlify the client had more than ten clinics, each with its own spreadsheets, APIs and database engine. The warehouse mapped all of them into one star schema where clinic is just a dimension. On top of it sat one Power BI model with a clinic switcher, serving each clinic&rsquo;s own view and the company-wide view. The reported outcomes were reporting cycles about 40% faster and zero dashboard timeouts after the SQL refactor. Those are reported results; I have no benchmark logs to publish. The full write-up is in <a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>.</p>
+<p>The reason I go this way is simple. If the network total and a single clinic&rsquo;s number come from the same tables and the same measures, they cannot disagree. With a model per site, every rollup is a reconciliation problem waiting to happen.</p>
+<p>The cost is paid in the warehouse, not in Power BI. Every source has to be mapped to the shared schema before it loads. In the freelance clinic warehouse I put <code>clinic_id</code> on every fact, bridge and dimension table from day one, so that a second floor could load into the same database later &ldquo;by pointing a second ETL config at the same database — no schema changes required&rdquo; (from my design notes). See <a href="../articles/six-stage-client-etl.html">the six-stage ETL post</a> for the load side.</p>
+<div class="hl"><pre><span></span><code>            dim_clinic ──────────────► fact_orders ◄─────── dim_date
+                                         │  │   (order_date active,
+            dim_staff ── salesperson ────┘  │    conversation_date via
+               │  └──── reception (inactive)│    USERELATIONSHIP)
+               │                            ▼
+               ├──── fact_order_performer   fact_order_upsell ──┐
+               └────────────────────────────────────────────────┘
+   No dim_staff → dim_clinic relationship: clinic filtering flows only
+   through fact_orders[clinic_id]. Staff are scoped per clinic in the
+   database with UNIQUE(clinic_id, staff_name), not in the model.
+</code></pre></div>
+
+<h2 id="pattern-1-the-site-filter-gets-exactly-one-path">Pattern 1: the site filter gets exactly one path<a class="h-anchor" href="#pattern-1-the-site-filter-gets-exactly-one-path" title="Permanent link">#</a></h2>
+<p>The rule I wrote into the clinic model notes is the one I would give anyone building a multi-site model: do not create a <code>dim_staff -&gt; dim_clinic</code> relationship. <code>fact_orders[clinic_id] -&gt; dim_clinic</code> already carries all the filtering, and a second path through staff creates an ambiguous loop.</p>
+<p>It is tempting to add it, because staff really do belong to a clinic. But that fact is enforced in the database with <code>UNIQUE(clinic_id, staff_name)</code>. Power BI does not need to know it. One site filter, one path, and the switcher behaves the same on every page.</p>
+<h2 id="pattern-2-one-staff-dimension-many-roles">Pattern 2: one staff dimension, many roles<a class="h-anchor" href="#pattern-2-one-staff-dimension-many-roles" title="Permanent link">#</a></h2>
+<p>In clinic data the same person can be the salesperson on one order, the upseller on another and the performer on a third. The model needs one staff table so per-person totals add up, but several relationships into it. Only one can be active, so the others are switched on per measure. From the freelance design:</p>
+<div class="hl"><pre><span></span><code>Reception Handled Count :=
+<span class="nf">CALCULATE</span><span class="p">(</span>
+<span class="w">    </span><span class="nf">COUNTROWS</span><span class="p">(</span>fact_orders),
+<span class="w">    </span><span class="nf">USERELATIONSHIP</span><span class="p">(</span><span class="na">fact_orders[reception_id]</span><span class="p">,</span><span class="w"> </span><span class="na">dim_staff[staff_id]</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The same design handles two date roles (conversation date and order date) against one <code>dim_date</code>. Where <code>RELATED</code> can&rsquo;t follow an inactive relationship, the patient-journey drillthrough page in the design uses <code>LOOKUPVALUE</code> in calculated columns to build a one-line story per order. That drillthrough page is a design in the documentation, and I describe it as one.</p>
+<div class="admonition note">
+<p class="admonition-title">The mistake that led to this pattern</p>
+<p>An earlier iteration of the MySQL version gave upsells and visits their own staff views (<code>upsell_staff</code>, <code>visit_staff</code>) instead of inactive relationships. I abandoned it. Those views were disconnected from <code>staff</code>, so Power BI could not tell that the upseller and the performer were the same person, and combined per-person totals broke. If your model has a dimension copied per role, that is the first thing I would check.</p>
+</div>
+<p>Bridge tables need the same care. At Nexlify, staff with several roles across several clinics went into bridge tables. That gives correct attribution, but a careless measure that crosses a bridge still double counts. I now write down which measures may cross a bridge next to the model, not just in my head.</p>
+<h2 id="pattern-3-per-site-access-with-row-level-security">Pattern 3: per-site access with row-level security<a class="h-anchor" href="#pattern-3-per-site-access-with-row-level-security" title="Permanent link">#</a></h2>
+<p>A clinic switcher is a slicer: everyone can see every site. When each site manager should only see their own site, I move the same idea into RLS. The estates asset-maintenance project (P07, synthetic data) specifies a role filter on the building dimension, driven by a mapping table:</p>
+<div class="hl"><pre><span></span><code><span class="c1">-- Role building_manager, filter on dim_building</span>
+<span class="na">[building_id]</span><span class="w"> </span><span class="ow">IN</span>
+<span class="w">    </span><span class="nf">CALCULATETABLE</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nf">VALUES</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="na">rlsusers[building_id]</span><span class="w"> </span><span class="p">),</span>
+<span class="w">                     </span><span class="na">rlsusers[principal]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">USERPRINCIPALNAME</span><span class="p">()</span><span class="w"> </span><span class="p">)</span>
+</code></pre></div>
+
+<p>The handoff lists four &ldquo;View as&rdquo; test cases: a manager sees only their building and the totals tie to the validation SQL filtered to that building; the analyst role sees all 8 buildings; an unmapped user gets a blank report; and the asset-health mart is scoped through the building path, with no filter of its own. That last test is the one-path rule from Pattern 1 again.</p>
+<div class="admonition warning">
+<p class="admonition-title">Status</p>
+<p>The P07 RLS design and test cases are written down and the gold tables they run on exist. The <code>.pbix</code> is meant to be saved outside the repo and the screenshots folder is empty, so I can&rsquo;t show a run of those tests in Power BI Desktop. A Streamlit app mirrors three of the five pages from the same gold tables.</p>
+</div>
+<p>Power Query stays thin in these handoffs. Each table is one query against a Parquet file, with the folder as a parameter:</p>
+<div class="hl"><pre><span></span><code>let
+    Source = Parquet.Document(File.Contents(GoldFolder &amp; &quot;\fct_work_order.parquet&quot;))
+in
+    Source
+</code></pre></div>
+
+<p>All shaping happens in dbt before Power BI sees it. That keeps the logic testable and leaves Power BI with relationships and measures.</p>
+<h2 id="pattern-4-put-a-data-quality-page-in-the-report">Pattern 4: put a data-quality page in the report<a class="h-anchor" href="#pattern-4-put-a-data-quality-page-in-the-report" title="Permanent link">#</a></h2>
+<p>A multi-site model mixes sources of different quality, so I give the report a page that shows it. In the freelance design that is a reconciliation measure:</p>
+<div class="hl"><pre><span></span><code>Total Amount Check (reconciliation) :=
+<span class="nb">VAR</span><span class="w"> </span>Computed = SUM(fact_orders[paid_amount]) + SUM(fact_order_upsell[amount])
+<span class="nb">VAR</span><span class="w"> </span>Stored = SUM(fact_orders[total_amount])
+<span class="nb">RETURN</span><span class="w"> </span>Computed - Stored
+</code></pre></div>
+
+<p>Any non-zero result points at a row where the typed total doesn&rsquo;t match paid plus upsells, which is usually a data-entry slip. In the digital-estates showcase, one of its 10 DAX measures, <code>COBie Completeness %</code>, divides the clean rows by clean plus quarantined rows. That puts the quarantine count in the report itself. The estates P07 handoff goes one step further. Every KPI card has an expected value in a build guide (for example PPM completion 93.0%, MTTR 3.17 days) that comes from a SQL file run against the same gold tables, so whoever builds the report can check each card against a number.</p>
+<h2 id="grafana-matplotlib-and-the-rest">Grafana, Matplotlib and the rest<a class="h-anchor" href="#grafana-matplotlib-and-the-rest" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Where I used it</th>
+<th>Status</th>
+<th>When I pick it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Power BI (DAX, Power Query, RLS)</td>
+<td>Nexlify clinic network; freelance clinic; estates handoffs</td>
+<td>Client work; estates is spec plus SQL tie-outs</td>
+<td>Business reporting over a star schema, many sites, per-user security</td>
+</tr>
+<tr>
+<td>Grafana</td>
+<td>Flight radar: provisioned dashboard, 6 panels, 10 s refresh over InfluxDB</td>
+<td>Portfolio, ran against live data</td>
+<td>Time series and live operational views</td>
+</tr>
+<tr>
+<td>Streamlit</td>
+<td>Estates projects mirror Power BI pages</td>
+<td>Portfolio</td>
+<td>When the reviewer has no Power BI licence</td>
+</tr>
+<tr>
+<td>Matplotlib</td>
+<td>Static PNG charts in estates scripts (e.g. net-zero intensity)</td>
+<td>Portfolio</td>
+<td>A chart that ships as a file in a pipeline output</td>
+</tr>
+</tbody>
+</table></div>
+<p>I have also built dashboards in Tableau, including during my NTI internship. The patterns in this article are tool-neutral, but the snippets here are all Power BI.</p>
+<p>Grafana taught me the most about the gap between a file and a dashboard. The <a href="../articles/adsb-flight-radar-streaming.html">flight radar</a> dashboard is provisioned and was tuned against live data. Elsewhere, the retail project has one dashboard JSON with 9 panels but no provisioning folder, so Grafana never loads it (<a href="../articles/retail-cdc-debezium.html">retail write-up</a>). AquaWatch runs a Grafana container with no dashboards checked in. The petroleum scaffold has dashboards that query metrics no service exports. A dashboard JSON in a repo proves nothing until the datasource and provisioning are in the repo too.</p>
+<h2 id="mistakes-id-warn-you-about">Mistakes I&rsquo;d warn you about<a class="h-anchor" href="#mistakes-id-warn-you-about" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>A panel title that lies.</strong> The flight radar&rsquo;s &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft. Check what a count actually counts before you name the visual.</li>
+<li><strong>Copying a dimension per role.</strong> Covered above. It breaks per-person totals silently.</li>
+<li><strong>A second filter path to the site.</strong> It feels like more correct modelling, and it gives you an ambiguous model.</li>
+<li><strong>Calling a spec a report.</strong> The estates handoffs are complete as specs, and I label them that way. The clinic documentation also points to a measures file (<code>powerbi/dax_measures.md</code>) that isn&rsquo;t in the project folder. The example measures in the documentation itself are what I can stand behind.</li>
+</ul>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<p>If each site really is a separate business with no shared questions, separate models are simpler and I would not force a shared schema. If the users need second-level freshness, I reach for Grafana over a time-series store, not Power BI. And if the audience has no Power BI licence, a Streamlit page over the same gold tables answers the same questions. In every case the model underneath stays the same: facts, conformed dimensions, and the site as one more dimension.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html" data-title="One BI model, many sites: how I design Power BI models for multi-site data">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="one-warehouse-ten-clinics.html"><small>← Newer</small><b>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</b></a>
+          <a class="post-pager-next" href="kafka-nifi-sqoop-flume.html"><small>Older →</small><b>Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

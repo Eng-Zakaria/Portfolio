@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Spark and Hadoop in practice: what NTI taught and where I used it | Mohammed Zakaria</title>
+  <meta name="description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html">
+  <meta property="og:title" content="Spark and Hadoop in practice: what NTI taught and where I used it | Mohammed Zakaria">
+  <meta property="og:description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Spark and Hadoop in practice: what NTI taught and where I used it", "description": "How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html", "wordCount": 1635, "keywords": "Spark, Hadoop, Big Data"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Hadoop</span><span class="post-tag">Big Data</span></div>
+        <h1>Spark and Hadoop in practice: what NTI taught and where I used it</h1>
+        <p class="post-lede">How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#where-this-skill-comes-from">Where this skill comes from</a></li>
+<li><a href="#how-i-use-spark">How I use Spark</a><ul>
+<li><a href="#pattern-1-fix-the-schema-at-the-boundary">Pattern 1: fix the schema at the boundary</a></li>
+<li><a href="#pattern-2-built-in-expressions-before-udfs">Pattern 2: built-in expressions before UDFs</a></li>
+<li><a href="#pattern-3-event-time-a-watermark-and-append-mode-for-anything-stored">Pattern 3: event time, a watermark, and append mode for anything stored</a></li>
+<li><a href="#pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink</a></li>
+</ul>
+</li>
+<li><a href="#mistakes-i-made">Mistakes I made</a></li>
+<li><a href="#hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio</a></li>
+<li><a href="#flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it</a></li>
+<li><a href="#when-id-pick-something-else">When I&rsquo;d pick something else</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), plus the portfolio projects and write-ups linked below. The portfolio Spark jobs quoted here run on one machine, over a few hundred to about a thousand rows per run, which keeps them easy to rerun and inspect.</p>
+<h2 id="where-this-skill-comes-from">Where this skill comes from<a class="h-anchor" href="#where-this-skill-comes-from" title="Permanent link">#</a></h2>
+<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. The internship code isn&rsquo;t part of this portfolio, so the examples below come from what I built afterwards to apply the same ideas to real or synthetic feeds:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Project</th>
+<th>Engine</th>
+<th>Status</th>
+<th>Scale</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../articles/reddit-medallion-pyspark.html">Reddit medallion</a></td>
+<td>PySpark batch, <code>local[*]</code></td>
+<td>Portfolio, live public data</td>
+<td>up to ~1,000 posts per run</td>
+</tr>
+<tr>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a></td>
+<td>Spark Structured Streaming <code>local[2]</code>, HDFS archive</td>
+<td>Portfolio, live public data, ran in Docker</td>
+<td>capped at 300 aircraft per 10 s poll</td>
+</tr>
+<tr>
+<td><a href="../articles/retail-cdc-debezium.html">Retail streaming</a></td>
+<td>Spark windowed aggregates + a PyFlink job</td>
+<td>Portfolio, synthetic data</td>
+<td>simulator at 2-5 transactions/s</td>
+</tr>
+<tr>
+<td><a href="../articles/telecom-lakehouse-8-domains.html">Telecom lakehouse</a></td>
+<td>PySpark + Delta MERGE</td>
+<td>Written, never run</td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a></td>
+<td>Apache Beam aimed at the Flink runner</td>
+<td>Scaffold, never ran on Flink</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two notes on that table. I practised Hive and MapReduce during my NTI internship; none of these five projects uses them. And the <a href="../articles/ethereum-neo4j-vs-spark.html">Ethereum benchmark harness</a> has a Spark side, but in the default run it is a pandas wrapper with a Spark-like API, not Spark.</p>
+<h2 id="how-i-use-spark">How I use Spark<a class="h-anchor" href="#how-i-use-spark" title="Permanent link">#</a></h2>
+<h3 id="pattern-1-fix-the-schema-at-the-boundary">Pattern 1: fix the schema at the boundary<a class="h-anchor" href="#pattern-1-fix-the-schema-at-the-boundary" title="Permanent link">#</a></h3>
+<p>The first thing I do in any Spark job is stop Spark from guessing types. In the Reddit pipeline, bronze is written with a hand-written schema:</p>
+<div class="hl"><pre><span></span><code><span class="n">POST_SCHEMA</span> <span class="o">=</span> <span class="n">StructType</span><span class="p">([</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># ... 13 more</span>
+<span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">all_records</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">POST_SCHEMA</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Inference on Python dicts can change a column&rsquo;s type between runs when a field happens to be null in the sample. A fixed schema makes every bronze file the same shape. The retail stream does the same thing for Kafka JSON: it parses the value against an explicit schema before any aggregation.</p>
+<p>The lesson I took from writing it up: putting the schema in bronze means bronze isn&rsquo;t raw. Fields I didn&rsquo;t list are gone for good. Next time I&rsquo;d land the JSON as-is and apply the schema in silver.</p>
+<h3 id="pattern-2-built-in-expressions-before-udfs">Pattern 2: built-in expressions before UDFs<a class="h-anchor" href="#pattern-2-built-in-expressions-before-udfs" title="Permanent link">#</a></h3>
+<p>The engagement score and tier in Reddit silver are plain <code>F.when</code> chains, not the Python UDF that sits unused in <code>src/udfs.py</code>. Built-ins stay inside the JVM, so Spark can optimise them and no Python worker starts. Where I did use a UDF (the keyword topic tagger), it was both slower in principle and wrong in practice: substring matching tagged &ldquo;software&rdquo; as <code>war</code>. Word-boundary <code>rlike</code> would fix both problems.</p>
+<h3 id="pattern-3-event-time-a-watermark-and-append-mode-for-anything-stored">Pattern 3: event time, a watermark, and append mode for anything stored<a class="h-anchor" href="#pattern-3-event-time-a-watermark-and-append-mode-for-anything-stored" title="Permanent link">#</a></h3>
+<p>In the retail job, product metrics use event time with a 10-minute watermark and 5-minute windows, and go to a Delta path in <code>append</code> mode:</p>
+<div class="hl"><pre><span></span><code><span class="n">parsed_df</span> <span class="o">=</span> <span class="n">parsed_df</span><span class="o">.</span><span class="n">withWatermark</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;10 minutes&quot;</span><span class="p">)</span>
+<span class="n">product_metrics</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;item&quot;</span><span class="p">,</span> <span class="n">explode</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;items&quot;</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="n">window</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">),</span> <span class="s2">&quot;5 minutes&quot;</span><span class="p">),</span>
+             <span class="n">col</span><span class="p">(</span><span class="s2">&quot;item.product_id&quot;</span><span class="p">),</span> <span class="n">col</span><span class="p">(</span><span class="s2">&quot;store_id&quot;</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="s2">&quot;item.quantity&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;total_quantity_sold&quot;</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Append mode on a watermarked aggregation writes each window once, after the watermark passes it, so the stored table never needs a window rewritten. The price is latency: a window lands about ten minutes after it closes. I chose correctness of the stored table over freshness.</p>
+<h3 id="pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink<a class="h-anchor" href="#pattern-4-foreachbatch-when-theres-no-sink" title="Permanent link">#</a></h3>
+<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code>:</p>
+<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
+    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>It&rsquo;s short and readable. It also hides costs, which brings me to the mistakes.</p>
+<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
+<p>These all come from re-reading my own code for the published write-ups.</p>
+<ul>
+<li><strong>Processing time dressed as event time.</strong> The flight radar&rsquo;s window and watermark use <code>current_timestamp()</code>, Spark&rsquo;s clock, not the <code>ingested_at</code> field the poller writes. Its &ldquo;1-minute window&rdquo; really means &ldquo;rows Spark read in that minute&rdquo;. The retail job got this right; the radar didn&rsquo;t.</li>
+<li><strong><code>collect()</code> to the driver.</strong> Each radar micro-batch is collected on the driver and written through a new InfluxDB client. Fine at 300 rows, wrong at real volume. <code>foreachPartition</code> with batched writes from the executors is the fix.</li>
+<li><strong>Unbounded series.</strong> Tagging aggregate points with <code>batch_id</code> creates a new InfluxDB series every 30 seconds.</li>
+<li><strong>Names that overpromise.</strong> Reddit&rsquo;s <code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>, which is the last three posts, not three hours. <code>rangeBetween</code> on a timestamp is what the name needed.</li>
+<li><strong>A broadcast join that proves nothing.</strong> Broadcasting a 10-row lookup onto about 1,000 posts shows the <code>BroadcastHashJoin</code> plan in <code>explain()</code>. It says nothing about performance.</li>
+<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture would have caught it.</li>
+<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. It&rsquo;s a design that still needs its first run.</li>
+</ul>
+<h2 id="hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio<a class="h-anchor" href="#hadoop-and-hive-in-the-portfolio" title="Permanent link">#</a></h2>
+<p>In the portfolio, Hadoop shows up as HDFS in the flight radar. A Hadoop namenode and datanode run in Docker Compose, and a Flume agent drains Kafka into HDFS:</p>
+<div class="hl"><pre><span></span><code>Kafka &quot;aircraft-states&quot; -&gt; Flume (Kafka source, file channel, HDFS sink)
+                        -&gt; HDFS /aircraft-states/dt=YYYY-MM-DD/hr=HH/states-*.json
+                           roll every 120 s or 10,000 events
+</code></pre></div>
+
+<p>Partitioning by date and hour in the path is the same habit Hive teaches: lay files out so a query can skip what it doesn&rsquo;t need. The radar repo doesn&rsquo;t put a Hive table over that archive yet; that&rsquo;s on the list at the end.</p>
+<h2 id="flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it<a class="h-anchor" href="#flink-one-job-written-one-job-aimed-at-it" title="Permanent link">#</a></h2>
+<p>The retail project has a PyFlink job that reads <code>retail_transactions</code> from Kafka, keys by customer, and runs two <code>KeyedProcessFunction</code>s, with output to a Kafka topic and a JDBC sink into Postgres. The environment enables 60-second checkpoints and parallelism 4. The petroleum project took a different route: an Apache Beam pipeline meant to run on the Flink runner, with Flink configured for exactly-once checkpoints on incremental RocksDB.</p>
+<p>Neither has run logs, and re-reading them taught me more than writing them did.</p>
+<ul>
+<li><strong>State in a Python dict.</strong> The retail fraud function keeps each customer&rsquo;s recent transactions in <code>self.transaction_history</code>, a plain dict on the operator. Flink doesn&rsquo;t checkpoint that, so the 60-second checkpoints protect nothing that matters. The right tool is Flink keyed state (<code>ListState</code> or <code>MapState</code>) plus a timer to expire old entries.</li>
+<li><strong>Time types.</strong> The same function subtracts a <code>timedelta</code> from <code>ctx.timer_service().current_processing_time()</code>, which returns epoch milliseconds as an integer. Reading it now, I expect that line to raise on the first event.</li>
+<li><strong>Portability that cost the source.</strong> The Beam job&rsquo;s Flink branch reads from Google Pub/Sub, which the stack doesn&rsquo;t have, because the Beam Python SDK has no RabbitMQ source and I never wrote one.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What I&rsquo;d say in an interview</p>
+<p>I design and write Flink jobs around keyed state, checkpoints and watermarks. These two portfolio jobs don&rsquo;t have a long run behind them yet. The next step is a PyFlink job with real keyed state and a <code>TestStream</code>-style test, run against a local Kafka.</p>
+</div>
+<h2 id="when-id-pick-something-else">When I&rsquo;d pick something else<a class="h-anchor" href="#when-id-pick-something-else" title="Permanent link">#</a></h2>
+<p>A lot of real data fits on one machine: at Nexlify the clinic feeds came to about 1,000 revenue and ledger records a day. For my estates portfolio platform I used <a href="../articles/estates-lakehouse-zero-loss.html">DuckDB, Parquet and dbt</a> and never felt a need for Spark. My rule of thumb:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>What I&rsquo;d reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Data fits in memory on one machine, batch</td>
+<td>DuckDB or pandas, plus dbt for SQL models</td>
+</tr>
+<tr>
+<td>Data or joins outgrow one machine, or the team already runs Databricks/EMR</td>
+<td>Spark batch with Delta or Parquet</td>
+</tr>
+<tr>
+<td>Micro-batch latency (seconds) is fine, team knows Spark</td>
+<td>Spark Structured Streaming</td>
+</tr>
+<tr>
+<td>Per-event stateful logic, timers, low latency</td>
+<td>Flink with keyed state</td>
+</tr>
+<tr>
+<td>Existing Hadoop estate with Hive tables</td>
+<td>Spark SQL over the Hive metastore, not new MapReduce</td>
+</tr>
+</tbody>
+</table></div>
+<p>The table is opinion, not benchmark. None of the portfolio Spark jobs above has been benchmarked, and the published posts say so.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Run one Spark job at a size that hurts: point the radar at a global endpoint, raise the cap, and log <code>processedRowsPerSecond</code> and batch duration until the single node bends.</li>
+<li>Rewrite the retail Flink function with keyed state and timers, and add a test.</li>
+<li>Put a Hive external table over the radar&rsquo;s HDFS archive, so the radar archive can be queried from Hive.</li>
+</ol>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html" data-title="Spark and Hadoop in practice: what NTI taught and where I used it">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="telecom-lakehouse-8-domains.html"><small>← Newer</small><b>A telecom lakehouse for 8 domains: the blueprint, and what runs today</b></a>
+          <a class="post-pager-next" href="six-stage-client-etl.html"><small>Older →</small><b>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -4,16 +4,22 @@
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/</loc></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/python-sql-for-data-engineers.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</loc><lastmod>2026-11-08</lastmod></url>
@@ -21,14 +27,19 @@
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/docker-k8s-terraform.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/data-quality-toolkit.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/bim-automation-for-data-people.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://eng-zakaria.github.io/Portfolio/projects/aircraft-tracking.html</loc></url>

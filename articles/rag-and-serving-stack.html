@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow | Mohammed Zakaria</title>
+  <meta name="description" content="How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha&#x27;s bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html">
+  <meta property="og:title" content="RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow | Mohammed Zakaria">
+  <meta property="og:description" content="How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha&#x27;s bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow", "description": "How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha's bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html", "wordCount": 1874, "keywords": "RAG, LLM, Vector Databases"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">RAG</span><span class="post-tag">LLM</span><span class="post-tag">Vector Databases</span></div>
+        <h1>RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow</h1>
+        <p class="post-lede">How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha&#x27;s bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#choosing-a-vector-store-measure-first-then-pick-for-operations">Choosing a vector store: measure first, then pick for operations</a><ul>
+<li><a href="#pattern-one-interface-every-backend-behind-it">Pattern: one interface, every backend behind it</a></li>
+<li><a href="#mistakes-i-made-with-qdrant">Mistakes I made with Qdrant</a></li>
+</ul>
+</li>
+<li><a href="#measuring-a-rag-two-numbers-never-one">Measuring a RAG: two numbers, never one</a></li>
+<li><a href="#local-llms-through-ollama">Local LLMs through Ollama</a></li>
+<li><a href="#serving-fastapi-in-front-redis-for-state">Serving: FastAPI in front, Redis for state</a></li>
+<li><a href="#speech-to-text-what-lab-means">Speech-to-text: what &ldquo;(lab)&rdquo; means</a></li>
+<li><a href="#mlflow-tracking-in-the-portfolio-ml-projects">MLflow: tracking in the portfolio ML projects</a></li>
+<li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a working guide to the retrieval-and-serving half of my skill set: vector stores, local LLMs, FastAPI, Redis, speech-to-text and experiment tracking. Evidence: drawn from my production work at Waffarha (the bilingual customer-service assistant and the nightly recommender), my graduation project, and two portfolio ML projects, all linked below. Where a number appears, it comes from an eval report or a source file, and I say what it measures.</p>
+<h2 id="choosing-a-vector-store-measure-first-then-pick-for-operations">Choosing a vector store: measure first, then pick for operations<a class="h-anchor" href="#choosing-a-vector-store-measure-first-then-pick-for-operations" title="Permanent link">#</a></h2>
+<p>In August 2026 I benchmarked five vector stores on the same 1,690 documents, holding the embedding model fixed (<code>multilingual-e5-base</code>) so any difference came from the store.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Load time (s)</th>
+<th>Index size (MB)</th>
+<th>Recall@3</th>
+<th>Avg query latency (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FAISS</td>
+<td>0.071</td>
+<td>4.95</td>
+<td>0.881</td>
+<td>0.62</td>
+</tr>
+<tr>
+<td>Chroma</td>
+<td>2.206</td>
+<td>17.48</td>
+<td>0.881</td>
+<td>7.59</td>
+</tr>
+<tr>
+<td>Qdrant</td>
+<td>2.728</td>
+<td>13.93</td>
+<td>0.881</td>
+<td>22.53</td>
+</tr>
+<tr>
+<td>LanceDB</td>
+<td>4.193</td>
+<td>5.61</td>
+<td>0.881</td>
+<td>26.99</td>
+</tr>
+<tr>
+<td>pgvector</td>
+<td>0.126</td>
+<td>0.66</td>
+<td>0.847</td>
+<td>65.06</td>
+</tr>
+</tbody>
+</table></div>
+<p>The first lesson is in the recall column. Four stores returned identical recall, most likely because at a few thousand documents they all end up doing near-exact cosine search over the same vectors. At that scale the store does not decide quality; the embedding model and the chunking do. The store decides how you deploy, back up and filter. pgvector was the exception, with lower recall and the slowest queries in that run, which is exactly why I would re-measure before trusting it.</p>
+<p>What actually shipped in September 2026 was <code>BAAI/bge-m3</code> embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don&rsquo;t record why, and I&rsquo;ve written that up honestly in <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>. The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.</p>
+<h3 id="pattern-one-interface-every-backend-behind-it">Pattern: one interface, every backend behind it<a class="h-anchor" href="#pattern-one-interface-every-backend-behind-it" title="Permanent link">#</a></h3>
+<p>The way I keep that choice reversible is a small abstract class that every store implements, plus a factory:</p>
+<div class="hl"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FaissStore</span><span class="p">(</span><span class="n">VectorStore</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;faiss&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">embeddings</span><span class="p">,</span> <span class="n">docs</span><span class="p">):</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">faiss</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="n">embeddings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># IndexFlatIP on normalized vectors == cosine similarity, exact (no ANN</span>
+        <span class="c1"># approximation) -- the right default at FAQ+offer corpus scale</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexFlatIP</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">embeddings</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">))</span>
+</code></pre></div>
+
+<p><code>get_store(name, persist_path)</code> returns FAISS, Chroma, Qdrant, LanceDB, pgvector or a BM25 index, and the config line <code>VECTOR_STORE_BACKEND: str = "pgvector"  # faiss | chroma | pgvector | qdrant</code> is the only thing that changes between them. That is what made the five-way benchmark cheap to run, and it is why moving the default from Qdrant to pgvector was a config change rather than a rewrite.</p>
+<h3 id="mistakes-i-made-with-qdrant">Mistakes I made with Qdrant<a class="h-anchor" href="#mistakes-i-made-with-qdrant" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>One collection name for every model.</strong> Qdrant in server mode is shared across builds. With a fixed collection name, each embedding model silently overwrote the last one. The fix was to derive the collection name from the index path, so every <code>data/index/&lt;model&gt;/qdrant/</code> build gets its own collection.</li>
+<li><strong>Embedded mode is single-process.</strong> <code>QdrantClient(path=...)</code> locks the folder, and a second client on the same path fails with &ldquo;already accessed by another instance&rdquo;. Scripts and the API can&rsquo;t share an embedded index; use server mode for that.</li>
+<li><strong>Filters need to be planned at index time.</strong> I wanted a native &ldquo;offer is still live&rdquo; filter. The payload stored expiry as a string, the client version&rsquo;s range filter only accepts floats, and there was no datetime payload index. Rather than reindex, every backend over-fetches and drops expired offers before scoring. It works, but it is the kind of decision to make before the first build.</li>
+</ul>
+<h2 id="measuring-a-rag-two-numbers-never-one">Measuring a RAG: two numbers, never one<a class="h-anchor" href="#measuring-a-rag-two-numbers-never-one" title="Permanent link">#</a></h2>
+<p>My rule is to score retrieval and the full pipeline in the same run, on the same index. In September 2026 retrieval passed 151 of 172 checkable cases (an 87.8% hit rate), while the full pipeline passed 64 of 225. The hit rate says the right document reached the model. It says nothing about whether the answer was right, which is why I never report it as accuracy.</p>
+<p>Most of the gap was in answering, not finding, and that is what pushed me toward <a href="../articles/deterministic-gates-before-llm.html">deterministic gates before the LLM</a>: plain rules that answer or refuse many questions before any model call, plus checks on every price and date the model writes. An older harness on the earlier FAISS + <code>qwen2.5:1.5b</code> version scored 106 of 110, but that suite was smaller and has been superseded by the 225-case, 20-category suite, so I don&rsquo;t lead with it.</p>
+<h2 id="local-llms-through-ollama">Local LLMs through Ollama<a class="h-anchor" href="#local-llms-through-ollama" title="Permanent link">#</a></h2>
+<p>I reach for Ollama when the model has to run on hardware we control and when I want to swap models with a tag change. The same August benchmark compared eight local models on keyword coverage and speed:</p>
+<div class="hl"><pre><span></span><code>model                      coverage  tok/s   (Arabic coverage)
+qwen2.5:3b-instruct          0.650    50.0     0.455
+aya-expanse:8b               0.644     5.0     0.477
+granite3.1-moe:3b            0.606    88.8     0.455
+llama3.2                     0.573    45.6     0.386
+</code></pre></div>
+
+<p>(Four of the eight rows shown; the full table is in the eval report.) Two things stood out. The compact MoE model was the fastest by a wide margin with only a small coverage loss, and no model passed 0.48 coverage on Arabic. That second point is a reason to put effort into retrieval, rules and fact-checking rather than hoping a bigger local model fixes Arabic.</p>
+<p>The model now serving inside Chatwoot is a LoRA fine-tune of <code>Qwen3-4B-Instruct-2507</code> on FAQ-grounded data, merged into the base weights and served through Ollama as <code>waffarha-support:4b</code>. The merge was needed because Ollama dropped LoRA adapter support, as described in <a href="../articles/redacting-160k-support-chats.html">Redacting 160k support chats</a>. Its only evaluation so far is a 19-20 case routing check, so I describe it as deployed, not as measured.</p>
+<p>In the Compose stack, two Ollama settings do most of the work: <code>OLLAMA_MAX_LOADED_MODELS=1</code> so a second model can&rsquo;t push the first out of memory, and <code>OLLAMA_KEEP_ALIVE=-1</code> so the model stays loaded between requests instead of paying the load time on the first message after a quiet spell.</p>
+<h2 id="serving-fastapi-in-front-redis-for-state">Serving: FastAPI in front, Redis for state<a class="h-anchor" href="#serving-fastapi-in-front-redis-for-state" title="Permanent link">#</a></h2>
+<p>FastAPI is my default service layer: the assistant streams answers over server-sent events, the <a href="../articles/agent-that-cant-go-rogue.html">Waffy agent prototype</a> is a FastAPI service, and the <a href="../articles/fail-open-nightly-recommender.html">nightly recommender</a> exposes <code>/status</code>, <code>/run-now</code> and <code>/recommend</code> behind a Google OAuth dashboard.</p>
+<p>Redis holds session memory: the last ten turns and the last few offers shown, keyed per session with a one-hour TTL. The design rule I follow is that Redis improves answers but is never required to give one:</p>
+<div class="hl"><pre><span></span><code>    <span class="k">try</span><span class="p">:</span>
+        <span class="n">memory_store</span> <span class="o">=</span> <span class="k">await</span> <span class="n">get_memory_store_async</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">RedisError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># Session memory is a nice-to-have (better follow-up resolution),</span>
+        <span class="c1"># not required to answer</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Redis unavailable, continuing without session memory: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">memory_store</span> <span class="o">=</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>The same pattern wraps the read before generation and the write after it, so a Redis outage costs follow-up quality (&ldquo;how much was it before the discount?&rdquo;) but never drops an answer that was already generated. Redis calls go through <code>asyncio.to_thread</code> so blocking network I/O stays off the event loop, and <code>MEMORY_BACKEND=local</code> swaps in an in-process dict for tests.</p>
+<div class="admonition note">
+<p class="admonition-title">Two serving mistakes worth naming</p>
+<p><code>remember_turns</code> reads the list, then deletes and rewrites it in a pipeline. Two concurrent requests on one session can lose a turn; the code says so in a comment, and an atomic <code>LPUSH</code> + <code>LTRIM</code> would fix it. In the recommender, the nightly scheduler is a <code>time.sleep</code> loop started from the FastAPI lifespan, so running more than one worker would run the night twice. The project&rsquo;s own status notes flag it and suggest moving the schedule out to Jenkins or cron.</p>
+</div>
+<p>My graduation project shows the other side of serving. The Django app my team built called a teammate&rsquo;s hosted model through <code>gradio_client</code>, synchronously, with a new client per request and no timeout, and it only ever received one answer string. Since then I always want the retrieved passages back alongside the answer, and a timeout on every model call. The full write-up is in <a href="../articles/arabic-rag-graduation-project.html">My graduation-project Arabic QA app</a>.</p>
+<h2 id="speech-to-text-what-lab-means">Speech-to-text: what &ldquo;(lab)&rdquo; means<a class="h-anchor" href="#speech-to-text-what-lab-means" title="Permanent link">#</a></h2>
+<p>The Whisper work is a voice lab I built for Waffarha: a FastAPI test bench on port 8002 that lazy-loads one model at a time so it fits a 4 GB GPU. On the STT side it loads Faster-Whisper <code>small</code> in int8 as the baseline, two community Arabic fine-tunes (a dialectal Whisper-small and an Egyptian Whisper-medium) and Qwen3-ASR 0.6B, next to a set of Egyptian and Saudi TTS voices. It is a listening bench, not a benchmark: the notes recorded so far are TTS ratings, and there are no word-error-rate results for the Whisper models.</p>
+<p>The assistant&rsquo;s voice channel takes a different route. Its code sends audio to Deepgram (or ElevenLabs) for transcription, and sherpa-onnx is there as the offline text-to-speech fallback when cloud TTS is unavailable, not as a speech recogniser. The research note behind it makes the point I agree with most: vendor WER figures don&rsquo;t transfer to your own phone audio, so the choice should be gated on a set of about 200 of your own clips.</p>
+<h2 id="mlflow-tracking-in-the-portfolio-ml-projects">MLflow: tracking in the portfolio ML projects<a class="h-anchor" href="#mlflow-tracking-in-the-portfolio-ml-projects" title="Permanent link">#</a></h2>
+<p>I use MLflow for experiment tracking in two portfolio projects on synthetic data. In the <a href="../articles/credit-risk-mlops-loop.html">credit-risk pipeline</a>, each candidate model gets its own run:</p>
+<div class="hl"><pre><span></span><code><span class="k">with</span> <span class="n">mlflow</span><span class="o">.</span><span class="n">start_run</span><span class="p">(</span><span class="n">run_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">model_type</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">run_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;model_type&quot;</span><span class="p">,</span> <span class="n">model_type</span><span class="p">)</span>
+    <span class="n">mlflow</span><span class="o">.</span><span class="n">log_param</span><span class="p">(</span><span class="s2">&quot;train_size&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span>
+    <span class="o">...</span>
+    <span class="k">for</span> <span class="n">metric_name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+            <span class="n">mlflow</span><span class="o">.</span><span class="n">log_metric</span><span class="p">(</span><span class="n">metric_name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The <a href="../articles/fraud-scoring-kafka.html">fraud-scoring project</a> logs the same way. Neither repo contains saved runs, and both save models with joblib rather than the registry, so I don&rsquo;t quote model scores from them. One small mistake: the credit-risk Compose service runs <code>pip install mlflow</code> unpinned every time the container starts. A pinned image would make the tracking server reproducible.</p>
+<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Under ~10k documents, exact search is enough.</strong> FAISS <code>IndexFlatIP</code> or pgvector inside an existing Postgres, chosen for operations, not recall.</li>
+<li><strong>When filters matter</strong>, Qdrant with payload indexes designed at build time, or pgvector so filters are plain SQL <code>WHERE</code> clauses next to the relational data.</li>
+<li><strong>When Arabic quality matters more than latency</strong>, a hosted model behind the same interface, kept only after it passes the same 225-case suite.</li>
+<li><strong>When state must be exact</strong> (proposals, rate limits across workers), Redis with atomic commands or Postgres, not a read-modify-write on a list.</li>
+</ul>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html" data-title="RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/rag-and-serving-stack.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="redacting-160k-support-chats.html"><small>← Newer</small><b>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</b></a>
+          <a class="post-pager-next" href="python-sql-for-data-engineers.html"><small>Older →</small><b>The Python and SQL I actually use: CTEs, join tuning, Pandas cleansing</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>GCP, AWS, Azure, Huawei: what multi-cloud means day to day | Mohammed Zakaria</title>
+  <meta name="description" content="Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html">
+  <meta property="og:title" content="GCP, AWS, Azure, Huawei: what multi-cloud means day to day | Mohammed Zakaria">
+  <meta property="og:description" content="Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "GCP, AWS, Azure, Huawei: what multi-cloud means day to day", "description": "Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html", "wordCount": 1396, "keywords": "Cloud, AWS, GCP"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Cloud</span><span class="post-tag">AWS</span><span class="post-tag">GCP</span></div>
+        <h1>GCP, AWS, Azure, Huawei: what multi-cloud means day to day</h1>
+        <p class="post-lede">Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#what-i-use-each-cloud-for">What I use each cloud for</a></li>
+<li><a href="#two-clouds-one-nightly-job">Two clouds, one nightly job</a><ul>
+<li><a href="#what-day-to-day-actually-means-here">What &ldquo;day to day&rdquo; actually means here</a></li>
+</ul>
+</li>
+<li><a href="#huawei-cloud-where-the-assistant-lives">Huawei Cloud: where the assistant lives</a></li>
+<li><a href="#aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying">AWS beyond EC2 and RDS: a CDK build I reviewed before deploying</a></li>
+<li><a href="#azure-infrastructure-code-and-a-local-twin">Azure: infrastructure code and a local twin</a></li>
+<li><a href="#mistakes-i-made-and-what-i-do-now">Mistakes I made, and what I do now</a></li>
+<li><a href="#when-multi-cloud-is-worth-it">When multi-cloud is worth it</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>&ldquo;Multi-cloud&rdquo; sounds like an architecture decision. Most days it is something smaller: two sets of credentials in one process, a network path that only exists through a jump host, and two clocks that disagree about when &ldquo;tonight&rdquo; is. Evidence: drawn from my production work at Waffarha (a nightly recommender that spans GCP and AWS, and the customer-service assistant on Huawei Cloud) and three portfolio builds for AWS and Azure, each labelled below.</p>
+<h2 id="what-i-use-each-cloud-for">What I use each cloud for<a class="h-anchor" href="#what-i-use-each-cloud-for" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Cloud</th>
+<th>What runs there in the work below</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GCP</td>
+<td>Cloud Storage: daily MoEngage event exports the recommender reads</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>AWS</td>
+<td>EC2 as an SSH jump host, MySQL on RDS that the app reads recommendations from</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>Huawei Cloud</td>
+<td>The assistant: ECS/CCE compute, OBS storage, GaussDB/RDS plus a DWS warehouse</td>
+<td>Production, Waffarha</td>
+</tr>
+<tr>
+<td>AWS</td>
+<td>API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront in TypeScript CDK</td>
+<td>Tutorial build, never deployed</td>
+</tr>
+<tr>
+<td>Azure</td>
+<td>Terraform modules (Key Vault, Blob, Event Hubs, Data Factory, Databricks, Fabric)</td>
+<td>Portfolio design, never applied</td>
+</tr>
+<tr>
+<td>Azure</td>
+<td><code>cloudkit</code>: one SDK layer for Azure emulators or real Azure, plus a Bicep template</td>
+<td>Portfolio lab</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="two-clouds-one-nightly-job">Two clouds, one nightly job<a class="h-anchor" href="#two-clouds-one-nightly-job" title="Permanent link">#</a></h2>
+<p>The recommender is the clearest example of two clouds in one job (<a href="../articles/fail-open-nightly-recommender.html">full write-up</a>). At 00:00 Cairo time it pulls the last day of event exports from a GCS bucket, builds item-to-item similarity, and upserts each user&rsquo;s picks into MySQL on AWS RDS in batches of 5,000 rows.</p>
+<p>The GCS side authenticates with a service account whose JSON lives in an environment variable, not a key file on disk:</p>
+<div class="hl"><pre><span></span><code><span class="n">sa_info</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;GCP_SA_JSON&quot;</span><span class="p">])</span>
+<span class="n">creds</span> <span class="o">=</span> <span class="n">service_account</span><span class="o">.</span><span class="n">Credentials</span><span class="o">.</span><span class="n">from_service_account_info</span><span class="p">(</span><span class="n">sa_info</span><span class="p">)</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">storage</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">credentials</span><span class="o">=</span><span class="n">creds</span><span class="p">,</span> <span class="n">project</span><span class="o">=</span><span class="n">creds</span><span class="o">.</span><span class="n">project_id</span><span class="p">)</span>
+<span class="n">cutoff</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">days</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The AWS side is different in kind. RDS is not reachable from where the job runs, so every write goes through an SSH tunnel to an EC2 host, and MySQL connects to a local port the tunnel picks:</p>
+<div class="hl"><pre><span></span><code><span class="k">with</span> <span class="n">SSHTunnelForwarder</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">EC2_HOST</span><span class="p">,</span> <span class="n">EC2_PORT</span><span class="p">),</span>
+    <span class="n">ssh_username</span><span class="o">=</span><span class="n">EC2_USER</span><span class="p">,</span>
+    <span class="n">ssh_pkey</span><span class="o">=</span><span class="n">EC2_KEY_PATH</span><span class="p">,</span>
+    <span class="n">remote_bind_address</span><span class="o">=</span><span class="p">(</span><span class="n">RDS_HOST</span><span class="p">,</span> <span class="n">RDS_PORT</span><span class="p">),</span>
+    <span class="n">local_bind_address</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>   <span class="c1"># pick a free local port</span>
+<span class="p">)</span> <span class="k">as</span> <span class="n">tunnel</span><span class="p">:</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">pymysql</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="n">tunnel</span><span class="o">.</span><span class="n">local_bind_port</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Before opening anything, <code>validate_db_env()</code> checks that every host, user and key path is set and that the key file exists. It is a small check with a big payoff: a missing variable fails in the first second with its name, not later as a timeout from the wrong cloud.</p>
+<h3 id="what-day-to-day-actually-means-here">What &ldquo;day to day&rdquo; actually means here<a class="h-anchor" href="#what-day-to-day-actually-means-here" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>Two credential stories.</strong> GCP gets a service-account JSON; AWS gets an SSH key plus a database user. They rotate on different schedules and fail with different errors. I keep them in separate env vars and validate both at startup.</li>
+<li><strong>Two failure domains.</strong> GCS can be fine while the tunnel is down, and the other way round. A third system, ClickHouse, supplies the active-offer filter. When it is unreachable, the job fails open and writes recommendations without the filter, which the write-up covers in detail, including the honest cost.</li>
+<li><strong>Two clocks.</strong> The schedule is Cairo time (<code>TZ_NAME = "Africa/Cairo"</code>), the GCS cutoff is UTC, and <code>generated_at</code> is written to MySQL as naive UTC. That is fine as long as everyone reading the table knows it. I&rsquo;d put the time zone in the column comment, because &ldquo;naive&rdquo; means &ldquo;someone will guess&rdquo;.</li>
+</ul>
+<h2 id="huawei-cloud-where-the-assistant-lives">Huawei Cloud: where the assistant lives<a class="h-anchor" href="#huawei-cloud-where-the-assistant-lives" title="Permanent link">#</a></h2>
+<p>Waffarha&rsquo;s bilingual customer-service assistant runs on Huawei Cloud: compute on ECS and CCE, files on OBS, relational data on GaussDB/RDS, and a DWS warehouse. On the data side, offer cards in the assistant show product photos served from OBS through a CDN.</p>
+<p>The reason Huawei comes up in design work is location. When we costed self-hosted GPU options for the assistant, the cost report described a Huawei Cairo GPU quote as the only route that keeps data in Egypt with zero ops. It was also the most expensive option in that report, and the quote itself is marked unverified there, so I treat it as a placeholder until it&rsquo;s confirmed. The lesson that carried over: for some workloads the region is the requirement, and the provider follows from it.</p>
+<p>I also hold the Huawei HCIP Big Data certification (H13-723).</p>
+<h2 id="aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying">AWS beyond EC2 and RDS: a CDK build I reviewed before deploying<a class="h-anchor" href="#aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying" title="Permanent link">#</a></h2>
+<p>I built a serverless task API in TypeScript CDK as a guided learning project: API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront (<a href="../articles/aws-serverless-blueprint.html">write-up</a>). It has never been deployed, and reading it carefully found two problems a deploy would have hit. The table uses <code>taskId</code> as the partition key and <code>userId</code> as the sort key, so the main &ldquo;list my tasks&rdquo; query can&rsquo;t run as written. And <code>cdk synth</code> would fail on a syntax error in an imported pipeline stack the app doesn&rsquo;t even use.</p>
+<p>The habit I took from it: run <code>cdk synth</code> and a CDK assertions test before anything else, and design DynamoDB keys from the queries backwards.</p>
+<h2 id="azure-infrastructure-code-and-a-local-twin">Azure: infrastructure code and a local twin<a class="h-anchor" href="#azure-infrastructure-code-and-a-local-twin" title="Permanent link">#</a></h2>
+<p>Two portfolio projects carry my Azure infrastructure work.</p>
+<p>The telecom lakehouse design has Terraform modules for Key Vault, VNet, Blob, Event Hubs, Data Factory, Databricks and a Fabric capacity across four environments, every Azure resource gated on one <code>use_local_dev</code> flag (<a href="../articles/telecom-lakehouse-8-domains.html">write-up</a>). It has never been applied, and the write-up lists what a <code>terraform validate</code> with the flag off would catch.</p>
+<p>The Azure local lab is the layer I&rsquo;d put under any Azure data project. Code uses the official Azure SDKs; one environment variable decides whether they reach Microsoft&rsquo;s emulators in Docker Compose (Azurite, the Event Hubs and Service Bus emulators, Cosmos DB) or real resources over Entra ID with no keys:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">blob_service</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlobServiceClient</span><span class="p">:</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="ow">or</span> <span class="n">Settings</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">is_local</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BlobServiceClient</span><span class="o">.</span><span class="n">from_connection_string</span><span class="p">(</span><span class="n">blob_connection_string</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s2">&quot;storage_account&quot;</span><span class="p">)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;https://</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">storage_account</span><span class="si">}</span><span class="s2">.blob.core.windows.net&quot;</span>
+    <span class="k">return</span> <span class="n">BlobServiceClient</span><span class="p">(</span><span class="n">account_url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">credential</span><span class="o">=</span><span class="n">credential</span><span class="p">())</span>
+</code></pre></div>
+
+<p><code>credential()</code> is <code>DefaultAzureCredential</code>: <code>az login</code> on a laptop, managed identity in Azure. The cloud side is a Bicep template, and the README tells you to set a budget alert before the first deploy and tags every resource <code>ttl: delete-same-day</code>. Services with no emulator, such as Data Factory and Fabric, sit behind an interface and each project says so in its README.</p>
+<h2 id="mistakes-i-made-and-what-i-do-now">Mistakes I made, and what I do now<a class="h-anchor" href="#mistakes-i-made-and-what-i-do-now" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>A local flag that skips the cloud path tests nothing.</strong> In the telecom Terraform, the local path is mostly &ldquo;create nothing&rdquo;, so undeclared references and provider resources that don&rsquo;t exist in the pinned version went unnoticed. The fix is to run <code>terraform validate</code> with the cloud flag on in CI, even when nothing gets applied.</li>
+<li><strong>Code-complete is not deployed.</strong> The CDK build looked finished and couldn&rsquo;t synthesise. A plan or synth artifact is the minimum before I call infrastructure done.</li>
+<li><strong>A tunnel per run is a dependency you don&rsquo;t see.</strong> The recommender&rsquo;s path to RDS depends on one EC2 host and one key. It works, but it&rsquo;s the first thing I&rsquo;d move to a private network route, and until then it&rsquo;s the first thing the startup check verifies.</li>
+<li><strong>Fail open needs a flag.</strong> Writing recommendations without the active-offer filter is right for the batch, but the app should know it happened. The fix I want is a run-status flag and a loud alert.</li>
+</ul>
+<h2 id="when-multi-cloud-is-worth-it">When multi-cloud is worth it<a class="h-anchor" href="#when-multi-cloud-is-worth-it" title="Permanent link">#</a></h2>
+<p>I don&rsquo;t pick multi-cloud on purpose. It happens because data already lives somewhere: the marketing tool exports to GCS, the backend lives on AWS, the assistant has to sit in a Cairo region. When that&rsquo;s the situation, my rules are short. Move files, not connections, across clouds where possible. Validate every credential at startup. Write down the time zone of every timestamp. And make each cloud&rsquo;s failure a separate, named branch in the code, not one generic exception.</p>
+<p><em>If you run jobs that cross clouds, I&rsquo;d like to hear how you handle the network path. <a href="../index.html#contact">Get in touch</a>.</em></p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html" data-title="GCP, AWS, Azure, Huawei: what multi-cloud means day to day">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="watchdog-price-intel.html"><small>← Newer</small><b>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</b></a>
+          <a class="post-pager-next" href="telecom-lakehouse-8-domains.html"><small>Older →</small><b>A telecom lakehouse for 8 domains: the blueprint, and what runs today</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

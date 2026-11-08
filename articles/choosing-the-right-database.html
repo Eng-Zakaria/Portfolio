@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins | Mohammed Zakaria</title>
+  <meta name="description" content="How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html">
+  <meta property="og:title" content="PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins | Mohammed Zakaria">
+  <meta property="og:description" content="How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins", "description": "How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html", "wordCount": 1698, "keywords": "Databases, SQL, Data Architecture"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Databases</span><span class="post-tag">SQL</span><span class="post-tag">Data Architecture</span></div>
+        <h1>PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins</h1>
+        <p class="post-lede">How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-short-version">The short version</a></li>
+<li><a href="#postgresql-my-default-warehouse">PostgreSQL: my default warehouse</a></li>
+<li><a href="#mysql-when-it-is-the-applications-database">MySQL: when it is the application&rsquo;s database</a></li>
+<li><a href="#clickhouse-read-it-dont-own-it">ClickHouse: read it, don&rsquo;t own it</a></li>
+<li><a href="#sql-server-sqlite-and-duckdb">SQL Server, SQLite and DuckDB</a></li>
+<li><a href="#time-series-influxdb-and-timescaledb">Time series: InfluxDB and TimescaleDB</a></li>
+<li><a href="#neo4j-and-elasticsearch">Neo4j and Elasticsearch</a></li>
+<li><a href="#redis-and-pgvector">Redis and pgvector</a></li>
+<li><a href="#how-i-choose">How I choose</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>&ldquo;Which database should we use?&rdquo; usually gets answered by whatever the team used last. I try to answer it by asking what the data looks like, who writes it, and who reads it. This guide goes through the databases I have worked with, where each one was really used, and what state that work is in. Evidence: drawn from my production work at Waffarha, a freelance client warehouse, the Nexlify engagement (reported outcomes only), and portfolio projects linked below, several of them on synthetic data.</p>
+<h2 id="the-short-version">The short version<a class="h-anchor" href="#the-short-version" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Database</th>
+<th>Where I used it</th>
+<th>Status of that work</th>
+<th>What it was good at</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PostgreSQL</td>
+<td>Nexlify clinic warehouse; freelance clinic warehouse</td>
+<td>Client, production</td>
+<td>Star schemas, constraints, upserts</td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td>Waffarha recommender output on AWS RDS; first clinic loader</td>
+<td>Production; client</td>
+<td>Being the app&rsquo;s database</td>
+</tr>
+<tr>
+<td>ClickHouse</td>
+<td>Waffarha offers, coupons and orders (<code>main_eg</code>)</td>
+<td>Production, read-only consumer</td>
+<td>Fast reads over wide fact tables</td>
+</tr>
+<tr>
+<td>SQL Server, SQLite, MySQL</td>
+<td>Nexlify source systems</td>
+<td>Client; reported outcomes</td>
+<td>Sources to map and refactor</td>
+</tr>
+<tr>
+<td>DuckDB</td>
+<td>Estates lakehouse, credit-risk marts</td>
+<td>Portfolio, synthetic data</td>
+<td>Local analytics over Parquet</td>
+</tr>
+<tr>
+<td>SQLite</td>
+<td>Graduation-project web app, brand-radar pilot, small warehouses</td>
+<td>Graduation project; pilot; portfolio</td>
+<td>Zero-ops single-user storage</td>
+</tr>
+<tr>
+<td>InfluxDB</td>
+<td>Live ADS-B flight radar; NTI internship</td>
+<td>Portfolio (live public data); internship</td>
+<td>Tagged time-series points for Grafana</td>
+</tr>
+<tr>
+<td>TimescaleDB</td>
+<td>AquaWatch</td>
+<td>Prototype, simulated sensors</td>
+<td>Time series with plain SQL</td>
+</tr>
+<tr>
+<td>Neo4j</td>
+<td>Ethereum forensics prototype</td>
+<td>Prototype; no measured comparison</td>
+<td>Multi-hop traversal (in design)</td>
+</tr>
+<tr>
+<td>Elasticsearch</td>
+<td>Petroleum platform, blockchain prototype</td>
+<td>Compose service; in-memory stand-in</td>
+<td>Search and Kibana dashboards (planned)</td>
+</tr>
+<tr>
+<td>Redis</td>
+<td>Waffarha assistant memory; fraud and price-tracker projects</td>
+<td>Production config; portfolio</td>
+<td>Small shared state, queues, counters</td>
+</tr>
+<tr>
+<td>pgvector</td>
+<td>Waffarha assistant config default</td>
+<td>Benchmarked; cutover deferred</td>
+<td>Vectors next to relational data</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="postgresql-my-default-warehouse">PostgreSQL: my default warehouse<a class="h-anchor" href="#postgresql-my-default-warehouse" title="Permanent link">#</a></h2>
+<p>When I need a warehouse that one team owns and writes to, I start with PostgreSQL. At Nexlify I evaluated MySQL against PostgreSQL for a warehouse that pulled from 10+ clinics, and the warehouse ended up on PostgreSQL, modelled as star schemas with bridge tables for staff who hold several roles (<a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>).</p>
+<p>For the freelance clinic client I used the parts of PostgreSQL that let the database defend itself. <code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so a daily full re-send updates rows instead of duplicating them. <code>dim_staff</code> has a <code>CHECK</code> constraint on six staff groups. Dimensions are scoped by <code>clinic_id</code> with <code>UNIQUE(clinic_id, name)</code>, so one floor&rsquo;s data can never be counted as another&rsquo;s. The ETL also reads <code>information_schema.columns</code> before loading, to catch schema drift (<a href="../articles/six-stage-client-etl.html">the six-stage ETL</a>).</p>
+<p>The lesson from that project: constraints only help if the pipeline knows about them. A <code>CHECK</code> on patient status rejected 1,041 rows in the first real run because the quality scan didn&rsquo;t test that column. I now write a matching quality rule for every constraint in the DDL.</p>
+<h2 id="mysql-when-it-is-the-applications-database">MySQL: when it is the application&rsquo;s database<a class="h-anchor" href="#mysql-when-it-is-the-applications-database" title="Permanent link">#</a></h2>
+<p>At Waffarha, MySQL on AWS RDS is what the app reads, so that is where the nightly recommender writes. The job reaches it through an SSH tunnel on EC2 and upserts in 5,000-row batches with <code>INSERT ... ON DUPLICATE KEY UPDATE</code>, keyed on the user, committing after each batch (<a href="../articles/fail-open-nightly-recommender.html">Fail open, never fail the night</a>).</p>
+<p>I don&rsquo;t choose MySQL for that job. The backend team did, and the right move for a pipeline is to write where the consumer already reads. The first version of the clinic loader was also MySQL: keyed upserts plus delete-and-reinsert of child rows inside one transaction. The PostgreSQL warehouse came later, with the six-stage checks around the load.</p>
+<h2 id="clickhouse-read-it-dont-own-it">ClickHouse: read it, don&rsquo;t own it<a class="h-anchor" href="#clickhouse-read-it-dont-own-it" title="Permanent link">#</a></h2>
+<p>ClickHouse holds Waffarha&rsquo;s live offers, coupons and orders. My code reads it in two production paths: the recommender&rsquo;s active-offer filter, and the support assistant&rsquo;s lookups for a customer&rsquo;s own coupons and orders. Both treat it as someone else&rsquo;s database.</p>
+<p>The assistant&rsquo;s client opens every session with <code>readonly=2</code>, a server-side <code>max_execution_time</code> and a <code>max_result_rows</code> cap, so the server itself refuses writes and runaway scans. Queries are fixed templates; the model never writes SQL (<a href="../articles/deterministic-gates-before-llm.html">Deterministic gates before the LLM</a>).</p>
+<p>ClickHouse has its own dialect, and it bit me twice. The Arabic text normaliser had to be built from nested single-pattern calls, because the function I wanted wasn&rsquo;t on our build. From <code>sql.py</code>:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_build_norm_template</span><span class="p">(</span><span class="n">inner</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%E</span><span class="s2">XPR%&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``multiReplaceRegexpAll`` is not available on the target ClickHouse build, so the</span>
+<span class="sd">    normaliser is a nest of single-pattern ``replaceRegexpAll`` calls.&quot;&quot;&quot;</span>
+</code></pre></div>
+
+<p>And list parameters must render as <code>['a','b']</code>, not as a tuple, because a one-element tuple degrades to a scalar. Small things, but they are why I test templates against the real server, not just a SQL parser.</p>
+<p>The other ClickHouse lesson is about failure. If it is down at midnight, the recommender skips the active-offer filter and still writes fresh recommendations. That is right for the batch, but it means some picks can point at expired offers on those nights, and the run needs a status flag the app can check.</p>
+<h2 id="sql-server-sqlite-and-duckdb">SQL Server, SQLite and DuckDB<a class="h-anchor" href="#sql-server-sqlite-and-duckdb" title="Permanent link">#</a></h2>
+<p>At Nexlify the source systems were a mix of MySQL, PostgreSQL, SQL Server and SQLite, plus Excel and clinic APIs. I refactored legacy SQL across those dialects with CTEs and reworked joins. The reported results were about 30% lower query latency and zero dashboard timeouts. Those are outcomes from my CV; the timing logs stayed with the client.</p>
+<p>SQLite is what I reach for when there is one writer and no server to run. The graduation-project web app keeps logins and Q&amp;A history in it (<a href="../articles/arabic-rag-graduation-project.html">Arabic RAG graduation project</a>), and the brand-radar pilot runs locally on it (<a href="../articles/brand-radar-connector-registry.html">Brand radar</a>). The mistake I made there: SQLite doesn&rsquo;t enforce <code>REFERENCES</code> unless <code>PRAGMA foreign_keys</code> is on, and in one estates warehouse build it wasn&rsquo;t (<a href="../articles/estates-warehouse-governed.html">Modeling estates data</a>).</p>
+<p>DuckDB is SQLite&rsquo;s analytical cousin. In the estates portfolio (synthetic data) it runs the lakehouse queries, dbt models and validation SQL over Parquet with no server (<a href="../articles/estates-lakehouse-zero-loss.html">8/8 sources, zero loss</a>). If the work is analytics on one machine, DuckDB is faster to set up than any warehouse.</p>
+<h2 id="time-series-influxdb-and-timescaledb">Time series: InfluxDB and TimescaleDB<a class="h-anchor" href="#time-series-influxdb-and-timescaledb" title="Permanent link">#</a></h2>
+<p>For the ADS-B flight radar (<a href="../articles/adsb-flight-radar-streaming.html">Live flight radar</a>), a portfolio project on live public data, Spark Structured Streaming writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, aircraft type and on-ground, and Grafana reads it with Flux. InfluxDB fits when the questions are &ldquo;latest value per tag&rdquo; and &ldquo;aggregate per window&rdquo;.</p>
+<p>It also showed me how to misuse it. I tagged aggregate points with <code>batch_id</code>, which creates a new series every 30 seconds and grows series cardinality without limit. Timestamps were write time, not event time. Tags should be things you group by, and the timestamp should come from the event.</p>
+<p>For AquaWatch, a fish-farm prototype on simulated sensors (<a href="../articles/aquawatch-iot-alerts.html">AquaWatch</a>), I used TimescaleDB instead, because the alerting and reporting wanted plain SQL joins next to the readings. My bug there: <code>create_hypertable</code> ran on every start without <code>if_not_exists</code>, which fails once the table is already a hypertable.</p>
+<h2 id="neo4j-and-elasticsearch">Neo4j and Elasticsearch<a class="h-anchor" href="#neo4j-and-elasticsearch" title="Permanent link">#</a></h2>
+<p>Neo4j is the textbook answer for multi-hop questions like &ldquo;where did this money go in three hops?&rdquo; In the Ethereum forensics prototype (<a href="../articles/ethereum-neo4j-vs-spark.html">Neo4j vs Spark</a>) the real client ingests in <code>UNWIND</code> batches of 100 and models each transaction as a node:</p>
+<div class="hl"><pre><span></span><code><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SENT</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">:</span><span class="n">Transaction</span><span class="w"> </span><span class="p">{</span><span class="n">hash</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">RECEIVED</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">receiver</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span>
+</code></pre></div>
+
+<p>with uniqueness constraints on <code>Wallet.address</code> and <code>Transaction.hash</code>. That project has no measured Neo4j-vs-Spark result: the timing harness runs against local stand-ins. Writing it also exposed a modelling mistake. The multi-hop query assumed direct wallet-to-wallet <code>SENT</code> edges, which this schema doesn&rsquo;t have, so the query and the schema have to be reconciled before any real comparison.</p>
+<p>Elasticsearch appears in two of these repositories in limited form. The petroleum platform declares Elasticsearch and Kibana in Docker Compose, with the routing into them planned as NiFi UI work (<a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a>). The blockchain prototype indexes into an in-memory stand-in and generates a Kibana dashboard config. My rule for it is simple: use it when the question is full-text search or log exploration, not as a system of record.</p>
+<h2 id="redis-and-pgvector">Redis and pgvector<a class="h-anchor" href="#redis-and-pgvector" title="Permanent link">#</a></h2>
+<p>Redis holds small, shared, short-lived state. The Waffarha assistant&rsquo;s config uses it as the conversation-memory backend. In portfolio projects it holds daily counters for fraud scoring (<a href="../articles/fraud-scoring-kafka.html">Fraud scoring</a>) and brokers Celery jobs for price tracking (<a href="../articles/watchdog-price-intel.html">Watchdog</a>). I don&rsquo;t put anything in Redis I can&rsquo;t rebuild.</p>
+<p>pgvector is tempting because vectors sit next to relational data. In my August 2026 benchmark it had lower recall@3 (0.847 vs 0.881 for the other four stores) and the slowest queries, at 65.06 ms (<a href="../articles/bilingual-rag-retrieval-hit-rate.html">Bilingual RAG</a>). The assistant shipped on Qdrant. The current code defaults to pgvector, but the project&rsquo;s state log records that cutover as deferred, and it hasn&rsquo;t been re-measured. I&rsquo;d measure it on our own eval before switching.</p>
+<h2 id="how-i-choose">How I choose<a class="h-anchor" href="#how-i-choose" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>Who writes the data?
+ ├─ another team / the app      -&gt; use their store, read-only, with limits (ClickHouse, MySQL)
+ └─ my pipeline
+     ├─ shape?
+     │   ├─ rows with keys and constraints, BI on top   -&gt; PostgreSQL
+     │   ├─ analytics on one machine, files in, no ops  -&gt; DuckDB
+     │   ├─ metrics per tag over time                   -&gt; InfluxDB / TimescaleDB
+     │   ├─ paths between entities are the question     -&gt; Neo4j (benchmark it first)
+     │   └─ full-text search, log exploration           -&gt; Elasticsearch
+     └─ state that is small, shared and rebuildable     -&gt; Redis
+</code></pre></div>
+
+<p>Two rules sit above the tree. Write where your consumer already reads, even if you&rsquo;d have picked something else. And before claiming one database beats another for a workload, run both on the same data, warm, repeated, with the hardware written down. I learned the second rule from a benchmark harness that wasn&rsquo;t ready to make the claim yet.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html" data-title="PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="config-not-code-ingestion.html"><small>← Newer</small><b>Config, not code: schema-drift gates and a cdp CLI</b></a>
+          <a class="post-pager-next" href="brand-radar-connector-registry.html"><small>Older →</small><b>Brand radar: one file per source and a connector registry</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
