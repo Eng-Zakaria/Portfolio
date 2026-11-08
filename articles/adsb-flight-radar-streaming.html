@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB | Mohammed Zakaria</title>
+  <meta name="description" content="How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html">
+  <meta property="og:title" content="Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB | Mohammed Zakaria">
+  <meta property="og:description" content="How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB", "description": "How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html", "wordCount": 1834, "keywords": "Streaming, Kafka, Spark"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">Kafka</span><span class="post-tag">Spark</span></div>
+        <h1>Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB</h1>
+        <p class="post-lede">How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-two-flume-agents-around-kafka">Decision 1: two Flume agents around Kafka</a></li>
+<li><a href="#decision-2-two-queries-in-one-spark-job-written-with-foreachbatch">Decision 2: two queries in one Spark job, written with foreachBatch</a></li>
+<li><a href="#decision-3-cap-the-feed-instead-of-scaling-the-stack">Decision 3: cap the feed instead of scaling the stack</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence label: Portfolio (live public data).</strong> This is a personal learning project, not client work. It pulls real, live aircraft positions from the free <a href="https://api.adsb.lol/docs">adsb.lol</a> ADS-B API, but the volume is small: one request every 10 seconds, capped at 300 aircraft per request, all running in Docker Compose on one machine. The repository has no saved logs, benchmarks or screenshots, so this article describes what the code does and what its configuration allows. It does not report measured throughput or latency.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted a project that touches every piece of a classic Hadoop-era streaming stack in one place: Flume for ingestion, Kafka as the buffer, Spark Structured Streaming for processing, HDFS for the raw archive, and a time-series store with a live dashboard on top. Most tutorials use fake click events. I wanted real data that changes every few seconds and is easy to check by eye, and aircraft positions fit well: if the dots on the map line up with Cairo International Airport, the pipeline works.</p>
+<p>The data source is adsb.lol, a community-run ADS-B aggregator. It needs no API key and publishes data under the ODbL licence, so any dashboard built on it has to credit adsb.lol. By default the poller asks for every aircraft within 250 nautical miles of Cairo (<code>/v2/point/30.0444/31.2357/250</code>). It also supports three global endpoints through one environment variable: military aircraft (<code>/v2/mil</code>), the LADD privacy list (<code>/v2/ladd</code>) and PIA addresses (<code>/v2/pia</code>).</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>adsb.lol API  /v2/point/{lat}/{lon}/250   (poll every 10 s, max 300 aircraft)
+      |
+      v
+data-source (Python)  -- flatten &quot;ac&quot; array, drop rows with no lat/lon
+      |  HTTP POST, Flume JSONHandler format
+      v
+Flume agent &quot;producer&quot;   HTTP source -&gt; memory channel -&gt; Kafka sink (acks=1)
+      |
+      v
+Kafka topic &quot;aircraft-states&quot;   1 broker, 3 partitions, replication 1
+      |
+      +----------------------------------+
+      v                                  v
+Flume agent &quot;consumer&quot;            Spark Structured Streaming (local[2])
+Kafka source -&gt; file channel      query 1: every 10 s  -&gt; aircraft_states_raw
+-&gt; HDFS sink                      query 2: every 30 s  -&gt; aircraft_states_agg
+      |                                  |
+      v                                  v
+HDFS /aircraft-states/            InfluxDB 2.7 bucket &quot;aircraft-states&quot;
+  dt=YYYY-MM-DD/hr=HH/*.json             |
+                                         v
+                                  Grafana 10.4 (6 panels, 10 s refresh)
+</code></pre></div>
+
+<p>Everything runs from one <code>docker-compose.yml</code>: ZooKeeper, a single Kafka broker, an init container that creates the topic, a Hadoop namenode and datanode, InfluxDB, Grafana, two Flume containers, the Spark job and the Python poller. The README asks for 8 GB of RAM, mostly for Hadoop and Spark.</p>
+<p>The poller does the only real transformation before Kafka. adsb.lol sends <code>alt_baro</code> as a number in flight and as the string <code>"ground"</code> on the runway, so the producer turns that into a boolean and a zero:</p>
+<div class="hl"><pre><span></span><code><span class="n">alt_baro_raw</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alt_baro&quot;</span><span class="p">)</span>
+<span class="n">on_ground</span> <span class="o">=</span> <span class="p">(</span><span class="n">alt_baro_raw</span> <span class="o">==</span> <span class="s2">&quot;ground&quot;</span><span class="p">)</span>
+<span class="n">alt_baro</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">on_ground</span> <span class="k">else</span> <span class="n">_num</span><span class="p">(</span><span class="n">alt_baro_raw</span><span class="p">)</span>
+</code></pre></div>
+
+<p>It also renames the short API fields (<code>r</code> to <code>registration</code>, <code>t</code> to <code>aircraft_type</code>, <code>gs</code> to <code>ground_speed</code>), trims the padded callsign, and stamps an <code>ingested_at</code> time in UTC.</p>
+<p>The Spark job reads the topic twice, once per streaming query. The first query writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, <code>aircraft_type</code> and <code>on_ground</code>. The second groups by aircraft type over a 1-minute window that slides every 30 seconds and writes count, average and maximum ground speed, and average barometric altitude. Grafana reads both measurements with Flux. The map panel takes the last latitude, longitude and altitude per <code>hex</code> from the past 2 minutes, so it shows each aircraft&rsquo;s current position, not a track.</p>
+<h2 id="decision-1-two-flume-agents-around-kafka">Decision 1: two Flume agents around Kafka<a class="h-anchor" href="#decision-1-two-flume-agents-around-kafka" title="Permanent link">#</a></h2>
+<p>The poller does not talk to Kafka. It POSTs to a Flume HTTP source, and a second Flume agent drains Kafka into HDFS. That is more moving parts than a Python Kafka producer plus a small consumer, so it needs a reason.</p>
+<p>The README gives the reasons: the producer agent buffers between the HTTP poller and Kafka, and the consumer agent gives file-channel buffering from Kafka to HDFS. A side benefit is that the poller needs no Kafka client, only <code>requests</code>. The two agents are set up differently on purpose:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Source</th>
+<th>Channel</th>
+<th>Sink</th>
+<th>What the channel buys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>producer</td>
+<td>HTTP, port 44444</td>
+<td>memory, capacity 10,000</td>
+<td>Kafka, <code>acks=1</code></td>
+<td>Fast, but events in the channel are lost if the container dies</td>
+</tr>
+<tr>
+<td>consumer</td>
+<td>Kafka, batch 1,000</td>
+<td>file, capacity 100,000</td>
+<td>HDFS, roll every 120 s or 10,000 events</td>
+<td>Survives a restart; Kafka offsets plus the file channel protect the archive path</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is that only the archive side is durable. On the way in there are three places where data can drop: the poller logs a warning and moves on if the POST to Flume fails (no retry), the memory channel loses whatever it holds on a crash, and <code>acks=1</code> on a single broker with replication factor 1 means one broker failure loses data. For a radar that refreshes every 10 seconds, losing one poll is fine because the next one replaces it. For anything that needs a complete history, it is not, and I would not call this ingestion lossless.</p>
+<h2 id="decision-2-two-queries-in-one-spark-job-written-with-foreachbatch">Decision 2: two queries in one Spark job, written with foreachBatch<a class="h-anchor" href="#decision-2-two-queries-in-one-spark-job-written-with-foreachbatch" title="Permanent link">#</a></h2>
+<p>InfluxDB has no built-in Spark sink, so both queries use <code>foreachBatch</code> and the official <code>influxdb-client</code>:</p>
+<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
+    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The 10-second trigger matches the 10-second poll, so each micro-batch roughly holds one poll&rsquo;s worth of aircraft. The aggregate query runs every 30 seconds in <code>update</code> mode with a 1-minute watermark.</p>
+<p>This is simple and easy to read, but it has costs I can see in the code:</p>
+<ul>
+<li>Each batch is pulled to the driver with <code>collect()</code>, and a new InfluxDB client is opened and closed per batch. At 300 rows per poll that is fine. At real volume it would not be.</li>
+<li>The window and watermark use <code>event_time = current_timestamp()</code>, which is Spark&rsquo;s processing time, not the <code>ingested_at</code> field the poller writes, and not the aircraft&rsquo;s own <code>seen_pos</code>. The &ldquo;1-minute window&rdquo; is really &ldquo;rows Spark happened to read in that minute&rdquo;.</li>
+<li>The InfluxDB timestamp is <code>datetime.utcnow()</code> at write time, so a delayed batch shows up as if it were fresh.</li>
+<li>Writes are synchronous and not idempotent. If a batch is retried after a failure, its points are written again.</li>
+<li>Aggregate points are tagged with <code>batch_id</code>, which creates a new series every 30 seconds. That works for a demo but grows InfluxDB series cardinality without limit.</li>
+</ul>
+<p>The upside is that both queries share one parsed DataFrame and one schema, and the whole job is about 200 lines of Python.</p>
+<h2 id="decision-3-cap-the-feed-instead-of-scaling-the-stack">Decision 3: cap the feed instead of scaling the stack<a class="h-anchor" href="#decision-3-cap-the-feed-instead-of-scaling-the-stack" title="Permanent link">#</a></h2>
+<p>A 250 nm circle around Cairo, or any of the global endpoints, can return hundreds of aircraft per call. Rather than size Kafka and Spark for that, I capped it in the poller:</p>
+<div class="hl"><pre><span></span><code><span class="n">aircraft</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aircraft</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lat&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lon&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aircraft</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_AIRCRAFT</span><span class="p">:</span>
+    <span class="n">aircraft</span> <span class="o">=</span> <span class="n">aircraft</span><span class="p">[:</span><span class="n">MAX_AIRCRAFT</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Rows without a position are dropped first, since adsb.lol leaves out <code>lat</code>/<code>lon</code> when the last position report is stale, and they cannot be mapped. Then the list is cut at 300. That puts a hard ceiling on load: 300 events every 10 seconds, so at most about 30 events per second. Spark runs as <code>local[2]</code> with 2 shuffle partitions to match.</p>
+<p>The trade-off is that the cut is not random or ranked. If the API returns more than 300 aircraft, the ones after position 300 never appear on the map. The README says to shrink the radius rather than rely on the cap, and that is the honest fix for a single-node demo.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What the repository shows:</p>
+<ul>
+<li>A full stack that starts with <code>docker compose up --build -d</code>: 11 services, with health checks on ZooKeeper, Kafka, the namenode and InfluxDB, and a startup order enforced through <code>depends_on</code>.</li>
+<li>A provisioned Grafana dashboard with six panels: live aircraft positions on a Geomap, aircraft count by type, total tracked over time, average ground speed by type, average barometric altitude by type, and on-ground versus airborne.</li>
+<li>Raw JSON landing in HDFS, partitioned by date and hour, as <code>states-*.json</code> files.</li>
+<li>Two exported copies of the dashboard JSON from a running Grafana, and a follow-up commit that fixed the map query to keep <code>aircraft_type</code> per point. This tells me the stack ran and was tuned against live data, but there are no logs or screenshots in the repo to quote numbers from.</li>
+</ul>
+<p>What it does not show: any measured messages per second, end-to-end latency, or uptime. The configuration caps the input at about 30 events per second, which is far from &ldquo;at scale&rdquo;. The one latency fact I can state is the cadence: a new poll every 10 seconds, a Spark write every 10 seconds, and a Grafana refresh every 10 seconds, so a position on the map is roughly 10 to 30 seconds old.</p>
+<div class="admonition note">
+<p class="admonition-title">Small bugs I found while writing this</p>
+<p>The consumer Dockerfile passes <code>--conf /opt/opt/flume/conf</code> (a doubled path) to <code>flume-ng</code>. The config file itself is passed separately, so the agent still loads its settings. The consumer config header still says <code>topic = user-events</code>, and the compose comment on the poller says &ldquo;Random User API&rdquo;, both left over from an earlier template. The &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Use event time. Parse <code>ingested_at</code> (or <code>ingested_at - seen_pos</code>) into a timestamp in Spark and use it for the watermark, the windows and the InfluxDB point time.</li>
+<li>Make the ingest path durable or drop Flume from it. Either switch the producer agent to a file channel with <code>acks=all</code>, or let the poller write to Kafka directly with retries and keep Flume only for the HDFS archive.</li>
+<li>Write to InfluxDB from the executors with <code>foreachPartition</code> and batched writes, and remove the <code>batch_id</code> tag.</li>
+<li>Build real tracks. Keep the last N positions per <code>hex</code> with <code>applyInPandasWithState</code> or a Flux query over a longer range, and draw them as lines on the map.</li>
+<li>Measure it. Log rows per batch and Spark&rsquo;s <code>processedRowsPerSecond</code> and batch duration, then switch to a global endpoint with the cap raised to see where the single-node stack actually bends.</li>
+<li>Move secrets out of <code>docker-compose.yml</code> into an <code>.env</code> file that is not committed.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Code: <a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline">github.com/Eng-Zakaria/aircraft-tracking-pipeline</a></li>
+<li>Case page: <a href="../projects/aircraft-tracking.html">Aircraft Tracking Pipeline</a></li>
+<li>Data: aircraft data courtesy of <a href="https://adsb.lol">adsb.lol</a>, licensed under ODbL v1.0.</li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html" data-title="Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="agent-that-cant-go-rogue.html"><small>← Newer</small><b>Waffy: a support agent that can&#x27;t go rogue</b></a>
+          <span></span>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

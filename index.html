@@ -446,9 +446,9 @@
 
         <div class="project-card wide reveal">
           <div class="project-num">08 — REAL-TIME STREAMING</div>
-          <div class="project-name"><i class="fas fa-shield-alt"></i>Fraud Shield — Sub-Second Scoring</div>
+          <div class="project-name"><i class="fas fa-shield-alt"></i>Fraud Shield — Kafka Fraud Scoring</div>
           <div class="project-desc">
-            Kafka streaming scores every transaction in under a second. Drift-aware monitoring with Slack/email escalation, Plotly/Dash war-room, and a retraining loop — fraud caught while the payment is still warm.
+            A Kafka consumer and a FastAPI service score each synthetic transaction with a scikit-learn model tracked in MLflow. Aggregate alerts (fraud-rate spikes, AUC drops, health checks) go to Slack, email or webhook; Airflow retrains every 6 hours; a Plotly/Dash dashboard shows it all.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -457,19 +457,20 @@
             <span class="stack-tag"><i class="fas fa-flask"></i> MLflow</span>
             <span class="stack-tag"><i class="fab fa-redis"></i> Redis</span>
             <span class="stack-tag"><i class="fas fa-chart-line"></i> Plotly/Dash</span>
-            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker Compose</span>
           </div>
           <div class="project-links">
             <a href="projects/fraud-detection.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/fraud-scoring-kafka.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/Fraud_Detection" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
 
         <div class="project-card reveal">
           <div class="project-num">09 — STREAMING PIPELINE</div>
-          <div class="project-name"><i class="fas fa-plane"></i>Live Flight Radar — ADS-B at Scale</div>
+          <div class="project-name"><i class="fas fa-plane"></i>Live Flight Radar — ADS-B Streaming</div>
           <div class="project-desc">
-            Real ADS-B feed → Kafka → Spark Structured Streaming → InfluxDB, visualized live in Grafana with geomaps and per-aircraft tracks. Dual Flume agents keep ingestion lossless when the sky gets busy.
+            Live ADS-B feed (250 nm around Cairo, every 10 s) → Flume → Kafka → Spark Structured Streaming → InfluxDB, shown in Grafana as a live map of current aircraft plus per-type speed and altitude charts. A second Flume agent archives raw JSON to HDFS through a durable file channel.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> Spark Streaming</span>
@@ -480,6 +481,7 @@
           </div>
           <div class="project-links">
             <a href="projects/aircraft-tracking.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/adsb-flight-radar-streaming.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
@@ -578,21 +580,21 @@
 
         <div class="project-card wide reveal" data-category="platform batch streaming">
           <div class="project-num">15 — ENERGY PLATFORM</div>
-          <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Pulse — Wells + Markets Live</div>
+          <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Pulse — Wells + Markets Scaffold</div>
           <div class="project-desc">
-            Well telemetry meets market reality: historic Volve field data plus EIA/Baker Hughes feeds → RabbitMQ → Beam-on-Flink anomaly detection → Elasticsearch + warehouse. 3-node NiFi, Grafana + Prometheus, IaC with Terraform/K8s.
+            Well telemetry meets market data: ~560K synthetic Volve-style sensor rows and EIA/Baker Hughes scrapers routed through bounded RabbitMQ queues (3 exchanges, 8 queues), a 3-node NiFi cluster, and a windowed Beam anomaly detector written for the Flink runner. 20-service Compose stack with Prometheus and Grafana; not yet wired end to end.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-water"></i> NiFi</span>
             <span class="stack-tag"><i class="fas fa-rabbit"></i> RabbitMQ</span>
             <span class="stack-tag"><i class="fas fa-bolt"></i> Flink / Beam</span>
             <span class="stack-tag"><i class="fas fa-search"></i> Elasticsearch</span>
-            <span class="stack-tag"><i class="fas fa-database"></i> BigQuery</span>
             <span class="stack-tag"><i class="fas fa-tachometer-alt"></i> Grafana</span>
             <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
           </div>
           <div class="project-links">
             <a href="projects/petroleum-platform.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/petroleum-nifi-beam-flink.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/petroleum-platform" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
@@ -618,9 +620,9 @@
 
         <div class="project-card wide reveal" data-category="platform streaming batch">
           <div class="project-num">17 — RETAIL ANALYTICS</div>
-          <div class="project-name"><i class="fas fa-store"></i>Retail Command — POS to Forecast Live</div>
+          <div class="project-name"><i class="fas fa-store"></i>Retail Command — POS Streaming to Delta</div>
           <div class="project-desc">
-            POS, e-commerce, and inventory streaming into one decision layer. 15-service stack: Kafka + Debezium CDC → Spark & Flink → Delta Lake + Postgres → FastAPI, with ML demand forecasts and Grafana war-boards.
+            Simulated POS and e-commerce events streaming through a 15-service stack: Kafka → Spark windowed aggregates & Flink → Delta-format writes + Postgres → FastAPI. A Debezium Postgres CDC connector and a demand-forecasting module are built but not yet wired in.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
@@ -632,14 +634,15 @@
           </div>
           <div class="project-links">
             <a href="projects/retail-analytics-pipeline.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/retail-cdc-debezium.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform streaming">
           <div class="project-num">18 — AQUACULTURE IOT</div>
-          <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Farms That Phone Home</div>
+          <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Pond Alerts Prototype</div>
           <div class="project-desc">
-            Autonomous water-quality ops for fish farms: 5-minute sensor cadence → Airflow → TimescaleDB → Grafana with SMS/email escalation and cooldown logic, plus a FastAPI read layer for the farm floor.
+            Fish-farm water-quality prototype on simulated sensors: Airflow loads readings into TimescaleDB, and a threshold alert module applies a 15-minute per-pond, per-parameter cooldown with email alerts. FastAPI read endpoints; Grafana dashboards next.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -650,6 +653,7 @@
           </div>
           <div class="project-links">
             <a href="projects/aquawatch.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/aquawatch-iot-alerts.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -966,11 +970,11 @@
       <p class="projects-sub">Code-first, production-tested: Airflow at scale, NoSQL when it wins, and the resilience patterns that keep pipelines alive at 3am. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a> · <a href="articles/index.html" class="inline-link">All articles on this site →</a></p>
       <!-- native-articles:start -->
       <div class="native-articles">
-        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 13 articles →</a></div>
+        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 18 articles →</a></div>
         <div class="native-articles-grid">
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/six-stage-client-etl.html">Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</a></h3><p>How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</p><div class="post-tags"><span class="post-tag">ETL</span><span class="post-tag">Data Quality</span><span class="post-tag">MySQL</span></div><a class="proj-link" href="articles/six-stage-client-etl.html">Read article →</a></article>
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/retail-cdc-debezium.html">Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</a></h3><p>A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.</p><div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">CDC</span><span class="post-tag">Delta Lake</span></div><a class="proj-link" href="articles/retail-cdc-debezium.html">Read article →</a></article>
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/reddit-medallion-pyspark.html">A 7-stage PySpark medallion for Reddit signals</a></h3><p>How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</p><div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div><a class="proj-link" href="articles/reddit-medallion-pyspark.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/redacting-160k-support-chats.html">Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</a></h3><p>How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</p><div class="post-tags"><span class="post-tag">Data Privacy</span><span class="post-tag">LLM Fine-Tuning</span><span class="post-tag">Data Engineering</span></div><a class="proj-link" href="articles/redacting-160k-support-chats.html">Read article →</a></article>
         </div>
         <div class="native-articles-label native-articles-label-alt">Also on Medium</div>
       </div>

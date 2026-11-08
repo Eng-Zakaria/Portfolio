@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Retail Analytics — Streaming Pipeline — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Real-time retail analytics platform: Kafka + Debezium CDC, Spark and Flink streaming, Delta Lake, PostgreSQL, FastAPI. 15 Docker services.">
+  <meta name="description" content="Local retail streaming project on synthetic data: simulated POS feed through Kafka into Spark and Flink, Delta writes, a Debezium CDC config not yet wired in, and FastAPI. 15 Docker Compose services.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -212,7 +212,7 @@
       <div class="sec-label">// project case study</div>
       <h1>Retail Analytics — Streaming Pipeline</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Real-time retail analytics platform streaming POS, e-commerce, and inventory data into forecasting and recommendation APIs.
+        Local streaming project on synthetic data: a simulated POS feed flows through Kafka into Spark and Flink, with Delta writes, a Debezium CDC config, and a FastAPI layer whose ML endpoints are still mocks.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -245,6 +245,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/retail-cdc-debezium.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -257,7 +258,7 @@
         </div>
         <div class="metric-card">
           <div class="metric-value">CDC</div>
-          <div class="metric-label">via Debezium</div>
+          <div class="metric-label">Debezium config, not wired</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">2</div>
@@ -270,15 +271,12 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>Retail data arrives from disconnected sources — in-store POS systems, e-commerce events, and an inventory database — each with its own format and cadence. Batch-only pipelines leave stock, sales, and demand signals stale by the time analysts and downstream services see them.</p>
-      <p>The platform needed a unified streaming path: capture every change at the source, process it with dedicated stream engines, and serve fresh features to forecasting, segmentation, and recommendation workloads behind a single API.</p>
+      <p>The goal was one streaming path: capture changes at the source, process them with stream engines, land them in a lake table, and serve demand forecasts behind an API. This build covers the first half of that path on synthetic data; the CDC branch and the forecast serving are still being connected.</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/retail-analytics-pipeline.svg" alt="Retail Analytics Streaming Pipeline Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -288,11 +286,12 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Ingest:</strong> POS systems plus e-commerce events and inventory DB changes feed Kafka topics, Debezium CDC 2.3, and a REST ingest path.</li>
-        <li><strong>Stream processing:</strong> Spark 3.4 Streaming and Flink 1.17 run the streaming transforms (dbt per README) over the Kafka event backbone.</li>
-        <li><strong>Storage:</strong> Curated output lands in Delta Lake on MinIO, with PostgreSQL 15 and Redis 7 serving operational and low-latency reads.</li>
-        <li><strong>Serving & ML:</strong> FastAPI behind Nginx exposes the data, with Jupyter/ML workloads for forecasting, customer segmentation, and recommendations.</li>
-        <li><strong>Observability:</strong> Prometheus and Grafana monitor the pipeline end to end.</li>
+        <li><strong>Ingest:</strong> A POS simulator (3 stores, 5 products) publishes JSON transactions to the <code>retail_transactions</code> Kafka topic with <code>acks=all</code>, keyed by transaction ID. An e-commerce events module and a REST API module also exist.</li>
+        <li><strong>Stream processing:</strong> Spark 3.4 Structured Streaming computes 5-minute windowed metrics with a 10-minute watermark; a PyFlink job (Flink 1.17) runs keyed fraud and journey functions with Kafka and JDBC sinks. There are no dbt models in the project.</li>
+        <li><strong>Storage:</strong> Product metrics and customer journeys are written in Delta format (append mode) to local paths. The Spark session does not yet configure Delta or MinIO/S3, so Delta-on-MinIO is not wired. PostgreSQL 15 holds the raw schema; Redis 7 is used as an API cache.</li>
+        <li><strong>CDC:</strong> A Debezium 2.3 Postgres connector config (pgoutput, five <code>raw.*</code> tables, topics renamed to table names) is mounted into the Connect container, but it is not registered, Postgres is not set to logical WAL, and no job consumes the CDC topics yet.</li>
+        <li><strong>Serving & ML:</strong> FastAPI exposes SQL-backed analytics routes. A forecasting module (ARIMA, linear/RF/GBM, optional LSTM, mean ensemble) has only been trained on a generated series, and the forecast, segmentation, and recommendation endpoints currently return mock output.</li>
+        <li><strong>Observability:</strong> A Prometheus metrics collector and scrape config, plus one Grafana dashboard JSON with nine panels (HTTP, system, transaction, revenue, model metrics).</li>
         <li><strong>15 compose services:</strong> zookeeper, kafka, postgres, redis, spark-master, spark-worker, flink-jobmanager, flink-taskmanager, api, prometheus, grafana, Debezium, nginx, minio, jupyter.</li>
       </ul>
     </section>
@@ -306,23 +305,23 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Kafka + Debezium CDC ingest</h4>
-        <p>Standardized all change capture on Kafka topics with Debezium CDC 2.3 for the inventory database plus REST ingest, so every source streams through one backbone.</p>
+        <p>Used Kafka as the shared backbone: the POS feed publishes to its own topic today, and a Debezium 2.3 Postgres connector config is written for the inventory and order tables. Registering it and adding a consumer is the next step.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Dual-engine orchestration</h4>
         <p>Running Spark and Flink side by side with 15 containers raises coordination and monitoring overhead.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Composed platform with unified observability</h4>
-        <p>Packaged all 15 services in Docker Compose with Prometheus and Grafana, keeping Spark 3.4 Streaming, Flink 1.17, Delta Lake on MinIO, PostgreSQL 15, and Redis 7 observable from one place.</p>
+        <h4>Solution: One Compose file with shared monitoring config</h4>
+        <p>Defined all 15 services in one Docker Compose file on a shared network, with a Prometheus scrape config covering the API, Kafka, Spark, Flink, and Debezium, and a Grafana dashboard definition for the API and business metrics.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The platform unifies POS, e-commerce, and inventory change streams into Delta Lake, PostgreSQL, and Redis, served through FastAPI and Nginx with Jupyter-based forecasting, segmentation, and recommendation workloads.</p>
-      <p>CDC via Debezium and dual Spark plus Flink stream processing give the pipeline a dedicated streaming path from source change to served API. Local project — no public GitHub link.</p>
+      <p>The working path is a simulated POS feed into Kafka, aggregated by Spark into windowed metrics and written as Delta, with a parallel Flink job and a FastAPI layer over PostgreSQL. All data is synthetic, and there are no saved run logs, tests, or forecast accuracy figures.</p>
+      <p>The Debezium CDC branch is configured but not yet part of the running flow, and the ML endpoints return mock output until a trained model is loaded. Local project — no public GitHub link.</p>
     </section>
   </main>
 

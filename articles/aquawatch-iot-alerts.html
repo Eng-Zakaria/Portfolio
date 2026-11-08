@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>AquaWatch: sensor alerts with cooldown logic | Mohammed Zakaria</title>
+  <meta name="description" content="A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html">
+  <meta property="og:title" content="AquaWatch: sensor alerts with cooldown logic | Mohammed Zakaria">
+  <meta property="og:description" content="A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "AquaWatch: sensor alerts with cooldown logic", "description": "A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html", "wordCount": 1704, "keywords": "IoT, Streaming, Alerting"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">IoT</span><span class="post-tag">Streaming</span><span class="post-tag">Alerting</span></div>
+        <h1>AquaWatch: sensor alerts with cooldown logic</h1>
+        <p class="post-lede">A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-cooldown-keyed-on-pond-and-parameter">Decision 1: cooldown keyed on pond and parameter</a></li>
+<li><a href="#decision-2-a-file-and-a-batch-dag-not-a-message-stream">Decision 2: a file and a batch DAG, not a message stream</a></li>
+<li><a href="#decision-3-real-email-mocked-sms">Decision 3: real email, mocked SMS</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: portfolio project, simulated sensors only.</strong> No physical probes, no farm, and no real SMS or phone calls. AquaWatch is a local prototype. A Python simulator writes fake readings for fish ponds, an Airflow DAG loads them into TimescaleDB, and a separate alert module checks thresholds and holds back repeat alerts with a cooldown. This post covers how that cooldown works, the trade-offs behind it, and what turned up when I tested the alert rules directly. Some of it is not flattering.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Water quality in a fish pond can go bad between two manual checks. The PRD lists four parameters that matter: pH, dissolved oxygen, ammonia, and temperature. It targets small operators with 1 to 5 ponds. The success metrics it sets are alert latency under 5 minutes and 95%+ uptime in local testing. Those are targets. I never measured either one.</p>
+<p>Any threshold alert has an obvious failure mode. A pond that sits above the ammonia limit for an hour crosses the threshold on every reading. If every crossing sends an email, the operator gets a pile of identical messages and starts ignoring them. The cooldown is meant to stop that.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> sensors/sensor_simulator.py
+   pH, dissolved_oxygen, ammonia, temperature per pond
+   writes one JSON line per pond per tick
+            |
+            v
+   logs/sensor_readings.jsonl
+            |
+            v
+ airflow/dags/ingest_sensor_data.py   (schedule: &#39;@every_5_minutes&#39;)
+   reads the whole file, flattens to (time, pond_id, parameter, value)
+   execute_batch(page_size=100)
+            |
+            v
+ TimescaleDB  sensor_readings  (create_hypertable on &#39;time&#39;)
+            |
+            +--&gt; backend/main.py (FastAPI: /readings, /alerts, /analytics)
+            +--&gt; Grafana 10.1.5 container (no dashboards checked in)
+
+ alerting/alert_manager.py   &lt;-- NOT called by the DAG or the API
+   thresholds + 15-min cooldown per (pond_id, parameter)
+   -&gt; alerts.jsonl, SMTP email, mock_sms.log
+</code></pre></div>
+
+<p>The bottom box matters most for the rest of this post. <code>AlertManager</code> is a self-contained class with a <code>__main__</code> example. Nothing in the DAG, the API, or Docker Compose imports it. The architecture doc draws an arrow from the database to the alert module, but the code doesn&rsquo;t have that link yet.</p>
+<p>There&rsquo;s no MQTT either. Readings move as lines in a JSONL file. The only mention of MQTT is a comment in the mock actuator endpoint (&ldquo;In a real system this would push a command to an MQTT topic&rdquo;).</p>
+<h2 id="decision-1-cooldown-keyed-on-pond-and-parameter">Decision 1: cooldown keyed on pond and parameter<a class="h-anchor" href="#decision-1-cooldown-keyed-on-pond-and-parameter" title="Permanent link">#</a></h2>
+<p>This is the core of the alert module:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_get_alert_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pond_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">parameter</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_should_alert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alert_key</span><span class="p">(</span><span class="n">pond_id</span><span class="p">,</span> <span class="n">parameter</span><span class="p">)</span>
+    <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">current_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alert_cooldown_minutes</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+
+<p>What it does:</p>
+<ul>
+<li><strong>Scope:</strong> one timer per pond and parameter pair. Ammonia in pond 1 and ammonia in pond 2 are tracked separately, and so are ammonia and temperature in the same pond. Nothing is scoped per farm. The code has no farm concept at all.</li>
+<li><strong>Duration:</strong> <code>alert_cooldown_minutes</code> defaults to 15. The FastAPI app also reads an <code>ALERT_COOLDOWN_MINUTES</code> environment variable (default 15), but it never uses it.</li>
+<li><strong>Re-arm:</strong> the timer only resets when an alert actually fires. Inside the window, breaches are dropped without being counted.</li>
+<li><strong>State:</strong> a plain Python dict in memory, so restarting the process clears it.</li>
+</ul>
+<p><strong>Trade-off.</strong> Keying on pond and parameter is the right granularity for an operator. &ldquo;Pond 2 ammonia&rdquo; is something you can act on, and one noisy pond can&rsquo;t hide an alert from another. The cost comes from keying on the <em>parameter</em> and not the <em>severity</em>. I didn&rsquo;t see it until I tested the code: the first alert in a window blocks the rest, including a later critical one. Keeping the state in memory makes the class easy to test, but a scheduled job that starts a new process on each run would never suppress anything, and a long-running process loses its state on every deploy.</p>
+<h2 id="decision-2-a-file-and-a-batch-dag-not-a-message-stream">Decision 2: a file and a batch DAG, not a message stream<a class="h-anchor" href="#decision-2-a-file-and-a-batch-dag-not-a-message-stream" title="Permanent link">#</a></h2>
+<p>The simulator appends JSON lines to a file. The DAG reads the whole file, flattens each reading into four rows, creates the table and hypertable, and inserts with <code>execute_batch(..., page_size=100)</code>.</p>
+<p><strong>Trade-off.</strong> A file is easy to inspect and needs no broker, which suits a laptop prototype. The cost is latency and correctness. In the best case, data lands in the database on a 5-minute schedule. It also has three problems I can see from reading the code. I haven&rsquo;t run the stack to confirm them:</p>
+<ul>
+<li>The DAG reads the full file on every run and never truncates it or stores an offset, so every run would re-insert every earlier reading.</li>
+<li><code>create_hypertable('sensor_readings', 'time')</code> runs every time without <code>if_not_exists</code>, which TimescaleDB rejects once the table is already a hypertable.</li>
+<li><code>'@every_5_minutes'</code> is not one of Airflow&rsquo;s schedule presets. I&rsquo;d expect the DAG to fail at parse time until that line is changed to a cron string or a <code>timedelta(minutes=5)</code>.</li>
+</ul>
+<p>The cadence numbers need a caveat too. The simulator class defaults to <code>sampling_interval=300</code> seconds and a 10% anomaly rate. The container runs the file&rsquo;s <code>__main__</code> block, though, which uses <code>sampling_interval=10</code> and <code>anomalies_probability=0.3</code>. So the Docker setup samples every 10 seconds with a 30% anomaly rate, not every 5 minutes with 10%.</p>
+<h2 id="decision-3-real-email-mocked-sms">Decision 3: real email, mocked SMS<a class="h-anchor" href="#decision-3-real-email-mocked-sms" title="Permanent link">#</a></h2>
+<p><code>send_email_alert</code> uses <code>smtplib</code> with STARTTLS. That path is real, but the shipped config has placeholder credentials, so it fails and logs an error until someone sets up SMTP. SMS is fully mocked. <code>log_sms_alert</code> writes a Twilio-shaped JSON record (<code>'to': f'+1{pond_id}000'</code>, <code>'from': '+1AQUAwatch'</code>) to <code>mock_sms.log</code>. Nothing is sent to a phone, and there&rsquo;s no Telegram, voice, or SNS integration.</p>
+<p><strong>Trade-off.</strong> Mocking SMS keeps the project free and offline, and it still shows the message format. But it also means the portfolio card&rsquo;s &ldquo;farms that phone home&rdquo; line has nothing real behind it. The only network notification is email, and only if you configure it.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no tests in the repo and no saved outputs (<code>grafana/provisioning/</code>, <code>dashboard/</code>, <code>dags/</code>, and <code>plugins/</code> are empty). So I wrote a small probe that imports <code>AlertManager</code> and the simulator directly, with email turned off and every output going to a scratch folder. No services ran. Here are five calls against one fresh manager:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Expected</th>
+<th>What the code did</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ammonia 2.5 ppm</td>
+<td>critical (above 2.0)</td>
+<td>one alert labelled <strong>high</strong>. The critical check was suppressed by the cooldown that the high alert had just set</td>
+</tr>
+<tr>
+<td>ammonia 3.0 ppm, seconds later</td>
+<td>suppressed</td>
+<td>suppressed (the cooldown works)</td>
+</tr>
+<tr>
+<td>dissolved oxygen 7.0 mg/L</td>
+<td>no alert (healthy)</td>
+<td><strong>CRITICAL</strong> alert</td>
+</tr>
+<tr>
+<td>dissolved oxygen 3.0 mg/L</td>
+<td>critical (below 4.0)</td>
+<td>no alert</td>
+</tr>
+<tr>
+<td>pH 6.0</td>
+<td>alert if low-pH rules existed</td>
+<td>no alert. pH thresholds are never found</td>
+</tr>
+<tr>
+<td>temperature 29.0 °C</td>
+<td>high (above 28.0)</td>
+<td>high (correct)</td>
+</tr>
+</tbody>
+</table></div>
+<p>There are three separate bugs here:</p>
+<ol>
+<li><strong>Severity is lost.</strong> The loop checks levels in dict order (<code>high</code> before <code>critical</code>), and both checks share one cooldown key. Whichever level matches first takes the window, so a critical reading is always reported as high.</li>
+<li><strong>Dissolved oxygen is inverted.</strong> Its thresholds are <code>{'low': 5.0, 'critical': 4.0}</code>, but every comparison is <code>value &gt; threshold</code>. A healthy pond triggers a critical alert, and a pond running out of oxygen triggers nothing. That&rsquo;s the opposite of what the alert is for, on the parameter most likely to kill fish quickly.</li>
+<li><strong>pH never alerts.</strong> The thresholds dict uses the key <code>'pH'</code>, but the lookup is <code>thresholds.get(parameter.lower())</code>, which asks for <code>'ph'</code>.</li>
+</ol>
+<p>The simulator has its own issues. Over 20,000 generated readings with a fixed seed:</p>
+<ul>
+<li>about <strong>45%</strong> of ammonia readings marked normal were above the 1.0 ppm high threshold, because &ldquo;normal&rdquo; values come from the full 0–2.0 range;</li>
+<li>about <strong>18%</strong> of parameter readings had an <code>is_anomalous</code> flag that didn&rsquo;t match their <code>note</code>, because the flag rolls the dice a second time;</li>
+<li>about <strong>0.7%</strong> of values were negative (ammonia or temperature anomalies that drop below zero).</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What actually holds up</p>
+<p>The per-pond, per-parameter cooldown does what it says: a repeat breach inside 15 minutes is dropped, and different ponds and parameters don&rsquo;t block each other. Temperature and ammonia high-threshold checks fire correctly. The FastAPI read endpoints are coherent SQL against <code>sensor_readings</code>. But the <code>alerts</code> table they query is never created anywhere: <code>init.sql</code> only enables the TimescaleDB extension.</p>
+</div>
+<p>Other gaps: there&rsquo;s no <code>.env.example</code> even though the README says to copy one. The compose file has no backend service. And the compose paths are written as if run from the repo root while the file sits in <code>provisioning/</code>.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>In order of how much damage each bug can do:</p>
+<ol>
+<li><strong>Fix the comparisons.</strong> Give each threshold a direction (<code>above</code> / <code>below</code>), and check levels from most to least severe so critical wins.</li>
+<li><strong>Key the cooldown on (pond, parameter, severity)</strong>, or let a higher severity break through an active lower-severity window. An escalation should never be quiet.</li>
+<li><strong>Persist cooldown state</strong> in the <code>alerts</code> table (create it first). Then &ldquo;should I alert?&rdquo; becomes a query for the last alert per key, and restarts stop mattering.</li>
+<li><strong>Wire the alerting into the pipeline.</strong> Run it as a second DAG task after the load, over only the rows that task just inserted.</li>
+<li><strong>Make ingestion incremental.</strong> Track a file offset or a max ingested timestamp, add <code>if_not_exists =&gt; TRUE</code>, and fix the schedule string.</li>
+<li><strong>Write the tests I just ran by hand</strong> as pytest cases, and fix the simulator&rsquo;s double roll and its &ldquo;normal&rdquo; range.</li>
+<li><strong>Check in a Grafana datasource and dashboard JSON</strong>, then actually measure alert latency against the 5-minute target.</li>
+</ol>
+<p>None of this needs MQTT or a real SMS provider. Both would make sense later, once the rules are correct.</p>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/aquawatch.html">AquaWatch — Fish-Farm Monitoring</a></li>
+<li>Code: local project, no public repository.</li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html" data-title="AquaWatch: sensor alerts with cooldown logic">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="bilingual-rag-retrieval-hit-rate.html"><small>← Newer</small><b>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</b></a>
+          <a class="post-pager-next" href="agent-that-cant-go-rogue.html"><small>Older →</small><b>Waffy: a support agent that can&#x27;t go rogue</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AquaWatch — Fish-Farm Monitoring — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="IoT fish-farm monitoring: Airflow ingestion every 5 minutes across 3 ponds, TimescaleDB hypertables, threshold alerts via email and SMS, Grafana dashboards.">
+  <meta name="description" content="Fish-farm monitoring prototype on simulated sensors: an Airflow DAG loading a TimescaleDB hypertable, a standalone threshold-alert module with a 15-minute per-pond, per-parameter cooldown, SMTP email and a mocked SMS log.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -212,7 +212,7 @@
       <div class="sec-label">// project case study</div>
       <h1>AquaWatch — Fish-Farm Monitoring</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        IoT water-quality monitoring for fish farms with scheduled ingestion, threshold alerting, and Grafana dashboards.
+        Prototype water-quality monitoring for fish farms on simulated sensors: scheduled ingestion into TimescaleDB, threshold alerting with cooldowns, and a Grafana container (dashboards not built yet).
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -225,7 +225,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">IoT Platform</span>
+          <span class="meta-value">IoT Prototype (simulated)</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -242,6 +242,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/aquawatch-iot-alerts.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -253,12 +254,12 @@
           <div class="metric-label">Ponds × Params</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">5-min</div>
-          <div class="metric-label">Sampling</div>
+          <div class="metric-value">15-min</div>
+          <div class="metric-label">Alert Cooldown</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">Email+SNS</div>
-          <div class="metric-label">Alerts</div>
+          <div class="metric-value">Email</div>
+          <div class="metric-label">+ Mock SMS Log</div>
         </div>
       </div>
     </section>
@@ -267,15 +268,12 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>Fish-farm water quality — pH, dissolved oxygen, ammonia, and temperature — can drift into dangerous ranges between manual checks. Without continuous sensing and prompt alerts, stock health is at risk.</p>
-      <p>AquaWatch closes that gap with a scheduled sensor pipeline: simulated readings every 5 minutes across the ponds, a time-series store, threshold checks with cooldowns, and email plus SMS notification paths.</p>
+      <p>AquaWatch is a local prototype of that loop: a Python simulator stands in for real sensors, an Airflow DAG loads the readings into a time-series store, and a separate alert module checks thresholds with cooldowns and notifies by SMTP email plus a mocked SMS log. No physical sensors or real SMS are involved.</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/aquawatch.svg" alt="AquaWatch Fish-Farm Monitoring Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -285,12 +283,12 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Simulation:</strong> Python sensor simulator covers 3 ponds by default (1–5 target) across pH, dissolved oxygen, ammonia, and temperature at 5-minute sampling with a 10% anomaly rate.</li>
-        <li><strong>Ingestion:</strong> Airflow DAG ingest_sensor_data runs every 5 minutes, writing batches via execute_batch with page_size=100.</li>
-        <li><strong>Storage:</strong> TimescaleDB hypertable sensor_readings plus a dedicated alerts table hold the time series and alert history.</li>
-        <li><strong>Alerting:</strong> AlertManager checks ammonia high 1.0 / critical 2.0 ppm, pH high 8.2 / 8.8, dissolved oxygen low 5.0 / 4.0, temperature high 28.0 / 30.5, with a 15-minute cooldown per parameter per pond; real SMTP email plus a mocked Twilio-like SMS log.</li>
-        <li><strong>Serving:</strong> Grafana 10.1.5 dashboards visualize ponds and alerts, with an optional FastAPI layer exposing /readings, /alerts, and /analytics.</li>
-        <li><strong>PRD targets:</strong> Alert latency under 5 minutes and 95%+ uptime in local testing.</li>
+        <li><strong>Simulation:</strong> Python sensor simulator writes JSONL for 3 ponds by default across pH, dissolved oxygen, ammonia, and temperature. Class defaults are 5-minute sampling and a 10% anomaly rate; the containerised demo runs at 10 seconds and 30%.</li>
+        <li><strong>Ingestion:</strong> Airflow DAG ingest_sensor_data is meant to run every 5 minutes, reading the JSONL file and inserting via execute_batch with page_size=100. It re-reads the whole file each run, so incremental loading is still to do.</li>
+        <li><strong>Storage:</strong> TimescaleDB hypertable sensor_readings holds the time series. The API expects an alerts table, but no script creates it yet; alerts are written to a JSONL log.</li>
+        <li><strong>Alerting:</strong> A standalone AlertManager (not yet called from the DAG or API) defines ammonia 1.0 / 2.0 ppm, pH 8.2 / 8.8, dissolved oxygen 5.0 / 4.0 mg/L and temperature 28.0 / 30.5 °C, with an in-memory 15-minute cooldown per pond and parameter. Testing showed the dissolved-oxygen check is inverted, pH thresholds are never matched, and critical breaches are reported as high; fixes are listed in the write-up. Email goes over SMTP; SMS is a mocked Twilio-like log file.</li>
+        <li><strong>Serving:</strong> Docker Compose starts a Grafana 10.1.5 container (no datasource or dashboard JSON checked in yet), and a FastAPI app defines /readings, /alerts, /analytics and a mock actuator endpoint.</li>
+        <li><strong>PRD targets:</strong> Alert latency under 5 minutes and 95%+ uptime in local testing. These are targets, not measured results.</li>
       </ul>
     </section>
 
@@ -303,23 +301,23 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Per-pond cooldowns</h4>
-        <p>Added a 15-minute cooldown per parameter per pond so a sustained breach pages once, then re-arms only after the window clears.</p>
+        <p>Added a 15-minute cooldown keyed on pond and parameter, so a repeat breach inside the window is dropped and one pond never blocks another. The window is held in memory and is not severity-aware yet, so a critical reading right after a high one is suppressed.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Dual notification paths</h4>
-        <p>Operators need email and SMS, but SMS delivery varies by provider and environment.</p>
+        <p>Operators would want email and SMS, but a real SMS provider adds cost and an external dependency to a local prototype.</p>
       </div>
       <div class="solution-card">
         <h4>Solution: Real SMTP plus mocked SMS</h4>
-        <p>Sends alerts over real SMTP email and logs SMS through a mocked Twilio-like path, keeping both channels exercised without a live carrier dependency.</p>
+        <p>Email uses smtplib with STARTTLS once SMTP credentials are configured; SMS is mocked as Twilio-shaped JSON lines in a log file. Nothing is sent to a phone.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>AquaWatch ingests simulated pond telemetry on a 5-minute Airflow schedule into TimescaleDB, evaluates water-quality thresholds, and notifies operators over email and SMS with Grafana dashboards on top.</p>
-      <p>PRD targets are alert latency under 5 minutes and 95%+ uptime in local testing. Local project — no public GitHub link.</p>
+      <p>AquaWatch is a working sketch: simulated pond telemetry, an Airflow DAG targeting TimescaleDB, and an alert module whose per-pond cooldown works but whose threshold rules need fixing before they can be trusted. It has not been run end to end with measurements, and the Grafana dashboards are still to be built.</p>
+      <p>PRD targets (alert latency under 5 minutes, 95%+ uptime in local testing) have not been measured. Local project — no public GitHub link.</p>
     </section>
   </main>
 

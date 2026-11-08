@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fraud Detection — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Real-time fraud detection pipeline using Kafka streaming with sub-second latency. Docker containerization with Plotly/Dash monitoring.">
+  <meta name="description" content="Portfolio fraud detection pipeline on synthetic data: Kafka consumer and FastAPI scoring with scikit-learn, Airflow retraining, MLflow tracking, aggregate alerting and a Plotly/Dash dashboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -71,7 +71,7 @@
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-shield-alt"></i> Fraud Detection</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Real-time streaming architecture for fraud detection with sub-second latency.
+        Kafka and FastAPI fraud scoring on synthetic transactions, with aggregate alerting and scheduled retraining. Latency has not been measured.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -103,6 +103,7 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/fraud-scoring-kafka.html">Read the write-up →</a>
       <a href="https://github.com/Eng-Zakaria/Fraud_Detection" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
@@ -111,15 +112,15 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-value">&lt;1s</div>
-          <div class="metric-label">Latency Target</div>
+          <div class="metric-label">Latency Goal (Not Measured)</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">Real-time</div>
-          <div class="metric-label">Processing</div>
+          <div class="metric-value">Kafka</div>
+          <div class="metric-label">Event Stream</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">Multi-channel</div>
-          <div class="metric-label">Alerting</div>
+          <div class="metric-value">3</div>
+          <div class="metric-label">Alert Channels</div>
         </div>
       </div>
     </section>
@@ -127,34 +128,46 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        Financial institutions need to detect fraudulent transactions in real-time to prevent
-        losses. Batch processing systems introduce unacceptable delays, allowing fraud to
-        occur before detection. The challenge is building a streaming pipeline that can
-        process high-volume transaction data with sub-second latency while maintaining
-        model accuracy and providing actionable alerts.
+        Fraud has to be caught while a payment is still being authorised; a nightly batch job
+        flags it too late. This personal project builds the pieces a streaming fraud system
+        needs (an event stream, per-transaction scoring, alerts, a dashboard and a retraining
+        schedule) and runs them on synthetic transactions from a Python generator with a 2%
+        fraud rate. It is a learning build, not a production system.
       </p>
     </section>
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/fraud-detection---streaming-pipeline.svg" alt="Fraud Detection Architecture Diagram" style="width:100%; height:auto;">
+<pre>
+ <span class="highlight">TransactionStreamSimulator</span> (synthetic)     <span class="highlight">Airflow DAG</span> (every 6 h)
+            |                                   generate -> clean -> load -> train -> evaluate
+            v                                                       |          |
+ Kafka topic "transactions" (key: transaction_id)               MLflow    Postgres model_metrics
+            |
+            v
+ <span class="highlight">Kafka consumer</span> ----+----> <span class="highlight">FraudDetector</span> (scikit-learn) <---- <span class="highlight">FastAPI</span> /predict
+                      |      score + risk tier
+                      v
+ Kafka topic "fraud_alerts"  (no consumer yet)
+
+ <span class="highlight">MonitoringSystem</span> polls Postgres every 5 min ---> Slack / email / webhook
+ <span class="highlight">Plotly/Dash</span> dashboard re-queries Postgres every 30 s
+ <span class="highlight">Redis</span>: daily prediction / alert counters
+</pre>
       </div>
     </section>
 
     <section class="content-section">
       <h3>Implementation</h3>
       <ul>
-        <li><strong>Kafka Streaming:</strong> Configured Kafka topics for transaction ingestion with partitioning by merchant ID for parallel processing</li>
-        <li><strong>Feature Engineering:</strong> Built real-time feature extraction including transaction velocity, amount patterns, and historical behavior scores</li>
-        <li><strong>Model Serving:</strong> Deployed ML models via FastAPI with Redis caching for low-latency feature lookups</li>
-        <li><strong>Monitoring:</strong> Integrated Plotly/Dash dashboard for real-time fraud analytics and system health visualization</li>
-        <li><strong>Alerting:</strong> Implemented multi-channel alerting (Slack, Email, Webhooks) for suspicious transaction notifications</li>
-        <li><strong>Model Drift:</strong> Added monitoring for model performance degradation with automated retraining triggers</li>
-        <li><strong>Docker Containerization:</strong> Containerized the full stack for consistent deployment across environments</li>
+        <li><strong>Kafka Streaming:</strong> A producer writes synthetic transactions to a <code>transactions</code> topic keyed by transaction ID (<code>acks='all'</code>, 3 retries); a consumer group scores each message and commits offsets after every poll</li>
+        <li><strong>Feature Engineering:</strong> Temporal, amount, per-user history, location-distance, device-reuse and merchant features, all standard-scaled. At scoring time the history is rebuilt from the request itself, so per-user features carry little signal yet</li>
+        <li><strong>Model Serving:</strong> The same scikit-learn detector sits behind the Kafka consumer and a FastAPI service (<code>/predict</code>, <code>/predict/batch</code>, <code>/health</code>). Redis holds daily prediction and alert counters, not features</li>
+        <li><strong>Monitoring:</strong> A Plotly/Dash dashboard shows transaction volume, fraud trends, merchant risk, hourly patterns, recent alerts and model metrics, refreshing every 30 seconds from Postgres</li>
+        <li><strong>Alerting:</strong> Slack, email and webhook handlers fire on aggregate rules checked every 5 minutes: a 3x hour-over-hour fraud-rate spike, fraud rate above 10%, AUC-ROC falling 10% or below 0.7, and health and data-quality checks. Per-transaction alerts go to a <code>fraud_alerts</code> Kafka topic that nothing consumes yet</li>
+        <li><strong>Model Monitoring:</strong> Performance-degradation alerts on stored AUC-ROC; there is no feature-distribution drift check. Retraining runs on a 6-hour Airflow schedule, not on an alert trigger</li>
+        <li><strong>Docker:</strong> Docker Compose runs the infrastructure (Postgres, Redis, Kafka, Zookeeper, Airflow, MLflow); the Python services are started by hand</li>
       </ul>
     </section>
 
@@ -165,20 +178,21 @@
         <li><strong>Gradient Boosting:</strong> Improved accuracy through ensemble boosting</li>
         <li><strong>Logistic Regression:</strong> Interpretable model for explainability requirements</li>
       </ul>
-      <p>Models are tracked with MLflow for experiment comparison and version management.</p>
+      <p>Training compares all three on validation AUC-ROC, optionally grid-searches the winner, and logs runs to MLflow. No trained models or metric reports are saved in the repository, and the synthetic data contains a label-derived <code>fraud_score</code> column that leaks into the features, so any score from this pipeline would be inflated until that is removed.</p>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The system achieves sub-second fraud prediction on incoming transactions, enabling
-        real-time decision making. The monitoring dashboard provides visibility into fraud
-        patterns and system health, while multi-channel alerting ensures timely response
-        to suspicious activity.
+        The project covers the full shape of a streaming fraud system: ingestion, scoring,
+        alerting, a dashboard and scheduled retraining. Scoring latency and model accuracy
+        have not been measured, so no performance numbers are claimed.
       </p>
       <p>
-        The containerized architecture enables easy scaling and deployment in production
-        environments, with automated retraining capabilities to maintain model accuracy.
+        A close read of the code found bugs to fix before any benchmark: feature leakage from
+        the synthetic data, an alerting import error, a risk-tier ordering bug, and a model path
+        mismatch between training and the API. The write-up covers each one and the plan to
+        measure latency and add real drift checks.
       </p>
     </section>
   </main>

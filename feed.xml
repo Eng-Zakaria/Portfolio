@@ -202,6 +202,160 @@
 <p>The staged structure worked. The dry-run report, the diff buckets and the unmatched-staff queue gave the client and me something concrete to look at before each load. The weak points were in the handoffs between stages, and I only saw them once real data ran through.</p>]]></content:encoded>
     </item>
     <item>
+      <title>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.</description>
+      <category>Streaming</category><category>CDC</category><category>Delta Lake</category>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio project, synthetic data.</strong> Everything below comes from reading the project&rsquo;s code and config. The project has no saved run logs, no test suite and no git history, so I describe what the code is built to do and where it stops. I don&rsquo;t report any runtime numbers, because I don&rsquo;t have any.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A retailer&rsquo;s data shows up in different shapes and at different speeds. Tills produce transactions. The website produces clickstream events. The inventory database changes whenever stock moves. If you pull all of that in a nightly batch, sales and stock figures are already a day old when anyone reads them.</p>
+<p>I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project is my attempt at that path, built locally in Docker Compose. Some parts work end to end. Others are scaffolding, and I&rsquo;ll say which is which.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The Compose file defines 15 services: zookeeper, kafka, postgres, redis, spark-master, spark-worker, flink-jobmanager, flink-taskmanager, api, prometheus, grafana, debezium, nginx, minio and jupyter. Here is how data actually moves through the code:</p>
+<div class="hl"><pre><span></span><code>POSSimulator (synthetic: 3 stores, 5 products, 8% tax)
+      │  POSProducer: key=transaction_id, acks=all, gzip
+      ▼
+Kafka topic: retail_transactions ───────────────┐
+      │                                         │
+      ▼                                         ▼
+Spark Structured Streaming               Flink job (PyFlink)
+  watermark 10 min, window 5 min           keyed fraud / journey functions
+  ├─ store x payment metrics ─▶ console    └─ JDBC sink ─▶ Postgres
+  └─ product metrics ─▶ Delta (append)
+       /data/processed/transactions/product_metrics
+
+Postgres raw.* ──▶ Debezium connector JSON (pgoutput)
+                     topics: transactions, transaction_items, inventory, ...
+                     (connector is never registered; no consumer reads these)
+
+ml/demand_forecasting.py   trains only on a generated sine + trend series
+serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecaster output
+</code></pre></div>
+
+<p>The live path is the top half: simulator to Kafka to Spark to Delta. The CDC branch and the forecast at the bottom are the parts I still have to connect.</p>
+<h2 id="decision-1-key-pos-events-by-transaction-and-wait-for-all-acks">Decision 1: Key POS events by transaction and wait for all acks<a class="h-anchor" href="#decision-1-key-pos-events-by-transaction-and-wait-for-all-acks" title="Permanent link">#</a></h2>
+<p>The producer favors durability over throughput:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">producer_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;acks&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;retries&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16384</span><span class="p">,</span>
+    <span class="s1">&#39;linger_ms&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;compression_type&#39;</span><span class="p">:</span> <span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Every send then calls <code>future.get(timeout=10)</code>, so each transaction blocks until the broker confirms it. The message key is <code>transaction_id</code>, which means retries of the same sale go to the same partition.</p>
+<p><strong>Trade-off.</strong> Waiting on every send means real batching never happens. <code>linger_ms=10</code> has almost nothing to group, because the next record isn&rsquo;t sent until the previous one is acknowledged. At the simulator&rsquo;s default rate (2 transactions per second in <code>main()</code>, 5 in <code>simulate_streaming</code>) that costs nothing. At real till volumes I would use async sends with a delivery callback. Keying by transaction ID also gives up per-store ordering. If I needed ordered per-store aggregates, <code>store_id</code> would be the better key.</p>
+<h2 id="decision-2-event-time-windows-with-a-watermark-delta-only-for-append-safe-output">Decision 2: Event-time windows with a watermark, Delta only for append-safe output<a class="h-anchor" href="#decision-2-event-time-windows-with-a-watermark-delta-only-for-append-safe-output" title="Permanent link">#</a></h2>
+<p>Spark parses the JSON against an explicit schema. It turns <code>transaction_date</code> into an event timestamp, sets a 10-minute watermark and aggregates over 5-minute windows:</p>
+<div class="hl"><pre><span></span><code><span class="n">parsed_df</span> <span class="o">=</span> <span class="n">parsed_df</span><span class="o">.</span><span class="n">withWatermark</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;10 minutes&quot;</span><span class="p">)</span>
+<span class="n">product_metrics</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;item&quot;</span><span class="p">,</span> <span class="n">explode</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;items&quot;</span><span class="p">)))</span>
+    <span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="n">window</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;transaction_timestamp&quot;</span><span class="p">),</span> <span class="s2">&quot;5 minutes&quot;</span><span class="p">),</span>
+             <span class="n">col</span><span class="p">(</span><span class="s2">&quot;item.product_id&quot;</span><span class="p">),</span> <span class="n">col</span><span class="p">(</span><span class="s2">&quot;store_id&quot;</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="s2">&quot;item.quantity&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s2">&quot;total_quantity_sold&quot;</span><span class="p">),</span> <span class="o">...</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The job produces two outputs. Store-by-payment-method metrics go to the console in <code>update</code> mode. Product metrics go to Delta in <code>append</code> mode, with their own checkpoint directory. Append mode on a watermarked aggregation writes each window only once, after the watermark passes it. That means the Delta table never has to rewrite a window.</p>
+<p><strong>Trade-off.</strong> Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is &ldquo;near real time&rdquo;, not live. The faster <code>update</code> stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. In hindsight I should have sent the update stream somewhere useful, like a Delta <code>MERGE</code> via <code>foreachBatch</code>, instead of stdout.</p>
+<div class="admonition note">
+<p class="admonition-title">What the Delta write still needs</p>
+<p>The Spark session in <code>spark_streaming.py</code> doesn&rsquo;t set <code>spark.sql.extensions</code> or the Delta catalog, and doesn&rsquo;t add the Delta package. <code>delta-spark==2.4.0</code> is in <code>requirements.txt</code>, which matches Spark 3.4, but the <code>bitnami/spark:3.4</code> containers don&rsquo;t install it. The output path is a local <code>/data/processed/...</code> directory. There&rsquo;s no <code>s3a</code> config for the MinIO service, so Delta-on-MinIO is not wired up yet.</p>
+</div>
+<h2 id="decision-3-debezium-with-pgoutput-and-topic-names-shortened-to-the-table">Decision 3: Debezium with pgoutput and topic names shortened to the table<a class="h-anchor" href="#decision-3-debezium-with-pgoutput-and-topic-names-shortened-to-the-table" title="Permanent link">#</a></h2>
+<p>For the inventory and order tables, I wrote a Debezium Postgres connector config instead of polling:</p>
+<div class="hl"><pre><span></span><code><span class="nt">&quot;connector.class&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;io.debezium.connector.postgresql.PostgresConnector&quot;</span><span class="p">,</span>
+<span class="nt">&quot;plugin.name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pgoutput&quot;</span><span class="p">,</span>
+<span class="nt">&quot;table.include.list&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;raw.transactions,raw.transaction_items,raw.inventory,raw.customers,raw.products&quot;</span><span class="p">,</span>
+<span class="nt">&quot;transforms.route.type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;org.apache.kafka.connect.transforms.RegexRouter&quot;</span><span class="p">,</span>
+<span class="nt">&quot;transforms.route.regex&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;([^.]+)\\.([^.]+)\\.([^.]+)&quot;</span><span class="p">,</span>
+<span class="nt">&quot;transforms.route.replacement&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;$3&quot;</span><span class="p">,</span>
+<span class="nt">&quot;snapshot.mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;initial&quot;</span><span class="p">,</span>
+<span class="nt">&quot;slot.name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;debezium_slot&quot;</span><span class="p">,</span>
+<span class="nt">&quot;publication.autocreate.mode&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;filtered&quot;</span>
+</code></pre></div>
+
+<p><code>pgoutput</code> is the logical decoding plugin built into Postgres, so I don&rsquo;t need an extra extension in the database image. <code>snapshot.mode: initial</code> copies the existing rows before streaming changes. The RegexRouter drops the <code>server.schema.</code> prefix, so changes to <code>raw.inventory</code> land on a topic named <code>inventory</code>. <code>column.include.list</code> keeps only the columns downstream jobs need, such as quantity, price and <code>quantity_on_hand</code>. Value converters have schemas disabled, so messages are plain JSON.</p>
+<p><strong>Trade-off.</strong> Short topic names are easy to read, but they throw away the schema. If a <code>staging.inventory</code> table ever gets captured, it collides with <code>raw.inventory</code>. Disabling converter schemas makes messages smaller, but consumers then need their own schema, which is exactly what the Spark job already does for the POS feed.</p>
+<p><strong>Where it actually stands.</strong> I need to be blunt here. The connector is a file mounted into the <code>debezium</code> container. No script POSTs it to the Connect REST API on port 8083, so it is never registered. The <code>postgres</code> service doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> requires. The config uses <code>database.server.name</code>, and Debezium 2.x expects <code>topic.prefix</code> instead. The column list also has no <code>raw.customers</code> or <code>raw.products</code> columns. Most importantly, no Spark or Flink job subscribes to the CDC topics. Both engines read <code>retail_transactions</code> from the simulator. So CDC is designed and configured on paper, but it isn&rsquo;t part of the running data flow.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>Here is what I can honestly claim from the code:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>What exists</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Stack</td>
+<td>15 services in <code>docker-compose.yml</code></td>
+<td>Defined</td>
+</tr>
+<tr>
+<td>POS ingest</td>
+<td>Simulator + Kafka producer, <code>retail_transactions</code></td>
+<td>Implemented, synthetic</td>
+</tr>
+<tr>
+<td>Stream processing</td>
+<td>Spark windowed aggregates; PyFlink keyed functions with JDBC sink</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Delta Lake</td>
+<td><code>format("delta")</code> append writes for product metrics and customer journeys</td>
+<td>Coded; Delta not configured in the session</td>
+</tr>
+<tr>
+<td>CDC</td>
+<td>Debezium Postgres connector JSON</td>
+<td>Configured, not registered or consumed</td>
+</tr>
+<tr>
+<td>Batch</td>
+<td>Reads <code>/data/lake/transactions</code> as Delta, falls back to Postgres JDBC</td>
+<td>Path is never written by the stream job</td>
+</tr>
+<tr>
+<td>Forecasting</td>
+<td>ARIMA, linear / RF / GBM, optional LSTM, mean ensemble</td>
+<td>Trained only in <code>main()</code> on generated data</td>
+</tr>
+<tr>
+<td>Forecast API</td>
+<td><code>POST /api/v1/ml/demand-forecast</code></td>
+<td>Returns mock output</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>Prometheus scrape config, one Grafana dashboard JSON with 9 panels</td>
+<td>Dashboard file only; provisioning folder missing</td>
+</tr>
+</tbody>
+</table></div>
+<p>There are no forecast accuracy numbers to report. <code>demand_forecasting.py</code> computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. But the only training data is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise. Even that run&rsquo;s output was never saved. The feature builder also adds random <code>price</code>, <code>promotion</code>, <code>competitor_price</code> and <code>weather_index</code> columns as placeholders. Any score from those features would mean nothing. The API endpoint doesn&rsquo;t load this model at all. It uses a <code>MockDemandForecaster</code> that produces seeded random numbers.</p>
+<p>There are other gaps too. The README lists <code>tests/</code>, <code>docs/</code>, <code>transformation/</code> (dbt), <code>helm/</code> and <code>infrastructure/</code> folders, and mentions Superset and Presto. None of those exist in the project. <code>detect_anomalies</code> in the Spark module calls <code>expr</code> without importing it.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make CDC real.</strong> Start Postgres with <code>-c wal_level=logical</code>, switch to <code>topic.prefix</code>, register the connector with a <code>curl</code> step in <code>quick-start.sh</code>, and add a Spark job that reads the <code>inventory</code> topic and <code>MERGE</code>s it into a Delta stock table.</li>
+<li><strong>Configure Delta on MinIO properly.</strong> Add the Delta package and extensions to the Spark session, set the <code>s3a</code> endpoint and credentials from <code>.env</code>, and make the batch job read the same path the stream job writes.</li>
+<li><strong>Feed the forecaster from the lake.</strong> Build a daily demand series from the <code>product_metrics</code> table, remove the random placeholder features, evaluate on a held-out period, and save the metrics to a file I can cite.</li>
+<li><strong>Replace the mock endpoint</strong> with a loaded model artifact. The <code>save_model</code> and <code>load_model</code> methods already exist.</li>
+<li><strong>Add tests.</strong> One end-to-end smoke test (simulator to Kafka to a Delta row) would have caught most of the gaps above.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/retail-analytics-pipeline.html">Retail Analytics — Streaming Pipeline</a></li>
+<li>Source: local project; no public GitHub repository yet.</li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>A 7-stage PySpark medallion for Reddit signals</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</guid>
@@ -487,6 +641,183 @@
 </ol>
 <p>The lesson I keep coming back to: the builder&rsquo;s counters felt like proof, and they were not. The independent audit found three leak types on its first run. Without it, &ldquo;redacted&rdquo; would have been a claim, not a measurement.</p>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.</description>
+      <category>Streaming</category><category>Apache Beam</category><category>NiFi</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: portfolio project, public data sources, synthetic data in the repo.</strong> The well data is not the real Equinor Volve release. It is six CSVs that <code>scripts/generate-synthetic-volve.py</code> generates with <code>np.random.seed(42)</code>, using Volve column names and well IDs. The market side has two scrapers written against public sources: the EIA Open Data API (WTI and Brent spot prices, free key required) and the Baker Hughes rig-count pages. Nothing in the repo shows either scraper running. There are no saved responses, no logs and no tests. The repo has two commits, from 28 August and 2 September 2026. This is a write-up of a scaffold, not of a system that ran in production.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted one place where a question like &ldquo;did this well&rsquo;s pressure anomaly line up with a move in the oil price?&rdquo; could be answered without joining CSV dumps by hand. Telemetry and markets are very different feeds. Sensor readings arrive every few seconds per well and are noisy. Spot prices are daily, and rig counts are weekly. The plan was to replay historical field data as if it were live SCADA telemetry, pull the market feeds on a schedule, push everything through one broker, and run streaming anomaly detection on the sensor side.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The Compose stack is the most complete part of the project. <code>docker-compose.yml</code> defines 16 services: RabbitMQ, three NiFi 2.0 nodes, an external ZooKeeper, Elasticsearch and Kibana, a Flink 1.18 JobManager with two TaskManagers, a BigQuery emulator, MinIO, Prometheus, Grafana, Postgres and Jenkins. <code>docker-compose.override.yml</code> adds four more: the replay simulator, the two scrapers and the Beam job, which makes 20.</p>
+<p>The repo has six generated datasets. The profiling report (<code>data/profiling_reports/volve_profiling_latest.json</code>, run on 28 August) covers all six, 49.51 MB in total:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Rows</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>volve_sensor_data.csv</code></td>
+<td>518,460</td>
+<td>10-second readings, 6 sensor types per well</td>
+</tr>
+<tr>
+<td><code>volve_production_data.csv</code></td>
+<td>39,456</td>
+<td>daily volumes per well, 2008–2016</td>
+</tr>
+<tr>
+<td><code>volve_market_prices.csv</code></td>
+<td>2,349</td>
+<td>random-walk WTI/Brent prices</td>
+</tr>
+<tr>
+<td><code>volve_rig_counts.csv</code></td>
+<td>470</td>
+<td>weekly counts, labelled <code>Baker Hughes (synthetic)</code></td>
+</tr>
+<tr>
+<td><code>volve_drilling_reports.csv</code></td>
+<td>96</td>
+<td>templated text reports</td>
+</tr>
+<tr>
+<td><code>volve_well_info.csv</code></td>
+<td>12</td>
+<td>well metadata</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>download-volve.sh</code> tries to fetch the real Volve files, but <code>data/downloads/</code> is empty.</p>
+<p>Routing goes through RabbitMQ. <code>config/rabbitmq/definitions.json</code> declares three exchanges (<code>petroleum.sensors</code> and <code>petroleum.market</code> as topic exchanges, <code>petroleum.dlq</code> as direct) and eight queues. When I mapped every routing key to its publisher and its consumer in code, this is what I found:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Queue</th>
+<th>Published by</th>
+<th>Consumed by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>well.sensor.raw</code></td>
+<td>replay simulator</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>well.sensor.validated</code></td>
+<td>Beam job (enriched readings)</td>
+<td>NiFi <code>PetroleumSensorFlow</code></td>
+</tr>
+<tr>
+<td><code>well.sensor.anomalies</code></td>
+<td>Beam job</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>market.price.raw</code></td>
+<td>EIA scraper</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>market.price.validated</code></td>
+<td>nothing</td>
+<td>NiFi <code>PetroleumMarketFlow</code></td>
+</tr>
+<tr>
+<td><code>market.rigcount.raw</code></td>
+<td>Baker Hughes scraper</td>
+<td>nothing</td>
+</tr>
+<tr>
+<td><code>market.rigcount.validated</code></td>
+<td>nothing</td>
+<td>NiFi <code>PetroleumMarketFlow</code></td>
+</tr>
+<tr>
+<td><code>dead.letter</code></td>
+<td>nothing (bound on <code>dlq.*</code>; Beam publishes <code>dead.letter</code>)</td>
+<td>nothing</td>
+</tr>
+</tbody>
+</table></div>
+<p>The table is the honest architecture diagram. Each component is shaped correctly on its own, but the hops do not connect. Nothing moves a message from <code>raw</code> to <code>validated</code>. The Beam job does not read from RabbitMQ at all, as I explain below. The dead-letter binding uses a different key from the one the publisher uses.</p>
+<h2 id="decision-1-a-broker-in-front-of-everything-with-hard-limits">Decision 1: a broker in front of everything, with hard limits<a class="h-anchor" href="#decision-1-a-broker-in-front-of-everything-with-hard-limits" title="Permanent link">#</a></h2>
+<p>I put RabbitMQ between the producers and everything else, so that a replay running ten times faster than real time could not knock over a consumer. The queue arguments show the intent:</p>
+<div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
+<span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;x-message-ttl&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">86400000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-max-length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;x-overflow&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reject-publish&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Sensor queues hold at most one million messages for 24 hours. Anomalies are kept for 7 days, and <code>dead.letter</code> for 30 days with a 10,000-message cap. <code>reject-publish</code> was a deliberate choice: when a queue is full, the producer gets refused. It does not lose the oldest messages without telling anyone.</p>
+<p>The trade-off: <code>reject-publish</code> only protects you if producers use publisher confirms, and none of mine do. They all call <code>basic_publish</code> on a plain channel, so a rejected publish looks like a success. The queues are also classic, not quorum. One more gap: the definitions file is mounted into the container, but no <code>load_definitions</code> setting tells RabbitMQ to load it. As committed, the queues only exist if a client declares them.</p>
+<h2 id="decision-2-nifi-for-validation-and-routing-configured-from-a-script">Decision 2: NiFi for validation and routing, configured from a script<a class="h-anchor" href="#decision-2-nifi-for-validation-and-routing-configured-from-a-script" title="Permanent link">#</a></h2>
+<p>NiFi gives visual flows, provenance and back-pressure, and I wanted a three-node cluster to learn how clustering behaves. All three nodes are configured in Compose against ZooKeeper. The README says &ldquo;embedded ZooKeeper&rdquo;, but the Compose file runs a separate <code>cp-zookeeper</code> container.</p>
+<p>There are no exported NiFi flows in the repo. <code>config/nifi/flows/sensor-ingestion.json</code> is a prose README despite its extension, and the <code>templates/</code> folder it mentions does not exist. The real artefact is <code>deploy-flows.py</code>, which calls the NiFi REST API to create two process groups. The sensor group gets <code>ConsumeAMQP</code>, <code>ValidateJson</code> and <code>UpdateAttribute</code>. The market group gets two <code>ConsumeAMQP</code> processors. The script ends with:</p>
+<div class="hl"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sensor ingestion flow deployed. Please configure routing in the NiFi UI.&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>So the routing to Elasticsearch, the anomaly and DLQ branches, and the warehouse path described in <code>docs/nifi-flows.md</code> were planned as manual UI work, and none of that work was exported. The trade-off I accepted was speed over reproducibility. A NiFi flow that lives only on a canvas is gone after <code>docker compose down -v</code>. I also never checked the script against a live 2.0 API. The create calls send no <code>revision</code> object, and two of the processor class paths do not match NiFi&rsquo;s standard bundles.</p>
+<h2 id="decision-3-beam-with-the-flink-runner-not-a-native-flink-job">Decision 3: Beam with the Flink runner, not a native Flink job<a class="h-anchor" href="#decision-3-beam-with-the-flink-runner-not-a-native-flink-job" title="Permanent link">#</a></h2>
+<p>I wrote the detector in the Beam Python SDK so the same code could run on the DirectRunner locally and on Flink in the stack. <code>anomaly_pipeline.py</code> keys readings by <code>(well_id, sensor_type)</code> and uses 5-minute sliding windows that advance every minute. A processing-time trigger fires every 10 seconds in accumulating mode. Each window needs at least 30 samples before it scores anything. A reading is flagged when it hits any of four rules: a global z-score above 3, Tukey&rsquo;s 1.5×IQR fences, a z-score above 2.5 against the last 10 points, or a fixed per-sensor limit such as wellhead pressure above 600. Scores above 0.7 are labelled <code>critical</code>.</p>
+<p>On the Flink side, <code>flink-conf.yaml</code> sets 60-second exactly-once checkpoints on incremental RocksDB, and the job passes <code>--flink_parallelism 2</code>.</p>
+<p>The trade-off was portability against a much thinner Flink integration, and the code shows the cost. When the runner is Flink, the source is:</p>
+<div class="hl"><pre><span></span><code><span class="o">|</span> <span class="s1">&#39;ReadFromRabbitMQ&#39;</span> <span class="o">&gt;&gt;</span> <span class="n">beam</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ReadFromPubSub</span><span class="p">(</span>
+    <span class="n">topic</span><span class="o">=</span><span class="s1">&#39;projects/petroleum/topics/sensor-data&#39;</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>Despite the label, that reads from Google Pub/Sub, and the stack has no Pub/Sub. The Python SDK has no RabbitMQ source, and I never wrote one. On the DirectRunner, the source is 1,000 synthetic readings from <code>beam.Create</code>. Reading the file again, I also doubt the pipeline would build at all:</p>
+<ul>
+<li>the dead-letter loop applies the label <code>'WriteDLQ'</code> twice, and Beam rejects duplicate labels;</li>
+<li>the step after scoring is <code>beam.FlatMap(lambda x: x)</code> over dicts, which emits dictionary keys rather than readings;</li>
+<li><code>pika</code> is imported inside <code>setup()</code>, but <code>process()</code> uses it.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">What did not happen</p>
+<p>Nothing in the repo shows the Beam job running on Flink: no job ID, no logs, no checkpoint directory, no output in Elasticsearch. The tests folders under <code>beam-pipeline/</code> and <code>replay-simulator/</code> are empty. The replay simulator as committed contains a syntax error (an unclosed <code>logging.info(</code> call and <code>args.pass</code>). The Compose override also starts the EIA scraper without the <code>--api-key</code> flag that the script requires.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What exists and works as files:</p>
+<ul>
+<li>A 20-service Compose definition with resource limits, health checks and named volumes. One conflict remains: <code>nifi-2</code> and the Flink JobManager both bind host port 8081.</li>
+<li>A synthetic, reproducible Volve-shaped dataset (about 560,000 rows) and a profiling script that ran against it.</li>
+<li>A RabbitMQ topology with explicit TTLs, length caps and overflow behaviour.</li>
+<li>A Postgres schema (<code>init.sql</code>) with monthly partitions for sensor readings, plus tables for anomalies, prices, rig counts and production. No code writes to it.</li>
+<li>Grafana dashboards that query metrics such as <code>petroleum_market_price</code> and <code>petroleum_well_correlation_coefficient</code>. No service exports those metrics, because no code uses <code>prometheus_client</code>.</li>
+</ul>
+<p>What is scaffolding only:</p>
+<ul>
+<li>Kubernetes: a namespace and one NiFi Deployment. The folders for the other services and all overlays are empty.</li>
+<li>Terraform: provider blocks and a namespace. The four module folders are empty, and the root and <code>dev</code> modules call each other.</li>
+<li>There is no PySpark, ML or correlation code, and nothing writes to BigQuery or MinIO.</li>
+</ul>
+<p>There are no throughput, latency or anomaly-precision numbers, because nothing ran end to end.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Close the loop with one path.</strong> Replay sensor CSV → <code>well.sensor.raw</code> → Beam → <code>well.sensor.anomalies</code>. The replay currently publishes production rows, which have no <code>SENSOR_TYPE</code>, so the Beam parser would drop them. I would switch it to the sensor file, fix the syntax errors and add publisher confirms.</li>
+<li><strong>Give Beam a real source.</strong> I would either write a small RabbitMQ-to-Kafka bridge and use Beam&rsquo;s Kafka IO, which works on the Flink runner, or drop Beam and write the detector as a PyFlink job. Then I would pin the Beam and Flink versions to a pair the runner supports.</li>
+<li><strong>Export the NiFi flow.</strong> I would build it once in the UI and commit it as a versioned flow definition, so it can be reloaded instead of rebuilt by hand.</li>
+<li><strong>Test the detector on its own.</strong> I would add unit tests for <code>ComputeRollingStats</code> with known outliers, then a DirectRunner test with <code>TestStream</code> for the windowing.</li>
+<li><strong>Use real data for the market side.</strong> Correlating production with a random-walk price series means nothing. I would save one real EIA response as a fixture before building any correlation.</li>
+<li><strong>Trim the stack.</strong> BigQuery emulator, MinIO, Jenkins and Terraform can wait until there is data to put in them.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/petroleum-platform.html">Petroleum Platform</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/petroleum-platform">github.com/Eng-Zakaria/petroleum-platform</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</title>
@@ -797,6 +1128,131 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 </ol>
 <h2 id="case-study">Case study<a class="h-anchor" href="#case-study" title="Permanent link">#</a></h2>
 <p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Fraud scoring on Kafka: what is built, what is measured, what is missing</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.</description>
+      <category>Streaming</category><category>Machine Learning</category><category>Kafka</category>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio, synthetic data.</strong> This is a personal project, not client work. Every transaction in it comes from a Python generator with a fixed 2% fraud rate. The repository has one commit and no saved metrics, logs, benchmark results or trained models. So this post describes what the code does and what I found when I read it closely. It does not report any measured latency or model accuracy, because none was recorded.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Card fraud has to be caught while the payment is still being authorised. A nightly batch job that flags a transaction the next morning is too late. I wanted to build the parts a streaming fraud system needs: an event stream, a model that scores each event, a way to push alerts, a dashboard, and a loop that retrains the model.</p>
+<p>The README for this project promises &ldquo;Sub-second fraud prediction on incoming transactions&rdquo;, and I had planned drift-aware monitoring. Before writing about the project I checked both against the code. Short version: neither one is there yet. This post explains why, because the gap between the README and the code taught me more than the code did.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The stack runs in Docker Compose: Postgres 15, Redis 7, Zookeeper and Kafka (Confluent 7.4.0), Airflow 2.7.3 and an MLflow server. The Python services (the API, the Kafka consumer, the dashboard and the monitoring loop) are started by hand with <code>python -c ...</code>. They are not in the Compose file and there is no Dockerfile.</p>
+<div class="hl"><pre><span></span><code> TransactionStreamSimulator             Airflow DAG (every 6 h)
+ (synthetic, 10 tx/s default)           generate -&gt; clean -&gt; load -&gt; train -&gt; evaluate
+            |                                                |           |
+            v                                                v           v
+   Kafka topic &quot;transactions&quot; &lt;---- key: transaction_id     MLflow     Postgres
+            |                                              (runs)     model_metrics
+            v                                                            |
+ TransactionKafkaConsumer ---+                                           |
+ (group fraud_detection_group)|      FastAPI /predict, /predict/batch   |
+            |                 +----&gt; FraudDetector (scikit-learn) &lt;-----+ |
+            |                         score + risk tier                   |
+            v                                                             |
+   Kafka topic &quot;fraud_alerts&quot;   (no consumer in the repo)                 |
+                                                                          v
+   MonitoringSystem (polls Postgres every 300 s) ----&gt; Slack / email / webhook
+   Plotly/Dash dashboard (refreshes every 30 s, reads Postgres)
+   Redis: daily counters only (stats:YYYY-MM-DD)
+</code></pre></div>
+
+<p>The model code trains Random Forest, Gradient Boosting and Logistic Regression, picks the one with the best validation AUC-ROC, optionally runs a grid search, and logs runs to MLflow. Features are temporal (hour, weekday, cyclical encodings), amount statistics, per-user history, distance from the user&rsquo;s usual location, device reuse, and merchant statistics. Every numeric column is passed through a <code>StandardScaler</code> and any column ending in <code>_scaled</code> or <code>_encoded</code> becomes a model input.</p>
+<h2 id="decision-1-one-detector-object-behind-two-entry-points">Decision 1: one detector object behind two entry points<a class="h-anchor" href="#decision-1-one-detector-object-behind-two-entry-points" title="Permanent link">#</a></h2>
+<p>Both the Kafka consumer and the FastAPI service call the same method, <code>FraudDetector.predict_single</code>. That kept the scoring logic in one place, which I still think is right. The trade-off sits in how that method builds features:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">predict_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">transaction</span><span class="p">])</span>
+    <span class="n">predictions</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre></div>
+
+<p><code>predict</code> calls <code>create_feature_matrix(df, historical_data=None, ...)</code>, and every feature function then does <code>historical_data = df.copy()</code>. For a single event that means the &ldquo;user history&rdquo; is one row: the user&rsquo;s average amount is this amount, and the seven-day transaction count is zero. The features that make fraud models useful (how this payment compares with the user&rsquo;s normal behaviour) are flat at scoring time. A real design would read user aggregates from a store (Redis was the obvious place, and it is already running) instead of rebuilding them from the request.</p>
+<p>There is a second cost. The cleaner drops rows without <code>transaction_time</code>, and its business rules read that column directly. The FastAPI <code>TransactionRequest</code> model has no <code>transaction_time</code> field. Reading the code, a <code>/predict</code> call should fail inside the cleaner and return HTTP 500. The merchant features also group by <code>is_fraud</code>, which a live request does not have.</p>
+<h2 id="decision-2-risk-tiers-from-three-config-thresholds">Decision 2: risk tiers from three config thresholds<a class="h-anchor" href="#decision-2-risk-tiers-from-three-config-thresholds" title="Permanent link">#</a></h2>
+<p>I wanted more than a yes/no answer, so the score maps to a tier and the tier decides whether an alert is sent:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">HIGH_RISK_THRESHOLD</span><span class="p">:</span>      <span class="c1"># 0.8</span>
+    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;HIGH&quot;</span>
+<span class="k">elif</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MEDIUM_RISK_THRESHOLD</span><span class="p">:</span>  <span class="c1"># 0.6</span>
+    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;MEDIUM&quot;</span>
+<span class="k">elif</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">FRAUD_THRESHOLD</span><span class="p">:</span>        <span class="c1"># 0.7</span>
+    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;LOW&quot;</span>
+</code></pre></div>
+
+<p>The trade-off I chose was simplicity: three constants in <code>config.py</code>, the same block copied into the consumer and the API. The cost is that the copies drifted from the intent and nobody noticed. Because 0.6 is below 0.7, the <code>LOW</code> branch can never run. Any score of 0.6 or more becomes <code>MEDIUM</code> and sends an alert, even though the &ldquo;fraud&rdquo; threshold is 0.7. A single function with a test for each boundary would have caught this.</p>
+<p>Each alert is published to a Kafka topic, <code>fraud_alerts</code>. Nothing in the repository consumes that topic. Per-transaction alerts therefore never reach Slack or email.</p>
+<h2 id="decision-3-aggregate-monitoring-instead-of-per-event-paging">Decision 3: aggregate monitoring instead of per-event paging<a class="h-anchor" href="#decision-3-aggregate-monitoring-instead-of-per-event-paging" title="Permanent link">#</a></h2>
+<p>Slack, email and webhook delivery live in <code>AlertManager</code>, driven by a <code>MonitoringSystem</code> thread that wakes every 300 seconds and runs four checks against Postgres:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Rule in the code</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fraud spike</td>
+<td>last hour&rsquo;s fraud rate is more than 3x the previous hour&rsquo;s</td>
+<td>HIGH</td>
+</tr>
+<tr>
+<td>High fraud rate</td>
+<td>last hour&rsquo;s fraud rate is above 10%</td>
+<td>CRITICAL</td>
+</tr>
+<tr>
+<td>Model performance</td>
+<td>latest stored AUC-ROC is below 0.9x a value from the past 24 h, or below 0.7</td>
+<td>HIGH / CRITICAL</td>
+</tr>
+<tr>
+<td>System health / data quality</td>
+<td>Redis or Kafka unreachable; null or non-positive amounts, null user IDs</td>
+<td>HIGH / MEDIUM</td>
+</tr>
+</tbody>
+</table></div>
+<p>Polling every five minutes is cheap and avoids paging someone for every flagged card, which I think is the right call for a team. But this table is the whole &ldquo;drift-aware&rdquo; story. There is no feature-distribution check: no PSI, no KS test, no comparison of live inputs against training data. The AUC rule needs labelled outcomes, and the fraud-rate rules count <code>is_fraud = TRUE</code> rows. In this project those labels come from the generator, so the checks are measuring the simulator. Calling this &ldquo;drift detection&rdquo; was an overstatement. &ldquo;Performance-degradation and fraud-rate alerts&rdquo; is accurate.</p>
+<div class="admonition warning">
+<p class="admonition-title">The alerting module does not import</p>
+<p><code>alerting.py</code> starts with <code>from email.mime.text import MimeText</code>. The real class is <code>MIMEText</code>, and Python 3.13 raises <code>ImportError</code> on that line. Since <code>src/monitoring/__init__.py</code> imports <code>alerting</code>, both the monitoring loop and the dashboard fail at import until that name is fixed.</p>
+</div>
+<p>Retraining is a schedule rather than a trigger. The Airflow DAG runs every six hours. Nothing in the monitoring code starts it when AUC drops.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no numbers to report, and I would rather say that than make some up.</p>
+<ul>
+<li><strong>Latency.</strong> Nothing measures it. The <code>processing_time</code> field returned by the API and the consumer is <code>datetime.utcnow().isoformat()</code>, a timestamp and not a duration. No benchmark or load test exists. &ldquo;Sub-second&rdquo; comes from one line in the README.</li>
+<li><strong>Model metrics.</strong> <code>train()</code> computes AUC-ROC, PR-AUC, precision, recall and F1 and logs them to MLflow, but no MLflow runs, reports or model files are in the repo (<code>models/*.joblib</code> and <code>reports/*.json</code> are git-ignored).</li>
+<li><strong>Tests.</strong> There are unit tests for ingestion, preprocessing and modelling. I did not run them because <code>kafka-python</code> and <code>mlflow</code> are not installed on this machine, and I did not want to change the environment just to write this post.</li>
+</ul>
+<p>Reading the code turned up problems that would make any metric from this pipeline unreliable:</p>
+<ol>
+<li><strong>Label leakage.</strong> The generator writes a <code>fraud_score</code> column drawn from 0.7-1.0 for fraud and 0.0-0.3 for legitimate rows. It is numeric and not excluded from scaling, so <code>fraud_score_scaled</code> becomes a model input that encodes the label. <code>merchant_fraud_rate</code> and <code>category_fraud_rate</code> are also computed from <code>is_fraud</code> on the same rows. Expect a near-perfect AUC that means nothing.</li>
+<li><strong>The API cannot find the model.</strong> Training saves <code>models/best_model_&lt;name&gt;_&lt;timestamp&gt;.joblib</code>. The API loads the fixed path <code>models/best_model_random_forest.joblib</code>.</li>
+<li><strong>The DAG&rsquo;s training task ignores its data.</strong> It queries 30 days of transactions, then calls <code>automated_training_pipeline(data_source='dataframe')</code>. That falls through to <code>pd.read_csv('dataframe')</code>.</li>
+<li><strong><code>pd</code> is not imported in <code>fraud_api.py</code></strong>, so the background task that saves scored transactions fails (the error is caught and logged).</li>
+<li><strong>The stream simulator likely sends nothing.</strong> <code>to_dict('records')</code> keeps pandas <code>Timestamp</code> objects, which <code>json.dumps</code> cannot serialise. I did not run this, so treat it as a likely bug.</li>
+</ol>
+<p>What does hold up: the module layout is clean, the Kafka producer uses <code>acks='all'</code> with retries, the consumer commits offsets after each poll, the trainer has stratified and time-series cross-validation paths, and the dashboard has seven Dash callbacks that re-query Postgres every 30 seconds.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Remove the leaks first.</strong> Drop <code>fraud_score</code> and any label-derived merchant rates from the feature set. Compute merchant rates only from data older than the training window.</li>
+<li><strong>Serve features from history.</strong> Keep per-user aggregates (mean amount, seven-day count, usual location, known devices) in Redis, update them in the consumer, and read them in <code>predict_single</code>. Add <code>transaction_time</code> to the request schema.</li>
+<li><strong>Measure latency for real.</strong> Time <code>predict_single</code> with <code>time.perf_counter()</code>, record p50, p95 and p99 over a replay of a few thousand events, and save the results to the repo. Only then put a number on the card.</li>
+<li><strong>Add actual drift checks.</strong> Compare live feature distributions with a training snapshot using PSI per feature on a schedule, and alert on it. Keep the AUC check for when labels arrive.</li>
+<li><strong>Close the alert loop.</strong> Add a small consumer on <code>fraud_alerts</code> that writes to the <code>fraud_alerts</code> table and forwards HIGH alerts to Slack. Put one tier function behind tests for each threshold boundary.</li>
+<li><strong>Containerise the services</strong> so <code>docker compose up</code> starts the API, consumer and dashboard too.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/fraud-detection.html">Fraud Detection</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/Fraud_Detection">github.com/Eng-Zakaria/Fraud_Detection</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</title>
@@ -1903,6 +2359,156 @@ ConfigDrivenScraper                            MouserClient
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
     </item>
     <item>
+      <title>AquaWatch: sensor alerts with cooldown logic</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.</description>
+      <category>IoT</category><category>Streaming</category><category>Alerting</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: portfolio project, simulated sensors only.</strong> No physical probes, no farm, and no real SMS or phone calls. AquaWatch is a local prototype. A Python simulator writes fake readings for fish ponds, an Airflow DAG loads them into TimescaleDB, and a separate alert module checks thresholds and holds back repeat alerts with a cooldown. This post covers how that cooldown works, the trade-offs behind it, and what turned up when I tested the alert rules directly. Some of it is not flattering.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Water quality in a fish pond can go bad between two manual checks. The PRD lists four parameters that matter: pH, dissolved oxygen, ammonia, and temperature. It targets small operators with 1 to 5 ponds. The success metrics it sets are alert latency under 5 minutes and 95%+ uptime in local testing. Those are targets. I never measured either one.</p>
+<p>Any threshold alert has an obvious failure mode. A pond that sits above the ammonia limit for an hour crosses the threshold on every reading. If every crossing sends an email, the operator gets a pile of identical messages and starts ignoring them. The cooldown is meant to stop that.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> sensors/sensor_simulator.py
+   pH, dissolved_oxygen, ammonia, temperature per pond
+   writes one JSON line per pond per tick
+            |
+            v
+   logs/sensor_readings.jsonl
+            |
+            v
+ airflow/dags/ingest_sensor_data.py   (schedule: &#39;@every_5_minutes&#39;)
+   reads the whole file, flattens to (time, pond_id, parameter, value)
+   execute_batch(page_size=100)
+            |
+            v
+ TimescaleDB  sensor_readings  (create_hypertable on &#39;time&#39;)
+            |
+            +--&gt; backend/main.py (FastAPI: /readings, /alerts, /analytics)
+            +--&gt; Grafana 10.1.5 container (no dashboards checked in)
+
+ alerting/alert_manager.py   &lt;-- NOT called by the DAG or the API
+   thresholds + 15-min cooldown per (pond_id, parameter)
+   -&gt; alerts.jsonl, SMTP email, mock_sms.log
+</code></pre></div>
+
+<p>The bottom box matters most for the rest of this post. <code>AlertManager</code> is a self-contained class with a <code>__main__</code> example. Nothing in the DAG, the API, or Docker Compose imports it. The architecture doc draws an arrow from the database to the alert module, but the code doesn&rsquo;t have that link yet.</p>
+<p>There&rsquo;s no MQTT either. Readings move as lines in a JSONL file. The only mention of MQTT is a comment in the mock actuator endpoint (&ldquo;In a real system this would push a command to an MQTT topic&rdquo;).</p>
+<h2 id="decision-1-cooldown-keyed-on-pond-and-parameter">Decision 1: cooldown keyed on pond and parameter<a class="h-anchor" href="#decision-1-cooldown-keyed-on-pond-and-parameter" title="Permanent link">#</a></h2>
+<p>This is the core of the alert module:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_get_alert_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pond_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">parameter</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_should_alert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alert_key</span><span class="p">(</span><span class="n">pond_id</span><span class="p">,</span> <span class="n">parameter</span><span class="p">)</span>
+    <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">current_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alert_cooldown_minutes</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</code></pre></div>
+
+<p>What it does:</p>
+<ul>
+<li><strong>Scope:</strong> one timer per pond and parameter pair. Ammonia in pond 1 and ammonia in pond 2 are tracked separately, and so are ammonia and temperature in the same pond. Nothing is scoped per farm. The code has no farm concept at all.</li>
+<li><strong>Duration:</strong> <code>alert_cooldown_minutes</code> defaults to 15. The FastAPI app also reads an <code>ALERT_COOLDOWN_MINUTES</code> environment variable (default 15), but it never uses it.</li>
+<li><strong>Re-arm:</strong> the timer only resets when an alert actually fires. Inside the window, breaches are dropped without being counted.</li>
+<li><strong>State:</strong> a plain Python dict in memory, so restarting the process clears it.</li>
+</ul>
+<p><strong>Trade-off.</strong> Keying on pond and parameter is the right granularity for an operator. &ldquo;Pond 2 ammonia&rdquo; is something you can act on, and one noisy pond can&rsquo;t hide an alert from another. The cost comes from keying on the <em>parameter</em> and not the <em>severity</em>. I didn&rsquo;t see it until I tested the code: the first alert in a window blocks the rest, including a later critical one. Keeping the state in memory makes the class easy to test, but a scheduled job that starts a new process on each run would never suppress anything, and a long-running process loses its state on every deploy.</p>
+<h2 id="decision-2-a-file-and-a-batch-dag-not-a-message-stream">Decision 2: a file and a batch DAG, not a message stream<a class="h-anchor" href="#decision-2-a-file-and-a-batch-dag-not-a-message-stream" title="Permanent link">#</a></h2>
+<p>The simulator appends JSON lines to a file. The DAG reads the whole file, flattens each reading into four rows, creates the table and hypertable, and inserts with <code>execute_batch(..., page_size=100)</code>.</p>
+<p><strong>Trade-off.</strong> A file is easy to inspect and needs no broker, which suits a laptop prototype. The cost is latency and correctness. In the best case, data lands in the database on a 5-minute schedule. It also has three problems I can see from reading the code. I haven&rsquo;t run the stack to confirm them:</p>
+<ul>
+<li>The DAG reads the full file on every run and never truncates it or stores an offset, so every run would re-insert every earlier reading.</li>
+<li><code>create_hypertable('sensor_readings', 'time')</code> runs every time without <code>if_not_exists</code>, which TimescaleDB rejects once the table is already a hypertable.</li>
+<li><code>'@every_5_minutes'</code> is not one of Airflow&rsquo;s schedule presets. I&rsquo;d expect the DAG to fail at parse time until that line is changed to a cron string or a <code>timedelta(minutes=5)</code>.</li>
+</ul>
+<p>The cadence numbers need a caveat too. The simulator class defaults to <code>sampling_interval=300</code> seconds and a 10% anomaly rate. The container runs the file&rsquo;s <code>__main__</code> block, though, which uses <code>sampling_interval=10</code> and <code>anomalies_probability=0.3</code>. So the Docker setup samples every 10 seconds with a 30% anomaly rate, not every 5 minutes with 10%.</p>
+<h2 id="decision-3-real-email-mocked-sms">Decision 3: real email, mocked SMS<a class="h-anchor" href="#decision-3-real-email-mocked-sms" title="Permanent link">#</a></h2>
+<p><code>send_email_alert</code> uses <code>smtplib</code> with STARTTLS. That path is real, but the shipped config has placeholder credentials, so it fails and logs an error until someone sets up SMTP. SMS is fully mocked. <code>log_sms_alert</code> writes a Twilio-shaped JSON record (<code>'to': f'+1{pond_id}000'</code>, <code>'from': '+1AQUAwatch'</code>) to <code>mock_sms.log</code>. Nothing is sent to a phone, and there&rsquo;s no Telegram, voice, or SNS integration.</p>
+<p><strong>Trade-off.</strong> Mocking SMS keeps the project free and offline, and it still shows the message format. But it also means the portfolio card&rsquo;s &ldquo;farms that phone home&rdquo; line has nothing real behind it. The only network notification is email, and only if you configure it.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no tests in the repo and no saved outputs (<code>grafana/provisioning/</code>, <code>dashboard/</code>, <code>dags/</code>, and <code>plugins/</code> are empty). So I wrote a small probe that imports <code>AlertManager</code> and the simulator directly, with email turned off and every output going to a scratch folder. No services ran. Here are five calls against one fresh manager:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Expected</th>
+<th>What the code did</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ammonia 2.5 ppm</td>
+<td>critical (above 2.0)</td>
+<td>one alert labelled <strong>high</strong>. The critical check was suppressed by the cooldown that the high alert had just set</td>
+</tr>
+<tr>
+<td>ammonia 3.0 ppm, seconds later</td>
+<td>suppressed</td>
+<td>suppressed (the cooldown works)</td>
+</tr>
+<tr>
+<td>dissolved oxygen 7.0 mg/L</td>
+<td>no alert (healthy)</td>
+<td><strong>CRITICAL</strong> alert</td>
+</tr>
+<tr>
+<td>dissolved oxygen 3.0 mg/L</td>
+<td>critical (below 4.0)</td>
+<td>no alert</td>
+</tr>
+<tr>
+<td>pH 6.0</td>
+<td>alert if low-pH rules existed</td>
+<td>no alert. pH thresholds are never found</td>
+</tr>
+<tr>
+<td>temperature 29.0 °C</td>
+<td>high (above 28.0)</td>
+<td>high (correct)</td>
+</tr>
+</tbody>
+</table></div>
+<p>There are three separate bugs here:</p>
+<ol>
+<li><strong>Severity is lost.</strong> The loop checks levels in dict order (<code>high</code> before <code>critical</code>), and both checks share one cooldown key. Whichever level matches first takes the window, so a critical reading is always reported as high.</li>
+<li><strong>Dissolved oxygen is inverted.</strong> Its thresholds are <code>{'low': 5.0, 'critical': 4.0}</code>, but every comparison is <code>value &gt; threshold</code>. A healthy pond triggers a critical alert, and a pond running out of oxygen triggers nothing. That&rsquo;s the opposite of what the alert is for, on the parameter most likely to kill fish quickly.</li>
+<li><strong>pH never alerts.</strong> The thresholds dict uses the key <code>'pH'</code>, but the lookup is <code>thresholds.get(parameter.lower())</code>, which asks for <code>'ph'</code>.</li>
+</ol>
+<p>The simulator has its own issues. Over 20,000 generated readings with a fixed seed:</p>
+<ul>
+<li>about <strong>45%</strong> of ammonia readings marked normal were above the 1.0 ppm high threshold, because &ldquo;normal&rdquo; values come from the full 0–2.0 range;</li>
+<li>about <strong>18%</strong> of parameter readings had an <code>is_anomalous</code> flag that didn&rsquo;t match their <code>note</code>, because the flag rolls the dice a second time;</li>
+<li>about <strong>0.7%</strong> of values were negative (ammonia or temperature anomalies that drop below zero).</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What actually holds up</p>
+<p>The per-pond, per-parameter cooldown does what it says: a repeat breach inside 15 minutes is dropped, and different ponds and parameters don&rsquo;t block each other. Temperature and ammonia high-threshold checks fire correctly. The FastAPI read endpoints are coherent SQL against <code>sensor_readings</code>. But the <code>alerts</code> table they query is never created anywhere: <code>init.sql</code> only enables the TimescaleDB extension.</p>
+</div>
+<p>Other gaps: there&rsquo;s no <code>.env.example</code> even though the README says to copy one. The compose file has no backend service. And the compose paths are written as if run from the repo root while the file sits in <code>provisioning/</code>.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>In order of how much damage each bug can do:</p>
+<ol>
+<li><strong>Fix the comparisons.</strong> Give each threshold a direction (<code>above</code> / <code>below</code>), and check levels from most to least severe so critical wins.</li>
+<li><strong>Key the cooldown on (pond, parameter, severity)</strong>, or let a higher severity break through an active lower-severity window. An escalation should never be quiet.</li>
+<li><strong>Persist cooldown state</strong> in the <code>alerts</code> table (create it first). Then &ldquo;should I alert?&rdquo; becomes a query for the last alert per key, and restarts stop mattering.</li>
+<li><strong>Wire the alerting into the pipeline.</strong> Run it as a second DAG task after the load, over only the rows that task just inserted.</li>
+<li><strong>Make ingestion incremental.</strong> Track a file offset or a max ingested timestamp, add <code>if_not_exists =&gt; TRUE</code>, and fix the schedule string.</li>
+<li><strong>Write the tests I just ran by hand</strong> as pytest cases, and fix the simulator&rsquo;s double roll and its &ldquo;normal&rdquo; range.</li>
+<li><strong>Check in a Grafana datasource and dashboard JSON</strong>, then actually measure alert latency against the 5-minute target.</li>
+</ol>
+<p>None of this needs MQTT or a real SMS provider. Both would make sense later, once the rules are correct.</p>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/aquawatch.html">AquaWatch — Fish-Farm Monitoring</a></li>
+<li>Code: local project, no public repository.</li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Waffy: a support agent that can&#x27;t go rogue</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</guid>
@@ -2021,6 +2627,142 @@ ConfigDrivenScraper                            MouserClient
 </ul>
 <p>The lesson for me: keep identity, SQL and execution in plain code, where I can test them, and let the model phrase.</p>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.</description>
+      <category>Streaming</category><category>Kafka</category><category>Spark</category>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio (live public data).</strong> This is a personal learning project, not client work. It pulls real, live aircraft positions from the free <a href="https://api.adsb.lol/docs">adsb.lol</a> ADS-B API, but the volume is small: one request every 10 seconds, capped at 300 aircraft per request, all running in Docker Compose on one machine. The repository has no saved logs, benchmarks or screenshots, so this article describes what the code does and what its configuration allows. It does not report measured throughput or latency.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted a project that touches every piece of a classic Hadoop-era streaming stack in one place: Flume for ingestion, Kafka as the buffer, Spark Structured Streaming for processing, HDFS for the raw archive, and a time-series store with a live dashboard on top. Most tutorials use fake click events. I wanted real data that changes every few seconds and is easy to check by eye, and aircraft positions fit well: if the dots on the map line up with Cairo International Airport, the pipeline works.</p>
+<p>The data source is adsb.lol, a community-run ADS-B aggregator. It needs no API key and publishes data under the ODbL licence, so any dashboard built on it has to credit adsb.lol. By default the poller asks for every aircraft within 250 nautical miles of Cairo (<code>/v2/point/30.0444/31.2357/250</code>). It also supports three global endpoints through one environment variable: military aircraft (<code>/v2/mil</code>), the LADD privacy list (<code>/v2/ladd</code>) and PIA addresses (<code>/v2/pia</code>).</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code>adsb.lol API  /v2/point/{lat}/{lon}/250   (poll every 10 s, max 300 aircraft)
+      |
+      v
+data-source (Python)  -- flatten &quot;ac&quot; array, drop rows with no lat/lon
+      |  HTTP POST, Flume JSONHandler format
+      v
+Flume agent &quot;producer&quot;   HTTP source -&gt; memory channel -&gt; Kafka sink (acks=1)
+      |
+      v
+Kafka topic &quot;aircraft-states&quot;   1 broker, 3 partitions, replication 1
+      |
+      +----------------------------------+
+      v                                  v
+Flume agent &quot;consumer&quot;            Spark Structured Streaming (local[2])
+Kafka source -&gt; file channel      query 1: every 10 s  -&gt; aircraft_states_raw
+-&gt; HDFS sink                      query 2: every 30 s  -&gt; aircraft_states_agg
+      |                                  |
+      v                                  v
+HDFS /aircraft-states/            InfluxDB 2.7 bucket &quot;aircraft-states&quot;
+  dt=YYYY-MM-DD/hr=HH/*.json             |
+                                         v
+                                  Grafana 10.4 (6 panels, 10 s refresh)
+</code></pre></div>
+
+<p>Everything runs from one <code>docker-compose.yml</code>: ZooKeeper, a single Kafka broker, an init container that creates the topic, a Hadoop namenode and datanode, InfluxDB, Grafana, two Flume containers, the Spark job and the Python poller. The README asks for 8 GB of RAM, mostly for Hadoop and Spark.</p>
+<p>The poller does the only real transformation before Kafka. adsb.lol sends <code>alt_baro</code> as a number in flight and as the string <code>"ground"</code> on the runway, so the producer turns that into a boolean and a zero:</p>
+<div class="hl"><pre><span></span><code><span class="n">alt_baro_raw</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alt_baro&quot;</span><span class="p">)</span>
+<span class="n">on_ground</span> <span class="o">=</span> <span class="p">(</span><span class="n">alt_baro_raw</span> <span class="o">==</span> <span class="s2">&quot;ground&quot;</span><span class="p">)</span>
+<span class="n">alt_baro</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">on_ground</span> <span class="k">else</span> <span class="n">_num</span><span class="p">(</span><span class="n">alt_baro_raw</span><span class="p">)</span>
+</code></pre></div>
+
+<p>It also renames the short API fields (<code>r</code> to <code>registration</code>, <code>t</code> to <code>aircraft_type</code>, <code>gs</code> to <code>ground_speed</code>), trims the padded callsign, and stamps an <code>ingested_at</code> time in UTC.</p>
+<p>The Spark job reads the topic twice, once per streaming query. The first query writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, <code>aircraft_type</code> and <code>on_ground</code>. The second groups by aircraft type over a 1-minute window that slides every 30 seconds and writes count, average and maximum ground speed, and average barometric altitude. Grafana reads both measurements with Flux. The map panel takes the last latitude, longitude and altitude per <code>hex</code> from the past 2 minutes, so it shows each aircraft&rsquo;s current position, not a track.</p>
+<h2 id="decision-1-two-flume-agents-around-kafka">Decision 1: two Flume agents around Kafka<a class="h-anchor" href="#decision-1-two-flume-agents-around-kafka" title="Permanent link">#</a></h2>
+<p>The poller does not talk to Kafka. It POSTs to a Flume HTTP source, and a second Flume agent drains Kafka into HDFS. That is more moving parts than a Python Kafka producer plus a small consumer, so it needs a reason.</p>
+<p>The README gives the reasons: the producer agent buffers between the HTTP poller and Kafka, and the consumer agent gives file-channel buffering from Kafka to HDFS. A side benefit is that the poller needs no Kafka client, only <code>requests</code>. The two agents are set up differently on purpose:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Source</th>
+<th>Channel</th>
+<th>Sink</th>
+<th>What the channel buys</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>producer</td>
+<td>HTTP, port 44444</td>
+<td>memory, capacity 10,000</td>
+<td>Kafka, <code>acks=1</code></td>
+<td>Fast, but events in the channel are lost if the container dies</td>
+</tr>
+<tr>
+<td>consumer</td>
+<td>Kafka, batch 1,000</td>
+<td>file, capacity 100,000</td>
+<td>HDFS, roll every 120 s or 10,000 events</td>
+<td>Survives a restart; Kafka offsets plus the file channel protect the archive path</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is that only the archive side is durable. On the way in there are three places where data can drop: the poller logs a warning and moves on if the POST to Flume fails (no retry), the memory channel loses whatever it holds on a crash, and <code>acks=1</code> on a single broker with replication factor 1 means one broker failure loses data. For a radar that refreshes every 10 seconds, losing one poll is fine because the next one replaces it. For anything that needs a complete history, it is not, and I would not call this ingestion lossless.</p>
+<h2 id="decision-2-two-queries-in-one-spark-job-written-with-foreachbatch">Decision 2: two queries in one Spark job, written with foreachBatch<a class="h-anchor" href="#decision-2-two-queries-in-one-spark-job-written-with-foreachbatch" title="Permanent link">#</a></h2>
+<p>InfluxDB has no built-in Spark sink, so both queries use <code>foreachBatch</code> and the official <code>influxdb-client</code>:</p>
+<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
+    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The 10-second trigger matches the 10-second poll, so each micro-batch roughly holds one poll&rsquo;s worth of aircraft. The aggregate query runs every 30 seconds in <code>update</code> mode with a 1-minute watermark.</p>
+<p>This is simple and easy to read, but it has costs I can see in the code:</p>
+<ul>
+<li>Each batch is pulled to the driver with <code>collect()</code>, and a new InfluxDB client is opened and closed per batch. At 300 rows per poll that is fine. At real volume it would not be.</li>
+<li>The window and watermark use <code>event_time = current_timestamp()</code>, which is Spark&rsquo;s processing time, not the <code>ingested_at</code> field the poller writes, and not the aircraft&rsquo;s own <code>seen_pos</code>. The &ldquo;1-minute window&rdquo; is really &ldquo;rows Spark happened to read in that minute&rdquo;.</li>
+<li>The InfluxDB timestamp is <code>datetime.utcnow()</code> at write time, so a delayed batch shows up as if it were fresh.</li>
+<li>Writes are synchronous and not idempotent. If a batch is retried after a failure, its points are written again.</li>
+<li>Aggregate points are tagged with <code>batch_id</code>, which creates a new series every 30 seconds. That works for a demo but grows InfluxDB series cardinality without limit.</li>
+</ul>
+<p>The upside is that both queries share one parsed DataFrame and one schema, and the whole job is about 200 lines of Python.</p>
+<h2 id="decision-3-cap-the-feed-instead-of-scaling-the-stack">Decision 3: cap the feed instead of scaling the stack<a class="h-anchor" href="#decision-3-cap-the-feed-instead-of-scaling-the-stack" title="Permanent link">#</a></h2>
+<p>A 250 nm circle around Cairo, or any of the global endpoints, can return hundreds of aircraft per call. Rather than size Kafka and Spark for that, I capped it in the poller:</p>
+<div class="hl"><pre><span></span><code><span class="n">aircraft</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aircraft</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lat&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lon&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aircraft</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_AIRCRAFT</span><span class="p">:</span>
+    <span class="n">aircraft</span> <span class="o">=</span> <span class="n">aircraft</span><span class="p">[:</span><span class="n">MAX_AIRCRAFT</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Rows without a position are dropped first, since adsb.lol leaves out <code>lat</code>/<code>lon</code> when the last position report is stale, and they cannot be mapped. Then the list is cut at 300. That puts a hard ceiling on load: 300 events every 10 seconds, so at most about 30 events per second. Spark runs as <code>local[2]</code> with 2 shuffle partitions to match.</p>
+<p>The trade-off is that the cut is not random or ranked. If the API returns more than 300 aircraft, the ones after position 300 never appear on the map. The README says to shrink the radius rather than rely on the cap, and that is the honest fix for a single-node demo.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What the repository shows:</p>
+<ul>
+<li>A full stack that starts with <code>docker compose up --build -d</code>: 11 services, with health checks on ZooKeeper, Kafka, the namenode and InfluxDB, and a startup order enforced through <code>depends_on</code>.</li>
+<li>A provisioned Grafana dashboard with six panels: live aircraft positions on a Geomap, aircraft count by type, total tracked over time, average ground speed by type, average barometric altitude by type, and on-ground versus airborne.</li>
+<li>Raw JSON landing in HDFS, partitioned by date and hour, as <code>states-*.json</code> files.</li>
+<li>Two exported copies of the dashboard JSON from a running Grafana, and a follow-up commit that fixed the map query to keep <code>aircraft_type</code> per point. This tells me the stack ran and was tuned against live data, but there are no logs or screenshots in the repo to quote numbers from.</li>
+</ul>
+<p>What it does not show: any measured messages per second, end-to-end latency, or uptime. The configuration caps the input at about 30 events per second, which is far from &ldquo;at scale&rdquo;. The one latency fact I can state is the cadence: a new poll every 10 seconds, a Spark write every 10 seconds, and a Grafana refresh every 10 seconds, so a position on the map is roughly 10 to 30 seconds old.</p>
+<div class="admonition note">
+<p class="admonition-title">Small bugs I found while writing this</p>
+<p>The consumer Dockerfile passes <code>--conf /opt/opt/flume/conf</code> (a doubled path) to <code>flume-ng</code>. The config file itself is passed separately, so the agent still loads its settings. The consumer config header still says <code>topic = user-events</code>, and the compose comment on the poller says &ldquo;Random User API&rdquo;, both left over from an earlier template. The &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Use event time. Parse <code>ingested_at</code> (or <code>ingested_at - seen_pos</code>) into a timestamp in Spark and use it for the watermark, the windows and the InfluxDB point time.</li>
+<li>Make the ingest path durable or drop Flume from it. Either switch the producer agent to a file channel with <code>acks=all</code>, or let the poller write to Kafka directly with retries and keep Flume only for the HDFS archive.</li>
+<li>Write to InfluxDB from the executors with <code>foreachPartition</code> and batched writes, and remove the <code>batch_id</code> tag.</li>
+<li>Build real tracks. Keep the last N positions per <code>hex</code> with <code>applyInPandasWithState</code> or a Flux query over a longer range, and draw them as lines on the map.</li>
+<li>Measure it. Log rows per batch and Spark&rsquo;s <code>processedRowsPerSecond</code> and batch duration, then switch to a global endpoint with the cap raised to see where the single-node stack actually bends.</li>
+<li>Move secrets out of <code>docker-compose.yml</code> into an <code>.env</code> file that is not committed.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Code: <a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline">github.com/Eng-Zakaria/aircraft-tracking-pipeline</a></li>
+<li>Case page: <a href="../projects/aircraft-tracking.html">Aircraft Tracking Pipeline</a></li>
+<li>Data: aircraft data courtesy of <a href="https://adsb.lol">adsb.lol</a>, licensed under ODbL v1.0.</li>
+</ul>]]></content:encoded>
     </item>
   </channel>
 </rss>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Petroleum Platform — Well Monitoring + Market Intel | Mohammed Zakaria</title>
-  <meta name="description" content="Oil & gas well monitoring plus live market intelligence. 3-node NiFi cluster, 13 Compose services, Volve history + EIA/Baker Hughes live feeds, RabbitMQ ingestion.">
+  <meta name="description" content="Portfolio scaffold for oil &amp; gas well monitoring plus market data: 20-service Compose stack with a 3-node NiFi cluster, RabbitMQ topology, synthetic Volve-style data, EIA/Baker Hughes scrapers and a Beam anomaly job aimed at Flink.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -71,12 +71,12 @@
     <div class="container">
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-oil-well"></i> Petroleum Platform</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Well monitoring + live oil market intelligence: historical Volve sensor data fused with EIA and Baker Hughes feeds for anomaly detection and production-vs-price correlation.</p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Portfolio scaffold for well monitoring plus oil market data: synthetic Volve-style sensor data and EIA / Baker Hughes scrapers routed through RabbitMQ, with a windowed anomaly detector written in Apache Beam for the Flink runner. Not yet wired end to end.</p>
       <div class="project-meta">
         <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Data Engineer / Platform Builder</span></div>
         <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">2026</span></div>
         <div class="meta-item"><span class="meta-label">Platform</span><span class="meta-value">Oil &amp; Gas Telemetry</span></div>
-        <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Platform</span></div>
+        <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Portfolio scaffold</span></div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag"><i class="fas fa-share-nodes"></i> NiFi</span>
@@ -96,21 +96,22 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/petroleum-nifi-beam-flink.html">Read the write-up →</a>
       <a href="https://github.com/Eng-Zakaria/petroleum-platform" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
     <section class="content-section">
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card"><div class="metric-value">3-node</div><div class="metric-label">NiFi Cluster</div></div>
-        <div class="metric-card"><div class="metric-value">13</div><div class="metric-label">Compose Services</div></div>
-        <div class="metric-card"><div class="metric-value">3-src</div><div class="metric-label">Volve + EIA + Baker Hughes</div></div>
-        <div class="metric-card"><div class="metric-value"><i class="fas fa-envelope-open-text"></i></div><div class="metric-label">RabbitMQ Ingestion</div></div>
+        <div class="metric-card"><div class="metric-value">20</div><div class="metric-label">Compose Services (16 + 4 override)</div></div>
+        <div class="metric-card"><div class="metric-value">~560K</div><div class="metric-label">Synthetic Volve-style rows</div></div>
+        <div class="metric-card"><div class="metric-value">8</div><div class="metric-label">RabbitMQ Queues / 3 Exchanges</div></div>
       </div>
     </section>
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>Well-sensor telemetry (high-frequency, noisy, multi-well) and oil market signals (EIA spot prices, Baker Hughes rig counts) lived in separate worlds. Engineers could not answer questions like "did this production anomaly coincide with a price regime shift?" without manual joins across CSV dumps, APIs, and PDFs.</p>
-      <p>The platform needed to replay historical Volve field data as live SCADA streams, ingest market feeds continuously, validate and route everything reliably, and serve both real-time anomaly alerts and batch ML over a shared warehouse and lake.</p>
+      <p>Well-sensor telemetry (high-frequency, noisy, multi-well) and oil market signals (EIA spot prices, Baker Hughes rig counts) arrive at very different rates and formats. I wanted one place to ask questions like "did this pressure anomaly line up with a price move?" without joining CSV dumps by hand.</p>
+      <p>The plan: replay Volve-shaped field data as if it were live SCADA telemetry, pull market feeds on a schedule, route everything through one broker, and run windowed anomaly detection on the sensor stream. The well data in the repo is synthetic (generated with a fixed seed using Volve column names); the real Volve download script exists but was not used.</p>
     </section>
     <section class="content-section">
       <h3>Architecture</h3>
@@ -124,27 +125,27 @@
     <section class="content-section">
       <h3>Approach &amp; Implementation</h3>
       <ul>
-        <li><strong>Brokered ingestion:</strong> producers publish to topic exchanges (petroleum.sensors, petroleum.market) with a dead-letter exchange, decoupling replay/scraper rates from consumers.</li>
-        <li><strong>NiFi validation &amp; routing:</strong> 3-node cluster validates JSON, enriches with reference data, and routes sensor streams to Elasticsearch plus BigQuery/MinIO for analytics.</li>
-        <li><strong>Stream anomaly detection:</strong> Apache Beam on Flink keys by well_id + sensor_type, applies tumbling/sliding windows with z-score/IQR detection, writes anomalies back to RabbitMQ and Elasticsearch.</li>
-        <li><strong>Batch feature &amp; ML layer:</strong> PySpark jobs build daily features, retrain Isolation Forest models weekly, and run production-vs-price correlation analysis.</li>
-        <li><strong>Searchable operations log:</strong> daily Elasticsearch indices for sensor readings, market data, and drilling reports with Kibana for ad-hoc analysis.</li>
-        <li><strong>Full local parity:</strong> 13-service Compose stack (NiFi ×3, RabbitMQ, ES, Kibana, Flink, BigQuery emulator, MinIO, Prometheus, Grafana, Postgres, Jenkins) with IaC via Terraform and K8s manifests.</li>
+        <li><strong>Broker topology:</strong> RabbitMQ definitions declare topic exchanges petroleum.sensors and petroleum.market plus a petroleum.dlq exchange, and eight durable queues with explicit TTLs, length caps and <code>reject-publish</code> overflow. Producers do not use publisher confirms yet, and the definitions file is mounted but not auto-loaded.</li>
+        <li><strong>NiFi cluster:</strong> three NiFi 2.0 nodes coordinated by a ZooKeeper container. A REST script creates two process groups with consume / validate / attribute processors; routing to Elasticsearch and the warehouse is documented but left as manual UI work, and no flow export is committed.</li>
+        <li><strong>Stream anomaly detection:</strong> an Apache Beam (Python) job keys by well_id + sensor_type over 5-minute sliding windows (1-minute slide) and flags readings by z-score, IQR fences, rolling z-score and fixed sensor limits, with sinks for RabbitMQ and Elasticsearch. It is configured for the Flink runner, but its Flink-mode source is a Pub/Sub read rather than RabbitMQ, and there is no evidence it has run on Flink.</li>
+        <li><strong>Market scrapers:</strong> an EIA Open Data API client (WTI / Brent daily spot, cached, rate-limited) and a Baker Hughes rig-count page parser, both publishing to petroleum.market. No saved output shows either running. There is no PySpark, ML or correlation code yet.</li>
+        <li><strong>Storage and dashboards (defined, not fed):</strong> the Beam job writes daily well-sensor-* and well-anomalies-* Elasticsearch indices; a partitioned Postgres schema and three Grafana dashboards exist, but nothing writes to Postgres, BigQuery or MinIO, and no service exports the business metrics the dashboards query.</li>
+        <li><strong>Compose stack:</strong> 16 services in docker-compose.yml (NiFi ×3, ZooKeeper, RabbitMQ, Elasticsearch, Kibana, Flink JobManager + 2 TaskManagers, BigQuery emulator, MinIO, Prometheus, Grafana, Postgres, Jenkins) plus 4 in the override file (replay simulator, two scrapers, Beam job). Terraform and Kubernetes are early scaffolding: a namespace, one NiFi Deployment, and empty module folders.</li>
       </ul>
     </section>
     <section class="content-section">
       <h3>Challenges &amp; Solutions</h3>
-      <div class="challenge-card"><h4>Challenge: Bursty replay vs. slow consumers</h4><p>SCADA replay at 10–60x real-time overwhelmed downstream processors during backfills.</p></div>
-      <div class="solution-card"><h4>Solution: Broker + NiFi backpressure</h4><p>RabbitMQ absorbs bursts with quorum queues and publisher confirms; NiFi backpressure thresholds and provenance tracking keep the cluster stable and debuggable.</p></div>
-      <div class="challenge-card"><h4>Challenge: Exactly-once stream semantics</h4><p>Duplicate sensor readings produced false anomaly alerts on job restarts.</p></div>
-      <div class="solution-card"><h4>Solution: Flink checkpointing</h4><p>Beam-on-Flink checkpointing with savepoints gives exactly-once processing; anomalies are idempotently keyed before writing to Elasticsearch.</p></div>
-      <div class="challenge-card"><h4>Challenge: Heterogeneous source formats</h4><p>Volve LAS/CSV/WITSML history, EIA JSON API, and Baker Hughes HTML tables each needed different parsing.</p></div>
-      <div class="solution-card"><h4>Solution: Normalize at the edge</h4><p>Scraper/replay producers emit a canonical event envelope into RabbitMQ; NiFi validates and enriches once, so stream and batch layers share one schema.</p></div>
+      <div class="challenge-card"><h4>Challenge: Bursty replay vs. slow consumers</h4><p>A replay simulator that can publish faster than real time could flood downstream consumers.</p></div>
+      <div class="solution-card"><h4>Design: Bounded queues</h4><p>Queues are capped (for example 1,000,000 messages / 24 h for sensor queues) with <code>reject-publish</code> overflow so a full queue refuses work instead of silently dropping old messages. Still to do: publisher confirms so producers actually see the rejection, and quorum queues.</p></div>
+      <div class="challenge-card"><h4>Challenge: Restarts and duplicate alerts</h4><p>A streaming detector that restarts can re-emit anomalies it already reported.</p></div>
+      <div class="solution-card"><h4>Design: Checkpoints + deterministic IDs</h4><p>flink-conf.yaml sets 60-second exactly-once checkpoints on incremental RocksDB, and the Elasticsearch sink uses a well + sensor + timestamp document ID so rewrites overwrite instead of duplicating. Untested: the job has not been shown running on Flink.</p></div>
+      <div class="challenge-card"><h4>Challenge: Heterogeneous source formats</h4><p>Field CSVs, the EIA JSON API and Baker Hughes HTML pages each need different parsing.</p></div>
+      <div class="solution-card"><h4>Design: Parse at the producer</h4><p>Each producer turns its source into JSON before publishing (the replay wraps a row as <code>{timestamp, data}</code>; scrapers emit price or rig-count records). The envelopes are not yet one shared schema, and the queue hops do not connect: nothing moves messages from the *.raw queues to the *.validated queues NiFi reads.</p></div>
     </section>
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>A single Compose command boots the whole platform with health checks, seeded Volve history, and live market scrapers. Grafana shows pipeline throughput alongside business metrics — anomalies, prices, production, and their correlations — while Prometheus and the ELK path cover infra and logs.</p>
-      <p>Terraform, Ansible, and K8s manifests carry the same topology from laptop to cloud, so the 3-node NiFi cluster, broker exchanges, and Flink jobs promote without redesign.</p>
+      <p>What exists today is a well-specified scaffold: the Compose definitions with health checks and resource limits, a reproducible synthetic dataset (about 560,000 rows across six files) with a profiling report, the RabbitMQ topology, the Beam detector logic, and two scrapers. There are no tests, logs or saved outputs, and no throughput or detection-quality numbers, because the pipeline has not run end to end.</p>
+      <p>Next steps are to close one path (replay → RabbitMQ → Beam → anomalies queue), give the Beam job a real source the Flink runner supports, export the NiFi flow to version control, and add unit tests for the detector. Terraform, Ansible and Kubernetes folders are placeholders until then.</p>
     </section>
   </main>
   <footer>
