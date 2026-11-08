@@ -206,8 +206,8 @@ Classification tiers:
       <h3>Implementation</h3>
       <ul>
         <li><strong>Tiered Product Matching:</strong> Implemented a three-tier matching system: exact product code match → manual override → fuzzy text matching via rapidfuzz for cases without standardized codes</li>
-        <li><strong>Dual Scraping Engine:</strong> Built a scraping system with two backends: BeautifulSoup for static HTML pages and Playwright for JavaScript-rendered sites, with automatic fallback</li>
-        <li><strong>Resumable Checkpoints:</strong> Implemented per-partner JSON checkpoints to enable resumable scraping, preventing redundant work on failures</li>
+        <li><strong>Dual Scraping Engine:</strong> Built a scraping system with two backends: BeautifulSoup for static HTML pages and Playwright for JavaScript-rendered sites; Playwright is the default handler, and the static scraper runs when it is switched off</li>
+        <li><strong>Resumable Checkpoints:</strong> Per-partner JSON checkpoints of successful scrapes, so a re-run skips partners already done; failed partners are retried, not checkpointed</li>
         <li><strong>Canonical Reporting:</strong> Generated reports in HTML, Excel, and Markdown formats with configurable tolerance bands (default 2%) and watch-list filtering</li>
         <li><strong>Automated Scheduling:</strong> Orchestrated as two Airflow DAGs: weekly partner audit and daily ingest-compare-report cycle</li>
       </ul>

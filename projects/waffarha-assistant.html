@@ -331,7 +331,7 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Automated Fact-Checking</h4>
-        <p>Built a claim extraction layer that identifies verifiable assertions in LLM output and validates them against retrieved source documents. Unsupported claims are stripped before response delivery.</p>
+        <p>Built a claim extraction layer that identifies verifiable assertions in LLM output and validates them against retrieved source documents. When a claim isn't supported, the answer is regenerated once with a critique; if it still fails, the assistant falls back to a minimal factual reply and offers a handoff to a human agent.</p>
       </div>
 
       <div class="challenge-card">
