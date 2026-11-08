@@ -8,6 +8,152 @@
     <language>en</language>
     <lastBuildDate>Sun, 08 Nov 2026 09:00:00 +0200</lastBuildDate>
     <item>
+      <title>Mapping Egyptian apparel wholesalers from public directories</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.</description>
+      <category>Web Scraping</category><category>Data Pipelines</category><category>Entity Resolution</category>
+      <content:encoded><![CDATA[<p><em>Evidence: Portfolio, freelance client project (Sep–Oct 2026). The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A client selling men&rsquo;s casual clothing at wholesale wanted a list of shops and wholesale offices across Egypt they could contact: shop name, area, governorate, and a phone number the business had published itself. The first idea on the table was &ldquo;scrape Facebook and Instagram commenters&rdquo;. I ruled that out early, and that choice shaped the rest of the project.</p>
+<p>People who comment &ldquo;how much?&rdquo; or &ldquo;interested&rdquo; under a wholesale post almost never include a phone number, and their profiles don&rsquo;t expose one publicly. Getting at those numbers would mean logging in, breaking platform terms, and harvesting personal data, which creates liability under Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020). Businesses, on the other hand, list themselves in public directories precisely so customers can find and call them. So the pipeline targets business listings, and treats social platforms as something you work with through manual exports, not live scraping.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The project is plain Python 3.13: <code>requests</code> for server-rendered pages, Playwright for one directory that needs a real browser, pandas and openpyxl for exports. There are no workers, queues or framework. Each source has its own collector script that writes a CSV in a shared column layout, plus a resumable progress file.</p>
+<div class="hl"><pre><span></span><code> PUBLIC BUSINESS DIRECTORIES                      SOCIAL (manual export only)
+ Yellow Pages EG (area catalogs)                  own FB Page / Group export JSON
+ to-all.com, dalilmadina, EgypYello               Ad Library search URLs (opened by hand)
+ buy.com.eg (JSON-LD), brand store pages          IG / TikTok export files
+ QIZ garment-factory list (PDF)                          |
+        |                                         phone_extractor (contact-hint gate)
+        v                                         intent_collector: seller vs buyer
+ per-source collector  -&gt; shops_*.csv                    |
+ (jittered delay, resume file)                           v
+        |                                         SQLite: leads / buyer_intent
+        v
+ merge_governorates.py  (dedupe on phone+name, drop Cairo/Giza leaks)
+        |
+        v
+ entity_resolution.build_canonical
+   definitely same: shared phone | shared directory id
+   probably same:   normalized Arabic name + same governorate
+   uncertain:       same name, different areas -&gt; review queue
+        |
+        v
+ build_business_db.py -&gt; businesses.csv/.xlsx, contacts.csv, review_queue.csv
+</code></pre></div>
+
+<p>Fields kept per business: name, normalized name, governorate, area, address, category, phone numbers, a WhatsApp link column, any Facebook/Instagram/TikTok page found on the business&rsquo;s own website, source and evidence URL, a verification status, and a member count. The factory list also carries a contact title per company, because that is how the source publishes it.</p>
+<p>Two optional paths exist but were never run live. A Google Places adapter (<code>src/places_adapter.py</code>) reads its key from the environment and caches results; it was tested only in mock mode, so no money was spent. A Google Maps text-search collector exists for the same reason. None of the saved outputs come from Google Maps.</p>
+<h2 id="decision-1-business-listings-only-and-a-context-gate-for-free-text">Decision 1: business listings only, and a context gate for free text<a class="h-anchor" href="#decision-1-business-listings-only-and-a-context-gate-for-free-text" title="Permanent link">#</a></h2>
+<p>For the social-export path, <code>extract_phones</code> only returns a number when the surrounding text contains a contact hint (WhatsApp, &ldquo;call&rdquo;, &ldquo;contact&rdquo; and similar Arabic words) or a <code>wa.me</code> link. That keeps prices, dates and quantities out, and it limits capture to numbers someone posted as contact details:</p>
+<div class="hl"><pre><span></span><code><span class="n">has_hint</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">WHATSAPP_HINT</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;wa.me&quot;</span> <span class="ow">in</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">require_context</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_hint</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">[]</span>
+</code></pre></div>
+
+<p>Arabic-Indic digits are mapped to Western digits first, so <code>٠١١...</code> and <code>011...</code> normalize to the same thing. The unit tests cover exactly those cases, and they pass.</p>
+<p>The intent collector splits the same exports into sellers (posts with a phone) and buyer intent (comments like &ldquo;how much?&rdquo;). Buyer-intent rows carry no phone. They do keep the commenter&rsquo;s username, the post URL and the comment text, though, and that is still personal data. The honest framing is &ldquo;phone-free&rdquo;, not &ldquo;personal-data-free&rdquo;.</p>
+<p>The trade-off: the gate only applies to free text. The directory collectors keep whatever number the listing shows, which is reasonable because the listing exists for contact, but it means the gate isn&rsquo;t what protects most of the data.</p>
+<h2 id="decision-2-deterministic-entity-resolution-with-a-review-queue">Decision 2: deterministic entity resolution with a review queue<a class="h-anchor" href="#decision-2-deterministic-entity-resolution-with-a-review-queue" title="Permanent link">#</a></h2>
+<p>The same shop shows up in several directories under different spellings. <code>normalize_name</code> folds alef and hamza variants, taa marbuta and alef maqsura, strips diacritics, and removes generic words like &ldquo;shop&rdquo;, &ldquo;office&rdquo;, &ldquo;store&rdquo; and &ldquo;fashion&rdquo;. Clustering then runs as a union-find in three tiers:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Signal</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Definitely same</td>
+<td>shared normalized phone, or shared directory ID</td>
+<td>merge</td>
+</tr>
+<tr>
+<td>Probably same</td>
+<td>same normalized name and same governorate</td>
+<td>merge</td>
+</tr>
+<tr>
+<td>Uncertain</td>
+<td>same name across different areas (possible chain)</td>
+<td>send to review queue, no auto-merge</td>
+</tr>
+</tbody>
+</table></div>
+<p>I chose rules over fuzzy matching or a model because a sales team has to trust the merge, and a rule is easy to explain when it is wrong. The cost is recall: two spellings that normalize differently stay as two businesses. A shared phone is a strong signal, but it can also join two different shops that list the same reseller&rsquo;s number, which is another reason the review file exists.</p>
+<h2 id="decision-3-pace-requests-and-resume-instead-of-going-fast">Decision 3: pace requests and resume instead of going fast<a class="h-anchor" href="#decision-3-pace-requests-and-resume-instead-of-going-fast" title="Permanent link">#</a></h2>
+<p>Every collector waits between requests with random jitter (from about one second to over twenty, depending on the source and flags), saves state after each page, and can be stopped and resumed. Repeated HTTP errors trigger a longer pause. On the one directory behind Cloudflare, the project notes record a challenge after about two rapid page loads, so the Playwright collector runs slowly.</p>
+<p>The project also has a written rule list of things that must not be automated: CAPTCHA solving, rate-limit evasion, logins or session reuse, personal-profile harvesting, and bulk messaging. A manual protocol covers phone numbers hidden behind a click-to-reveal button: a person opens the listing and copies the number the business published.</p>
+<div class="admonition note">
+<p class="admonition-title">Where the code falls short of the rules</p>
+<p>Pacing is real, but other guardrails are only written down. No collector reads robots.txt. Requests go out with a generic desktop browser user-agent instead of an identifying one. When a challenge page appears, the Playwright collectors wait and then retry in a fresh browser context, which discards session state; that works around a block instead of respecting it, and the right behaviour is to stop that source. One collector also automates the click-to-reveal flow that the manual protocol reserves for a person. The README mentions suppression support, but there is no suppression or opt-out table in the code. I would not call this pipeline &ldquo;ethical by design&rdquo; until those gaps are closed.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These figures come from the saved exports and experiment notes, counted in aggregate.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Run (saved output)</th>
+<th>Raw rows</th>
+<th>Canonical businesses</th>
+<th>With a phone</th>
+<th>Review queue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controlled batch, Yellow Pages Cairo/Giza (README, 2026-09-24)</td>
+<td>618</td>
+<td>532</td>
+<td>28 (5.3%)</td>
+<td>42</td>
+</tr>
+<tr>
+<td>Cairo/Giza + QIZ factories (<code>exports/</code>, 2026-09-28)</td>
+<td>n/a</td>
+<td>2,557</td>
+<td>1,780</td>
+<td>114</td>
+</tr>
+<tr>
+<td>All governorates except Cairo/Giza (<code>exports_governorates/</code>, 2026-09-29)</td>
+<td>3,497</td>
+<td>3,163</td>
+<td>3,110</td>
+<td>45</td>
+</tr>
+</tbody>
+</table></div>
+<p>The non-Cairo/Giza file spans 25 governorate labels (24 governorates plus a &ldquo;Delta&rdquo; catch-all area that one directory uses) and 246 area values. By source it draws on Yellow Pages area catalogs (1,939 businesses), dalilmadina (842), EgypYello (318), a search-engine research pass (201) and one brand&rsquo;s store page (5). Some businesses appear in more than one source.</p>
+<p>The phone-enrichment experiment was a useful negative result. Searching for each business&rsquo;s own website and reading its contact page, across a 200-business sample, added one verified number and three for review among the 157 businesses that had none (+0.6% verified). About 80% of the sample had no discoverable website. It became a secondary verification step, not a phone source.</p>
+<p>Three data-quality issues show up in those exports:</p>
+<ul>
+<li><strong>Status labels overstate verification.</strong> The build passes the same evidence type for every business with a phone, so any valid mobile is labelled &ldquo;business-associated&rdquo; regardless of source. Landlines fail the mobile-only check and are labelled &ldquo;invalid&rdquo; (767 rows in the governorates file), even though many are good business numbers.</li>
+<li><strong>WhatsApp is inferred.</strong> The project&rsquo;s own rule says WhatsApp is never assumed from a mobile prefix, but the collectors build a <code>wa.me</code> link for every 11-digit mobile. That column means &ldquo;is a mobile&rdquo;, not &ldquo;uses WhatsApp&rdquo;.</li>
+<li><strong>No coordinates.</strong> The <code>lat</code>/<code>lng</code> columns are empty in every merged file. The output is a per-governorate and per-area list, not a map. In the Cairo/Giza + QIZ file, the factory rows also put address fragments into the governorate column (461 distinct values), so that file needs cleaning before anyone groups by region.</li>
+</ul>
+<h2 id="lawful-basis-and-consent">Lawful basis and consent<a class="h-anchor" href="#lawful-basis-and-consent" title="Permanent link">#</a></h2>
+<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.</li>
+<li>Remove the automated click-to-reveal path and keep that step manual, as the protocol says.</li>
+<li>Add a <code>suppressions</code> table that every export filters through, plus <code>collected_at</code> and a retention date per contact.</li>
+<li>Fix the status logic: pass the real evidence type per source, accept landlines, and only fill the WhatsApp column when a page shows a WhatsApp link.</li>
+<li>Normalize governorate values against a fixed list of 27 and reject anything else into the review file.</li>
+<li>If the client wants a map, geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
+<li>Expand the tests. There is one test file, and it covers phone extraction and the seller/intent split, not entity resolution or the collectors&rsquo; parsers.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/automative-scrapper.html">Wholesale Radar case page</a></li>
+<li>No public repository; this was a client project.</li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</guid>
@@ -442,6 +588,165 @@
 <li><strong>A run-history table</strong> with file name, counts, errors and backup path, so &ldquo;did yesterday&rsquo;s load work&rdquo; becomes a query instead of a log search. Also tests for the small parsers (<code>split_multivalue</code>, <code>parse_overflow_upsells</code>, <code>to_date</code>, <code>to_time</code>), where a silent bug turns into a wrong number in Power BI weeks later.</li>
 </ul>
 <p>The staged structure worked. The dry-run report, the diff buckets and the unmatched-staff queue gave the client and me something concrete to look at before each load. The weak points were in the handoffs between stages, and I only saw them once real data ran through.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.</description>
+      <category>BIM</category><category>Python</category><category>Automation</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio tool, not yet run on a live Revit model.</strong> There is no client, no saved report, no log file and no test suite. Everything below comes from reading the code: about 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.</p>
+<p>I work on data pipelines, and the idea behind this project is one I use there every day: run checks, count what fails, and turn the count into a number someone can track. Here the dataset is a Revit model instead of a table.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Revit is the building-design tool most architecture and engineering firms use. A Revit model is a database of <em>elements</em> (walls, doors, furniture, views, sheets). Each element has a <em>category</em> (Walls, Doors) and a set of named <em>parameters</em>, which work like columns: &ldquo;Fire Rating&rdquo;, &ldquo;Type Mark&rdquo;, &ldquo;Level&rdquo;.</p>
+<p>Models get messy the way shared tables do. Required parameters are left blank. Two walls get drawn on top of each other. Views pile up with no template and no naming convention. Nobody notices until a coordination meeting or a schedule export goes wrong. A BIM manager can check by hand, but not on every model every week.</p>
+<p>So the question was: can a single button inside Revit audit the open model and give it a 0–100 grade, with a report behind the number?</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The tool is a pyRevit extension. pyRevit is a plug-in host that adds ribbon buttons to Revit and runs a Python script against the open document when you click one. That matters for the design: the audit runs <strong>inside Revit, on the live model</strong>, through the Revit API. It does not read an exported file.</p>
+<div class="hl"><pre><span></span><code>Revit (open document)
+   |
+   | Revit API: FilteredElementCollector by category
+   v
++---------------------------- script.py: ModelHealthAnalyzer ----------------------------+
+|  orphaned / problem elements   parameter consistency   view audit   performance   worksets |
+|  (geometry, missing params,    (80% majority rule)     (template,   (counts,      (borrowed |
+|   duplicate walls, unhosted)                            empty, size, links)        elements)|
++----------------------------------------------------------------------------------------+
+   |  each analyzer -&gt; report.add_section(name, data)
+   v
+ModelHealthReport (utils.py)
+   |  generate_summary(): critical = orphaned findings
+   |                      warnings = parameter outliers + views with issues
+   |  score = max(0, 100 - 10*critical - 2*warnings)
+   v
++-------------------+   +------------------------+   +--------------------------------+
+| JSON report       |   | HTML report (template) |   | WPF dashboard, 6 tabs          |
+| ./reports/*.json  |   | ./reports/*.html       |   | (built in code, no XAML)       |
++-------------------+   +------------------------+   +--------------------------------+
+</code></pre></div>
+
+<p>Each analyzer is a method on one class. It collects elements by category, applies a rule, and adds a section of plain dicts to the report object. Settings live in a JSON config (<code>config/settings.json</code>), created with defaults on first run: which categories to check, required parameters per category (Fire Rating and Type Mark on walls and doors, Type Mark on windows), and thresholds such as 10,000 elements per view.</p>
+<p>The checks are:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Analyzer</th>
+<th>What it flags</th>
+<th>Counts toward score as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orphaned / problem elements</td>
+<td>Walls, floors, roofs, curtain panels whose geometry is <code>None</code> or throws; elements missing a required parameter; walls with the same start/end point (rounded to 0.01 ft); unhosted Generic Models</td>
+<td>critical</td>
+</tr>
+<tr>
+<td>Parameter consistency</td>
+<td>Values held by less than 80% of a category&rsquo;s elements</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>View audit</td>
+<td>Views with no template, no elements, more than 10,000 elements, or a name that breaks a simple rule (plans need a <code>-</code>, sections need &ldquo;Section&rdquo;/&rdquo;Sec&rdquo;)</td>
+<td>warning (one per view)</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>More than 50,000 elements, more than 1,000 stairs/railings/ramps/topography, unloaded links</td>
+<td>not scored</td>
+</tr>
+<tr>
+<td>Worksharing</td>
+<td>Borrowed elements, non-editable worksets</td>
+<td>not scored</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-a-subtractive-score-instead-of-a-ratio">Decision 1: a subtractive score instead of a ratio<a class="h-anchor" href="#decision-1-a-subtractive-score-instead-of-a-ratio" title="Permanent link">#</a></h2>
+<p>The score lives in two places, <code>ModelHealthReport.export_to_html</code> and the dashboard&rsquo;s overview panel, and both use the same line:</p>
+<div class="hl"><pre><span></span><code><span class="n">health_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span> <span class="o">-</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;critical_issues&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;warnings&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Start at 100. Take off 10 points for each critical finding and 2 for each warning. Stop at 0. The dashboard colours it green at 80 or more, orange at 60 or more, and red below that.</p>
+<p>I chose this because anyone can recompute it in their head. &ldquo;You lost 30 points for three duplicate walls&rdquo; is easy to explain in a meeting. A weighted ratio isn&rsquo;t.</p>
+<p>The trade-off is that it ignores model size, and it hits zero fast. Ten critical findings already give a score of 0. On a real project, ten walls missing a Fire Rating is a normal Tuesday, so most real models would score 0 and the number would stop telling you anything. Three critical findings and fifteen warnings give 100 − 30 − 30 = 40, whether the model has 500 elements or 500,000.</p>
+<p>The views tab already does it the other way. It shows its own &ldquo;Health Score&rdquo; as <code>(total_views - problematic_views) / total_views * 100</code>, a ratio. So the tool currently reports two scores built on different ideas. The next version should pick one. I&rsquo;d go with a ratio of findings per checked element, with a weight for each severity.</p>
+<h2 id="decision-2-majority-vote-instead-of-expected-values">Decision 2: majority vote instead of expected values<a class="h-anchor" href="#decision-2-majority-vote-instead-of-expected-values" title="Permanent link">#</a></h2>
+<p>For parameter consistency I did not want users to write a rule for every parameter. <code>ParameterAnalyzer.analyze_parameter_consistency</code> groups a category&rsquo;s elements by parameter value, takes the most common value as &ldquo;expected&rdquo;, and flags every group that holds less than 80% of the elements:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parameter_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">elems</span> <span class="ow">in</span> <span class="n">parameter_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span><span class="p">:</span>  <span class="c1"># Less than 80% have this value</span>
+</code></pre></div>
+
+<p>This works without setup, and it&rsquo;s the same idea as a profiling check on a column: if 95% of rows say &ldquo;2 HR&rdquo;, the other 5% are worth a look.</p>
+<p>It has two weaknesses. First, if no value reaches 80%, every group gets flagged, including the majority, so a parameter split 60/40 turns 100% of its elements into warnings. Second, the parameters it checks are hard-coded as <code>Type Mark</code>, <code>Family</code> and <code>Type Name</code>. Family and Type Name are <em>supposed</em> to vary across a category, so they mostly produce noise. Type Mark is a type parameter, and an instance-level <code>LookupParameter</code> normally won&rsquo;t find it at all. The Dynamo sample (<code>consistency_node.py</code>) uses the same 80% rule but adds an optional expected-value input. That&rsquo;s the better design: majority vote by default, explicit expected values where the team has a standard.</p>
+<h2 id="decision-3-run-inside-revit-rather-than-on-exported-data">Decision 3: run inside Revit rather than on exported data<a class="h-anchor" href="#decision-3-run-inside-revit-rather-than-on-exported-data" title="Permanent link">#</a></h2>
+<p>Running in pyRevit means no export step. The tool sees the live model, including geometry, view templates, links and worksets, and the one write action (deleting duplicate walls) can go through a Revit transaction. <code>RevitHelper.safe_execute_in_transaction</code> starts a transaction, runs the function, commits, and rolls back on any exception.</p>
+<p>The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit, and there are no tests. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no run results to report. The repository has no <code>reports/</code> folder, no <code>logs/model_health.log</code>, no <code>config/settings.json</code> (it would be created on first run), and no tests. The C# README says plainly that its sample was &ldquo;not compiled or tested here&rdquo;, and the Dynamo README says the graph was authored &ldquo;without a live Revit session&rdquo;.</p>
+<p>What I could check without Revit was the code itself. One check I ran: the HTML report template is filled with <code>str.format</code>, but it has CSS rules like <code>body { font-family: ... }</code> inline. Running the same pattern in Python gives <code>KeyError(' font-family')</code>, so the HTML export would fail before writing a file.</p>
+<p>Reading the rest of the code turned up these blockers for a first run:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Defect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start-up</td>
+<td><code>RevitHelper.__init__</code> reads <code>doc.Application.ActiveUIDocument</code>. That property belongs to <code>UIApplication</code>, not the database <code>Application</code>, so the constructor fails.</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>The scripts use f-strings and <code>os.makedirs(..., exist_ok=True)</code>. pyRevit&rsquo;s default engine is IronPython 2.7, which rejects both, and there is no <code>#! python3</code> engine marker.</td>
+</tr>
+<tr>
+<td>Imports</td>
+<td><code>script.py</code> adds only <code>lib/</code> to <code>sys.path</code>, then imports <code>ui.dialogs</code>. It also uses <code>datetime</code> and <code>MessageBoxIcon</code> without importing them.</td>
+</tr>
+<tr>
+<td>Counting</td>
+<td><code>analyze_model_performance</code> calls <code>GetElementCount()</code> on a collector with no filter. The Revit API requires a filter first.</td>
+</tr>
+<tr>
+<td>Checks</td>
+<td>The unhosted-family check tests <code>hasattr(family, 'FamilySymbol')</code>, but a family instance exposes <code>Symbol</code>, so the check never fires.</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>Apart from the <code>KeyError</code>, the HTML section builder reads keys (<code>element</code>, <code>value</code>, <code>expected</code>) that the parameter records don&rsquo;t have (<code>element_name</code>, <code>current_value</code>, <code>expected_value</code>).</td>
+</tr>
+<tr>
+<td>Fix-ups</td>
+<td><code>fix_common_issues</code> calls <code>fix_parameter_consistency</code> and <code>cleanup_duplicate_views</code>, which aren&rsquo;t defined. The dashboard&rsquo;s Delete, Select, Export and Fix buttons only show a message box.</td>
+</tr>
+<tr>
+<td>Packaging</td>
+<td><code>bundle.yaml</code> points to a <code>BIMModelHealthAnalyzer.dll</code> and an <code>icon.png</code>, and neither is in the folder.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="admonition note">
+<p class="admonition-title">Where this stands</p>
+<p>The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft. It has never run against a live model, so I have no recorded score, runtime or issue count to report.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make it run.</strong> Fix the start-up and import defects, choose one Python engine (CPython via pyRevit&rsquo;s <code>#! python3</code> marker, or rewrite for IronPython 2.7), and build the HTML report with a templating step that escapes CSS braces.</li>
+<li><strong>Split extraction from rules.</strong> Have the Revit script turn elements into plain dicts, and run the checks on those dicts with pytest, using a small fixture model.</li>
+<li><strong>Normalise the score.</strong> Score findings per checked element, give each severity a weight, and use the same formula in the HTML report and on every dashboard tab.</li>
+<li><strong>Configurable consistency rules.</strong> Drop Family and Type Name. Check instance and type parameters separately. Let the config name expected values, and fall back to majority vote only where none are set.</li>
+<li><strong>Record evidence.</strong> Run it on a sample model (Autodesk ships some), and commit the JSON report and the timing log so the numbers in the write-up can be checked.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/bim-model-health.html">BIM Model Health Analyzer</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</title>
@@ -1248,6 +1553,223 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
   CI, so threshold changes show their effect before they ship.</li>
 </ul>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Ten interior specs, one priced BOQ: parametric Revit generation from JSON</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects.</description>
+      <category>BIM</category><category>Python</category><category>Automation</category>
+      <content:encoded><![CDATA[<p>Evidence: <strong>Portfolio project, demo content.</strong> The geometry is original and the specs are hand-written. The Revit models were built on my own machine, and the prices are illustrative figures I typed into the specs, not supplier quotes. Every number below comes from the build logs, the generated report, or the BOQ CSVs in the repo.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Interior fit-out documentation repeats itself. Every project needs the same work done in the same order: levels, grids, walls, openings, rooms with finishes, then sockets, sanitaryware, furniture and lights, then sheets. Someone also has to count all of it and put a price on it. Doing this by hand in Revit is slow. The quantities also drift: someone moves a sofa in the model and the spreadsheet never hears about it.</p>
+<p>I wanted one source of truth per project, a JSON file, and a pipeline that turns it into three things: a Revit model, an open IFC copy, and a priced bill of quantities (BOQ). The pipeline also had to be testable on a machine with no Revit installed.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Each project is one schema v2 JSON spec in <code>InteriorsToolkit.extension/projects/</code>. There are ten of them: a 45 m² studio, 2-bed, 3-bed and 4-bed apartments, a duplex, a penthouse, a 240 m² office, a 60 m² hotel suite, a 250 m² two-level villa, and a hand-sketch apartment (P05). P05 is walls, doors, windows and rooms only, with no fixtures or furniture.</p>
+<div class="hl"><pre><span></span><code> projects/P01..P10.json  (schema v2: levels, grids, walls, openings,
+        |                 rooms+finishes, electrical, plumbing,
+        |                 furniture, lighting, sheets, views)
+        |
+        +--&gt; project_builder_core.validate_project()   pure Python, no Revit
+        |          |
+        |          +--&gt; build_plan()             counts, wall lengths/areas
+        |          +--&gt; build_element_inventory() one dict per fixture (qty-expanded)
+        |                     |
+        |                     +--&gt; audit_core.audit_elements()  missing Manufacturer/Model/Price,
+        |                     |                                 invalid price, no level ...
+        |                     +--&gt; boq_core.build_boq()         group + price -&gt; *.boq.csv
+        |          =&gt; tools/build_projects.py --report out --boq-csv
+        |             (projects_report.html + out/plans/*.plan.json, *.boq.csv)
+        |
+        +--&gt; Revit 2026 via pyRevit
+        |      BuildPortfolioRVT.py -&gt; ProjectBuilder.build_single()
+        |      TransactionGroup, one Transaction per element -&gt; SaveAs .rvt
+        |      =&gt; out/P0x-build-log.json  (created counts + errors[])
+        |
+        +--&gt; tools/build_production_ifc.py  (CPython + ifcopenshell) -&gt; out/*.ifc (IFC4)
+</code></pre></div>
+
+<p>So there are two halves. The validation, audit and BOQ half is plain CPython and runs anywhere. The modelling half runs inside Revit 2026 through <code>pyrevit run</code>. It opens a copy of a base template, calls <code>build_single()</code>, and saves the result as a native <code>.rvt</code>. The IFC files don&rsquo;t come out of Revit. A separate ifcopenshell script writes them straight from the same specs.</p>
+<h2 id="decision-1-keep-the-logic-pure-and-ironpython-safe">Decision 1: keep the logic pure and IronPython-safe<a class="h-anchor" href="#decision-1-keep-the-logic-pure-and-ironpython-safe" title="Permanent link">#</a></h2>
+<p>All the rules live in <code>interiors_toolkit/*_core.py</code>: schema checks, plan totals, inventory expansion, audit and BOQ grouping. They are written for IronPython 2.7 as well as CPython 3, so no f-strings, no dataclasses, no pathlib, and only the standard library. The module docstring states it directly: &ldquo;All functions operate on plain dicts/lists (unit-testable).&rdquo;</p>
+<p>The benefit is that the test suite and the batch report run without Revit. The repo has 12 pytest files with 54 tests, and all 54 pass locally in about four seconds. The GitHub Actions workflow runs the same suite on <code>windows-latest</code>, plus a no-Revit demo and a <code>compileall</code> of the extension.</p>
+<p>The trade-off is that the Revit-facing code in <code>ProjectBuilder.pushbutton/script.py</code> (about 700 lines) is only exercised when I run it in Revit. CI can&rsquo;t catch a placement bug in it. The build logs are the only record of what happened in those runs.</p>
+<h2 id="decision-2-the-boq-comes-from-the-spec-not-from-the-model">Decision 2: the BOQ comes from the spec, not from the model<a class="h-anchor" href="#decision-2-the-boq-comes-from-the-spec-not-from-the-model" title="Permanent link">#</a></h2>
+<p><code>boq_core.build_boq()</code> groups elements by <code>(category, family, type, level)</code>, counts them, and multiplies by a unit price read from each element&rsquo;s <code>Price</code> parameter:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">fam</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">level</span><span class="p">),</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">_parse_price</span><span class="p">((</span><span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Price&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">prices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">unit_price</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="k">if</span> <span class="n">prices</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">qty</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+</code></pre></div>
+
+<p>In the batch report, those elements come from <code>build_element_inventory(spec)</code>, not from a Revit model. Each furniture, lighting, electrical or plumbing row in the spec is expanded by its <code>qty</code> and given a synthetic sequential id starting at 1001. That&rsquo;s why the <code>element_ids</code> column in the CSVs reads <code>1009;1010</code> and not real Revit ElementIds.</p>
+<p>I chose this because it makes the BOQ reproducible and testable without Revit. The same function also runs inside Revit on collected elements (the BOQ panel&rsquo;s Export BOQ button). The cost is that the published BOQ proves the spec is internally consistent, not that the model matches it. The link between the two is the Revit build log. For every project, it records the same element counts the spec asks for.</p>
+<p>The prices themselves are what you would expect from demo data. They are typed into each spec item, <code>"manufacturer": "BoConcept", "model": "Aria 3-Seat", "price": 1899</code>, using real brand and model names at catalogue-style levels. The spec has no currency field, no supplier quote and no price date. The README presents them in dollars. Scope is limited too: rows cover only electrical fixtures, plumbing fixtures, furniture and lighting, counted in <code>pcs</code>. Walls, finishes, doors, windows and labour aren&rsquo;t priced.</p>
+<div class="admonition note">
+<p class="admonition-title">A small mismatch in boq_core</p>
+<p>The comment says the unit price is the &ldquo;most common non-zero price&rdquo;, but the code takes <code>max(prices)</code>. It makes no difference here, because every element in a group comes from the same spec row and shares one price. With real collected elements carrying mixed prices, it would overstate the total.</p>
+</div>
+<h2 id="decision-3-per-element-transactions-logged-never-fatal">Decision 3: per-element transactions, logged, never fatal<a class="h-anchor" href="#decision-3-per-element-transactions-logged-never-fatal" title="Permanent link">#</a></h2>
+<p><code>build_single()</code> wraps a project in one <code>TransactionGroup</code> and gives every level, grid, wall, opening, room, fixture and sheet its own <code>Transaction</code> inside a try/except. A failure rolls back that one element and is appended to <code>created["errors"]</code>. The rest of the build continues. Missing families are added to <code>created["skipped"]</code> without stopping the run.</p>
+<p>Fixtures and furniture are placeholders. <code>find_symbol()</code> picks the first family type in the template whose name matches a hint, falling back to any type in that category. The spec&rsquo;s Manufacturer, Model, Finish and Price are then written onto the instance as parameters. So a &ldquo;Jung LS990 socket&rdquo; in the <code>.rvt</code> is a template family carrying Jung&rsquo;s parameters, not a Jung content family.</p>
+<p>Views aren&rsquo;t created at all. Every build log says <code>"N views logged only (create/apply templates manually)"</code>.</p>
+<p>I also wrote a compiled C# add-in, <code>src/Interiors.Batch</code> (net48), for headless runners such as Revit Batch Processor and Design Automation. It reads <code>PROJECT_JSON</code> and <code>HEADLESS</code> from environment variables. When <code>HEADLESS=1</code> it skips the <code>TaskDialog</code> and logs to <code>%TEMP%\Interiors.Batch\</code>. <code>RevitApiStubs.cs</code> lets it compile without Revit. The scope is limited, though. <code>ResizeChairsCmd</code> is a complete command, but <code>BatchBuildCmd</code> is documented in its own code as a skeleton that &ldquo;validates + logs the plan … but does not create elements yet&rdquo;. The CI workflow doesn&rsquo;t build the C# project. Every model in this portfolio was built by the pyRevit path.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>From <code>out/projects_report.html</code> (generated 2026-10-03) and the BOQ CSVs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Project</th>
+<th>Rooms</th>
+<th>D/W</th>
+<th>E/P</th>
+<th>F/L</th>
+<th>Sheets</th>
+<th>BOQ rows</th>
+<th>BOQ total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P01</td>
+<td>Studio 45 m²</td>
+<td>2</td>
+<td>3/4</td>
+<td>9/4</td>
+<td>4/4</td>
+<td>2</td>
+<td>15</td>
+<td>6,054</td>
+</tr>
+<tr>
+<td>P02</td>
+<td>2-bed 75 m²</td>
+<td>4</td>
+<td>4/4</td>
+<td>13/5</td>
+<td>9/7</td>
+<td>3</td>
+<td>19</td>
+<td>10,138</td>
+</tr>
+<tr>
+<td>P03</td>
+<td>3-bed 120 m²</td>
+<td>6</td>
+<td>6/7</td>
+<td>19/11</td>
+<td>13/15</td>
+<td>4</td>
+<td>26</td>
+<td>16,743</td>
+</tr>
+<tr>
+<td>P04</td>
+<td>Duplex 160 m²</td>
+<td>7</td>
+<td>6/7</td>
+<td>22/10</td>
+<td>10/17</td>
+<td>4</td>
+<td>30</td>
+<td>14,996</td>
+</tr>
+<tr>
+<td>P05</td>
+<td>Sketch 3-bed 140 m²</td>
+<td>12</td>
+<td>10/8</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>P06</td>
+<td>Penthouse 185 m²</td>
+<td>9</td>
+<td>11/7</td>
+<td>33/12</td>
+<td>15/23</td>
+<td>5</td>
+<td>31</td>
+<td>24,302</td>
+</tr>
+<tr>
+<td>P07</td>
+<td>Office 240 m²</td>
+<td>8</td>
+<td>9/7</td>
+<td>38/9</td>
+<td>42/24</td>
+<td>5</td>
+<td>24</td>
+<td>39,544</td>
+</tr>
+<tr>
+<td>P08</td>
+<td>Villa 250 m²</td>
+<td>10</td>
+<td>9/8</td>
+<td>30/13</td>
+<td>13/23</td>
+<td>5</td>
+<td>33</td>
+<td>21,407</td>
+</tr>
+<tr>
+<td>P09</td>
+<td>Hotel suite 60 m²</td>
+<td>4</td>
+<td>4/4</td>
+<td>8/4</td>
+<td>7/7</td>
+<td>3</td>
+<td>19</td>
+<td>8,980</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Family 4-bed 150 m²</td>
+<td>7</td>
+<td>10/8</td>
+<td>17/6</td>
+<td>15/12</td>
+<td>4</td>
+<td>22</td>
+<td>14,569</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>BOQ total: 156,733</strong> (the README uses $). It sums nine priced projects and 219 rows. I re-summed the nine CSVs and got the same figure, with zero unpriced rows.</li>
+<li><strong>Zero errors</strong> has three specific meanings. First, <code>validate_project()</code> returned 0 schema errors for all 11 specs in the report (the ten projects plus a legacy sample). Second, <code>audit_core</code> found 0 issues on each spec-derived inventory. Third, the nine Revit build logs (P01–P04, P06–P10) all end with <code>"errors": []</code>, and their created counts match the spec.</li>
+<li><strong>Independent check:</strong> <code>VerifyPortfolio.py</code> reopened two saved models and counted them. P06 has 12 walls, 11 doors, 7 windows and 9 rooms. The P08 build has 17 walls, 9 doors, 8 windows and 10 rooms on L1 and L2.</li>
+<li><strong>IFC4:</strong> all ten projects have an <code>.ifc</code> with <code>FILE_SCHEMA(('IFC4'))</code>. The plan PNGs are matplotlib renders of the specs. Revit 3D and plan view exports exist for P01–P04.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What the numbers don&rsquo;t cover</p>
+<p>P05&rsquo;s <code>.rvt</code> is byte-identical to the empty base template, so P05 exists as a spec, an IFC and a plan image only. For P08, the built model is saved as <code>P08build.rvt</code>. The file named <code>P08-villa-250m2.rvt</code> is a base copy that was never renamed. Nine projects have a Revit build behind them, not ten.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Read the BOQ from the model.</strong> Run <code>build_boq()</code> on elements collected from each saved <code>.rvt</code> and diff the result against the spec BOQ with <code>diff_boq()</code>, which already exists. That turns &ldquo;the spec is consistent&rdquo; into &ldquo;the model matches the spec&rdquo;.</li>
+<li><strong>Give prices a source.</strong> Add <code>currency</code>, <code>price_date</code> and <code>supplier_ref</code> to the schema, and have the audit flag any price without them. Then the total can be described as more than illustrative.</li>
+<li><strong>Finish <code>BatchBuildCmd</code>.</strong> Port the seven build phases to C#, retarget to <code>net8.0-windows</code> for Revit 2025+, and add a <code>dotnet build</code> step to CI against the stubs.</li>
+<li><strong>Fix the loose ends.</strong> Rename the P08 model, either build P05 or drop its <code>.rvt</code>, create the views the specs list, and swap <code>max()</code> for a real mode in <code>boq_core</code>.</li>
+<li><strong>Price the shell.</strong> Add wall, finish and opening quantities to the BOQ, since the spec already carries wall lengths and room finishes.</li>
+</ul>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/interiors-toolkit.html">Interiors Toolkit</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</title>
@@ -2551,495 +3073,6 @@ labeling, and human calibration labels are still pending.</p>
 <li>Turn traced production turns into eval cases, so the suite grows from real failures and not
   from what I think customers ask.</li>
 </ul>
-<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>A score-and-decide credit-risk pipeline on synthetic data</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.</description>
-      <category>MLOps</category><category>Machine Learning</category><category>Python</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio, synthetic data.</strong> This is a personal project. Every applicant in it is generated by a script, and the repository holds no saved training run, so this write-up describes the design and the code, not measured model performance.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>A credit model is only useful if it sits inside a process: data comes in, features are built the same way every time, a model is trained and checked against minimum standards, the winner is deployed, applications are scored and turned into a decision, and someone watches for drift so the model gets retrained before it goes stale. Most portfolio credit projects stop at a notebook with an AUC. I wanted the surrounding machinery: a training pipeline with a validation gate, a scoring API that returns a decision rather than a raw probability, and scheduled jobs for retraining and monitoring.</p>
-<p>Because there is no real bureau data to use, the project starts with its own generator.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<div class="hl"><pre><span></span><code> credit_data_generator.py         100,000 synthetic applications, target default rate 15%
-            |
-            v
- FeaturePipeline                   stratified 70/10/20 split, then fit on train only:
- (winsorize + scale + target enc)  median fill, 1-99% clipping, StandardScaler, TargetEncoder
-            |
-            v
- TrainingPipeline / training DAG   XGBoost, LightGBM, CatBoost (early stopping on val)
-            |                      metrics + params logged to MLflow (local ./mlruns)
-            v
- ModelValidator                    fail if test AUC &lt; 0.70, Gini &lt; 0.40, KS &lt; 0.30
-            |                      warn on train/test AUC gap &gt; 0.05, PSI &gt; 0.20
-            v
- deploy_model                      copy best model dir -&gt; models/production
-            .
-            .  (not connected: API loads models/ensemble)
-            .
- FastAPI /predict                  PD -&gt; risk band -&gt; APPROVE / REVIEW / DECLINE
-
- monitoring DAG (daily 06:00)      PSI + KS drift on 4 columns -&gt; branch -&gt; retrain stub
-</code></pre></div>
-
-<p>The code lives in one Python package (<code>src/</code>): a data generator, a feature pipeline, model wrappers, evaluation and validation, drift and performance monitors, a DuckDB data mart, and a FastAPI app. Two Airflow DAGs in <code>pipelines/</code> wire the training and monitoring steps, and <code>docker-compose.yml</code> defines containers for the API, a training job, an MLflow server, a Streamlit dashboard, and an optional Airflow profile.</p>
-<h2 id="decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on">Decision 1: generate the data, and know exactly what the label depends on<a class="h-anchor" href="#decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on" title="Permanent link">#</a></h2>
-<p>The generator builds demographics, credit history, loan terms and utilization with correlated draws (credit score rises with age and income, interest rate falls with credit score, and so on). The default flag then comes from a hand-written logistic formula:</p>
-<div class="hl"><pre><span></span><code><span class="n">log_odds</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="o">-</span><span class="mf">3.0</span>
-    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_score&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">650</span><span class="p">)</span>
-    <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;dti_ratio&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delinquency_2years&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;bankruptcies&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;num_credit_inquiries_6m&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_utilization_ratio&#39;</span><span class="p">]</span>
-    <span class="o">-</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;annual_income&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;loan_amount&#39;</span><span class="p">]</span>
-    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;employment_length&#39;</span><span class="p">]</span>
-    <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>After sampling, labels are flipped at random to hit the configured 15% default rate.</p>
-<p>The upside is control. I know the true signal, so I can check whether the model recovers it, and I can rerun everything from a seed. The downside is that any score on this data measures how well a tree ensemble fits a logistic formula with noise. It says nothing about real borrowers, and a high AUC here would be expected rather than impressive.</p>
-<p>I also checked for label leakage. No feature is computed from <code>default</code>, and the target encoder is fitted on the training split only, so the test set does not leak into the encodings. Two details are worth knowing. <code>bankruptcies</code> carries the largest coefficient in the formula, but it is not in the configured feature list, so the model never sees it. And <code>risk_score_bucket</code> and <code>interest_rate</code> are both derived from <code>credit_score</code>, which adds redundancy but not leakage.</p>
-<h2 id="decision-2-a-hard-validation-gate-before-anything-ships">Decision 2: a hard validation gate before anything ships<a class="h-anchor" href="#decision-2-a-hard-validation-gate-before-anything-ships" title="Permanent link">#</a></h2>
-<p>Training and deployment are separated by <code>ModelValidator</code>. The training DAG trains the three boosters in parallel, picks the best one by test AUC, and then runs the validator. If the model misses any minimum, the task raises and the deploy step never runs:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Check</th>
-<th>Threshold</th>
-<th>Effect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Test AUC-ROC</td>
-<td>≥ 0.70</td>
-<td>failure blocks deploy</td>
-</tr>
-<tr>
-<td>Gini (2·AUC − 1)</td>
-<td>≥ 0.40</td>
-<td>failure blocks deploy</td>
-</tr>
-<tr>
-<td>KS statistic</td>
-<td>≥ 0.30</td>
-<td>failure blocks deploy</td>
-</tr>
-<tr>
-<td>Train − test AUC gap</td>
-<td>≤ 0.05</td>
-<td>warning</td>
-</tr>
-<tr>
-<td>PSI, train vs test scores</td>
-<td>≤ 0.20</td>
-<td>warning</td>
-</tr>
-<tr>
-<td>Default rate by score decile</td>
-<td>non-decreasing (0.01 tolerance)</td>
-<td>warning</td>
-</tr>
-</tbody>
-</table></div>
-<p>The trade-off is that only the three discrimination metrics can block a deploy, while overfitting, score shift and decile ordering just log warnings. I chose that because a fixed tolerance on a synthetic dataset is easy to trip by chance, and a pipeline that stops for every warning tends to get its checks switched off. The cost is that a model with a 0.08 overfit gap would still ship. In a real lender I would make the gap and decile ordering blocking and send warnings somewhere a person reads them.</p>
-<p>The gate also checks discrimination but not calibration. <code>metrics.py</code> can compute a Brier score and expected loss (<code>PD × LGD × EAD</code> with LGD defaulting to 0.6), but the validator does not test them, even though the decision bands below depend on the probabilities being well calibrated.</p>
-<h2 id="decision-3-return-a-decision-not-just-a-probability">Decision 3: return a decision, not just a probability<a class="h-anchor" href="#decision-3-return-a-decision-not-just-a-probability" title="Permanent link">#</a></h2>
-<p>The API converts the PD into a band and an action:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>PD</th>
-<th>Risk category</th>
-<th>Decision</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>&lt; 0.10</td>
-<td>Very Low Risk</td>
-<td>APPROVE</td>
-</tr>
-<tr>
-<td>0.10 – 0.20</td>
-<td>Low Risk</td>
-<td>APPROVE</td>
-</tr>
-<tr>
-<td>0.20 – 0.30</td>
-<td>Moderate Risk</td>
-<td>REVIEW</td>
-</tr>
-<tr>
-<td>0.30 – 0.50</td>
-<td>High Risk</td>
-<td>REVIEW</td>
-</tr>
-<tr>
-<td>≥ 0.50</td>
-<td>Very High Risk</td>
-<td>DECLINE</td>
-</tr>
-</tbody>
-</table></div>
-<p>A wide REVIEW band is a deliberate choice. Scores between 0.2 and 0.5 go to a person instead of being auto-declined, which costs analyst time but keeps borderline applicants out of an automatic rejection. The cut-offs are hard-coded constants, not tuned to a cost matrix or an approval-rate target, and the <code>confidence_score</code> field (<code>|0.5 − PD| × 2</code>) is a distance from 0.5, not a statistical confidence.</p>
-<p>The API also fills in features the request does not include: <code>interest_rate</code> is fixed at 15.0, <code>credit_history_length</code> is estimated from employment length, and <code>total_credit_utilized</code> from income. That keeps the request small, but it means the API scores a different feature distribution from the one the model was trained on.</p>
-<h2 id="where-the-loop-is-still-open">Where the loop is still open<a class="h-anchor" href="#where-the-loop-is-still-open" title="Permanent link">#</a></h2>
-<p>The repository has every component of a score-and-decide loop. The connections between them are what is missing.</p>
-<div class="admonition note">
-<p class="admonition-title">Gaps in the current code</p>
-<ul>
-<li><strong>Deploy and serve point at different places.</strong> <code>deploy_model</code> copies the winner to <code>models/production/</code>, but the API loads <code>models/ensemble/</code> through <code>GradientBoostingEnsemble.load</code>. The default training run (<code>xgboost lightgbm catboost</code>) never writes <code>models/ensemble/</code>, so the API starts with no model and <code>/predict</code> returns 503.</li>
-<li><strong>The request schema doesn&rsquo;t match the fitted pipeline.</strong> The feature pipeline selects <code>income_category</code> and <code>risk_score_bucket</code> by name, and <code>/predict</code> doesn&rsquo;t build either column.</li>
-<li><strong>Drift is simulated, and retraining is a stub.</strong> The monitoring DAG samples 1,000 rows from the training file, subtracts 10 from <code>credit_score</code>, and runs PSI and KS on four columns. When drift is found, it calls a function whose <code>TriggerDagRunOperator</code> is commented out.</li>
-<li><strong><code>/metrics/{model}</code> returns constants</strong> (0.85 / 0.70 / 0.55), not stored results.</li>
-<li><strong>MLflow is used for tracking only.</strong> Runs log parameters and metrics; models are saved with joblib, not registered.</li>
-<li><strong>Built but not wired in.</strong> The TabTransformer class and the stacking ensemble exist, but the CLI defaults train only the three boosters, the stacking ensemble is built with <code>use_tab_transformer=False</code>, and passing <code>tab_transformer</code> to the training pipeline raises &ldquo;Unknown model type&rdquo;.</li>
-<li><strong>No recorded results.</strong> There is no <code>mlruns/</code>, no saved model, and no log in the repo, and the environment I checked lacks xgboost, lightgbm, catboost, mlflow and category_encoders, so I did not rerun it. The model table in the README has no run behind it.</li>
-</ul>
-</div>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no recorded model scores to report. What I can state from the code:</p>
-<ul>
-<li>The generator produces 100,000 rows at a 15% target default rate, with a 70/10/20 stratified split (<code>random_state=42</code>).</li>
-<li>Each model is evaluated on the held-out 20% using AUC, Gini, KS, log loss, Brier score and lift at 10% and 20%, and the deploy gate requires AUC ≥ 0.70, Gini ≥ 0.40 and KS ≥ 0.30.</li>
-<li>The test suite covers model fit/predict, metric calculations, PSI and data generation. The API test accepts either 200 or 503 from <code>/predict</code>, so it passes without a loaded model.</li>
-</ul>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Close the deploy-to-serve path.</strong> Have the API load <code>models/production/</code> and its <code>metadata.json</code>, and add a test that trains a small model and gets a 200 from <code>/predict</code>.</li>
-<li><strong>Use one feature builder for training and serving.</strong> Move the derived-column logic out of the API into the feature pipeline, so a request goes through exactly the code the model was trained on.</li>
-<li><strong>Record a real run.</strong> Pin dependency versions, run the training once, and commit the metrics JSON next to the README so every number has a source.</li>
-<li><strong>Make retraining real.</strong> Compare recent scored applications against the training reference instead of a shifted sample, and enable the <code>TriggerDagRunOperator</code>.</li>
-<li><strong>Gate on calibration.</strong> Add a Brier or calibration-slope check, and choose the APPROVE/REVIEW cut-offs from an explicit cost of a missed default versus a lost good customer.</li>
-<li><strong>Register models.</strong> Log each model with MLflow and promote through the registry instead of copying directories.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case study: <a href="../projects/credit-risk.html">Credit Risk case page</a></li>
-<li>Code: <a href="https://github.com/Eng-Zakaria/Risk_Analysis">github.com/Eng-Zakaria/Risk_Analysis</a></li>
-</ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Config, not code: schema-drift gates and a cdp CLI</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.</description>
-      <category>Data Ingestion</category><category>Data Quality</category><category>Airflow</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio.</strong> I built this alone as a portfolio project while applying for a Data Automation Engineer role. It was not built for an employer or a client, and it uses only public websites and a free public API. It is a v1 scaffold: it covers ingestion, raw landing and a quality gate. The transform job, the warehouse and the analytics API are still on the roadmap, and I don&rsquo;t claim any of them work.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Electronic component data, meaning part numbers, prices, stock and datasheets, is mostly published as HTML pages owned by somebody else. A scraper written against one page layout works until the site changes its theme. When it breaks, it usually breaks without an error. A CSS class gets renamed, the selector returns <code>None</code>, the job still finishes green, and you end up with a table of empty prices that looks like a healthy one.</p>
-<p>So I wanted three things:</p>
-<ol>
-<li>A layout change should mean editing a config file, not the scraper code.</li>
-<li>A layout change I haven&rsquo;t caught yet should stop the run, not load empty fields.</li>
-<li>Someone who didn&rsquo;t write the project should be able to check, run and schedule it without reading the source.</li>
-</ol>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>Each source is one YAML file in <code>configs/sources/</code>. The v1 sources are SparkFun and Texas Instruments, both scraped from HTML, and Mouser, through its official API. Everything else is generic.</p>
-<div class="hl"><pre><span></span><code>configs/sources/*.yaml
-        |
-        v
-SourceConfig.from_yaml()  ----------------------------+
-        |                                             |
-  source_type: html                            source_type: api
-        |                                             |
-ConfigDrivenScraper                            MouserClient
-  fetch (3 retries, exp. backoff)                (3 retries, keyword search)
-  parse cards with CSS selectors from YAML
-  map fields via field_map
-  _check_schema_drift()  -- fails --&gt; SchemaDriftError (nothing written)
-        |                                             |
-        +--------------------+------------------------+
-                             v
-            write_raw_records()  -&gt;  data/raw/&lt;source&gt;/&lt;date&gt;/records.jsonl
-                             |
-                             v
-            validate_jsonl()  (null rate per required field, duplicate count)
-                             |
-                             v
-            data/.run_log.json  -&gt;  cdp status
-</code></pre></div>
-
-<p>Here is the SparkFun config, trimmed a little:</p>
-<div class="hl"><pre><span></span><code><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sparkfun</span>
-<span class="nt">source_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html</span>
-<span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="nt">base_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://www.sparkfun.com&quot;</span>
-<span class="nt">start_urls</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/development-boards/microcontrollers.html&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/sensors.html&quot;</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/components/resistors.html&quot;</span>
-<span class="nt">pagination</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;p&quot;</span>
-<span class="w">  </span><span class="nt">start_page</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
-<span class="w">  </span><span class="nt">max_pages</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">          </span><span class="c1"># safety cap</span>
-<span class="nt">rate_limit_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
-<span class="nt">selectors</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">product_card</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;li.product-item&quot;</span>
-<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
-<span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
-<span class="w">  </span><span class="nt">price</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;span[data-price-type=&#39;finalPrice&#39;]</span><span class="nv"> </span><span class="s">.price&quot;</span>
-<span class="nt">field_map</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span>
-<span class="w">  </span><span class="nt">product_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">url</span>
-<span class="w">  </span><span class="nt">list_price</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">price</span>
-<span class="nt">required_fields</span><span class="p">:</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_name</span>
-<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_url</span>
-</code></pre></div>
-
-<p>The scraper reads <code>selectors</code>, applies each one inside every <code>product_card</code>, renames the results through <code>field_map</code>, and stamps each record with <code>_source</code> and <code>_schema_version</code>. The landing module adds <code>_ingested_at</code>. Nothing in <code>ConfigDrivenScraper</code> mentions SparkFun.</p>
-<h2 id="decision-1-the-drift-gate-raises-before-anything-lands">Decision 1: the drift gate raises before anything lands<a class="h-anchor" href="#decision-1-the-drift-gate-raises-before-anything-lands" title="Permanent link">#</a></h2>
-<p>The core check sits at the end of <code>ConfigDrivenScraper.run()</code>, before any records are written:</p>
-<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">: zero records scraped — &quot;</span>
-        <span class="s2">&quot;selectors likely no longer match the page structure.&quot;</span>
-    <span class="p">)</span>
-
-<span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">required_fields</span><span class="p">:</span>
-    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">required</span><span class="p">))</span>
-    <span class="n">null_rate</span> <span class="o">=</span> <span class="n">missing</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">null_rate</span> <span class="o">&gt;</span> <span class="n">null_rate_threshold</span><span class="p">:</span>   <span class="c1"># default 0.5</span>
-        <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-</code></pre></div>
-
-<p>There are two cases. Zero cards means the <code>product_card</code> selector no longer matches. If any required field is null in more than 50% of records, a field selector has drifted. In both cases the error message names the field and the YAML file to fix.</p>
-<p>After landing there is a second, stricter check. <code>validate_jsonl()</code> fails a file when a required field is null in more than 30% of records, and it also counts duplicates on <code>product_url</code> (or <code>product_name</code> if there&rsquo;s no URL field). In the CLI, a file that fails this check is recorded as <code>quality_fail</code>, which is different from <code>error</code>.</p>
-<p><strong>Trade-off.</strong> A null-rate threshold is a blunt tool. It catches a selector that broke completely. It won&rsquo;t catch one that now picks up the wrong element, like a &ldquo;was&rdquo; price instead of the current price. It also only covers fields I list as required, so <code>list_price</code> on SparkFun could go fully null and the drift check would let it through. I accepted that for v1: required fields get a hard failure, and the other fields depend on downstream checks I haven&rsquo;t built yet. The 50% and 30% thresholds are my own judgement calls. I didn&rsquo;t tune them on data.</p>
-<div class="admonition note">
-<p class="admonition-title">The gate&rsquo;s first real run</p>
-<p>The run log in the repo (<code>data/.run_log.json</code>) has one live attempt per source, all on 7 August 2026. All three failed. SparkFun: <code>field 'product_name' is null in 64% of 791 records (threshold 50%)</code>. TI: <code>zero records scraped</code>. Mouser: <code>MOUSER_API_KEY not set</code>. Nothing was written to the landing zone. The gate did its job, but it also means the SparkFun selectors don&rsquo;t match the live site any more, and the roadmap line saying they were &ldquo;verified against live markup&rdquo; is out of date.</p>
-</div>
-<h2 id="decision-2-one-cli-with-the-checks-before-the-run">Decision 2: one CLI, with the checks before the run<a class="h-anchor" href="#decision-2-one-cli-with-the-checks-before-the-run" title="Permanent link">#</a></h2>
-<p><code>cdp</code> is a Click app (<code>pyproject.toml</code> maps <code>cdp = "cli.main:cli"</code>) with seven commands:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Command</th>
-<th>What it actually does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cdp doctor</code></td>
-<td>Checks Python ≥ 3.10, that 7 packages import, <code>.env</code> present, API key set (optional), write access to the landing folder, and that every YAML parses</td>
-</tr>
-<tr>
-<td><code>cdp sources list</code> / <code>info &lt;name&gt;</code></td>
-<td>Table of sources; <code>info</code> fetches the live <code>robots.txt</code>, checks each start URL against it, and prints a pre-run checklist</td>
-</tr>
-<tr>
-<td><code>cdp run &lt;name&gt;</code> / <code>run all</code></td>
-<td>Fetch, land, validate, log; <code>run all</code> catches each source&rsquo;s failure so one bad source doesn&rsquo;t stop the others, then prints a summary table</td>
-</tr>
-<tr>
-<td><code>cdp check</code></td>
-<td>Runs <code>doctor</code>, then re-validates every file under <code>data/raw/</code></td>
-</tr>
-<tr>
-<td><code>cdp status</code></td>
-<td>Last outcome per source from <code>data/.run_log.json</code></td>
-</tr>
-<tr>
-<td><code>cdp schedule</code></td>
-<td>Prints a cron line for <code>cdp run all</code> (hourly or daily); <code>--install</code> adds it to the crontab after a confirm prompt</td>
-</tr>
-<tr>
-<td><code>cdp test</code></td>
-<td>Runs <code>pytest tests/ -v</code></td>
-</tr>
-</tbody>
-</table></div>
-<p>The intended order is doctor, then run, then status, then schedule. <code>doctor</code> comes first because most failed runs I hit were environment problems, like a missing key or a broken YAML, not scraper problems.</p>
-<p><strong>Trade-off.</strong> Two ways of scheduling now exist side by side. <code>cdp schedule</code> writes a cron line for one machine. The Airflow DAG (<code>dags/component_pipeline_dag.py</code>) is the intended production orchestrator, with <code>retries: 2</code>, a 10-minute retry delay, <code>email_on_failure</code> and <code>@daily</code>. They don&rsquo;t share code. The DAG calls the scraper and validator modules directly, not through <code>cdp</code>, so the two paths can drift apart. The DAG is also explicitly a skeleton. It has not been deployed, and its transform and load tasks are TODO comments.</p>
-<h2 id="decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped">Decision 3: use the API where one exists, and write down what I skipped<a class="h-anchor" href="#decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped" title="Permanent link">#</a></h2>
-<p>Mouser has a free official API, so I used it instead of scraping. It still has a YAML file, so <code>sources list</code>, <code>run</code> and <code>check</code> treat it like the other sources. <code>docs/sources_evaluated.md</code> lists the sources I considered and why I deferred them. For example, LCSC has no public API, rate-limits aggressively and has blocked scraper IPs, and Digi-Key and Newark both have official APIs, so I&rsquo;d use those instead of scraping. Every HTML config also sets a <code>rate_limit_seconds</code> and an identifying <code>user_agent</code>.</p>
-<p><strong>Trade-off.</strong> API sources are only partly config-driven. In <code>cli/commands/run.py</code>, the dispatch for <code>source_type: api</code> is hard-coded to <code>source_name == "mouser"</code>. Any other source type raises <code>NotImplementedError</code>. A second API source needs a new client class and a new branch. &ldquo;YAML only&rdquo; holds for HTML sites that render without JavaScript. TI&rsquo;s config even has a <code>render_mode: rendered</code> option, but the scraper raises <code>NotImplementedError</code> for it.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What the files show:</p>
-<ul>
-<li><strong>Sources configured:</strong> 3 (2 HTML, 1 API). None has produced a passing live run yet (see the note above).</li>
-<li><strong>Tests:</strong> 3, all passing offline against a saved SparkFun HTML fixture. They check that the fixture parses to 3 records, that <code>field_map</code> normalisation works (name, URL, price <code>$45.65</code>, <code>_source</code>, <code>_schema_version</code>), and that a renamed <code>product_card</code> selector raises <code>SchemaDriftError</code>. Nothing tests the validator, the Mouser client, the CLI or the DAG.</li>
-<li><strong>Onboarding a new HTML source:</strong> adding <code>configs/sources/&lt;name&gt;.yaml</code> is enough for <code>cdp sources list</code>, <code>cdp run &lt;name&gt;</code>, <code>cdp run all</code> and <code>cdp status</code> to pick it up. That part is real. The Airflow DAG, though, has a hard-coded <code>SOURCE_CONFIGS</code> list and needs a code edit. I haven&rsquo;t added a fourth source, so I have no measured onboarding time.</li>
-<li><strong>Landing:</strong> local JSONL partitioned by source and date. The S3 swap would touch only <code>src/ingestion/landing.py</code>, but that&rsquo;s still a roadmap item.</li>
-</ul>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Fix SparkFun&rsquo;s selectors and get one green live run.</strong> The gate says they&rsquo;re broken, so the project currently has zero working live sources.</li>
-<li><strong>Make the DAG read <code>configs/sources/</code> the way the CLI does</strong>, so adding a YAML file onboards a source everywhere. While I&rsquo;m there, have the DAG&rsquo;s quality gate use each source&rsquo;s own <code>required_fields</code> and only today&rsquo;s partition. Right now it globs every file and checks only <code>product_name</code>.</li>
-<li><strong>Drive API sources from a registry</strong> keyed by name, instead of an <code>if</code> on <code>"mouser"</code>.</li>
-<li><strong>Make the thresholds per-source config</strong> and add a row-count floor compared to the last good run, so a site that quietly drops half its catalogue gets caught.</li>
-<li><strong>Add tests for the validator and <code>cdp run</code></strong>, including the <code>quality_fail</code> path.</li>
-<li>Then build the parts the roadmap already lists: S3 landing, the Glue/Spark transform to silver and gold, the Redshift schema, and the API.</li>
-</ol>
-<p>The full case study is at <a href="../projects/component-data-pipeline.html">Component Data Pipeline</a>. The case page doesn&rsquo;t link a public repository, so there&rsquo;s no GitHub link here.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>Brand radar: one file per source and a connector registry</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/brand-radar-connector-registry.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I built a pluggable pipeline that collects public mentions of Waffarha from app stores, Reddit, news and web search, routes Arabic and English text to different sentiment models, and tags each mention by business category.</description>
-      <category>Data Engineering</category><category>NLP</category><category>Python</category>
-      <content:encoded><![CDATA[<p>Evidence label: this is a working pilot, not a production system. It runs locally on SQLite, on demand, with a Streamlit dashboard. Several connectors need API keys that are not set, two are stubs, and the sentiment models have not been validated against labeled data. I describe what is built and say plainly where it stops.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Waffarha is a daily-deals platform in Egypt. People talk about it in app store reviews, on Reddit, in the news and on the open web. Product and marketing wanted all of that in one place.</p>
-<p>Two things made this harder than it sounds. The sources keep changing: libraries break, platforms add keys, new review sites matter. And the text is mixed. Egyptian users write in Arabic, in English, and in Arabizi (Arabic written in Latin letters, with digits like 3 and 7 standing in for Arabic sounds). A single English sentiment model would get a lot of it wrong.</p>
-<p>So I set one rule in the design doc: a new data source means one new file, and nothing else changes.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The pipeline is a straight line:</p>
-<p>connectors → ingestion (normalize, dedupe) → language detection → sentiment → topic tagging → storage → dashboard</p>
-<p>Every connector emits the same record, a <code>RawMention</code> with text, author, date, source name, URL, a rough language guess, an external ID and a source category. Nothing downstream knows which site a mention came from.</p>
-<p>Storage has two tables: <code>raw_mentions</code>, which holds the source data unchanged, and <code>mentions</code>, the processed fact table with language, sentiment label, a score from -1 to 1, and topics. Upserts are keyed on <code>(source_name, external_id)</code>, with a stable text hash as a fallback, so re-running the pipeline never duplicates rows.</p>
-<p>Here are the sources the article title promises, and how each one is collected:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Source</th>
-<th>Method</th>
-<th>Auth</th>
-<th>Status</th>
-<th>Cadence</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>App Store</td>
-<td>iTunes RSS feed</td>
-<td>None</td>
-<td>Working</td>
-<td>On demand; default window last 7 days</td>
-</tr>
-<tr>
-<td>Google Play</td>
-<td><code>google-play-scraper</code>, English and Arabic streams</td>
-<td>None</td>
-<td>Working</td>
-<td>On demand</td>
-</tr>
-<tr>
-<td>Reddit</td>
-<td>PRAW search over a fixed query list</td>
-<td>OAuth app</td>
-<td>Stubbed until keys are set</td>
-<td>On demand</td>
-</tr>
-<tr>
-<td>News</td>
-<td>Google News RSS</td>
-<td>None</td>
-<td>Working</td>
-<td>On demand</td>
-</tr>
-<tr>
-<td>Web search</td>
-<td>Bing Search API, robots.txt check, URL cache</td>
-<td>Paid key</td>
-<td>Disabled by default</td>
-<td>On demand</td>
-</tr>
-<tr>
-<td>Facebook, X</td>
-<td>Not implemented</td>
-<td>Platform approval / paid tier</td>
-<td>Stub only</td>
-<td>n/a</td>
-</tr>
-</tbody>
-</table></div>
-<p>There is no scheduler yet. The design doc lists cron, Airflow or Prefect as future production options. Today I run <code>python main.py run</code>, optionally with <code>--days</code> or <code>--since</code>.</p>
-<h2 id="decision-1-a-registry-instead-of-a-list">Decision 1: a registry instead of a list<a class="h-anchor" href="#decision-1-a-registry-instead-of-a-list" title="Permanent link">#</a></h2>
-<p>The interface is one method. A connector takes a timestamp and returns a list of mentions. The registry walks the <code>connectors/</code> package with <code>pkgutil</code>, imports each module, and keeps an instance of every <code>SourceConnector</code> subclass it finds. Nothing has to be registered by hand.</p>
-<p>Here is the idea in a minimal form. This is my own simplified sketch, not the project code:</p>
-<div class="hl"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span><span class="o">,</span><span class="w"> </span><span class="nn">pkgutil</span>
-
-<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Mention</span><span class="p">:</span>
-    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">source</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">external_id</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">date</span><span class="p">:</span> <span class="n">datetime</span>
-
-<span class="k">class</span><span class="w"> </span><span class="nc">Connector</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
-    <span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
-
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">fetch_since</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">since</span><span class="p">:</span> <span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Mention</span><span class="p">]:</span> <span class="o">...</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">discover</span><span class="p">(</span><span class="n">package</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Connector</span><span class="p">]:</span>
-    <span class="n">found</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">iter_modules</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="n">__path__</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
-            <span class="k">continue</span>  <span class="c1"># one broken file should not stop the rest</span>
-        <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Connector</span><span class="p">)</span> <span class="ow">and</span> <span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Connector</span><span class="p">:</span>
-                <span class="n">found</span><span class="p">[</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">found</span>
-</code></pre></div>
-
-<p>Two details mattered. A module that fails to import is logged and skipped, so one broken connector does not stop the run. And each connector can be switched off with an <code>ENABLE_&lt;NAME&gt;</code> flag on top of a class-level default; the stubs and web search default to off.</p>
-<p>The trade-off is that &ldquo;one file&rdquo; is slightly generous. A new connector runs without touching anything else, but a config switch for it also needs an entry in the registry&rsquo;s flag map and the settings class. Auto-discovery also hides failures: a file with a typo just disappears from the run. That is why I added a <code>status</code> command that shows each connector as live, mock or disabled without network calls, plus per-connector metrics in the run summary.</p>
-<h2 id="decision-2-route-sentiment-by-language">Decision 2: route sentiment by language<a class="h-anchor" href="#decision-2-route-sentiment-by-language" title="Permanent link">#</a></h2>
-<p>Language detection is a heuristic, not a model. If more than 30% of the characters are Arabic script, the mention is Arabic. Otherwise an Arabizi score is computed from Latin ratio, digit substitutions, common Arabizi words and doubled vowels, and a score of 3 or more marks it as Arabizi. Mostly-Latin text that does not look like Arabizi is English.</p>
-<p>Sentiment then routes on that label:</p>
-<ul>
-<li>Arabic goes to <code>aubmindlab/bert-base-arabertv02</code>.</li>
-<li>English goes to <code>cardiffnlp/twitter-roberta-base-sentiment-latest</code>.</li>
-<li>Arabizi is crudely transliterated to Arabic and sent to the Arabic model, falling back to a multilingual XLM-RoBERTa model.</li>
-<li>Anything unknown goes to the multilingual model.</li>
-</ul>
-<p>Each path falls back to a small keyword matcher if its model is missing or fails.</p>
-<p>The upside is that each language gets a model trained on that kind of text, swappable with an environment variable. The cost: the models are about 500MB to download, and the README estimates transformers at roughly a day per 100k rows. So an offline switch, <code>WAFFARHA_SENTIMENT_OFFLINE=1</code>, skips the models and uses the keyword matcher. CI and bulk runs both use it.</p>
-<div class="admonition warning">
-<p class="admonition-title">What the sentiment numbers actually mean</p>
-<p>The routing is in the code, but the existing case study is right to call model serving not yet implemented. Bulk runs use the keyword fallback, and the Arabic checkpoint is a base AraBERT model rather than one fine-tuned for sentiment. Treat the dashboard&rsquo;s sentiment labels as rough until the models are validated on labeled data.</p>
-</div>
-<p>The topic tagger has the same honesty problem. It is rule-based keyword matching in Arabic, English and Arabizi across 7 topics: the 6 business categories (app bugs, customer service, pricing, wallet security, offer accuracy, delivery) plus <code>other</code>. It is fast and explainable, and I had no labeled data to train anything else. It also misses negation. A made-up example: &ldquo;this is not a pricing issue&rdquo; would still get the <code>pricing</code> tag.</p>
-<h2 id="decision-3-official-feeds-and-apis-over-scraping">Decision 3: official feeds and APIs over scraping<a class="h-anchor" href="#decision-3-official-feeds-and-apis-over-scraping" title="Permanent link">#</a></h2>
-<p>I preferred official or public feeds wherever they existed, and I left gated platforms as stubs instead of faking them.</p>
-<p>The App Store connector is the clearest case. It first used a scraping library that had stopped working against Apple&rsquo;s current pages and returned 0 reviews. I replaced it with the iTunes RSS feed, which is official, keyless and paginated. That change, together with fixing a wrong store ID, took the App Store from 0 rows to 46 real reviews over 365 days.</p>
-<p>Web search goes through the Bing Search API, not a crawler. Before fetching any page it checks <code>robots.txt</code>, and it caches URL hashes so it does not fetch the same page twice. The code comment is direct about it: it is not a general-purpose scraper. The cost is money. Bing is paid beyond a free tier of 1,000 calls a month, so the connector is off by default.</p>
-<p>Facebook and X are stubs. Facebook needs Meta App Review, which can take weeks or months and is not guaranteed. X needs a paid API tier of $100 a month. I wrote the interface and documented the gap rather than scraping around the terms of service.</p>
-<p>The trade-off is coverage. The radar sees less than a scraper would. I think that is the right default for a company tool, but the dashboard only shows what the enabled sources can reach.</p>
-<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
-<p>What exists today:</p>
-<ul>
-<li>14 connector modules: Waffarha&rsquo;s own stores, competitor listings, review sites, Reddit, YouTube, news, web search, CSV import for manually exported social comments, and two stubs.</li>
-<li>Idempotent storage, with network calls retried 3 times with exponential backoff and jitter.</li>
-<li>A Streamlit dashboard with sentiment trends by source, a topic breakdown, a sentiment-by-topic heatmap, a recent-negative feed for triage, and a filterable table.</li>
-<li>A test suite where 120 unit tests pass in under a second in offline mode.</li>
-</ul>
-<p>What it does not show:</p>
-<ul>
-<li>No accuracy numbers. Arabizi detection, Arabizi sentiment and the topic tagger have not been measured against labeled data.</li>
-<li>Google Business returns mock data without a key. Reddit returns nothing without OAuth credentials.</li>
-<li>Volume is limited by reality. Waffarha&rsquo;s own Play listing has about 19k reviews in total, so the original target of 500k mentions only works if you include competitor and category data.</li>
-<li>It is not in production. There is no scheduler, no auth on the dashboard and no Postgres deployment yet.</li>
-</ul>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<p>The backlog is ranked, and I agree with it.</p>
-<p>First, label about 200 Egyptian review snippets and measure language detection, starting with Arabizi. Until then, the Arabizi bucket should not be trusted.</p>
-<p>Second, add a negation window to the topic tagger, so &ldquo;not&rdquo;, &ldquo;no&rdquo; or &ldquo;مش&rdquo; just before a keyword cancels the tag.</p>
-<p>Third, store confidence scores and add a &ldquo;needs review&rdquo; filter for low-confidence rows.</p>
-<p>Fourth, alert a chat webhook when the negative share jumps, reading the metrics line each run already writes.</p>
-<p>Then label around 1k mentions and train a topic classifier, keeping the rules as a fallback, and swap in sentiment-tuned checkpoints.</p>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
     </item>
   </channel>

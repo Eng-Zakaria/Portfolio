@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BIM Model Health Analyzer — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="pyRevit extension auditing Revit model health: orphaned elements, parameter consistency, views, and performance — with 0–100 scoring and JSON + HTML reports.">
+  <meta name="description" content="pyRevit extension auditing Revit model health: orphaned elements, parameter consistency, views, and performance — with a 0–100 score and JSON report. Portfolio tool, not yet run on a live model.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -212,24 +212,24 @@
       <div class="sec-label">// project case study</div>
       <h1>BIM Model Health Analyzer</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        pyRevit extension auditing Revit model health for a client BIM team.
+        Portfolio pyRevit extension that grades an open Revit model 0–100 from element, parameter and view checks. Written against the Revit API; not yet run on a live model.
       </p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">BIM Automation Developer</span>
+          <span class="meta-value">Solo developer</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2025</span>
+          <span class="meta-value">2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Client</span>
-          <span class="meta-value">BIM Team</span>
+          <span class="meta-value">None (portfolio)</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Client Tool</span>
+          <span class="meta-value">Portfolio Tool</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -247,6 +247,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/revit-model-health-score.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -254,16 +255,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">pyRevit</div>
-          <div class="metric-label">Extension</div>
+          <div class="metric-value">~1,940</div>
+          <div class="metric-label">Lines of Python</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">WPF</div>
-          <div class="metric-label">Dashboard</div>
+          <div class="metric-value">−10 / −2</div>
+          <div class="metric-label">Points per critical / warning</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">JSON + HTML</div>
-          <div class="metric-label">Report Export</div>
+          <div class="metric-value">0</div>
+          <div class="metric-label">Recorded runs</div>
         </div>
       </div>
     </section>
@@ -287,7 +288,7 @@
     <section class="content-section">
       <h3>Architecture</h3>
       <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        Audit pipeline: collectors → analyzers → scoring → dashboard + report export
+        Designed audit pipeline: collectors → analyzers → scoring → dashboard + report export
       </p>
       <div class="arch-full">
         <img src="../docs/diagrams/bim-model-health.svg" alt="BIM Model Health Analyzer Architecture Diagram" style="width:100%; height:auto;">
@@ -298,12 +299,12 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Revit API helpers:</strong> FilteredElementCollector-based helpers with transaction-safe writes for all model interactions.</li>
-        <li><strong>Analyzers:</strong> Orphaned-element, parameter-consistency, view-statistics, and performance analyzers covering element counts, geometry-heavy categories, linked models, and worksets.</li>
-        <li><strong>Health scoring:</strong> 0–100 model health score derived from critical issues and warnings.</li>
-        <li><strong>Report export:</strong> JSON plus styled HTML report export for sharing findings with the team.</li>
-        <li><strong>WPF dashboard:</strong> Tabbed dashboard with overview, orphaned, parameters, views, performance, and worksharing tabs.</li>
-        <li><strong>JSON config:</strong> Configurable naming standards, required parameters, and thresholds without code changes.</li>
+        <li><strong>Revit API helpers:</strong> FilteredElementCollector helpers for category queries, plus one wrapper that runs a function inside a Revit transaction and rolls back on error (used by the delete-duplicates fix-up).</li>
+        <li><strong>Analyzers:</strong> Problem elements (null geometry on walls/floors/roofs/curtain panels, missing required parameters, duplicate walls by endpoints, unhosted Generic Models), parameter consistency (80% majority rule), view audit (template, empty, &gt;10,000 elements, naming), performance (element counts, stairs/railings/ramps/topography, unloaded links), and borrowed elements in worksets.</li>
+        <li><strong>Health scoring:</strong> score = max(0, 100 − 10 × critical − 2 × warnings). Critical = problem-element findings; warnings = parameter outliers plus views with issues. Performance and worksharing findings are reported but not scored.</li>
+        <li><strong>Report export:</strong> JSON report via <code>json.dump</code>. An HTML report template exists, but its <code>str.format</code> call fails on the inline CSS braces, so HTML export needs a fix before it writes a file.</li>
+        <li><strong>WPF dashboard:</strong> Window built in code (no XAML) with overview, orphaned, parameters, views, performance, and worksharing tabs. The Delete/Select/Export/Fix buttons are placeholders that only show a message.</li>
+        <li><strong>JSON config:</strong> Default categories, required parameters, thresholds and export folder, written to <code>config/settings.json</code> on first run (top-level merge only). View naming rules are still hard-coded.</li>
       </ul>
     </section>
 
@@ -317,16 +318,16 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Transaction-Safe Helper Layer</h4>
-        <p>Centralized Revit helpers wrap all document access with proper transaction handling, keeping analyzers read-safe and writes controlled.</p>
+        <p>Analyzers only read the model. The single write path (deleting duplicate walls) goes through one transaction wrapper that commits or rolls back.</p>
       </div>
 
       <div class="challenge-card">
-        <h4>Challenge: IronPython / .NET Interop Quirks</h4>
+        <h4>Challenge: IronPython / Python Version and .NET Interop</h4>
         <p>Bridging IronPython with Revit's .NET API surfaces type-conversion and binding edge cases not present in C# add-ins.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Defensive Wrappers</h4>
-        <p>Safe-access helpers with fallbacks (e.g. element naming) and comprehensive error handling isolate interop issues from audit logic.</p>
+        <h4>Solution: Defensive Wrappers (Open Gap)</h4>
+        <p>Element-name and parameter lookups are wrapped in try/except with fallbacks. Open gap: the code uses f-strings and <code>exist_ok=True</code>, which pyRevit's default IronPython 2.7 engine rejects, so it needs a CPython engine marker or a 2.7 rewrite.</p>
       </div>
 
       <div class="challenge-card">
@@ -334,8 +335,8 @@
         <p>Full-model collectors over tens of thousands of elements can stall the Revit session if run naively.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Optimized Collectors + Timing</h4>
-        <p>Category-filtered collectors, targeted queries, and per-operation performance timing keep audits fast and identify slow spots.</p>
+        <h4>Solution: Category-Filtered Collectors + Timing</h4>
+        <p>Most checks use category-filtered collectors, and a PerformanceTimer logs each stage. Not yet measured on a real model; the shared-parameter scan still walks every element once per definition.</p>
       </div>
     </section>
 
@@ -343,9 +344,11 @@
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        A repeatable audit producing a scored report the client team can act on —
-        each run surfaces orphaned elements, parameter gaps, view issues, and
-        performance risks with a single health score and concrete recommendations.
+        A complete design and first implementation of an audit → score → report
+        pipeline. It has not been run on a live Revit model: there are no saved
+        reports, logs or tests. A code review found defects that block a first run
+        (start-up property, imports, Python engine, HTML templating); the write-up
+        lists them with the fixes planned.
       </p>
     </section>
 
@@ -353,8 +356,8 @@
     <section class="content-section">
       <h3>Companion Implementations</h3>
       <ul>
-        <li><strong>C# add-in sample:</strong> Sample C# add-in port of the analyzer in the sibling Workspace BIM_Pyrevit/BIMModelHealthAnalyzer.CSharp folder.</li>
-        <li><strong>Dynamo sample:</strong> Sample Dynamo graph of the audit workflow in the sibling Workspace BIM_Pyrevit/DynamoSamples folder.</li>
+        <li><strong>C# add-in sample:</strong> Narrow C# add-in sample (one read-only command, wall Fire Rating only, same scoring formula) in Workspace BIM_Pyrevit/BIMModelHealthAnalyzer.CSharp. Not compiled or tested.</li>
+        <li><strong>Dynamo sample:</strong> Dynamo graph plus Python node applying the 80% majority rule to Fire Rating, with an optional expected value, in Workspace BIM_Pyrevit/DynamoSamples. Authored without a live Revit session.</li>
       </ul>
     </section>
   </main>

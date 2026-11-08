@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>My graduation-project Arabic QA app, and what production taught me after | Mohammed Zakaria</title>
+  <meta name="description" content="A look at the Django web app my team built around a hosted hadith question-answering model at Helwan University, what it did and didn&#x27;t do, and which of its gaps I closed later in production RAG at Waffarha.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html">
+  <meta property="og:title" content="My graduation-project Arabic QA app, and what production taught me after | Mohammed Zakaria">
+  <meta property="og:description" content="A look at the Django web app my team built around a hosted hadith question-answering model at Helwan University, what it did and didn&#x27;t do, and which of its gaps I closed later in production RAG at Waffarha.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "My graduation-project Arabic QA app, and what production taught me after", "description": "A look at the Django web app my team built around a hosted hadith question-answering model at Helwan University, what it did and didn't do, and which of its gaps I closed later in production RAG at Waffarha.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html", "wordCount": 1567, "keywords": "RAG, Arabic NLP, LLM"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">RAG</span><span class="post-tag">Arabic NLP</span><span class="post-tag">LLM</span></div>
+        <h1>My graduation-project Arabic QA app, and what production taught me after</h1>
+        <p class="post-lede">A look at the Django web app my team built around a hosted hadith question-answering model at Helwan University, what it did and didn&#x27;t do, and which of its gaps I closed later in production RAG at Waffarha.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decisions-and-trade-offs">Decisions and trade-offs</a><ul>
+<li><a href="#calling-a-hosted-model-through-gradio_client">Calling a hosted model through gradio_client</a></li>
+<li><a href="#keeping-history-in-the-database-and-searching-it-with-icontains">Keeping history in the database and searching it with icontains</a></li>
+<li><a href="#server-rendered-forms-instead-of-an-api">Server-rendered forms instead of an API</a></li>
+</ul>
+</li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-production-taught-me-after">What production taught me after</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Academic work: this was my graduation project at Helwan University (BSc Computers and Artificial Intelligence, 2024), built by a six-person team under the supervision of Dr. Ensaf Hussein. The project&rsquo;s reported grade was A+. The repository I&rsquo;m writing about is the web application, a Django site called Estidlal that lets a signed-in user ask questions about hadith and keeps their history. The question-answering model itself ran in a separate Hugging Face Space, and its code is not in this repository, so I&rsquo;ll describe it only from the outside.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Searching hadith collections usually means knowing which book to open and which words to search for. The site&rsquo;s own copy put the goal plainly: help students and researchers search religious sources using &ldquo;a question, phrase, or word&rdquo;. The landing page describes the intended scope as the Quran and hadith from the six major collections.</p>
+<p>My part of the problem was narrower than that sentence. Given a question-answering model my teammates had hosted, build a site where people can sign up, ask a question, see the answer, and find old answers again.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> Browser
+   |  home.html: sign up / sign in      chat.html: question form (POST)
+   v
+ Django 5 views (home/views.py)
+   |-- home, loginUser, logout ---------&gt; SQLite: Login (name, email, hashed password)
+   |-- answer --+----------------------&gt;  SQLite: Answer (login FK, question_text,
+   |            |                                  answer_text, created_at)
+   |            +--&gt; gradio_client.Client(&quot;Mohamed-Maher/Hadith-QA-System&quot;)
+   |                   .predict(question=..., api_name=&quot;/predict&quot;)
+   |                   -&gt; Hugging Face Space (model, data and retrieval live here,
+   |                      not in this repo)
+   |-- search_history -----------------&gt; SQLite: icontains on question or answer
+
+ Separate widget on the landing page (client side only):
+   &quot;New Hadith&quot; button -&gt; api.hadith.gading.dev/books/bukhari?range=300-500
+                          -&gt; shows the Arabic text of a random result
+</code></pre></div>
+
+<p>The whole app is three dependencies (<code>Django</code>, <code>gradio-client</code>, <code>Pillow</code>), five routes, two models and four migrations. The core of the answer path is short enough to quote:</p>
+<div class="hl"><pre><span></span><code><span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="s2">&quot;Mohamed-Maher/Hadith-QA-System&quot;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+    <span class="n">question</span><span class="o">=</span><span class="n">question_text</span><span class="p">,</span>
+    <span class="n">api_name</span><span class="o">=</span><span class="s2">&quot;/predict&quot;</span>
+<span class="p">)</span>
+<span class="n">answer</span> <span class="o">=</span> <span class="n">Answer</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+    <span class="n">question_text</span><span class="o">=</span><span class="n">question_text</span><span class="p">,</span>
+    <span class="n">answer_text</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+    <span class="n">login</span><span class="o">=</span><span class="n">user</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The answer comes back as one string. The app stores it and renders it under the question. It doesn&rsquo;t receive the retrieved passages, a source list or a score, so it can&rsquo;t show hadith numbers, collection names or grading separately from the answer text. Whatever references the user saw were whatever the model put in that string.</p>
+<p>The random-hadith widget is separate from the QA path. It pulls a range of Sahih al-Bukhari entries from a public API and displays the Arabic text of one of them, without showing the collection name or hadith number on screen.</p>
+<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
+<h3 id="calling-a-hosted-model-through-gradio_client">Calling a hosted model through <code>gradio_client</code><a class="h-anchor" href="#calling-a-hosted-model-through-gradio_client" title="Permanent link">#</a></h3>
+<p>The team split along a clean line: the model side published a Gradio Space, and the web side called it by name. That let the two halves work in parallel, kept the Django app tiny, and meant nobody had to deploy a model next to the website.</p>
+<p>The cost was visibility. From the web app, the model was a black box that took a question and returned text. There was no way to tell whether a bad answer came from retrieval or generation, because the app never saw what was retrieved. The call is also synchronous, creates a new client on every request and sets no timeout, so a slow Space holds the request open for as long as the Space takes.</p>
+<p>Failures had a specific shape. Any exception is shown to the user as a message (<code>Error getting response: ...</code>), and the app still saves a row with a canned apology as the answer. That keeps the user&rsquo;s question in history, which I liked at the time. It also means an outage turns into stored &ldquo;answers&rdquo; that are not answers.</p>
+<h3 id="keeping-history-in-the-database-and-searching-it-with-icontains">Keeping history in the database and searching it with <code>icontains</code><a class="h-anchor" href="#keeping-history-in-the-database-and-searching-it-with-icontains" title="Permanent link">#</a></h3>
+<p>Every question and answer is saved per user, newest first, and the search box filters with Django&rsquo;s <code>icontains</code> on either field. That gave users a working history and search with almost no code.</p>
+<p>The trade-off is that this is plain substring matching. It does no Arabic normalization: a search with diacritics won&rsquo;t match text without them, and different spellings of alef or ta marbuta are different strings. For an Arabic app, that&rsquo;s the part of search that matters most, and it isn&rsquo;t there.</p>
+<h3 id="server-rendered-forms-instead-of-an-api">Server-rendered forms instead of an API<a class="h-anchor" href="#server-rendered-forms-instead-of-an-api" title="Permanent link">#</a></h3>
+<p>The chat page is a normal HTML form that POSTs to <code>/home/answer/</code> and gets a full page back with the user&rsquo;s whole history. There&rsquo;s no JSON API, no streaming and no conversation state passed to the model; each question is sent on its own.</p>
+<p>This was the right size for a graduation project: easy to build, easy to demo, and Django&rsquo;s CSRF protection works without extra effort. The cost is that the user waits on a blank page while the model runs, and follow-up questions like &ldquo;and what about the second one?&rdquo; have no context to lean on.</p>
+<p>Auth sits in between. The <code>Login</code> model is custom rather than Django&rsquo;s <code>User</code>, but it does hash passwords with Django&rsquo;s <code>make_password</code> and <code>check_password</code>. Sessions are handled by hand by putting the email in <code>request.session</code>. It works, but it duplicates what <code>django.contrib.auth</code> already does.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I can verify from the repository:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What the code shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Question answering</td>
+<td>One call per question to a hosted Space; answer stored and rendered as text</td>
+</tr>
+<tr>
+<td>Sources and grading</td>
+<td>Not returned separately by the call, so not shown separately by the app</td>
+</tr>
+<tr>
+<td>History</td>
+<td>Per-user, newest first, substring search</td>
+</tr>
+<tr>
+<td>Failure handling</td>
+<td>Error message to the user plus a stored placeholder answer</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td><code>home/tests.py</code> is the Django default with no tests</td>
+</tr>
+<tr>
+<td>Evaluation</td>
+<td>None in this repository</td>
+</tr>
+<tr>
+<td>Grade</td>
+<td>A+, as reported for the graduation project</td>
+</tr>
+</tbody>
+</table></div>
+<p>I don&rsquo;t have a recorded accuracy figure for the question-answering model. If the team evaluated it, that work lived with the Space, not here. The virtualenv in the repo was created in April 2024, which fits the spring-2024 delivery; the code was pushed to GitHub in March 2026.</p>
+<h2 id="what-production-taught-me-after">What production taught me after<a class="h-anchor" href="#what-production-taught-me-after" title="Permanent link">#</a></h2>
+<p>Two years later I built a bilingual Arabic and English support assistant at Waffarha. Looking back at this app, almost every gap that hurt there was already visible here.</p>
+<p><strong>Measure retrieval and answers separately.</strong> Here, the web app couldn&rsquo;t see retrieval at all. At Waffarha, the same run scored retrieval at 151 of 172 checked cases (87.8%) and the full pipeline at 64 of 225 (28.4%). Without both numbers I would have fixed the wrong half. I wrote that up in <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>.</p>
+<p><strong>Have an eval suite before claiming quality.</strong> This repo has no tests and no evaluation set. The production assistant has a 225-case suite across 20 categories, including prompt injection, out-of-scope questions and checks for merchants that don&rsquo;t exist, and its runner exits non-zero unless every case passes.</p>
+<p><strong>Don&rsquo;t send everything to the model.</strong> Here, every non-empty question went straight to the Space. In production, greetings, gibberish, injection attempts, unknown merchants and out-of-scope questions are answered or refused by plain rules before any model call, with refusal floors on retrieval similarity. That&rsquo;s in <a href="../articles/deterministic-gates-before-llm.html">Deterministic gates before the LLM</a>.</p>
+<p><strong>Fail to a safe answer, not a stored apology.</strong> Here, an exception became a fake answer in the user&rsquo;s history. In production, a fact check compares prices, dates and IDs in the draft against the sources, retries once with a critique, and otherwise falls back to a minimal factual reply and a handoff offer.</p>
+<p><strong>Carry evidence with the answer.</strong> For religious content this matters even more than for deals. A hadith answer is only useful if the reader can see which collection and number it came from. In the production pipeline each turn carries its own evidence, reset at the start of the turn, and refusals carry none, so an answer never ships with someone else&rsquo;s sources. This app never had a channel for evidence at all.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>If I picked this project up again, in order:</p>
+<ol>
+<li>Change the model call to return the answer plus its retrieved passages and their references (collection, book, number, and any grading the source data carries), and render those under the answer instead of relying on the answer text.</li>
+<li>Write a small evaluation set of real questions with expected hadith references, and score retrieval and answers separately.</li>
+<li>Add a timeout and keep failed calls out of history, or mark them clearly as errors.</li>
+<li>Normalize Arabic for history search: strip diacritics and unify alef and ta marbuta forms on both the query and the stored text.</li>
+<li>Replace the custom login with <code>django.contrib.auth</code> and add a few view tests.</li>
+</ol>
+<p>The useful thing about this project, looking back, isn&rsquo;t that it worked. It&rsquo;s that it showed me where I needed to see inside the system and couldn&rsquo;t.</p>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li><a href="../projects/hadith-chat-app.html">Case page</a></li>
+<li><a href="https://github.com/Eng-Zakaria/Hadith_Chat_App">GitHub: Eng-Zakaria/Hadith_Chat_App</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html" data-title="My graduation-project Arabic QA app, and what production taught me after">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/arabic-rag-graduation-project.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="aws-serverless-blueprint.html"><small>← Newer</small><b>A serverless task API in AWS CDK, reviewed before its first deploy</b></a>
+          <a class="post-pager-next" href="aquawatch-iot-alerts.html"><small>Older →</small><b>AquaWatch: sensor alerts with cooldown logic</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

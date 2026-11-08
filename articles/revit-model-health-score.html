@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run | Mohammed Zakaria</title>
+  <meta name="description" content="How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html">
+  <meta property="og:title" content="A 0–100 health score for Revit models: the design, the formula, and what blocks a first run | Mohammed Zakaria">
+  <meta property="og:description" content="How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A 0–100 health score for Revit models: the design, the formula, and what blocks a first run", "description": "How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html", "wordCount": 1699, "keywords": "BIM, Python, Automation"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">BIM</span><span class="post-tag">Python</span><span class="post-tag">Automation</span></div>
+        <h1>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run</h1>
+        <p class="post-lede">How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-a-subtractive-score-instead-of-a-ratio">Decision 1: a subtractive score instead of a ratio</a></li>
+<li><a href="#decision-2-majority-vote-instead-of-expected-values">Decision 2: majority vote instead of expected values</a></li>
+<li><a href="#decision-3-run-inside-revit-rather-than-on-exported-data">Decision 3: run inside Revit rather than on exported data</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Portfolio tool, not yet run on a live Revit model.</strong> There is no client, no saved report, no log file and no test suite. Everything below comes from reading the code: about 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.</p>
+<p>I work on data pipelines, and the idea behind this project is one I use there every day: run checks, count what fails, and turn the count into a number someone can track. Here the dataset is a Revit model instead of a table.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Revit is the building-design tool most architecture and engineering firms use. A Revit model is a database of <em>elements</em> (walls, doors, furniture, views, sheets). Each element has a <em>category</em> (Walls, Doors) and a set of named <em>parameters</em>, which work like columns: &ldquo;Fire Rating&rdquo;, &ldquo;Type Mark&rdquo;, &ldquo;Level&rdquo;.</p>
+<p>Models get messy the way shared tables do. Required parameters are left blank. Two walls get drawn on top of each other. Views pile up with no template and no naming convention. Nobody notices until a coordination meeting or a schedule export goes wrong. A BIM manager can check by hand, but not on every model every week.</p>
+<p>So the question was: can a single button inside Revit audit the open model and give it a 0–100 grade, with a report behind the number?</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The tool is a pyRevit extension. pyRevit is a plug-in host that adds ribbon buttons to Revit and runs a Python script against the open document when you click one. That matters for the design: the audit runs <strong>inside Revit, on the live model</strong>, through the Revit API. It does not read an exported file.</p>
+<div class="hl"><pre><span></span><code>Revit (open document)
+   |
+   | Revit API: FilteredElementCollector by category
+   v
++---------------------------- script.py: ModelHealthAnalyzer ----------------------------+
+|  orphaned / problem elements   parameter consistency   view audit   performance   worksets |
+|  (geometry, missing params,    (80% majority rule)     (template,   (counts,      (borrowed |
+|   duplicate walls, unhosted)                            empty, size, links)        elements)|
++----------------------------------------------------------------------------------------+
+   |  each analyzer -&gt; report.add_section(name, data)
+   v
+ModelHealthReport (utils.py)
+   |  generate_summary(): critical = orphaned findings
+   |                      warnings = parameter outliers + views with issues
+   |  score = max(0, 100 - 10*critical - 2*warnings)
+   v
++-------------------+   +------------------------+   +--------------------------------+
+| JSON report       |   | HTML report (template) |   | WPF dashboard, 6 tabs          |
+| ./reports/*.json  |   | ./reports/*.html       |   | (built in code, no XAML)       |
++-------------------+   +------------------------+   +--------------------------------+
+</code></pre></div>
+
+<p>Each analyzer is a method on one class. It collects elements by category, applies a rule, and adds a section of plain dicts to the report object. Settings live in a JSON config (<code>config/settings.json</code>), created with defaults on first run: which categories to check, required parameters per category (Fire Rating and Type Mark on walls and doors, Type Mark on windows), and thresholds such as 10,000 elements per view.</p>
+<p>The checks are:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Analyzer</th>
+<th>What it flags</th>
+<th>Counts toward score as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Orphaned / problem elements</td>
+<td>Walls, floors, roofs, curtain panels whose geometry is <code>None</code> or throws; elements missing a required parameter; walls with the same start/end point (rounded to 0.01 ft); unhosted Generic Models</td>
+<td>critical</td>
+</tr>
+<tr>
+<td>Parameter consistency</td>
+<td>Values held by less than 80% of a category&rsquo;s elements</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>View audit</td>
+<td>Views with no template, no elements, more than 10,000 elements, or a name that breaks a simple rule (plans need a <code>-</code>, sections need &ldquo;Section&rdquo;/&rdquo;Sec&rdquo;)</td>
+<td>warning (one per view)</td>
+</tr>
+<tr>
+<td>Performance</td>
+<td>More than 50,000 elements, more than 1,000 stairs/railings/ramps/topography, unloaded links</td>
+<td>not scored</td>
+</tr>
+<tr>
+<td>Worksharing</td>
+<td>Borrowed elements, non-editable worksets</td>
+<td>not scored</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-a-subtractive-score-instead-of-a-ratio">Decision 1: a subtractive score instead of a ratio<a class="h-anchor" href="#decision-1-a-subtractive-score-instead-of-a-ratio" title="Permanent link">#</a></h2>
+<p>The score lives in two places, <code>ModelHealthReport.export_to_html</code> and the dashboard&rsquo;s overview panel, and both use the same line:</p>
+<div class="hl"><pre><span></span><code><span class="n">health_score</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span> <span class="o">-</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;critical_issues&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;warnings&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Start at 100. Take off 10 points for each critical finding and 2 for each warning. Stop at 0. The dashboard colours it green at 80 or more, orange at 60 or more, and red below that.</p>
+<p>I chose this because anyone can recompute it in their head. &ldquo;You lost 30 points for three duplicate walls&rdquo; is easy to explain in a meeting. A weighted ratio isn&rsquo;t.</p>
+<p>The trade-off is that it ignores model size, and it hits zero fast. Ten critical findings already give a score of 0. On a real project, ten walls missing a Fire Rating is a normal Tuesday, so most real models would score 0 and the number would stop telling you anything. Three critical findings and fifteen warnings give 100 − 30 − 30 = 40, whether the model has 500 elements or 500,000.</p>
+<p>The views tab already does it the other way. It shows its own &ldquo;Health Score&rdquo; as <code>(total_views - problematic_views) / total_views * 100</code>, a ratio. So the tool currently reports two scores built on different ideas. The next version should pick one. I&rsquo;d go with a ratio of findings per checked element, with a weight for each severity.</p>
+<h2 id="decision-2-majority-vote-instead-of-expected-values">Decision 2: majority vote instead of expected values<a class="h-anchor" href="#decision-2-majority-vote-instead-of-expected-values" title="Permanent link">#</a></h2>
+<p>For parameter consistency I did not want users to write a rule for every parameter. <code>ParameterAnalyzer.analyze_parameter_consistency</code> groups a category&rsquo;s elements by parameter value, takes the most common value as &ldquo;expected&rdquo;, and flags every group that holds less than 80% of the elements:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parameter_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">value</span><span class="p">,</span> <span class="n">elems</span> <span class="ow">in</span> <span class="n">parameter_values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elems</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.8</span><span class="p">:</span>  <span class="c1"># Less than 80% have this value</span>
+</code></pre></div>
+
+<p>This works without setup, and it&rsquo;s the same idea as a profiling check on a column: if 95% of rows say &ldquo;2 HR&rdquo;, the other 5% are worth a look.</p>
+<p>It has two weaknesses. First, if no value reaches 80%, every group gets flagged, including the majority, so a parameter split 60/40 turns 100% of its elements into warnings. Second, the parameters it checks are hard-coded as <code>Type Mark</code>, <code>Family</code> and <code>Type Name</code>. Family and Type Name are <em>supposed</em> to vary across a category, so they mostly produce noise. Type Mark is a type parameter, and an instance-level <code>LookupParameter</code> normally won&rsquo;t find it at all. The Dynamo sample (<code>consistency_node.py</code>) uses the same 80% rule but adds an optional expected-value input. That&rsquo;s the better design: majority vote by default, explicit expected values where the team has a standard.</p>
+<h2 id="decision-3-run-inside-revit-rather-than-on-exported-data">Decision 3: run inside Revit rather than on exported data<a class="h-anchor" href="#decision-3-run-inside-revit-rather-than-on-exported-data" title="Permanent link">#</a></h2>
+<p>Running in pyRevit means no export step. The tool sees the live model, including geometry, view templates, links and worksets, and the one write action (deleting duplicate walls) can go through a Revit transaction. <code>RevitHelper.safe_execute_in_transaction</code> starts a transaction, runs the function, commits, and rolls back on any exception.</p>
+<p>The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit, and there are no tests. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no run results to report. The repository has no <code>reports/</code> folder, no <code>logs/model_health.log</code>, no <code>config/settings.json</code> (it would be created on first run), and no tests. The C# README says plainly that its sample was &ldquo;not compiled or tested here&rdquo;, and the Dynamo README says the graph was authored &ldquo;without a live Revit session&rdquo;.</p>
+<p>What I could check without Revit was the code itself. One check I ran: the HTML report template is filled with <code>str.format</code>, but it has CSS rules like <code>body { font-family: ... }</code> inline. Running the same pattern in Python gives <code>KeyError(' font-family')</code>, so the HTML export would fail before writing a file.</p>
+<p>Reading the rest of the code turned up these blockers for a first run:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Defect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Start-up</td>
+<td><code>RevitHelper.__init__</code> reads <code>doc.Application.ActiveUIDocument</code>. That property belongs to <code>UIApplication</code>, not the database <code>Application</code>, so the constructor fails.</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>The scripts use f-strings and <code>os.makedirs(..., exist_ok=True)</code>. pyRevit&rsquo;s default engine is IronPython 2.7, which rejects both, and there is no <code>#! python3</code> engine marker.</td>
+</tr>
+<tr>
+<td>Imports</td>
+<td><code>script.py</code> adds only <code>lib/</code> to <code>sys.path</code>, then imports <code>ui.dialogs</code>. It also uses <code>datetime</code> and <code>MessageBoxIcon</code> without importing them.</td>
+</tr>
+<tr>
+<td>Counting</td>
+<td><code>analyze_model_performance</code> calls <code>GetElementCount()</code> on a collector with no filter. The Revit API requires a filter first.</td>
+</tr>
+<tr>
+<td>Checks</td>
+<td>The unhosted-family check tests <code>hasattr(family, 'FamilySymbol')</code>, but a family instance exposes <code>Symbol</code>, so the check never fires.</td>
+</tr>
+<tr>
+<td>Reports</td>
+<td>Apart from the <code>KeyError</code>, the HTML section builder reads keys (<code>element</code>, <code>value</code>, <code>expected</code>) that the parameter records don&rsquo;t have (<code>element_name</code>, <code>current_value</code>, <code>expected_value</code>).</td>
+</tr>
+<tr>
+<td>Fix-ups</td>
+<td><code>fix_common_issues</code> calls <code>fix_parameter_consistency</code> and <code>cleanup_duplicate_views</code>, which aren&rsquo;t defined. The dashboard&rsquo;s Delete, Select, Export and Fix buttons only show a message box.</td>
+</tr>
+<tr>
+<td>Packaging</td>
+<td><code>bundle.yaml</code> points to a <code>BIMModelHealthAnalyzer.dll</code> and an <code>icon.png</code>, and neither is in the folder.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="admonition note">
+<p class="admonition-title">Where this stands</p>
+<p>The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft. It has never run against a live model, so I have no recorded score, runtime or issue count to report.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make it run.</strong> Fix the start-up and import defects, choose one Python engine (CPython via pyRevit&rsquo;s <code>#! python3</code> marker, or rewrite for IronPython 2.7), and build the HTML report with a templating step that escapes CSS braces.</li>
+<li><strong>Split extraction from rules.</strong> Have the Revit script turn elements into plain dicts, and run the checks on those dicts with pytest, using a small fixture model.</li>
+<li><strong>Normalise the score.</strong> Score findings per checked element, give each severity a weight, and use the same formula in the HTML report and on every dashboard tab.</li>
+<li><strong>Configurable consistency rules.</strong> Drop Family and Type Name. Check instance and type parameters separately. Let the config name expected values, and fall back to majority vote only where none are set.</li>
+<li><strong>Record evidence.</strong> Run it on a sample model (Autodesk ships some), and commit the JSON report and the timing log so the numbers in the write-up can be checked.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/bim-model-health.html">BIM Model Health Analyzer</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html" data-title="A 0–100 health score for Revit models: the design, the formula, and what blocks a first run">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="six-stage-client-etl.html"><small>← Newer</small><b>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</b></a>
+          <a class="post-pager-next" href="retail-cdc-debezium.html"><small>Older →</small><b>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

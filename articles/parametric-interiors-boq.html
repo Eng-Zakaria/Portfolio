@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Ten interior specs, one priced BOQ: parametric Revit generation from JSON | Mohammed Zakaria</title>
+  <meta name="description" content="How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html">
+  <meta property="og:title" content="Ten interior specs, one priced BOQ: parametric Revit generation from JSON | Mohammed Zakaria">
+  <meta property="og:description" content="How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Ten interior specs, one priced BOQ: parametric Revit generation from JSON", "description": "How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html", "wordCount": 1778, "keywords": "BIM, Python, Automation"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">BIM</span><span class="post-tag">Python</span><span class="post-tag">Automation</span></div>
+        <h1>Ten interior specs, one priced BOQ: parametric Revit generation from JSON</h1>
+        <p class="post-lede">How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-keep-the-logic-pure-and-ironpython-safe">Decision 1: keep the logic pure and IronPython-safe</a></li>
+<li><a href="#decision-2-the-boq-comes-from-the-spec-not-from-the-model">Decision 2: the BOQ comes from the spec, not from the model</a></li>
+<li><a href="#decision-3-per-element-transactions-logged-never-fatal">Decision 3: per-element transactions, logged, never fatal</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: <strong>Portfolio project, demo content.</strong> The geometry is original and the specs are hand-written. The Revit models were built on my own machine, and the prices are illustrative figures I typed into the specs, not supplier quotes. Every number below comes from the build logs, the generated report, or the BOQ CSVs in the repo.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Interior fit-out documentation repeats itself. Every project needs the same work done in the same order: levels, grids, walls, openings, rooms with finishes, then sockets, sanitaryware, furniture and lights, then sheets. Someone also has to count all of it and put a price on it. Doing this by hand in Revit is slow. The quantities also drift: someone moves a sofa in the model and the spreadsheet never hears about it.</p>
+<p>I wanted one source of truth per project, a JSON file, and a pipeline that turns it into three things: a Revit model, an open IFC copy, and a priced bill of quantities (BOQ). The pipeline also had to be testable on a machine with no Revit installed.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Each project is one schema v2 JSON spec in <code>InteriorsToolkit.extension/projects/</code>. There are ten of them: a 45 m² studio, 2-bed, 3-bed and 4-bed apartments, a duplex, a penthouse, a 240 m² office, a 60 m² hotel suite, a 250 m² two-level villa, and a hand-sketch apartment (P05). P05 is walls, doors, windows and rooms only, with no fixtures or furniture.</p>
+<div class="hl"><pre><span></span><code> projects/P01..P10.json  (schema v2: levels, grids, walls, openings,
+        |                 rooms+finishes, electrical, plumbing,
+        |                 furniture, lighting, sheets, views)
+        |
+        +--&gt; project_builder_core.validate_project()   pure Python, no Revit
+        |          |
+        |          +--&gt; build_plan()             counts, wall lengths/areas
+        |          +--&gt; build_element_inventory() one dict per fixture (qty-expanded)
+        |                     |
+        |                     +--&gt; audit_core.audit_elements()  missing Manufacturer/Model/Price,
+        |                     |                                 invalid price, no level ...
+        |                     +--&gt; boq_core.build_boq()         group + price -&gt; *.boq.csv
+        |          =&gt; tools/build_projects.py --report out --boq-csv
+        |             (projects_report.html + out/plans/*.plan.json, *.boq.csv)
+        |
+        +--&gt; Revit 2026 via pyRevit
+        |      BuildPortfolioRVT.py -&gt; ProjectBuilder.build_single()
+        |      TransactionGroup, one Transaction per element -&gt; SaveAs .rvt
+        |      =&gt; out/P0x-build-log.json  (created counts + errors[])
+        |
+        +--&gt; tools/build_production_ifc.py  (CPython + ifcopenshell) -&gt; out/*.ifc (IFC4)
+</code></pre></div>
+
+<p>So there are two halves. The validation, audit and BOQ half is plain CPython and runs anywhere. The modelling half runs inside Revit 2026 through <code>pyrevit run</code>. It opens a copy of a base template, calls <code>build_single()</code>, and saves the result as a native <code>.rvt</code>. The IFC files don&rsquo;t come out of Revit. A separate ifcopenshell script writes them straight from the same specs.</p>
+<h2 id="decision-1-keep-the-logic-pure-and-ironpython-safe">Decision 1: keep the logic pure and IronPython-safe<a class="h-anchor" href="#decision-1-keep-the-logic-pure-and-ironpython-safe" title="Permanent link">#</a></h2>
+<p>All the rules live in <code>interiors_toolkit/*_core.py</code>: schema checks, plan totals, inventory expansion, audit and BOQ grouping. They are written for IronPython 2.7 as well as CPython 3, so no f-strings, no dataclasses, no pathlib, and only the standard library. The module docstring states it directly: &ldquo;All functions operate on plain dicts/lists (unit-testable).&rdquo;</p>
+<p>The benefit is that the test suite and the batch report run without Revit. The repo has 12 pytest files with 54 tests, and all 54 pass locally in about four seconds. The GitHub Actions workflow runs the same suite on <code>windows-latest</code>, plus a no-Revit demo and a <code>compileall</code> of the extension.</p>
+<p>The trade-off is that the Revit-facing code in <code>ProjectBuilder.pushbutton/script.py</code> (about 700 lines) is only exercised when I run it in Revit. CI can&rsquo;t catch a placement bug in it. The build logs are the only record of what happened in those runs.</p>
+<h2 id="decision-2-the-boq-comes-from-the-spec-not-from-the-model">Decision 2: the BOQ comes from the spec, not from the model<a class="h-anchor" href="#decision-2-the-boq-comes-from-the-spec-not-from-the-model" title="Permanent link">#</a></h2>
+<p><code>boq_core.build_boq()</code> groups elements by <code>(category, family, type, level)</code>, counts them, and multiplies by a unit price read from each element&rsquo;s <code>Price</code> parameter:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">fam</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">level</span><span class="p">),</span> <span class="n">items</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">prices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">_parse_price</span><span class="p">((</span><span class="n">el</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;params&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Price&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">ok</span> <span class="ow">and</span> <span class="n">p</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">prices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+    <span class="n">unit_price</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span> <span class="k">if</span> <span class="n">prices</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">qty</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+</code></pre></div>
+
+<p>In the batch report, those elements come from <code>build_element_inventory(spec)</code>, not from a Revit model. Each furniture, lighting, electrical or plumbing row in the spec is expanded by its <code>qty</code> and given a synthetic sequential id starting at 1001. That&rsquo;s why the <code>element_ids</code> column in the CSVs reads <code>1009;1010</code> and not real Revit ElementIds.</p>
+<p>I chose this because it makes the BOQ reproducible and testable without Revit. The same function also runs inside Revit on collected elements (the BOQ panel&rsquo;s Export BOQ button). The cost is that the published BOQ proves the spec is internally consistent, not that the model matches it. The link between the two is the Revit build log. For every project, it records the same element counts the spec asks for.</p>
+<p>The prices themselves are what you would expect from demo data. They are typed into each spec item, <code>"manufacturer": "BoConcept", "model": "Aria 3-Seat", "price": 1899</code>, using real brand and model names at catalogue-style levels. The spec has no currency field, no supplier quote and no price date. The README presents them in dollars. Scope is limited too: rows cover only electrical fixtures, plumbing fixtures, furniture and lighting, counted in <code>pcs</code>. Walls, finishes, doors, windows and labour aren&rsquo;t priced.</p>
+<div class="admonition note">
+<p class="admonition-title">A small mismatch in boq_core</p>
+<p>The comment says the unit price is the &ldquo;most common non-zero price&rdquo;, but the code takes <code>max(prices)</code>. It makes no difference here, because every element in a group comes from the same spec row and shares one price. With real collected elements carrying mixed prices, it would overstate the total.</p>
+</div>
+<h2 id="decision-3-per-element-transactions-logged-never-fatal">Decision 3: per-element transactions, logged, never fatal<a class="h-anchor" href="#decision-3-per-element-transactions-logged-never-fatal" title="Permanent link">#</a></h2>
+<p><code>build_single()</code> wraps a project in one <code>TransactionGroup</code> and gives every level, grid, wall, opening, room, fixture and sheet its own <code>Transaction</code> inside a try/except. A failure rolls back that one element and is appended to <code>created["errors"]</code>. The rest of the build continues. Missing families are added to <code>created["skipped"]</code> without stopping the run.</p>
+<p>Fixtures and furniture are placeholders. <code>find_symbol()</code> picks the first family type in the template whose name matches a hint, falling back to any type in that category. The spec&rsquo;s Manufacturer, Model, Finish and Price are then written onto the instance as parameters. So a &ldquo;Jung LS990 socket&rdquo; in the <code>.rvt</code> is a template family carrying Jung&rsquo;s parameters, not a Jung content family.</p>
+<p>Views aren&rsquo;t created at all. Every build log says <code>"N views logged only (create/apply templates manually)"</code>.</p>
+<p>I also wrote a compiled C# add-in, <code>src/Interiors.Batch</code> (net48), for headless runners such as Revit Batch Processor and Design Automation. It reads <code>PROJECT_JSON</code> and <code>HEADLESS</code> from environment variables. When <code>HEADLESS=1</code> it skips the <code>TaskDialog</code> and logs to <code>%TEMP%\Interiors.Batch\</code>. <code>RevitApiStubs.cs</code> lets it compile without Revit. The scope is limited, though. <code>ResizeChairsCmd</code> is a complete command, but <code>BatchBuildCmd</code> is documented in its own code as a skeleton that &ldquo;validates + logs the plan … but does not create elements yet&rdquo;. The CI workflow doesn&rsquo;t build the C# project. Every model in this portfolio was built by the pyRevit path.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>From <code>out/projects_report.html</code> (generated 2026-10-03) and the BOQ CSVs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Project</th>
+<th>Rooms</th>
+<th>D/W</th>
+<th>E/P</th>
+<th>F/L</th>
+<th>Sheets</th>
+<th>BOQ rows</th>
+<th>BOQ total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P01</td>
+<td>Studio 45 m²</td>
+<td>2</td>
+<td>3/4</td>
+<td>9/4</td>
+<td>4/4</td>
+<td>2</td>
+<td>15</td>
+<td>6,054</td>
+</tr>
+<tr>
+<td>P02</td>
+<td>2-bed 75 m²</td>
+<td>4</td>
+<td>4/4</td>
+<td>13/5</td>
+<td>9/7</td>
+<td>3</td>
+<td>19</td>
+<td>10,138</td>
+</tr>
+<tr>
+<td>P03</td>
+<td>3-bed 120 m²</td>
+<td>6</td>
+<td>6/7</td>
+<td>19/11</td>
+<td>13/15</td>
+<td>4</td>
+<td>26</td>
+<td>16,743</td>
+</tr>
+<tr>
+<td>P04</td>
+<td>Duplex 160 m²</td>
+<td>7</td>
+<td>6/7</td>
+<td>22/10</td>
+<td>10/17</td>
+<td>4</td>
+<td>30</td>
+<td>14,996</td>
+</tr>
+<tr>
+<td>P05</td>
+<td>Sketch 3-bed 140 m²</td>
+<td>12</td>
+<td>10/8</td>
+<td>0/0</td>
+<td>0/0</td>
+<td>2</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>P06</td>
+<td>Penthouse 185 m²</td>
+<td>9</td>
+<td>11/7</td>
+<td>33/12</td>
+<td>15/23</td>
+<td>5</td>
+<td>31</td>
+<td>24,302</td>
+</tr>
+<tr>
+<td>P07</td>
+<td>Office 240 m²</td>
+<td>8</td>
+<td>9/7</td>
+<td>38/9</td>
+<td>42/24</td>
+<td>5</td>
+<td>24</td>
+<td>39,544</td>
+</tr>
+<tr>
+<td>P08</td>
+<td>Villa 250 m²</td>
+<td>10</td>
+<td>9/8</td>
+<td>30/13</td>
+<td>13/23</td>
+<td>5</td>
+<td>33</td>
+<td>21,407</td>
+</tr>
+<tr>
+<td>P09</td>
+<td>Hotel suite 60 m²</td>
+<td>4</td>
+<td>4/4</td>
+<td>8/4</td>
+<td>7/7</td>
+<td>3</td>
+<td>19</td>
+<td>8,980</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>Family 4-bed 150 m²</td>
+<td>7</td>
+<td>10/8</td>
+<td>17/6</td>
+<td>15/12</td>
+<td>4</td>
+<td>22</td>
+<td>14,569</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>BOQ total: 156,733</strong> (the README uses $). It sums nine priced projects and 219 rows. I re-summed the nine CSVs and got the same figure, with zero unpriced rows.</li>
+<li><strong>Zero errors</strong> has three specific meanings. First, <code>validate_project()</code> returned 0 schema errors for all 11 specs in the report (the ten projects plus a legacy sample). Second, <code>audit_core</code> found 0 issues on each spec-derived inventory. Third, the nine Revit build logs (P01–P04, P06–P10) all end with <code>"errors": []</code>, and their created counts match the spec.</li>
+<li><strong>Independent check:</strong> <code>VerifyPortfolio.py</code> reopened two saved models and counted them. P06 has 12 walls, 11 doors, 7 windows and 9 rooms. The P08 build has 17 walls, 9 doors, 8 windows and 10 rooms on L1 and L2.</li>
+<li><strong>IFC4:</strong> all ten projects have an <code>.ifc</code> with <code>FILE_SCHEMA(('IFC4'))</code>. The plan PNGs are matplotlib renders of the specs. Revit 3D and plan view exports exist for P01–P04.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What the numbers don&rsquo;t cover</p>
+<p>P05&rsquo;s <code>.rvt</code> is byte-identical to the empty base template, so P05 exists as a spec, an IFC and a plan image only. For P08, the built model is saved as <code>P08build.rvt</code>. The file named <code>P08-villa-250m2.rvt</code> is a base copy that was never renamed. Nine projects have a Revit build behind them, not ten.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Read the BOQ from the model.</strong> Run <code>build_boq()</code> on elements collected from each saved <code>.rvt</code> and diff the result against the spec BOQ with <code>diff_boq()</code>, which already exists. That turns &ldquo;the spec is consistent&rdquo; into &ldquo;the model matches the spec&rdquo;.</li>
+<li><strong>Give prices a source.</strong> Add <code>currency</code>, <code>price_date</code> and <code>supplier_ref</code> to the schema, and have the audit flag any price without them. Then the total can be described as more than illustrative.</li>
+<li><strong>Finish <code>BatchBuildCmd</code>.</strong> Port the seven build phases to C#, retarget to <code>net8.0-windows</code> for Revit 2025+, and add a <code>dotnet build</code> step to CI against the stubs.</li>
+<li><strong>Fix the loose ends.</strong> Rename the P08 model, either build P05 or drop its <code>.rvt</code>, create the views the specs list, and swap <code>max()</code> for a real mode in <code>boq_core</code>.</li>
+<li><strong>Price the shell.</strong> Add wall, finish and opening quantities to the BOQ, since the spec already carries wall lengths and room finishes.</li>
+</ul>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/interiors-toolkit.html">Interiors Toolkit</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html" data-title="Ten interior specs, one priced BOQ: parametric Revit generation from JSON">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/parametric-interiors-boq.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="partner-price-integrity-check.html"><small>← Newer</small><b>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</b></a>
+          <a class="post-pager-next" href="one-warehouse-ten-clinics.html"><small>Older →</small><b>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -2,6 +2,7 @@
   "adsb-flight-radar-streaming.html",
   "agent-that-cant-go-rogue.html",
   "aquawatch-iot-alerts.html",
+  "arabic-rag-graduation-project.html",
   "aws-serverless-blueprint.html",
   "bilingual-rag-retrieval-hit-rate.html",
   "brand-radar-connector-registry.html",
@@ -16,12 +17,15 @@
   "fraud-scoring-kafka.html",
   "gdpr-native-chain-analytics.html",
   "one-warehouse-ten-clinics.html",
+  "parametric-interiors-boq.html",
   "partner-price-integrity-check.html",
   "petroleum-nifi-beam-flink.html",
   "redacting-160k-support-chats.html",
   "reddit-medallion-pyspark.html",
   "retail-cdc-debezium.html",
+  "revit-model-health-score.html",
   "six-stage-client-etl.html",
   "telecom-lakehouse-8-domains.html",
-  "watchdog-price-intel.html"
+  "watchdog-price-intel.html",
+  "wholesale-radar-lead-mapping.html"
 ]

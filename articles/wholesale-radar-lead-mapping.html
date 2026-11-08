@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Mapping Egyptian apparel wholesalers from public directories | Mohammed Zakaria</title>
+  <meta name="description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html">
+  <meta property="og:title" content="Mapping Egyptian apparel wholesalers from public directories | Mohammed Zakaria">
+  <meta property="og:description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Mapping Egyptian apparel wholesalers from public directories", "description": "A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html", "wordCount": 1800, "keywords": "Web Scraping, Data Pipelines, Entity Resolution"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Entity Resolution</span></div>
+        <h1>Mapping Egyptian apparel wholesalers from public directories</h1>
+        <p class="post-lede">A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-business-listings-only-and-a-context-gate-for-free-text">Decision 1: business listings only, and a context gate for free text</a></li>
+<li><a href="#decision-2-deterministic-entity-resolution-with-a-review-queue">Decision 2: deterministic entity resolution with a review queue</a></li>
+<li><a href="#decision-3-pace-requests-and-resume-instead-of-going-fast">Decision 3: pace requests and resume instead of going fast</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#lawful-basis-and-consent">Lawful basis and consent</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><em>Evidence: Portfolio, freelance client project (Sep–Oct 2026). The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A client selling men&rsquo;s casual clothing at wholesale wanted a list of shops and wholesale offices across Egypt they could contact: shop name, area, governorate, and a phone number the business had published itself. The first idea on the table was &ldquo;scrape Facebook and Instagram commenters&rdquo;. I ruled that out early, and that choice shaped the rest of the project.</p>
+<p>People who comment &ldquo;how much?&rdquo; or &ldquo;interested&rdquo; under a wholesale post almost never include a phone number, and their profiles don&rsquo;t expose one publicly. Getting at those numbers would mean logging in, breaking platform terms, and harvesting personal data, which creates liability under Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020). Businesses, on the other hand, list themselves in public directories precisely so customers can find and call them. So the pipeline targets business listings, and treats social platforms as something you work with through manual exports, not live scraping.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The project is plain Python 3.13: <code>requests</code> for server-rendered pages, Playwright for one directory that needs a real browser, pandas and openpyxl for exports. There are no workers, queues or framework. Each source has its own collector script that writes a CSV in a shared column layout, plus a resumable progress file.</p>
+<div class="hl"><pre><span></span><code> PUBLIC BUSINESS DIRECTORIES                      SOCIAL (manual export only)
+ Yellow Pages EG (area catalogs)                  own FB Page / Group export JSON
+ to-all.com, dalilmadina, EgypYello               Ad Library search URLs (opened by hand)
+ buy.com.eg (JSON-LD), brand store pages          IG / TikTok export files
+ QIZ garment-factory list (PDF)                          |
+        |                                         phone_extractor (contact-hint gate)
+        v                                         intent_collector: seller vs buyer
+ per-source collector  -&gt; shops_*.csv                    |
+ (jittered delay, resume file)                           v
+        |                                         SQLite: leads / buyer_intent
+        v
+ merge_governorates.py  (dedupe on phone+name, drop Cairo/Giza leaks)
+        |
+        v
+ entity_resolution.build_canonical
+   definitely same: shared phone | shared directory id
+   probably same:   normalized Arabic name + same governorate
+   uncertain:       same name, different areas -&gt; review queue
+        |
+        v
+ build_business_db.py -&gt; businesses.csv/.xlsx, contacts.csv, review_queue.csv
+</code></pre></div>
+
+<p>Fields kept per business: name, normalized name, governorate, area, address, category, phone numbers, a WhatsApp link column, any Facebook/Instagram/TikTok page found on the business&rsquo;s own website, source and evidence URL, a verification status, and a member count. The factory list also carries a contact title per company, because that is how the source publishes it.</p>
+<p>Two optional paths exist but were never run live. A Google Places adapter (<code>src/places_adapter.py</code>) reads its key from the environment and caches results; it was tested only in mock mode, so no money was spent. A Google Maps text-search collector exists for the same reason. None of the saved outputs come from Google Maps.</p>
+<h2 id="decision-1-business-listings-only-and-a-context-gate-for-free-text">Decision 1: business listings only, and a context gate for free text<a class="h-anchor" href="#decision-1-business-listings-only-and-a-context-gate-for-free-text" title="Permanent link">#</a></h2>
+<p>For the social-export path, <code>extract_phones</code> only returns a number when the surrounding text contains a contact hint (WhatsApp, &ldquo;call&rdquo;, &ldquo;contact&rdquo; and similar Arabic words) or a <code>wa.me</code> link. That keeps prices, dates and quantities out, and it limits capture to numbers someone posted as contact details:</p>
+<div class="hl"><pre><span></span><code><span class="n">has_hint</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">WHATSAPP_HINT</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;wa.me&quot;</span> <span class="ow">in</span> <span class="n">t</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">require_context</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">has_hint</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">[]</span>
+</code></pre></div>
+
+<p>Arabic-Indic digits are mapped to Western digits first, so <code>٠١١...</code> and <code>011...</code> normalize to the same thing. The unit tests cover exactly those cases, and they pass.</p>
+<p>The intent collector splits the same exports into sellers (posts with a phone) and buyer intent (comments like &ldquo;how much?&rdquo;). Buyer-intent rows carry no phone. They do keep the commenter&rsquo;s username, the post URL and the comment text, though, and that is still personal data. The honest framing is &ldquo;phone-free&rdquo;, not &ldquo;personal-data-free&rdquo;.</p>
+<p>The trade-off: the gate only applies to free text. The directory collectors keep whatever number the listing shows, which is reasonable because the listing exists for contact, but it means the gate isn&rsquo;t what protects most of the data.</p>
+<h2 id="decision-2-deterministic-entity-resolution-with-a-review-queue">Decision 2: deterministic entity resolution with a review queue<a class="h-anchor" href="#decision-2-deterministic-entity-resolution-with-a-review-queue" title="Permanent link">#</a></h2>
+<p>The same shop shows up in several directories under different spellings. <code>normalize_name</code> folds alef and hamza variants, taa marbuta and alef maqsura, strips diacritics, and removes generic words like &ldquo;shop&rdquo;, &ldquo;office&rdquo;, &ldquo;store&rdquo; and &ldquo;fashion&rdquo;. Clustering then runs as a union-find in three tiers:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Signal</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Definitely same</td>
+<td>shared normalized phone, or shared directory ID</td>
+<td>merge</td>
+</tr>
+<tr>
+<td>Probably same</td>
+<td>same normalized name and same governorate</td>
+<td>merge</td>
+</tr>
+<tr>
+<td>Uncertain</td>
+<td>same name across different areas (possible chain)</td>
+<td>send to review queue, no auto-merge</td>
+</tr>
+</tbody>
+</table></div>
+<p>I chose rules over fuzzy matching or a model because a sales team has to trust the merge, and a rule is easy to explain when it is wrong. The cost is recall: two spellings that normalize differently stay as two businesses. A shared phone is a strong signal, but it can also join two different shops that list the same reseller&rsquo;s number, which is another reason the review file exists.</p>
+<h2 id="decision-3-pace-requests-and-resume-instead-of-going-fast">Decision 3: pace requests and resume instead of going fast<a class="h-anchor" href="#decision-3-pace-requests-and-resume-instead-of-going-fast" title="Permanent link">#</a></h2>
+<p>Every collector waits between requests with random jitter (from about one second to over twenty, depending on the source and flags), saves state after each page, and can be stopped and resumed. Repeated HTTP errors trigger a longer pause. On the one directory behind Cloudflare, the project notes record a challenge after about two rapid page loads, so the Playwright collector runs slowly.</p>
+<p>The project also has a written rule list of things that must not be automated: CAPTCHA solving, rate-limit evasion, logins or session reuse, personal-profile harvesting, and bulk messaging. A manual protocol covers phone numbers hidden behind a click-to-reveal button: a person opens the listing and copies the number the business published.</p>
+<div class="admonition note">
+<p class="admonition-title">Where the code falls short of the rules</p>
+<p>Pacing is real, but other guardrails are only written down. No collector reads robots.txt. Requests go out with a generic desktop browser user-agent instead of an identifying one. When a challenge page appears, the Playwright collectors wait and then retry in a fresh browser context, which discards session state; that works around a block instead of respecting it, and the right behaviour is to stop that source. One collector also automates the click-to-reveal flow that the manual protocol reserves for a person. The README mentions suppression support, but there is no suppression or opt-out table in the code. I would not call this pipeline &ldquo;ethical by design&rdquo; until those gaps are closed.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These figures come from the saved exports and experiment notes, counted in aggregate.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Run (saved output)</th>
+<th>Raw rows</th>
+<th>Canonical businesses</th>
+<th>With a phone</th>
+<th>Review queue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controlled batch, Yellow Pages Cairo/Giza (README, 2026-09-24)</td>
+<td>618</td>
+<td>532</td>
+<td>28 (5.3%)</td>
+<td>42</td>
+</tr>
+<tr>
+<td>Cairo/Giza + QIZ factories (<code>exports/</code>, 2026-09-28)</td>
+<td>n/a</td>
+<td>2,557</td>
+<td>1,780</td>
+<td>114</td>
+</tr>
+<tr>
+<td>All governorates except Cairo/Giza (<code>exports_governorates/</code>, 2026-09-29)</td>
+<td>3,497</td>
+<td>3,163</td>
+<td>3,110</td>
+<td>45</td>
+</tr>
+</tbody>
+</table></div>
+<p>The non-Cairo/Giza file spans 25 governorate labels (24 governorates plus a &ldquo;Delta&rdquo; catch-all area that one directory uses) and 246 area values. By source it draws on Yellow Pages area catalogs (1,939 businesses), dalilmadina (842), EgypYello (318), a search-engine research pass (201) and one brand&rsquo;s store page (5). Some businesses appear in more than one source.</p>
+<p>The phone-enrichment experiment was a useful negative result. Searching for each business&rsquo;s own website and reading its contact page, across a 200-business sample, added one verified number and three for review among the 157 businesses that had none (+0.6% verified). About 80% of the sample had no discoverable website. It became a secondary verification step, not a phone source.</p>
+<p>Three data-quality issues show up in those exports:</p>
+<ul>
+<li><strong>Status labels overstate verification.</strong> The build passes the same evidence type for every business with a phone, so any valid mobile is labelled &ldquo;business-associated&rdquo; regardless of source. Landlines fail the mobile-only check and are labelled &ldquo;invalid&rdquo; (767 rows in the governorates file), even though many are good business numbers.</li>
+<li><strong>WhatsApp is inferred.</strong> The project&rsquo;s own rule says WhatsApp is never assumed from a mobile prefix, but the collectors build a <code>wa.me</code> link for every 11-digit mobile. That column means &ldquo;is a mobile&rdquo;, not &ldquo;uses WhatsApp&rdquo;.</li>
+<li><strong>No coordinates.</strong> The <code>lat</code>/<code>lng</code> columns are empty in every merged file. The output is a per-governorate and per-area list, not a map. In the Cairo/Giza + QIZ file, the factory rows also put address fragments into the governorate column (461 distinct values), so that file needs cleaning before anyone groups by region.</li>
+</ul>
+<h2 id="lawful-basis-and-consent">Lawful basis and consent<a class="h-anchor" href="#lawful-basis-and-consent" title="Permanent link">#</a></h2>
+<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.</li>
+<li>Remove the automated click-to-reveal path and keep that step manual, as the protocol says.</li>
+<li>Add a <code>suppressions</code> table that every export filters through, plus <code>collected_at</code> and a retention date per contact.</li>
+<li>Fix the status logic: pass the real evidence type per source, accept landlines, and only fill the WhatsApp column when a page shows a WhatsApp link.</li>
+<li>Normalize governorate values against a fixed list of 27 and reject anything else into the review file.</li>
+<li>If the client wants a map, geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
+<li>Expand the tests. There is one test file, and it covers phone extraction and the seller/intent split, not entity resolution or the collectors&rsquo; parsers.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/automative-scrapper.html">Wholesale Radar case page</a></li>
+<li>No public repository; this was a client project.</li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html" data-title="Mapping Egyptian apparel wholesalers from public directories">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <span></span>
+          <a class="post-pager-next" href="watchdog-price-intel.html"><small>Older →</small><b>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

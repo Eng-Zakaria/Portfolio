@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Interiors Toolkit — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="pyRevit + C# Revit toolkit that generates 10 native parametric interior projects with priced BOQ, IFC4 export and schema-validated audit trails. Design automation for Revit 2026.">
+  <meta name="description" content="pyRevit toolkit that turns 10 JSON interior specs into Revit 2026 models (9 built), IFC4 copies and a priced BOQ, with schema validation, audit checks and per-project build logs.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -212,7 +212,7 @@
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-cubes"></i> Interiors Toolkit</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Parametric Revit generation: a pyRevit + C# toolkit that builds 10 production interior projects with priced BOQ and IFC4 export.
+        Parametric Revit generation: a pyRevit toolkit that turns 10 JSON interior specs into Revit models, IFC4 copies and a priced BOQ.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -247,6 +247,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/parametric-interiors-boq.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -254,16 +255,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">10</div>
-          <div class="metric-label">Native .RVT Models</div>
+          <div class="metric-value">9</div>
+          <div class="metric-label">Revit-Built Models (of 10 specs)</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">$156,733</div>
-          <div class="metric-label">Priced BOQ</div>
+          <div class="metric-label">Priced BOQ (demo prices)</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">0</div>
-          <div class="metric-label">Audit Errors</div>
+          <div class="metric-label">Validation / Audit / Build Errors</div>
         </div>
       </div>
     </section>
@@ -288,9 +289,6 @@
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/interiors-toolkit.svg" alt="Interiors Toolkit — Parametric Revit Generation Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -300,15 +298,15 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Parametric Portfolio:</strong> 10 specs, P01–P10, spanning a 45 m² studio through a 250 m² courtyard villa and a 240 m² boutique office — residential and commercial in one generated set.</li>
+        <li><strong>Parametric Portfolio:</strong> 10 schema v2 JSON specs, P01–P10, from a 45 m² studio to a 250 m² two-level villa and a 240 m² office. Nine carry full MEP, furniture and lighting; P05 is an architecture-only sketch shell.</li>
         <li><strong>Deterministic Build Order:</strong> levels → grids → walls → doors/windows → rooms (+ finishes) → electrical / plumbing / furniture / lighting → sheets, so every model is built the same way.</li>
-        <li><strong>Native + Open Outputs:</strong> native <code>.RVT</code> for Revit 2026, IFC4 backups written with <code>ifcopenshell</code>, PNG floor plans and 3D renders, plus a gallery report.</li>
-        <li><strong>Quantities Per Project:</strong> rooms, doors/windows, electrical and plumbing outlets, lighting/fixtures and sheets are captured for every model; hero projects P06 penthouse, P07 office and P08 villa each carry 5 sheets.</li>
-        <li><strong>Compiled C# Add-in:</strong> <code>Interiors.Batch</code> (net48) with <code>BatchBuildCmd</code> and <code>ResizeChairsCmd</code> as <code>IExternalCommands</code> — one outer <code>TransactionGroup</code> with a <code>Transaction</code> per item and per-item try/catch, at parity with the pyRevit script.</li>
-        <li><strong>Headless-Safe Execution:</strong> configuration comes from environment variables (<code>PROJECT_JSON</code>, <code>HEADLESS</code>, <code>CHAIR_FILTER</code>, <code>CHAIR_TO_MM</code>, <code>CHAIR_ROOMS</code>) and <code>TaskDialog</code> is deliberately omitted, because modal input blocks the Revit Batch Processor and Design Automation runs. Ships with a <code>.addin</code> manifest and a Batch Processor starter manifest.</li>
-        <li><strong>CI Without Revit:</strong> <code>RevitApiStubs.cs</code> lets the project compile with Revit absent from the machine, with 36 pytest files and GitHub CI on top.</li>
-        <li><strong>Audit Trail:</strong> P06 verifies at 12 walls, 11 doors, 7 windows, 9 rooms and 5 sheets; schema v2 validation reports 0 audit errors, and build/export logs are written per project.</li>
-        <li><strong>Cost Roll-Up & BI:</strong> the priced BOQ totals $156,733 across the portfolio, and Power BI-ready CSVs land in <code>out/plans/</code>.</li>
+        <li><strong>Native + Open Outputs:</strong> native <code>.RVT</code> for Revit 2026 built through <code>pyrevit run</code> (9 projects; P05 exists as IFC and plan only), IFC4 files written from the specs with <code>ifcopenshell</code>, matplotlib plan PNGs, Revit view exports for P01–P04, and an HTML build report.</li>
+        <li><strong>Quantities Per Project:</strong> rooms, doors/windows, electrical and plumbing points, furniture, lighting and sheets are counted per project; P06, P07 and P08 each carry 5 sheets. Fixtures are placed as template families carrying the spec's Manufacturer/Model/Price parameters; views are listed in the log, not created.</li>
+        <li><strong>C# Add-in (in progress):</strong> <code>Interiors.Batch</code> (net48) with <code>ResizeChairsCmd</code> (complete: one outer <code>TransactionGroup</code>, a <code>Transaction</code> per change) and <code>BatchBuildCmd</code>, a skeleton that validates and logs a project plan but does not create elements yet. The models were built by the pyRevit path.</li>
+        <li><strong>Headless-Safe Execution:</strong> configuration comes from environment variables (<code>PROJECT_JSON</code>, <code>HEADLESS</code>, <code>CHAIR_FILTER</code>, <code>CHAIR_TO_MM</code>, <code>CHAIR_ROOMS</code>); there is no text-input dialog, and <code>HEADLESS=1</code> suppresses the summary <code>TaskDialog</code>, because modal UI blocks Batch Processor and Design Automation runs. A sample <code>.addin</code> manifest is in the README and a Batch Processor config is in <code>tools/</code>.</li>
+        <li><strong>Tests Without Revit:</strong> the core logic is pure, IronPython-safe Python, covered by 12 pytest files (54 tests, all passing) that GitHub CI runs on Windows; <code>RevitApiStubs.cs</code> lets the C# project compile without Revit installed (CI does not build it yet).</li>
+        <li><strong>Audit Trail:</strong> 0 schema v2 validation errors and 0 audit issues across all specs; 9 per-project Revit build logs with empty error lists; reopened models verified for P06 (12 walls, 11 doors, 7 windows, 9 rooms) and P08 (17 walls, 9 doors, 8 windows, 10 rooms).</li>
+        <li><strong>Cost Roll-Up & BI:</strong> the BOQ totals $156,733 across nine priced projects (219 rows of fixtures, furniture and lighting, at illustrative unit prices typed into the specs; no walls, finishes or labour), written as flat CSVs to <code>out/plans/</code>.</li>
       </ul>
     </section>
 
@@ -317,26 +315,26 @@
       <h3>Challenges & Solutions</h3>
 
       <div class="challenge-card"><h4>Challenge: Scripting Can't Ship to Design Automation</h4><p>pyRevit scripting was fine interactively, but Design Automation needs a compiled DLL and pyRevit cannot produce one.</p></div>
-      <div class="solution-card"><h4>Solution: A net48 Add-in With Stub-Based CI</h4><p>Built the C# <code>Interiors.Batch</code> add-in alongside the script, using <code>RevitApiStubs.cs</code> so CI can compile it without Revit installed, and environment variables for all configuration.</p></div>
+      <div class="solution-card"><h4>Solution: A net48 Add-in With Stub-Based CI</h4><p>Started the C# <code>Interiors.Batch</code> add-in alongside the script, with <code>RevitApiStubs.cs</code> so it compiles without Revit installed and environment variables for all configuration. The chair-resize command is complete; the batch build command still only validates and logs.</p></div>
       <div class="challenge-card"><h4>Challenge: Modal Dialogs Hang Headless Runs</h4><p>Revit is stateful and modal: a <code>TaskDialog</code> waiting for a click will stall the Batch Processor and Design Automation indefinitely.</p></div>
-      <div class="solution-card"><h4>Solution: No Dialogs, Explicit Headless Guard</h4><p>TaskDialog is deliberately omitted, a <code>HEADLESS</code> guard switches behaviour, and progress goes to file logs under <code>%TEMP%\Interiors.Batch\</code> so results survive without a UI.</p></div>
+      <div class="solution-card"><h4>Solution: No Dialogs, Explicit Headless Guard</h4><p>No text-input dialogs; a <code>HEADLESS=1</code> guard suppresses the summary <code>TaskDialog</code>, and progress goes to file logs under <code>%TEMP%\Interiors.Batch\</code> so results survive without a UI.</p></div>
       <div class="challenge-card"><h4>Challenge: Specs Drifting From Built Geometry</h4><p>A parametric spec can be edited freely while the model in Revit stays as it was, leaving no proof of what was actually built.</p></div>
-      <div class="solution-card"><h4>Solution: Schema v2 Validation + Build Logs</h4><p>Schema v2 validation audits every project against its spec (0 audit errors on the current portfolio), and per-project build/export logs form a traceable audit trail.</p></div>
+      <div class="solution-card"><h4>Solution: Schema v2 Validation + Build Logs</h4><p>Schema v2 validation checks every spec (0 errors), the audit checks the spec-derived inventory (0 issues), and per-project Revit build logs record what was actually created, so spec counts and built counts can be compared.</p></div>
       <div class="challenge-card"><h4>Challenge: Getting Quantities and Cost Out of Revit</h4><p>Clients want priced bills of quantities, but Revit is a modelling tool, not a cost roll-up — the numbers have to come from somewhere reliable.</p></div>
-      <div class="solution-card"><h4>Solution: Same Spec Drives Geometry and Numbers</h4><p>The priced BOQ and Power BI-ready CSV exports are generated from the identical spec that drives the geometry, so quantities and cost can never contradict the model.</p></div>
+      <div class="solution-card"><h4>Solution: Same Spec Drives Geometry and Numbers</h4><p>The BOQ CSVs are generated from the same spec that drives the geometry, so they are reproducible without Revit. They prove the spec is consistent; checking them against the saved model is the next step.</p></div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        10 openable native Revit models a recruiter can double-click, each with IFC4 backups, PNG plans and
-        renders, and a quantified cost roll-up totalling $156,733 across the portfolio. Every number is
-        reproducible because it comes from the same spec that built the geometry.
+        Nine native Revit 2026 models built from spec, IFC4 files and plan PNGs for all ten projects, and a
+        BOQ totalling $156,733 at demo prices across nine projects. Every number is reproducible because it
+        comes from the same spec that built the geometry, and every build left a log.
       </p>
       <p>
-        The C# add-in makes the identical build repeatable in batch: same transactions, same results, no
-        Revit licence needed for CI to prove it compiles.
+        The validation, audit and BOQ logic runs and is tested without Revit. The C# add-in for headless
+        batch builds is started but does not create elements yet.
       </p>
     </section>
   </main>

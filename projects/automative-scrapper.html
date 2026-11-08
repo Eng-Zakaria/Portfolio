@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Automative Scrapper — Wholesale Lead Tool — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Wholesale lead-collection tool: Playwright governorate collectors, social export parsers, Arabic-Indic phone extraction with WhatsApp-context filter, SQLite + CSV outputs.">
+  <title>Wholesale Radar — Egypt Apparel Leads — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Freelance lead-collection pipeline for Egyptian clothing wholesale: per-source collectors over public business directories, Arabic entity resolution with a review queue, per-governorate CSV/XLSX exports.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -210,16 +210,16 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1>Automative Scrapper — Wholesale Lead Tool</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Wholesale lead-collection tool for automotive buyers across Egyptian governorates and social channels.</p>
+      <h1>Wholesale Radar — Egypt Apparel Leads</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Lead-collection pipeline for a clothing wholesaler: Egyptian apparel shops from public business directories, deduplicated and exported per governorate. (The folder name says &ldquo;automative&rdquo;; the project is about clothing.)</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Data Engineer</span>
+          <span class="meta-value">Data Engineer (freelance)</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2026</span>
+          <span class="meta-value">Sep&ndash;Oct 2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Domain</span>
@@ -227,14 +227,14 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Local Project</span>
+          <span class="meta-value">Freelance Client Project</span>
         </div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag">Python</span>
         <span class="tech-tag">Playwright</span>
         <span class="tech-tag">SQLite</span>
-        <span class="tech-tag">REST</span>
+        <span class="tech-tag">pandas</span>
       </div>
     </div>
   </header>
@@ -243,6 +243,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/wholesale-radar-lead-mapping.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -250,16 +251,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">SQLite</div>
-          <div class="metric-label">+ CSV Outputs</div>
+          <div class="metric-value">3,163</div>
+          <div class="metric-label">Businesses outside Cairo/Giza</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">FB·IG·TT</div>
-          <div class="metric-label">Export Parsers</div>
+          <div class="metric-value">2,557</div>
+          <div class="metric-label">Businesses, Cairo/Giza + QIZ</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">WA-hint</div>
-          <div class="metric-label">Phone Filter</div>
+          <div class="metric-value">159</div>
+          <div class="metric-label">Uncertain Merges for Review</div>
         </div>
       </div>
     </section>
@@ -267,17 +268,14 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>Wholesale automotive buyers are scattered across Yellow Pages, EgypYello, Dalili, buy.com.eg listings, and Facebook/Instagram/TikTok exports — each with different formats, Arabic-Indic digits, and inconsistent governorate labels.</p>
-      <p>The tool needed to unify these sources into clean per-governorate lead lists while handling phone-number sensitivity responsibly: buyer-intent records are saved without phones by design.</p>
+      <p>A men&rsquo;s clothing wholesaler wanted a contact list of apparel shops and wholesale offices across Egypt. The shops are spread across public business directories (Yellow Pages Egypt, to-all.com, dalilmadina, EgypYello, buy.com.eg) and a public QIZ garment-factory list, each with its own layout, Arabic spelling variants, Arabic-Indic digits and inconsistent area labels.</p>
+      <p>Scraping social-media commenters for phone numbers was ruled out: it needs logins, breaks platform terms and harvests personal data. Social platforms are handled only through manual exports, and buyer-intent rows from those exports are stored without phone numbers (they still keep a username and comment).</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
-      <div class="arch-full">
+            <div class="arch-full">
         <img src="../docs/diagrams/automative-scrapper.svg" alt="Automative Scrapper Architecture Diagram" style="width:100%; height:auto;">
       </div>
     </section>
@@ -286,11 +284,11 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Directory collectors:</strong> Playwright governorate collectors crawl Yellow Pages, EgypYello, Dalili, and buy.com.eg listing pages with pagination and retry handling.</li>
-        <li><strong>Social export parsers:</strong> dedicated Facebook, Instagram, and TikTok parsers normalize shared export files into a common lead record shape.</li>
-        <li><strong>Arabic-Indic phone extraction:</strong> a phone extractor normalizes Arabic-Indic and Eastern digits, then applies a WhatsApp-context filter so numbers are only kept with an explicit WhatsApp hint.</li>
-        <li><strong>Intent split:</strong> records are classified into buyer-intent vs. seller listings; buyer-intent rows are stored without phone numbers for compliant outreach design.</li>
-        <li><strong>Portable outputs:</strong> results land in SQLite plus CSV with per-governorate exports for direct wholesale follow-up workflows.</li>
+        <li><strong>Directory collectors:</strong> one script per source writes a shared CSV layout with jittered delays and a resumable progress file. Most use plain HTTP requests; Playwright is used for the Yellow Pages pages that need a browser.</li>
+        <li><strong>Social export parsers:</strong> Facebook, Instagram and TikTok export files (and an own-Page Graph API option) are parsed offline; there is no live social scraping.</li>
+        <li><strong>Contact-hint phone gate:</strong> for free text from exports, Arabic-Indic digits are normalized and a number is kept only when the text carries a contact hint (WhatsApp, call, contact) or a wa.me link. Directory listings keep the number the business published.</li>
+        <li><strong>Entity resolution:</strong> Arabic name normalization plus union-find clustering: a shared phone or directory ID merges, the same name in the same governorate merges, and the same name across areas goes to a review queue instead of auto-merging.</li>
+        <li><strong>Outputs:</strong> per-run businesses CSV/XLSX, a contacts CSV and a review-queue CSV. SQLite holds the social-export leads and buyer-intent tables (sample data only).</li>
       </ul>
     </section>
 
@@ -298,28 +296,28 @@
     <section class="content-section">
       <h3>Challenges & Solutions</h3>
       <div class="challenge-card">
-        <h4>Challenge: Messy Arabic phone formats</h4>
-        <p>Listings mix Arabic-Indic digits, spacing variants, and decorative separators, and many numbers lack any consent-adjacent context.</p>
+        <h4>Challenge: Duplicate shops across directories</h4>
+        <p>The same shop appears in several directories under different Arabic and English spellings, and chains share names across areas.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Normalizer + WhatsApp-hint gate</h4>
-        <p>A digit normalizer unifies all variants to a canonical form, and the WhatsApp-context filter only retains numbers appearing alongside an explicit WhatsApp hint.</p>
+        <h4>Solution: Deterministic tiers + review queue</h4>
+        <p>Names are folded (alef/hamza, taa marbuta, diacritics, generic words removed) and clustered by rules a sales team can audit; uncertain same-name, different-area matches go to a review file rather than being merged.</p>
       </div>
       <div class="challenge-card">
-        <h4>Challenge: Source-format drift</h4>
-        <p>Each directory and social export uses different columns, labels, and governorate spellings.</p>
+        <h4>Challenge: Collecting politely</h4>
+        <p>One directory serves a challenge page after a few rapid loads, and several hide phone numbers behind a click-to-reveal button.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Per-source parsers, one schema</h4>
-        <p>Each source gets its own collector/parser module mapping into a single lead schema, so new layouts only touch one isolated parser.</p>
+        <h4>Solution (partial): Pacing and resume</h4>
+        <p>Collectors pace requests and resume from saved state, and a manual protocol covers click-to-reveal numbers. Still open: no robots.txt check, a generic browser user-agent, retries in a fresh browser context after a challenge, one automated reveal path, and no suppression list.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The tool produces unified SQLite + CSV lead lists with per-governorate exports, combining directory crawls and social export files in one workflow.</p>
-      <p>Its compliant-by-design phone handling keeps buyer-intent records phone-free while preserving seller-contact utility where a WhatsApp hint exists.</p>
+      <p>Saved exports hold 3,163 canonical businesses outside Cairo/Giza (from 3,497 raw rows; 3,110 with a phone; 25 governorate labels) and 2,557 for Cairo/Giza plus QIZ factories (1,780 with a phone). A 200-business website-enrichment test added one verified phone, so it stays a secondary check.</p>
+      <p>Known gaps: verification labels are too generous and mark landlines &ldquo;invalid&rdquo;, the WhatsApp column is inferred from the mobile prefix, coordinates are empty (it is a per-area list, not a map), and governorate values in the QIZ rows need cleaning.</p>
     </section>
   </main>
 

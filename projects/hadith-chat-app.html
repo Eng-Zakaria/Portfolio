@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Hadith Chat App — Arabic RAG Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Arabic NLP chatbot using RAG architecture. Django backend with Qdrant vector database. Achieved 70% chatbot accuracy through data refinement and retrieval optimization.">
+  <meta name="description" content="Graduation project: a Django web app (Estidlal) where signed-in users ask hadith questions answered by a team-hosted Hugging Face Space, with per-user history and search.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -71,16 +71,16 @@
       <div class="sec-label">// graduation project case study</div>
       <h1>Hadith Chat App — Arabic RAG</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Arabic NLP chatbot using RAG architecture for Islamic knowledge base queries.
+        Django web app for asking questions about hadith, backed by a question-answering model the team hosted on Hugging Face.
       </p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Lead Developer</span>
+          <span class="meta-value">Web App Developer (6-person team)</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2024-2025</span>
+          <span class="meta-value">2024</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
@@ -88,15 +88,15 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Grade</span>
-          <span class="meta-value">A+ (Top 5% of Class)</span>
+          <span class="meta-value">A+ (reported)</span>
         </div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag"><i class="fab fa-django"></i> Django</span>
-        <span class="tech-tag"><i class="fas fa-vector-square"></i> Qdrant</span>
-        <span class="tech-tag"><i class="fas fa-language"></i> Arabic NLP</span>
-        <span class="tech-tag"><i class="fas fa-project-diagram"></i> RAG</span>
-        <span class="tech-tag"><i class="fas fa-brain"></i> AraBERT</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> SQLite</span>
+        <span class="tech-tag"><i class="fas fa-plug"></i> gradio_client</span>
+        <span class="tech-tag"><i class="fas fa-brain"></i> Hugging Face Space</span>
+        <span class="tech-tag"><i class="fas fa-language"></i> Arabic QA</span>
       </div>
     </div>
   </header>
@@ -104,55 +104,71 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/arabic-rag-graduation-project.html">Read the write-up →</a>
       <a href="https://github.com/Eng-Zakaria/Hadith_Chat_App" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        Finding accurate Hadith references for specific questions requires extensive knowledge of Islamic jurisprudence and access to large text collections. Existing solutions either lacked proper Arabic NLP support or provided inaccurate results due to poor retrieval mechanisms.
+        Searching hadith collections usually means knowing which book to open and which words to try. The project, Estidlal, aimed to let students and researchers search religious sources with a question, phrase, or word instead.
       </p>
       <p>
-        The goal was to build a chatbot that could understand Arabic questions about Hadith and provide accurate, sourced responses from a comprehensive knowledge base.
+        This was a Helwan University graduation project built by a six-person team. The question-answering model ran in a Hugging Face Space on a teammate's account (<code>Mohamed-Maher/Hadith-QA-System</code>); its data, retrieval and model code are not in this repository. This repository is the Django web app: sign-up and sign-in, a chat page that sends each question to the Space, and per-user history with search.
       </p>
     </section>
 
     <section class="content-section">
       <h3>Architecture</h3>
       <div class="arch-full">
-        <img src="../docs/diagrams/hadith-chat-app-arabic-rag.svg" alt="Hadith Chat App Architecture Diagram" style="width:100%; height:auto;">
+        <pre>
+ Browser
+   |  home.html: sign up / sign in      chat.html: question form (POST)
+   v
+ <span class="highlight">Django 5 views</span> (home/views.py)
+   |-- home, loginUser, logout -----> SQLite: Login (name, email, hashed password)
+   |-- answer --+------------------> SQLite: Answer (login, question_text,
+   |            |                            answer_text, created_at)
+   |            +--> <span class="highlight">gradio_client</span>.Client("Mohamed-Maher/Hadith-QA-System")
+   |                   .predict(question=..., api_name="/predict")
+   |                   -> Hugging Face Space (model, data, retrieval;
+   |                      not in this repo)
+   |-- search_history -------------> SQLite: icontains on question or answer
+
+ Landing page widget (client side only):
+   "New Hadith" -> api.hadith.gading.dev/books/bukhari?range=300-500
+                -> shows the Arabic text of a random result
+</pre>
       </div>
     </section>
 
     <section class="content-section">
-      <h3>Data Pipeline</h3>
+      <h3>The Model Side</h3>
       <ul>
-        <li><strong>Hadith Corpus Collection:</strong> Aggregated from multiple authenticated sources (Sahih Bukhari, Muslim, Abu Dawud)</li>
-        <li><strong>Preprocessing:</strong> Cleaned Arabic text, normalized diacritics, and extracted hadith numbers for citation</li>
-        <li><strong>Chunking Strategy:</strong> Split into contextually coherent paragraphs with metadata (collection, book, hadith number)</li>
-        <li><strong>Embedding Generation:</strong> Design specifies AraBERT v2 for Arabic-specific semantic embeddings (documented architecture; embedding serving not yet implemented)</li>
-        <li><strong>Vector Storage:</strong> Indexed in Qdrant with collection metadata for filtering</li>
+        <li><strong>Hosted separately:</strong> The question-answering model was a Gradio app on Hugging Face Spaces, called by name from Django</li>
+        <li><strong>Interface:</strong> One input (<code>question</code>) and one text output from the <code>/predict</code> endpoint</li>
+        <li><strong>Not in this repo:</strong> The corpus, embedding model, vector store and LLM used by the Space are not part of this codebase, so they are not described here</li>
+        <li><strong>Stated scope:</strong> The site copy describes the intended scope as the Quran and hadith from the six major collections</li>
       </ul>
     </section>
 
     <section class="content-section">
-      <h3>Retrieval Optimization</h3>
+      <h3>Answers and Sources</h3>
       <ul>
-        <li><strong>Query Expansion:</strong> Added synonyms and related terms for better retrieval</li>
-        <li><strong>Reranking:</strong> Cross-encoder reranking to improve relevance of top results</li>
-        <li><strong>Context Window:</strong> Tuned retrieval depth and context size for optimal responses</li>
-        <li><strong>Citation Format:</strong> Standardized output with collection, book, and hadith number</li>
+        <li><strong>Single string:</strong> The Space returns the answer as text; the app stores and renders it under the question as-is</li>
+        <li><strong>No separate references:</strong> The call returns no retrieved passages, source list or score, so the app cannot show collection, hadith number or grading separately from the answer text</li>
+        <li><strong>Random hadith widget:</strong> A landing-page button shows the Arabic text of a random Sahih al-Bukhari entry from a public API, without the collection name or number on screen</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Django Backend</h3>
       <ul>
-        <li><strong>API Layer:</strong> RESTful endpoints for query submission and results</li>
-        <li><strong>Streaming Responses:</strong> Implemented server-sent events for real-time chat interface</li>
-        <li><strong>Session Management:</strong> Maintained conversation context across messages</li>
-        <li><strong>Rate Limiting:</strong> Prevented abuse with per-user rate limiting</li>
-        <li><strong>Feedback System:</strong> Users could rate responses to improve quality</li>
+        <li><strong>Server-rendered pages:</strong> Five routes (home, login, answer, logout, search); the chat is an HTML form POST with CSRF protection, not a JSON API</li>
+        <li><strong>Synchronous model call:</strong> Each question creates a <code>gradio_client</code> client and waits for the answer; no streaming and no timeout</li>
+        <li><strong>Accounts:</strong> Custom <code>Login</code> model with passwords hashed by Django's <code>make_password</code>; the signed-in email is kept in the Django session</li>
+        <li><strong>History and search:</strong> Every question and answer saved per user, newest first, searchable with <code>icontains</code> on either field</li>
+        <li><strong>No conversation context:</strong> Each question is sent to the model on its own</li>
       </ul>
     </section>
 
@@ -160,21 +176,21 @@
       <h3>Challenges & Solutions</h3>
 
       <div class="challenge-card">
-        <h4>Challenge: Arabic NLP Complexity</h4>
-        <p>Arabic text has complex morphology, diacritics, and right-to-left rendering issues.</p>
+        <h4>Challenge: Splitting the Work</h4>
+        <p>Six people had to build a model and a website in parallel without blocking each other.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Specialized Processing</h4>
-        <p>Implemented Arabic-specific tokenization, normalized diacritics for search, and handled RTL rendering in the frontend.</p>
+        <h4>Solution: A Hosted Model Behind One Call</h4>
+        <p>The model side published a Hugging Face Space and the web side called it through <code>gradio_client</code>. The trade-off: the web app can't see what was retrieved, so it can't tell retrieval errors from generation errors.</p>
       </div>
 
       <div class="challenge-card">
-        <h4>Challenge: Retrieval Accuracy</h4>
-        <p>Hadith queries require high precision to avoid incorrect religious guidance.</p>
+        <h4>Challenge: Model Outages</h4>
+        <p>The Space could be slow or unavailable during use.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Multi-Stage Filtering</h4>
-        <p>Implemented cascading filters: first retrieve relevant passages, then verify authenticity chain, then rank by relevance.</p>
+        <h4>Solution: Keep the Question</h4>
+        <p>On any error the user sees the error message and the question is still saved, with a placeholder apology as the answer. That keeps history complete, but stores placeholders as if they were answers.</p>
       </div>
     </section>
 
@@ -182,27 +198,27 @@
       <h3>Outcome</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">70%</div>
-          <div class="metric-label">Chatbot Accuracy</div>
+          <div class="metric-value">5</div>
+          <div class="metric-label">Routes</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">50k+</div>
-          <div class="metric-label">Hadiths Indexed</div>
+          <div class="metric-value">2</div>
+          <div class="metric-label">Data Models</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">&lt;2s</div>
-          <div class="metric-label">Avg Response Time</div>
+          <div class="metric-value">3</div>
+          <div class="metric-label">Dependencies</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">A+</div>
-          <div class="metric-label">Final Grade</div>
+          <div class="metric-label">Reported Grade</div>
         </div>
       </div>
       <p>
-        The system successfully retrieves accurate Hadith references with proper citations. User testing showed improved satisfaction compared to manual searching through traditional Hadith collections.
+        The app delivered the full user flow: sign up, ask a question, read the model's answer, and search past answers. The repository has no tests and no evaluation set, so there is no recorded accuracy or latency figure for the answers.
       </p>
       <p>
-        The graduation project received recognition for its technical implementation of Arabic NLP and RAG architecture.
+        The gaps it left (no visibility into retrieval, no evaluation, no separate source references) are the ones I closed later in production RAG at Waffarha, with retrieval and end-to-end scored separately on a 225-case suite and deterministic gates in front of the model.
       </p>
     </section>
   </main>

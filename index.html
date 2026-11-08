@@ -138,7 +138,7 @@
         <h2>Data engineer who ships AI that survives contact with customers</h2>
         <div class="about-text">
           <p>Data Engineer at <strong>Waffarha</strong> running production RAG and data pipelines over <strong>13.7M live rows</strong> — bilingual Arabic/English answers with <strong>87.8% retrieval hit rate</strong> on a 225-case bilingual eval suite. I own the whole loop: ingestion, dimensional modeling, orchestration, vector search, evaluation, and guardrails.</p>
-          <p>Before Waffarha I built a centralized healthcare warehouse from 10+ clinic sources that <strong>cut reporting time 40% and killed every dashboard timeout</strong>, completed Big Data training at the National Telecommunication Institute, and researched on-chain data at the <strong>University of Zurich</strong>. Helwan University graduate — graduation project graded <strong>A+</strong> for an Arabic RAG system that became the blueprint for my production work.</p>
+          <p>Before Waffarha I built a centralized healthcare warehouse from 10+ clinic sources that <strong>cut reporting time 40% and killed every dashboard timeout</strong>, completed Big Data training at the National Telecommunication Institute, and researched on-chain data at the <strong>University of Zurich</strong>. Helwan University graduate — graduation project graded <strong>A+</strong> for an Arabic hadith Q&amp;A app whose gaps shaped my production RAG work.</p>
           <div class="about-highlights">
             <div class="highlight-item"><span>🎯</span> I ship <strong>measured outcomes, not pipelines</strong> — every build carries quality checks, monitoring, and a latency budget.</div>
             <div class="highlight-item"><span>🤝</span> I make complex systems <strong>obvious to non-engineers</strong> — 100+ students mentored, executives and support teams onboarded to data they trust.</div>
@@ -545,18 +545,19 @@
 
         <div class="project-card reveal">
           <div class="project-num">13 — GRADUATION PROJECT · A+</div>
-          <div class="project-name"><i class="fas fa-mosque"></i>Hadith QA — Arabic RAG Pioneer</div>
+          <div class="project-name"><i class="fas fa-mosque"></i>Hadith QA — Arabic Q&amp;A Web App</div>
           <div class="project-desc">
-            Graded A+: the first Arabic RAG I shipped — Django + Qdrant over classical texts, retrieval-tuned to 70% answer accuracy. The prototype that proved grounded Arabic QA works — and became my Waffarha playbook.
+            Graduation project, graded A+: a Django web app where users ask hadith questions answered by our six-person team's hosted Arabic QA model, with per-user history and search. Its gaps (no visible sources, no evaluation) shaped how I built RAG at Waffarha.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-django"></i> Django</span>
-            <span class="stack-tag"><i class="fas fa-vector-square"></i> Qdrant</span>
-            <span class="stack-tag"><i class="fas fa-language"></i> NLP</span>
-            <span class="stack-tag"><i class="fas fa-project-diagram"></i> RAG</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> SQLite</span>
+            <span class="stack-tag"><i class="fas fa-language"></i> Arabic NLP</span>
+            <span class="stack-tag"><i class="fas fa-robot"></i> Hugging Face</span>
           </div>
           <div class="project-links">
             <a href="projects/hadith-chat-app.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/arabic-rag-graduation-project.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/Hadith_Chat_App" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
@@ -682,10 +683,10 @@
         </div>
 
         <div class="project-card reveal" data-category="platform batch">
-          <div class="project-num">20 — CLIENT TOOL</div>
+          <div class="project-num">20 — PORTFOLIO TOOL</div>
           <div class="project-name"><i class="fas fa-building"></i>Model Health Score — Revit, Graded 0–100</div>
           <div class="project-desc">
-            The audit a BIM team actually opens: orphaned-element detection, parameter consistency, and performance profiling via the Revit API — scored 0–100 with JSON + HTML evidence and a WPF command deck.
+            A pyRevit audit for Revit models: problem-element, parameter-consistency and view checks through the Revit API, scored 0–100 (−10 per critical, −2 per warning) with a JSON report and a WPF dashboard. Not yet run on a live model.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-cube"></i> pyRevit</span>
@@ -696,14 +697,15 @@
           </div>
           <div class="project-links">
             <a href="projects/bim-model-health.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/revit-model-health-score.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch">
           <div class="project-num">21 — BIM GENERATION</div>
-          <div class="project-name"><i class="fas fa-cubes"></i>Interiors Engine — 10 Villas, $156K BOQ, Zero Errors</div>
+          <div class="project-name"><i class="fas fa-cubes"></i>Interiors Engine — 10 Specs, 9 Revit Builds, $156K BOQ</div>
           <div class="project-desc">
-            Parametric generation that pays: 10 full interior projects (45 m² studio → 250 m² villa) as native RVT + IFC4, rendered plans, and a priced $156,733 BOQ — with a compiled net48 add-in for headless repeat builds.
+            Parametric generation from JSON: 10 interior specs (45 m² studio → 250 m² villa) driving 9 pyRevit-built RVT models, IFC4 for all 10, plan renders, and a $156,733 BOQ at demo prices, with zero validation, audit or build-log errors and 54 passing tests.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-cube"></i> pyRevit</span>
@@ -714,6 +716,7 @@
           </div>
           <div class="project-links">
             <a href="projects/interiors-toolkit.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/parametric-interiors-boq.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -739,9 +742,9 @@
 
         <div class="project-card reveal reveal-d1" data-category="platform batch">
           <div class="project-num">23 — MARKET INTELLIGENCE</div>
-          <div class="project-name"><i class="fas fa-phone"></i>Wholesale Radar — Egypt Apparel Map</div>
+          <div class="project-name"><i class="fas fa-phone"></i>Wholesale Radar — Egypt Apparel Leads</div>
           <div class="project-desc">
-            Ethical market mapping for Egyptian apparel wholesale: governorate-wide discovery with WhatsApp-context filtering — real sellers saved, noise dropped, per-region CSVs ready for the sales team.
+            Freelance lead mapping for Egyptian apparel wholesale from public business directories: 3,163 shops outside Cairo and Giza across 246 areas, Arabic dedup with a review queue, and per-governorate CSV exports for the sales team.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-mouse"></i> Playwright</span>
@@ -751,6 +754,7 @@
           </div>
           <div class="project-links">
             <a href="projects/automative-scrapper.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/wholesale-radar-lead-mapping.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -977,11 +981,11 @@
       <p class="projects-sub">Code-first, production-tested: Airflow at scale, NoSQL when it wins, and the resilience patterns that keep pipelines alive at 3am. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a> · <a href="articles/index.html" class="inline-link">All articles on this site →</a></p>
       <!-- native-articles:start -->
       <div class="native-articles">
-        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 25 articles →</a></div>
+        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 29 articles →</a></div>
         <div class="native-articles-grid">
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/wholesale-radar-lead-mapping.html">Mapping Egyptian apparel wholesalers from public directories</a></h3><p>A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.</p><div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Entity Resolution</span></div><a class="proj-link" href="articles/wholesale-radar-lead-mapping.html">Read article →</a></article>
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/watchdog-price-intel.html">Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</a></h3><p>A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.</p><div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div><a class="proj-link" href="articles/watchdog-price-intel.html">Read article →</a></article>
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/telecom-lakehouse-8-domains.html">A telecom lakehouse for 8 domains: the blueprint, and what runs today</a></h3><p>A portfolio design for a telecom medallion lakehouse with eight domain marts and an Azure/Fabric target. The synthetic generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written but have not been executed or deployed.</p><div class="post-tags"><span class="post-tag">Lakehouse</span><span class="post-tag">Data Quality</span><span class="post-tag">Azure</span></div><a class="proj-link" href="articles/telecom-lakehouse-8-domains.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/six-stage-client-etl.html">Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</a></h3><p>How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</p><div class="post-tags"><span class="post-tag">ETL</span><span class="post-tag">Data Quality</span><span class="post-tag">MySQL</span></div><a class="proj-link" href="articles/six-stage-client-etl.html">Read article →</a></article>
         </div>
         <div class="native-articles-label native-articles-label-alt">Also on Medium</div>
       </div>
@@ -1034,8 +1038,8 @@
         <div class="cred-card reveal">
           <div class="cred-label">🎓 Education</div>
           <h3>Helwan University — Computers & AI</h3>
-          <div class="cred-meta">Cairo · Graduation Project: A+ in Arabic RAG</div>
-          <p>A+ graduation build: an Arabic RAG over classical texts that became the prototype for Waffarha's production assistant. Theory where it counts, shipped code where it matters.</p>
+          <div class="cred-meta">Cairo · Graduation Project: A+ in Arabic Q&amp;A</div>
+          <p>A+ graduation build: an Arabic hadith question-answering app built by a six-person team. What it lacked, visible sources and evaluation, is what I built first at Waffarha.</p>
           <div class="cred-label" style="margin-top:1.4rem">🗣 Languages</div>
           <ul class="cred-list">
             <li><strong>Arabic</strong><span>Native</span></li>
