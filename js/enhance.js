@@ -63,4 +63,43 @@
     });
     list.after(btn);
   });
+
+  // Bottom bar: always on for phones, a dock that appears after the hero on desktop,
+  // with the current section highlighted.
+  const bar = document.getElementById('bottom-bar');
+  if (bar) {
+    const hero = document.getElementById('hero');
+    const phone = window.matchMedia('(max-width: 640px)');
+    const toggle = () => {
+      const past = !hero || window.scrollY > hero.offsetHeight * 0.6;
+      bar.classList.toggle('show', phone.matches || past);
+    };
+    window.addEventListener('scroll', toggle, { passive: true });
+    phone.addEventListener('change', toggle);
+    toggle();
+
+    const groups = {
+      home: ['hero', 'method', 'about', 'skills'],
+      work: ['projects'],
+      career: ['experience', 'articles', 'credentials'],
+      contact: ['contact']
+    };
+    const owner = {};
+    Object.entries(groups).forEach(([k, ids]) => ids.forEach(id => { owner[id] = k; }));
+    const links = [...bar.querySelectorAll('a[data-bb]')];
+    const setActive = key => links.forEach(a => {
+      const on = a.dataset.bb === key;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'location'); else a.removeAttribute('aria-current');
+    });
+    const spy = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting && owner[e.target.id]) setActive(owner[e.target.id]); });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    Object.keys(owner).forEach(id => { const el = document.getElementById(id); if (el) spy.observe(el); });
+    setActive('home');
+    // the short last section never reaches mid-screen, so claim it at the page end
+    window.addEventListener('scroll', () => {
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 8) setActive('contact');
+    }, { passive: true });
+  }
 })();
