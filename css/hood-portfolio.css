@@ -458,3 +458,38 @@ html[data-theme="dark"] #skills, html[data-theme="dark"] #about, html[data-theme
   .exp-more { width: 100%; }
   .hood-micro-stats span { font-size: .6rem; }
 }
+
+/* ── Menu fix: blur lives on a layer so the fixed menu can fill the screen ── */
+/* backdrop-filter on the header made it the containing block for the fixed
+   menu, trapping the overlay inside the 76px bar. */
+.hood-header, body:has(.project-header) nav { backdrop-filter: none; -webkit-backdrop-filter: none; background: transparent; }
+.hood-header::before, body:has(.project-header) nav::before { content: ''; position: absolute; inset: 0; z-index: -1; background: var(--nav-bg); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); pointer-events: none; }
+body.menu-open { overflow: hidden; }
+body.menu-open .hood-header::before, body.menu-open:has(.project-header) nav::before { background: var(--bg); }
+
+.hood-nav .nav-links, body:has(.project-header) nav .nav-links { counter-reset: navi; top: 0; bottom: 0; height: auto; min-height: 100vh; padding-top: 96px; padding-bottom: 40px; }
+.hood-nav .nav-links li, body:has(.project-header) nav .nav-links li { counter-increment: navi; opacity: 0; transform: translateY(14px); transition: opacity .35s ease, transform .35s ease; }
+.hood-nav .nav-links.open li, body:has(.project-header) nav .nav-links.open li { opacity: 1; transform: none; }
+.hood-nav .nav-links.open li:nth-child(2), body:has(.project-header) nav .nav-links.open li:nth-child(2) { transition-delay: .04s; }
+.hood-nav .nav-links.open li:nth-child(3), body:has(.project-header) nav .nav-links.open li:nth-child(3) { transition-delay: .08s; }
+.hood-nav .nav-links.open li:nth-child(4), body:has(.project-header) nav .nav-links.open li:nth-child(4) { transition-delay: .12s; }
+.hood-nav .nav-links.open li:nth-child(5), body:has(.project-header) nav .nav-links.open li:nth-child(5) { transition-delay: .16s; }
+.hood-nav .nav-links.open li:nth-child(6), body:has(.project-header) nav .nav-links.open li:nth-child(6) { transition-delay: .2s; }
+.hood-nav .nav-links.open li:nth-child(n+7), body:has(.project-header) nav .nav-links.open li:nth-child(n+7) { transition-delay: .24s; }
+.hood-nav .nav-links a, body:has(.project-header) nav .nav-links a { display: flex; align-items: baseline; gap: 14px; }
+.hood-nav .nav-links a::before, body:has(.project-header) nav .nav-links a::before { content: counter(navi, decimal-leading-zero); color: var(--accent); font: 600 .72rem/1 var(--font-mono); letter-spacing: .08em; transform: translateY(-.6em); }
+.hamburger:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hamburger.active { border-color: var(--accent); }
+.hamburger.active span { background: var(--accent); }
+.hamburger.active span:first-child { transform: translateY(8px) rotate(45deg); }
+.hamburger.active span:last-child { transform: translateY(-8px) rotate(-45deg); }
+
+@media (max-width: 640px) {
+  .hood-nav .nav-links a, body:has(.project-header) nav .nav-links a { font-size: clamp(1.9rem, 9.5vw, 2.6rem); padding: 14px 0; }
+  .hood-nav .nav-links, body:has(.project-header) nav .nav-links { justify-content: flex-start; padding-left: 22px; padding-right: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hood-nav .nav-links li, body:has(.project-header) nav .nav-links li { transition: none; opacity: 1; transform: none; }
+}
+.nav-links .nav-dot { display: none; }
+@media (min-width: 641px) { .hood-nav .nav-links, body:has(.project-header) nav .nav-links { justify-content: safe center; } .hood-nav .nav-links a, body:has(.project-header) nav .nav-links a { font-size: clamp(1.8rem, 6.2vh, 4.2rem); padding: clamp(8px, 1.4vh, 16px) 0; } }
