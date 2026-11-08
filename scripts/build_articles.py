@@ -332,7 +332,9 @@ def render_feed(posts: list[dict]) -> str:
       {cats}
       <content:encoded><![CDATA[{body}]]></content:encoded>
     </item>""")
-    now = format_datetime(dt.datetime.now(dt.timezone.utc))
+    # stable: only changes when the newest post changes, so rebuilds don't dirty git
+    newest = posts[0]["date"] if posts else dt.date(2026, 11, 8)
+    now = format_datetime(dt.datetime.combine(newest, dt.time(9, 0), tzinfo=dt.timezone(dt.timedelta(hours=2))))
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
