@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Serverless Task Manager on AWS — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Serverless task manager on AWS: API Gateway + Lambda + DynamoDB, S3 + CloudFront React frontend, TypeScript CDK IaC, CodePipeline CI/CD, CloudWatch observability.">
+  <meta name="description" content="Tutorial-based learning project: a TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront. Not yet deployed or tested.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -211,15 +211,15 @@
     <div class="container">
       <div class="sec-label">// project case study</div>
       <h1>Serverless Task Manager on AWS</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Serverless task manager with CDK infrastructure-as-code and a full CI/CD pipeline.</p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Tutorial-based learning project: a serverless task manager defined in TypeScript CDK. Not yet deployed, no tests, CI/CD pipeline drafted but not wired in.</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Cloud Data Engineer</span>
+          <span class="meta-value">Solo learning project</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2026</span>
+          <span class="meta-value">Dec 2025</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Domain</span>
@@ -227,7 +227,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Local Project</span>
+          <span class="meta-value">Tutorial-based, not deployed</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -235,7 +235,7 @@
         <span class="tech-tag">DynamoDB</span>
         <span class="tech-tag">React</span>
         <span class="tech-tag">CDK</span>
-        <span class="tech-tag">Docker</span>
+        <span class="tech-tag">API Gateway</span>
       </div>
     </div>
   </header>
@@ -244,6 +244,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/aws-serverless-blueprint.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -251,16 +252,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">Lambda</div>
-          <div class="metric-label">+ DynamoDB</div>
+          <div class="metric-value">6</div>
+          <div class="metric-label">Lambda routes</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">CDK</div>
-          <div class="metric-label">IaC Stacks</div>
+          <div class="metric-value">1</div>
+          <div class="metric-label">Active CDK stack</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">CI-CD</div>
-          <div class="metric-label">CodePipeline</div>
+          <div class="metric-value">0</div>
+          <div class="metric-label">Deploys / tests</div>
         </div>
       </div>
     </section>
@@ -268,16 +269,13 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>Small teams need a task manager that scales to zero, requires no server maintenance, and can be redeployed reproducibly across environments.</p>
-      <p>Click-ops infrastructure and manual frontend deploys make that fragile — every environment drifts and every release becomes a special event.</p>
+      <p>I wanted one small project that covers the standard AWS serverless pieces end to end: an HTTP API, functions, a managed database, file uploads, and a static frontend behind a CDN, all declared as code.</p>
+      <p>A task manager keeps the data model trivial, so the work is in the infrastructure and the access patterns. The target was a stack that one <code>cdk deploy</code> creates and one <code>cdk destroy</code> removes.</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/aws-serverless.svg" alt="Serverless Task Manager Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -287,11 +285,11 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Serverless API:</strong> API Gateway routes to Lambda functions that implement task CRUD against DynamoDB with single-table-style access patterns.</li>
-        <li><strong>Global frontend:</strong> the React app builds to static assets hosted on S3 and distributed through CloudFront.</li>
-        <li><strong>CDK infrastructure:</strong> TypeScript CDK stacks define the API, tables, buckets, distributions, and IAM permissions as versioned code.</li>
-        <li><strong>CI/CD pipeline:</strong> CodePipeline with CodeBuild stages builds, tests, and deploys backend and frontend changes automatically.</li>
-        <li><strong>Observability:</strong> CloudWatch logs, metrics, and alarms cover Lambda invocations, API errors, and pipeline health; Docker supports local parity.</li>
+        <li><strong>Serverless API:</strong> an API Gateway REST API with 6 methods, each routed to its own Node.js 18 Lambda for task CRUD against one DynamoDB table (on-demand, point-in-time recovery, a status GSI). The table key order (taskId partition, userId sort) breaks the list-by-user query; the fix is to swap them.</li>
+        <li><strong>Frontend:</strong> a React app meant to be built to an S3 bucket behind CloudFront. The bucket&#39;s website setting with public access blocked likely needs origin access control before CloudFront can serve it.</li>
+        <li><strong>CDK infrastructure:</strong> one TypeScript CDK stack defines the API, table, two buckets, the distribution, and a shared Lambda IAM role. Uploads use presigned S3 URLs so file bytes never pass through Lambda.</li>
+        <li><strong>CI/CD (draft only):</strong> a CodePipeline stack is written but commented out of the app. It has a buildspec syntax error, wildcard IAM, and no <code>cdk deploy</code> step, so it is not working CI/CD.</li>
+        <li><strong>Observability:</strong> Lambda logs with one-week retention, API Gateway stage logging and metrics, and one alarm on API 4XX errors with no notification target. No Docker setup.</li>
       </ul>
     </section>
 
@@ -304,7 +302,7 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Everything in CDK</h4>
-        <p>TypeScript CDK stacks declare all infrastructure so environments are synthesized and deployed from the same reviewed code.</p>
+        <p>One TypeScript CDK stack declares every resource, with four stack outputs (API URL, CloudFront URL, bucket names), so the environment can be created and destroyed from code.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Coordinating frontend + backend releases</h4>
@@ -312,15 +310,15 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Single CodePipeline flow</h4>
-        <p>CodePipeline and CodeBuild stages sequence backend deployment before the S3 + CloudFront frontend publish, keeping releases atomic and traceable.</p>
+        <p>Planned: a CodePipeline flow that builds backend and frontend from one commit. The current draft only builds; it does not deploy the stack, so this remains next-step work.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The task manager runs fully serverless with IaC-defined infrastructure, automated CI/CD, and CloudWatch observability.</p>
-      <p>The pattern generalizes to other small data and internal tools that need low-ops AWS hosting with reproducible environments.</p>
+      <p>The infrastructure is fully defined in CDK, but the project has not been synthesised, deployed or tested. A code review found blockers: the unused pipeline import breaks <code>cdk synth</code>, list-by-user queries the sort key, and there is no authentication (userId comes from the browser).</p>
+      <p>Next: fix the key design and synth error, add handler and CDK assertion tests, add a Cognito authorizer, then deploy to a sandbox account and record real outputs.</p>
     </section>
   </main>
 

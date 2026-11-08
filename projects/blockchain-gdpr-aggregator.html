@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blockchain GDPR Aggregator — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Compliance-first crypto data platform: Ethereum and Bitcoin ingestion, market APIs, PII masking and audit trails, Celery scheduling, FastAPI behind Nginx.">
+  <meta name="description" content="Prototype privacy layer for crypto analytics: Ethereum and Bitcoin ingestion, market APIs, regex PII masking, address truncation, an audit-log table and a retention ledger behind FastAPI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -212,7 +212,7 @@
       <div class="sec-label">// project case study</div>
       <h1>Blockchain GDPR Aggregator</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Compliance-first crypto data platform unifying on-chain and market data behind masked, auditable APIs.
+        Prototype that puts a masking and audit layer in front of on-chain and market data, reviewed from source; not yet run end to end.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -225,14 +225,14 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Compliance Platform</span>
+          <span class="meta-value">Prototype (code review)</span>
         </div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag">web3.py</span>
-        <span class="tech-tag">Celery</span>
+        <span class="tech-tag">networkx</span>
         <span class="tech-tag">PostgreSQL</span>
-        <span class="tech-tag">Elasticsearch</span>
+        <span class="tech-tag">SQLAlchemy</span>
         <span class="tech-tag">FastAPI</span>
         <span class="tech-tag">Docker</span>
       </div>
@@ -243,6 +243,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/gdpr-native-chain-analytics.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -250,16 +251,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">100/min</div>
-          <div class="metric-label">Req Limit</div>
+          <div class="metric-value">8</div>
+          <div class="metric-label">PII Regex Patterns</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">365-day</div>
-          <div class="metric-label">Retention</div>
+          <div class="metric-label">Default Retention</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">2555-day</div>
-          <div class="metric-label">Audit Trail</div>
+          <div class="metric-label">Default Audit Retention</div>
         </div>
       </div>
     </section>
@@ -267,16 +268,13 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>Blockchain and market data arrive from many endpoints — Ethereum nodes, Bitcoin RPC, and exchange APIs — while PII can hide in memos, labels, and metadata. Serving that data without masking, retention, and erasure support creates compliance risk.</p>
-      <p>The aggregator puts a compliance gate in front of analytics: mask and encrypt sensitive fields, record every processing step with timing, and support Article 20 export plus erasure trails before data reaches search, storage, and APIs.</p>
+      <p>Blockchain and market data arrive from many endpoints — Ethereum nodes, Bitcoin RPC, and exchange APIs. Wallet addresses are stable identifiers, and PII can hide in memos, labels, and metadata. Pseudonymised data is still personal data under GDPR, so serving it without masking, retention, and erasure controls creates risk.</p>
+      <p>The aggregator puts a privacy layer in front of analytics: mask identifiers and free-text PII, record processing steps with timing in an audit table, and schedule deletion. Export and erasure exist only as logging helpers so far, and the Fernet encryption methods are defined but not called.</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/blockchain-gdpr-aggregator.svg" alt="Blockchain GDPR Aggregator Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -286,12 +284,14 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Sources:</strong> Ethereum via web3.py HTTP provider, Bitcoin via bitcoinlib JSON-RPC, and market APIs — Binance via ccxt, CoinGecko, and Alpha Vantage.</li>
-        <li><strong>Compliance gate:</strong> Regex PII masking for email, phone, SSN, cards, IBAN, and wallet addresses with partial, full, hash, and tokenize modes; Fernet encryption; audit-log table with processing_time_ms and Art. 20 export plus erasure trails.</li>
-        <li><strong>Analytics:</strong> pandas, numpy, scipy, and sklearn flow analytics over the cleansed datasets.</li>
-        <li><strong>Storage:</strong> PostgreSQL 15 plus Elasticsearch 8.11, MongoDB 7, and Redis 7.</li>
-        <li><strong>Scheduling & serving:</strong> Celery workers (concurrency 4) with beat, FastAPI on :8000 behind Nginx, batch size 1000, rate limits of 100 requests per minute and 1000 per hour.</li>
-        <li><strong>Observability:</strong> Prometheus plus Grafana and Sentry.</li>
+        <li><strong>Sources:</strong> Ethereum via web3.py HTTP provider, Bitcoin via raw JSON-RPC over requests, and market APIs — Binance via ccxt, CoinGecko, and Alpha Vantage.</li>
+        <li><strong>Masking layer:</strong> 8 regex PII patterns (email, phone, SSN, card, IBAN, street address, IPv4, wallet) with partial, full, hash (unsalted SHA-256), and tokenize (unsalted MD5) modes; sender and recipient addresses truncated to prefix and suffix. Plain strings inside lists (Bitcoin output addresses, Ethereum log topics) are not yet masked.</li>
+        <li><strong>Audit log:</strong> audit_logs table written from flow-analysis and market processing with record counts and processing_time_ms; API reads are not yet logged, and the export and erasure helpers have no callers.</li>
+        <li><strong>Retention:</strong> DataRetention ledger (365-day default) and cleanup jobs for data and audit logs, implemented but not wired into ingestion or scheduled.</li>
+        <li><strong>Analytics:</strong> networkx, pandas, and numpy flow analysis: z-score amount and frequency anomalies plus circular-flow detection.</li>
+        <li><strong>Storage:</strong> SQLAlchemy models for PostgreSQL. A Docker Compose file also lists Elasticsearch 8.11, MongoDB 7, and Redis 7, but the app code does not use them yet.</li>
+        <li><strong>Scheduling & serving:</strong> FastAPI on :8000 with no authentication yet. Compose defines Celery worker/beat and Nginx, but the Celery app module and Nginx config are not in the repo; rate limits are documented, not implemented.</li>
+        <li><strong>Observability:</strong> prometheus-client metrics in the app; Prometheus and Grafana containers in Compose without their config files; Sentry DSN setting present but not initialised.</li>
       </ul>
     </section>
 
@@ -304,23 +304,23 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Masking gate with modes</h4>
-        <p>Applied regex masking across email, phone, SSN, cards, IBAN, and wallet patterns with partial, full, hash, and tokenize modes plus Fernet encryption before storage or analytics.</p>
+        <p>One pipeline every ingestor calls: regex masking across 8 PII patterns with partial, full, hash, and tokenize modes, plus shape-preserving truncation of addresses. Truncation and unsalted hashes can be matched back against the public ledger, so a keyed HMAC is the planned next step.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Provable retention and erasure</h4>
         <p>Compliance needs proof of what ran, how long it took, and what was exported or erased.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Timed audit log</h4>
-        <p>Records each step in an audit-log table with processing_time_ms, supporting Art. 20 export and erasure trails across the 365-day retention and 2555-day audit trail windows.</p>
+        <h4>Solution: Audit table plus retention ledger</h4>
+        <p>Processing steps are written to an audit-log table with processing_time_ms, and a DataRetention ledger records scheduled and completed deletions (365-day data and 2555-day audit defaults). Export and erasure flows, and a scheduler for cleanup, are still to be built.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The aggregator funnels Ethereum, Bitcoin, and market feeds through a masking and audit gate into PostgreSQL, Elasticsearch, MongoDB, and Redis, served by Celery-scheduled workers and a rate-limited FastAPI behind Nginx.</p>
-      <p>Rate limits hold at 100 requests per minute and 1000 per hour with batch size 1000, backed by Prometheus, Grafana, and Sentry. Local project — no public GitHub link.</p>
+      <p>The codebase routes Ethereum, Bitcoin, and market records through one masking pipeline before they reach the API and flow analysis, with an audit table and retention ledger alongside. It has not been run end to end: a pydantic v2 import error and an encryption-key mismatch (a 32-character validator vs. Fernet's 44-character key) stop it at startup, so there are no runtime numbers.</p>
+      <p>Next steps are keyed pseudonyms, wiring storage and scheduled cleanup, an erasure endpoint with a suppression list, and authenticated, audited reads. Local project — no public GitHub link.</p>
     </section>
   </main>
 

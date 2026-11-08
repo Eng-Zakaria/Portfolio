@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs | Mohammed Zakaria</title>
+  <meta name="description" content="A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html">
+  <meta property="og:title" content="Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs | Mohammed Zakaria">
+  <meta property="og:description" content="A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs", "description": "A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html", "wordCount": 1669, "keywords": "Web Scraping, Data Pipelines, Python"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div>
+        <h1>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</h1>
+        <p class="post-lede">A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-store-raw-html-before-parsing">Decision 1: store raw HTML before parsing</a></li>
+<li><a href="#decision-2-celery-for-fetches-airflow-for-stage-order">Decision 2: Celery for fetches, Airflow for stage order</a></li>
+<li><a href="#decision-3-a-star-schema-with-per-target-configuration">Decision 3: a star schema with per-target configuration</a></li>
+<li><a href="#crawling-politely">Crawling politely</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: Portfolio project. It has not been run end to end against live sites: <code>data/raw/</code> is empty, there are no saved runs, and the only price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the gaps I found reading the code.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The same product sells at different prices on different sites and in different regional storefronts, and those sites change their markup without notice. A scraper that parses prices on the fly has two weaknesses. First, when a CSS selector stops matching, you get a run of nulls and no way to recover them, because the page you fetched is gone. Second, a flat list of URLs can&rsquo;t say &ldquo;check electronics hourly, TVs every four hours&rdquo; or &ldquo;this storefront prices in GBP&rdquo;.</p>
+<p>Watchdog is my attempt at a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.</p>
+<p>This is a different job from the partner price-integrity check I built for Waffarha (<a href="partner-price-integrity-check.html">write-up</a>). That one compares partner prices against our own catalogue once a day. Watchdog is a general tracker for price history over time.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> targets table (product x domain x region x category, interval, threshold)
+        |
+        v
+ Celery beat (every 60 s: check_due_targets)     Airflow DAG (every 15 min)
+        |                                               |
+        v                                               v
+ scrape_target  --Playwright--&gt;  page HTML  --&gt;  data/raw/&lt;ts&gt;_&lt;hash&gt;.html
+        |
+        v
+ parse_snapshot  (BeautifulSoup + selector profile, price -&gt; USD)
+        |
+        v
+ Postgres star schema: dim_domain, dim_region, dim_category, dim_product,
+ dim_parser_profile, targets, fact_price_snapshot, dq_scraper_health
+        |
+        +--&gt; data-quality check (missing / zero prices, stale targets)
+        +--&gt; alert engine (Telegram + SMTP behind one Notifier interface)
+        +--&gt; Streamlit dashboard (trend, cross-region, availability, health)
+</code></pre></div>
+
+<p>The moving parts are Playwright for fetching, Celery with Redis for per-target jobs, Airflow for the stage order, Postgres through SQLAlchemy for storage, and Streamlit for the dashboard. Docker Compose defines Postgres, Redis and the Airflow services, and a GitHub Actions workflow runs lint, tests, a Docker build and a DAG import check.</p>
+<p>Scheduling exists twice. Celery beat runs <code>check_due_targets</code> every 60 seconds and queues any target whose <code>check_interval_minutes</code> has passed. The Airflow DAG <code>watchdog_price_pipeline</code> runs on <code>*/15 * * * *</code> with <code>max_active_runs=1</code>. A second DAG, <code>watchdog_backfill_parse</code>, has no schedule and is meant for manual re-parsing.</p>
+<h2 id="decision-1-store-raw-html-before-parsing">Decision 1: store raw HTML before parsing<a class="h-anchor" href="#decision-1-store-raw-html-before-parsing" title="Permanent link">#</a></h2>
+<p><code>save_raw_snapshot</code> writes each page to <code>data/raw/YYYYMMDD_HHMMSS_&lt;md5[:12]&gt;.html</code>, with a short comment header that records the URL and timestamp. The parser reads from that file, not from the live page, and strips the header before parsing:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="s2">&quot;&lt;!-- WATCHDOG SNAPSHOT&quot;</span> <span class="ow">in</span> <span class="n">html</span><span class="p">:</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;--&gt;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</code></pre></div>
+
+<p>The benefit is that a broken selector costs you time, not data. Fix the selector in <code>dim_parser_profile</code>, re-run the parse over the stored files, and the price series comes back.</p>
+<p>The cost is disk space and a retention decision. The code makes that decision for you: a Celery beat job, <code>cleanup_old_snapshots</code>, runs every hour and deletes raw files older than 30 days. So the real guarantee is &ldquo;you can re-parse the last 30 days&rdquo;, not &ldquo;raw HTML is never discarded&rdquo;. I think 30 days is a sensible default, but it should be a setting and it should be documented.</p>
+<h2 id="decision-2-celery-for-fetches-airflow-for-stage-order">Decision 2: Celery for fetches, Airflow for stage order<a class="h-anchor" href="#decision-2-celery-for-fetches-airflow-for-stage-order" title="Permanent link">#</a></h2>
+<p>A price fetch is a small, slow, independent job that can fail on its own. That fits a task queue: <code>scrape_target</code> is a Celery task with <code>max_retries=3</code>, <code>autoretry_for=(Exception,)</code> and <code>retry_backoff=True</code>, and the worker settings use <code>task_acks_late=True</code> and <code>worker_prefetch_multiplier=1</code>, so a crashed worker doesn&rsquo;t silently drop a job. Airflow sits above that and owns the order: fetch, parse, load, data-quality check, a branch on the check result, dashboard refresh, alerts, stats.</p>
+<p>The trade-off is two schedulers and two places to look when something is late. In this code the Airflow tasks call Celery with <code>.apply()</code>, which runs the work inside the Airflow worker process rather than sending it to the Celery pool. That keeps the DAG simple, but it means the Airflow path doesn&rsquo;t get Celery&rsquo;s parallelism. If I kept both, I&rsquo;d pick one scheduling entry point (probably Airflow) and turn the beat job into an on-demand trigger.</p>
+<h2 id="decision-3-a-star-schema-with-per-target-configuration">Decision 3: a star schema with per-target configuration<a class="h-anchor" href="#decision-3-a-star-schema-with-per-target-configuration" title="Permanent link">#</a></h2>
+<p>The warehouse has five dimensions (<code>dim_domain</code>, <code>dim_region</code>, <code>dim_category</code>, <code>dim_product</code>, <code>dim_parser_profile</code>), a <code>targets</code> table that joins them and carries <code>check_interval_minutes</code> and <code>price_drop_threshold_percent</code>, a <code>fact_price_snapshot</code> table, and an operational table, <code>dq_scraper_health</code>. Selectors live in <code>dim_parser_profile</code>, keyed by domain and optional region, so a regional storefront can share a parser with its parent site.</p>
+<p>Every price is converted to a USD column at parse time. The conversion uses a hard-coded rate table (<code>EXCHANGE_RATES_TO_USD</code>, ten currencies, with a comment saying production would use an API). That is fine for comparing shapes on a chart. It is not fine for alerts, because a rate change looks like a price change. I&rsquo;d store the original amount and currency as the source of truth (the schema already does) and convert at query time from a dated rate table.</p>
+<h2 id="crawling-politely">Crawling politely<a class="h-anchor" href="#crawling-politely" title="Permanent link">#</a></h2>
+<p>I&rsquo;d describe this part as polite crawling, not anti-bot work, and the code needs changes before I&rsquo;d point it at a real retailer.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Behaviour</th>
+<th>What the code does today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-target check intervals</td>
+<td>Yes. Seed targets use 60 to 240 minutes.</td>
+</tr>
+<tr>
+<td>Retries with backoff</td>
+<td>Yes, via Celery <code>retry_backoff</code> (3 retries).</td>
+</tr>
+<tr>
+<td>robots.txt</td>
+<td>Not checked. <code>respect_robots</code> and <code>robots_txt_url</code> are stored but never read.</td>
+</tr>
+<tr>
+<td>Pacing between requests</td>
+<td>Not applied. <code>_random_delay()</code> returns a number and is never called; <code>min_delay_between_requests</code> is unused.</td>
+</tr>
+<tr>
+<td>Per-domain circuit breaker</td>
+<td>Half done. <code>check_domain_health</code> classifies a domain from its last hour of failures, but nothing calls it to stop fetches.</td>
+</tr>
+<tr>
+<td>User-agent strings</td>
+<td>A list of 5 is defined, but the Playwright fetch picks one and never applies it to the browser context.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Before any live run I would add four things: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I&rsquo;d also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site&rsquo;s terms, and where a retailer offers a product feed or affiliate API, that is the better source.</p>
+<div class="admonition note">
+<p class="admonition-title">Which sites</p>
+<p>The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as <code>https://amazon.com/sony-wh1000xm5</code>. They are not real product pages, and nothing in the repo shows a fetch against them. The Phase 0 script fetches <code>https://httpbin.org/html</code> as a connectivity test.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I could verify:</p>
+<ul>
+<li>The 24 unit tests in <code>tests/test_parser.py</code> and <code>tests/test_scraper.py</code> pass locally (24 passed in 3.35 s). They cover price parsing in USD, EUR and GBP formats, availability parsing, USD normalization, the result dataclasses and raw snapshot writing.</li>
+<li>The integration tests in <code>tests/integration/</code> need Postgres, and I didn&rsquo;t run them.</li>
+<li>There are no recorded runs, row counts, success rates or alert logs. The dashboard renders whatever is in Postgres, which for a demo is the seeded random history.</li>
+</ul>
+<p>Reading the full path end to end, I found four bugs that would stop the pipeline producing real data:</p>
+<ol>
+<li><strong>Fetch never creates a snapshot row.</strong> <code>scrape_target</code> saves the HTML file and updates the target, but it doesn&rsquo;t insert a <code>fact_price_snapshot</code> row. The parse stage only works on existing rows, so live fetches never reach it. Only the seed script and the tests create snapshot rows.</li>
+<li><strong>The parse queue is always empty.</strong> <code>parsed_at</code> has <code>default=datetime.utcnow</code>, so every new row is born &ldquo;parsed&rdquo;, and the parse and backfill stages, which filter on <code>parsed_at IS NULL</code>, find nothing.</li>
+<li><strong>The alert compares the wrong rows.</strong> <code>check_price_drops</code> excludes the latest snapshot and then also applies <code>.offset(1)</code>, so it compares the newest price with the third newest. It also fires on rises as well as drops, because it tests <code>abs(percent_change)</code>.</li>
+<li><strong>Selector-break detection counts fetch failures.</strong> <code>consecutive_nulls</code> goes up when the page fails to load and resets on any successful load. A page that loads but no longer matches the price selector never increments it.</li>
+</ol>
+<p>The DAG file also imports <code>CeleryTaskGroup</code> from <code>airflow.providers.celery.operators.celery</code>, which I don&rsquo;t believe that provider package contains, and the import is unused. I haven&rsquo;t confirmed whether the DAG loads, because the CI import check hasn&rsquo;t run on this copy. The README also lists structured JSON logging, a Prometheus endpoint and dead-letter handling; I couldn&rsquo;t find code for any of the three.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Fix the four bugs above, starting with snapshot creation in <code>scrape_target</code> and removing the <code>parsed_at</code> default, then add an integration test that goes from a stored HTML fixture through to an alert.</li>
+<li>Add the polite-crawling controls from the table, and make them on by default.</li>
+<li>Make raw retention a config value and write it into the README.</li>
+<li>Replace the static exchange-rate table with dated rates, and keep alert thresholds in the target&rsquo;s own currency.</li>
+<li>Pick one scheduler entry point and record each run (targets due, fetched, parsed, loaded) in <code>dq_scraper_health</code>, so the dashboard&rsquo;s health view has real numbers to show.</li>
+<li>Run it for a week against a small set of sites that allow it, and publish the success rate and run counts.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case page: <a href="../projects/watchdog-prices.html">Watchdog — Price Intelligence</a></li>
+<li>Related: <a href="partner-price-integrity-check.html">Partner price-integrity check</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html" data-title="Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <span></span>
+          <a class="post-pager-next" href="telecom-lakehouse-8-domains.html"><small>Older →</small><b>A telecom lakehouse for 8 domains: the blueprint, and what runs today</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

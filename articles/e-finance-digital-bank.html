@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>E-Finance: a six-service digital bank scaffold, and where the money logic lives | Mohammed Zakaria</title>
+  <meta name="description" content="A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html">
+  <meta property="og:title" content="E-Finance: a six-service digital bank scaffold, and where the money logic lives | Mohammed Zakaria">
+  <meta property="og:description" content="A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "E-Finance: a six-service digital bank scaffold, and where the money logic lives", "description": "A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html", "wordCount": 1756, "keywords": "Microservices, Docker, Data Engineering"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Microservices</span><span class="post-tag">Docker</span><span class="post-tag">Data Engineering</span></div>
+        <h1>E-Finance: a six-service digital bank scaffold, and where the money logic lives</h1>
+        <p class="post-lede">A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit">Decision 1: store money as integer minor units, and write both legs of a transfer in one commit</a></li>
+<li><a href="#decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge">Decision 2: a separate Java service for transaction records, with Kafka as the outbound edge</a></li>
+<li><a href="#decision-3-put-batch-work-in-airflow-against-the-same-postgres">Decision 3: put batch work in Airflow, against the same Postgres</a></li>
+<li><a href="#security-as-written">Security as written</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a portfolio project with no production deployment and no real customer data. E-Finance is a scaffold for a digital bank: six backend services, a React web app, a Postgres schema and three Airflow DAGs, all declared in one Docker Compose file. The core-banking API holds most of the real logic. The other services are thinner, and several still run on in-memory dictionaries or generated sample data. Below I cover what the code does, the decisions behind it, and what is left before the stack runs end to end.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A bank has two kinds of work that pull against each other. On the request path it has to move money correctly: a transfer debits one account and credits another, or neither happens. Off the request path it needs batch jobs: interest accrual, daily summaries, and fraud review over recent activity. I wanted one repository that showed both sides. That meant a service split I could defend, a schema that stores money safely, and a data layer that Airflow could run batch jobs against.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Docker Compose declares six backend services, plus the frontend, Postgres, MongoDB, Redis, ZooKeeper and Kafka, an Airflow webserver and scheduler, Prometheus and Grafana.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Stack</th>
+<th>What the code does today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>core-banking-api</td>
+<td>FastAPI, SQLAlchemy async</td>
+<td>Auth, users, accounts, cards, transactions: 44 routes over Postgres. Deposits, withdrawals and internal transfers update balances.</td>
+</tr>
+<tr>
+<td>transaction-service</td>
+<td>Spring Boot, JPA</td>
+<td>10 REST routes. Saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>.</td>
+</tr>
+<tr>
+<td>fraud-detection</td>
+<td>FastAPI, scikit-learn</td>
+<td>Scores a transaction on request: 8 hand-written rules blended with a random forest and an isolation forest.</td>
+</tr>
+<tr>
+<td>bnpl-service</td>
+<td>FastAPI</td>
+<td>Credit score from 300 to 850, built from four weighted factors. Orders and merchants live in in-memory dicts.</td>
+</tr>
+<tr>
+<td>web3-service</td>
+<td>FastAPI, web3.py</td>
+<td>Creates wallets and encrypts their keys with Fernet. Wallets are held in memory.</td>
+</tr>
+<tr>
+<td>analytics-service</td>
+<td>FastAPI, PySpark</td>
+<td>Daily volume, account summaries, moving averages and segments, computed over five hard-coded sample rows.</td>
+</tr>
+</tbody>
+</table></div>
+<p>This is how data moves in the code as it stands:</p>
+<div class="hl"><pre><span></span><code>React app ──HTTP──&gt; core-banking-api ──&gt; Postgres: efinance_core
+                                           (users, accounts, transactions,
+                                            cards, fraud_alerts, audit_logs,
+                                            daily_transaction_summary,
+                                            user_velocity_metrics)
+                                                 ^
+Airflow (LocalExecutor) ──PostgresHook──────────┘
+  transaction_etl     02:00 daily   extract -&gt; transform -&gt; load / velocity upsert
+  interest_calc       00:00 daily   accrue -&gt; credit on the 1st of the month
+  fraud_detection     every 15 min  flagged txns -&gt; fraud_alerts
+
+transaction-service ──&gt; Postgres: efinance_transactions (separate table)
+        └──produce──&gt; Kafka topic &quot;transactions&quot;   (no consumer in the repo)
+
+fraud / bnpl / web3 / analytics: called directly on their own ports;
+no service calls another over HTTP today.
+</code></pre></div>
+
+<p>The README draws an API gateway (Kong), Elasticsearch and a notification service. None of them are in the Compose file or the code. Elasticsearch shows up only as a config field and a pinned client library.</p>
+<h2 id="decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit">Decision 1: store money as integer minor units, and write both legs of a transfer in one commit<a class="h-anchor" href="#decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit" title="Permanent link">#</a></h2>
+<p>Every balance and amount column in the schema is <code>BIGINT</code> in the smallest currency unit, and the ORM maps them to <code>Integer</code>. The account model formats them by dividing by 100, or by 10^8 for crypto. That keeps floating-point rounding out of the ledger. The cost is that every caller has to agree on the unit, and the Java service&rsquo;s <code>Long</code> fields depend on the same convention without anything enforcing it.</p>
+<p>An internal transfer in <code>account_service.py</code> writes two transaction rows: a <code>TRANSFER_OUT</code> on the source account and a <code>TRANSFER_IN</code> on the destination. Each row records <code>balance_before</code> and <code>balance_after</code>. Both balances change, and then a single commit runs:</p>
+<div class="hl"><pre><span></span><code><span class="n">from_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">from_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">to_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">to_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">debit_tx</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">credit_tx</span><span class="p">)</span>
+<span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div>
+
+<p>The two legs and both balance updates sit in one database transaction, so a failure part-way leaves no half-transfer behind. Same-currency transfers only: cross-currency requests are rejected. Ownership, account status, daily and monthly limits and minimum balance are checked before any write.</p>
+<p>The design is two-leg, but it is not a full double-entry ledger. There is no separate journal, and nothing checks that debits and credits sum to zero. Balances are a read-modify-write on the account row with no <code>SELECT ... FOR UPDATE</code> and no version column. Two transfers running at once from the same account can therefore both pass the balance check. The API also takes no idempotency key. Reference numbers come from a timestamp plus six random characters, and the schema has a <code>UNIQUE</code> constraint on them, but a client that retries a transfer creates a second one.</p>
+<h2 id="decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge">Decision 2: a separate Java service for transaction records, with Kafka as the outbound edge<a class="h-anchor" href="#decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge" title="Permanent link">#</a></h2>
+<p>I put a Spring Boot transaction service next to the Python API. It writes transaction records and emits events, and the idea was that downstream consumers (fraud scoring, search, analytics) would read the <code>transactions</code> topic and leave the core API&rsquo;s database alone. <code>processTransaction</code> saves a record as <code>PENDING</code>, sets it to <code>PROCESSING</code>, and publishes it with the reference number as the Kafka key, which keeps the events for one transaction in order on a single partition.</p>
+<p>Three things limit this today. First, the Kafka send runs inside the <code>@Transactional</code> method, before the database commit. If the commit fails, an event may already be out; if the send fails, the error is logged and swallowed. An outbox table would close that gap. Second, nothing in the repo consumes the topic. Third, the Java service has its own <code>efinance_transactions</code> database and its own transactions table, separate from the one the core API writes. It takes <code>balanceBefore</code> and <code>balanceAfter</code> from the request body and never touches an account balance. The fraud call in <code>FraudCheckService</code> is built but commented out, so no service scores a transaction on the money path.</p>
+<h2 id="decision-3-put-batch-work-in-airflow-against-the-same-postgres">Decision 3: put batch work in Airflow, against the same Postgres<a class="h-anchor" href="#decision-3-put-batch-work-in-airflow-against-the-same-postgres" title="Permanent link">#</a></h2>
+<p>Daily jobs run as Airflow DAGs that use <code>PostgresHook</code>, not as background tasks inside the API. That keeps scheduling, retries and run history in one place, and it keeps the API process free of cron logic.</p>
+<ul>
+<li><strong>transaction_etl</strong> (02:00): pulls the day&rsquo;s completed transactions, then upserts into <code>daily_transaction_summary</code> with <code>ON CONFLICT (date) DO UPDATE</code> and into <code>user_velocity_metrics</code> with <code>ON CONFLICT (user_id, date)</code>. These upserts make re-runs safe: running a day again overwrites its rows instead of duplicating them. The velocity step is a real aggregate join across users, accounts and transactions.</li>
+<li><strong>interest_calculation</strong> (midnight): accrues <code>balance × rate / 365</code> into <code>interest_accrued</code> for savings and fixed-deposit accounts. On the 1st of the month it writes an <code>interest</code> transaction and moves the accrued amount into the balance.</li>
+<li><strong>fraud_detection</strong> (every 15 minutes): reads unreviewed suspicious transactions from the last hour, groups them by account, and writes <code>fraud_alerts</code>.</li>
+</ul>
+<p>The trade-off is that DAGs write straight to the operational tables. That is fine at this size, but it couples the jobs to the API&rsquo;s schema.</p>
+<div class="admonition note">
+<p class="admonition-title">Gaps in the DAGs</p>
+<p>The ETL <code>transform</code> step returns a fixed dictionary (<code>total_volume: 1000000</code>, <code>transaction_count: 500</code>), not an aggregate of the extracted rows. The load step points at an <code>efinance_warehouse</code> connection, and the init scripts create no warehouse database. The extract filters <code>status = 'COMPLETED'</code> while the interest DAG writes <code>'completed'</code>. The interest DAG runs each statement as its own <code>hook.run</code>, so the transaction insert and the balance update are not atomic. Daily accrual sets <code>last_interest_calculated</code> but never checks it, so re-running a date accrues interest twice.</p>
+</div>
+<h2 id="security-as-written">Security as written<a class="h-anchor" href="#security-as-written" title="Permanent link">#</a></h2>
+<p>The core API has the most complete auth. JWTs are HS256, with 30-minute access tokens and 7-day refresh tokens checked by type. Passwords are hashed with bcrypt. Five failed logins lock the account for 30 minutes. TOTP 2FA can be enabled and disabled, and admin and super-admin routes check roles. Every account route checks that the caller owns the account before it reads or moves money.</p>
+<p>The weak points are configuration and the other services. <code>config.py</code> ships default values for the app and JWT secrets. The Compose file and <code>application.yml</code> hold plaintext database passwords, the Airflow Fernet key is a placeholder string, and Grafana uses a default admin password. Fraud, BNPL, web3 and analytics have no authentication, and fraud-detection allows CORS from any origin. The web3 service derives its encryption key with a fixed salt, and its RPC default points at an Ethereum mainnet URL placeholder. For a local scaffold that is acceptable. Before anything else it would need a secrets store and service-to-service auth.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>Here is what I can verify from the repository, without running it:</p>
+<ul>
+<li>6 backend services; about 5,400 lines in the core API and about 14,200 lines across services, DAGs, schema and frontend.</li>
+<li>93 FastAPI routes across the Python services (44 in core banking) and 10 Spring routes.</li>
+<li>A 320-line Postgres schema with 10 tables, indexes and <code>updated_at</code> triggers.</li>
+<li>3 Airflow DAGs with idempotent upserts in the ETL load and velocity steps.</li>
+<li>Prometheus scrape config for all six services.</li>
+<li>The Java service has compiled classes under <code>target/</code>. There are no automated tests in the repo.</li>
+</ul>
+<p>The stack does not come up as committed. Only three of the six services have a Dockerfile (core banking, fraud and transaction), so <code>docker compose up</code> fails to build the other three. The core API imports <code>app.middleware</code> and <code>app.events</code>, and neither exists. MongoDB and Redis connect at startup, but no code path uses them yet. The fraud models are fitted on <code>np.random.rand</code> placeholder data until real models are saved, so their scores carry no signal.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Make the stack boot: add the three missing Dockerfiles, restore or remove the missing middleware imports, and add one smoke test per service.</li>
+<li>Lock balances during transfers with <code>SELECT ... FOR UPDATE</code> or a version column, and accept an <code>Idempotency-Key</code> header that is stored with a unique constraint.</li>
+<li>Keep one transaction store. Either the core API calls the Java service, or the Java service owns all writes and the core API reads from it. Then publish through an outbox table and add a real Kafka consumer.</li>
+<li>Fix the ETL transform so it aggregates the extracted rows, create the warehouse database, normalise status casing, and make interest accrual atomic and guarded by <code>last_interest_calculated</code>.</li>
+<li>Move secrets into environment files kept out of git, and put the gateway in front of the services that have no auth today.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case page: <a href="../projects/e-finance.html">E-Finance case study</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html" data-title="E-Finance: a six-service digital bank scaffold, and where the money logic lives">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="estates-lakehouse-zero-loss.html"><small>← Newer</small><b>8/8 sources, zero loss: a lakehouse that proves itself</b></a>
+          <a class="post-pager-next" href="deterministic-gates-before-llm.html"><small>Older →</small><b>Deterministic Gates Before the LLM</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

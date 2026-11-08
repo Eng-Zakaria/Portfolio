@@ -408,9 +408,9 @@
 
         <div class="project-card reveal reveal-d2">
           <div class="project-num">06 — BLOCKCHAIN FORENSICS</div>
-          <div class="project-name"><i class="fas fa-link"></i>Ethereum Forensics — 73× Faster Traversal</div>
+          <div class="project-name"><i class="fas fa-link"></i>Ethereum Forensics — Neo4j vs Spark Harness</div>
           <div class="project-desc">
-            Bronze→Silver→Gold pipeline for on-chain threat detection. Head-to-head benchmark: Neo4j traverses multi-hop money flows 73× faster than Spark — Kibana surfaces the patterns investigators actually chase.
+            Bronze→Silver→Gold pipeline for on-chain threat detection, with unit-tested smurfing, fan-out and peel-chain detectors and a harness for timing Neo4j against Spark on multi-hop money-flow queries.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> PySpark</span>
@@ -421,25 +421,27 @@
           </div>
           <div class="project-links">
             <a href="projects/blockchain-analyzer.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/ethereum-neo4j-vs-spark.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/blockchain-analyzer" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
 
         <div class="project-card reveal">
           <div class="project-num">07 — MLOps</div>
-          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk — Score-and-Decide MLOps Loop</div>
+          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk — Score-and-Decide Pipeline</div>
           <div class="project-desc">
-            Portfolio build on synthetic credit data: a stacked XGBoost + LightGBM ensemble served behind FastAPI with Redis lookups. Airflow orchestration, MLflow lineage, BigQuery marts — a full score-and-decide loop, not a notebook.
+            Portfolio build on synthetic credit data: XGBoost, LightGBM and CatBoost trained behind an AUC/Gini/KS deploy gate, with MLflow tracking, Airflow train and monitor DAGs, DuckDB marts and a FastAPI endpoint that returns approve, review or decline.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-robot"></i> XGBoost</span>
             <span class="stack-tag"><i class="fas fa-robot"></i> LightGBM</span>
             <span class="stack-tag"><i class="fas fa-flask"></i> MLflow</span>
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-            <span class="stack-tag"><i class="fas fa-database"></i> BigQuery</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> DuckDB</span>
           </div>
           <div class="project-links">
             <a href="projects/credit-risk.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/credit-risk-mlops-loop.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/Risk_Analysis" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
@@ -561,20 +563,21 @@
 
         <div class="project-card wide reveal reveal-d2">
           <div class="project-num">14 — ENTERPRISE PLATFORM</div>
-          <div class="project-name"><i class="fas fa-network-wired"></i>Telecom Lakehouse — 8 Domains, One Truth</div>
+          <div class="project-name"><i class="fas fa-network-wired"></i>Telecom Lakehouse Blueprint — 8 Domains</div>
           <div class="project-desc">
-            Enterprise telecom analytics: 8 business domains in Bronze/Silver/Gold, Docker-to-Azure parity, MLflow tracking with drift-triggered retraining. The kind of platform BI teams stop fighting and start quoting.
+            Telecom lakehouse design on synthetic data: 25 dbt models across 8 domain marts over Bronze/Silver/Gold, 8 scikit-learn models including revenue-leakage detection with 80 pytest tests, and Azure Terraform modules for the next step.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-microsoft"></i> Azure</span>
             <span class="stack-tag"><i class="fas fa-bolt"></i> Spark</span>
             <span class="stack-tag"><i class="fas fa-database"></i> Delta Lake</span>
-            <span class="stack-tag"><i class="fas fa-cubes"></i> Fabric</span>
-            <span class="stack-tag"><i class="fas fa-flask"></i> MLflow</span>
+            <span class="stack-tag"><i class="fas fa-table"></i> dbt</span>
+            <span class="stack-tag"><i class="fas fa-vial"></i> pytest</span>
             <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
           </div>
           <div class="project-links">
             <a href="projects/telecom-platform.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/telecom-lakehouse-8-domains.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -601,9 +604,9 @@
 
         <div class="project-card wide reveal reveal-d1" data-category="price platform batch">
           <div class="project-num">16 — PRICE INTELLIGENCE</div>
-          <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Competitor Prices on Autopilot</div>
+          <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Raw-First Price Tracking</div>
           <div class="project-desc">
-            Multi-domain price intel that never sleeps: Playwright on Celery/Redis, Airflow 6-stage ETL with raw-HTML snapshots for lossless re-parsing, dimensional Postgres warehouse, Telegram/email strike alerts, Streamlit analytics — anti-bot resilient by design.
+            Multi-site price tracker: Playwright on Celery/Redis, a 6-stage Airflow DAG, raw HTML stored before parsing so selector fixes can re-parse 30 days of pages, a Postgres star schema, Telegram/email threshold alerts and a Streamlit dashboard. 24 unit tests pass; not yet run end to end.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
@@ -615,6 +618,7 @@
           </div>
           <div class="project-links">
             <a href="projects/watchdog-prices.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/watchdog-price-intel.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -659,20 +663,21 @@
 
         <div class="project-card reveal reveal-d2" data-category="platform batch">
           <div class="project-num">19 — COMPLIANCE PLATFORM</div>
-          <div class="project-name"><i class="fas fa-shield-alt"></i>ChainGuard — GDPR-Native Crypto Intel</div>
+          <div class="project-name"><i class="fas fa-shield-alt"></i>ChainGuard — Privacy Layer for Crypto Data</div>
           <div class="project-desc">
-            On-chain analytics with privacy baked in: Ethereum + Bitcoin + market feeds pass PII masking, Fernet encryption, and full audit trails before touching Postgres, Elasticsearch, or Mongo. 365-day retention, subpoena-ready.
+            Prototype privacy layer for on-chain analytics: Ethereum, Bitcoin and market feeds pass 8 regex PII patterns and address masking, with an audit-log table and a 365-day retention ledger in Postgres. Built from code review; not yet run end to end.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-link"></i> web3.py</span>
-            <span class="stack-tag"><i class="fas fa-tasks"></i> Celery</span>
+            <span class="stack-tag"><i class="fas fa-project-diagram"></i> networkx</span>
             <span class="stack-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
-            <span class="stack-tag"><i class="fas fa-search"></i> Elasticsearch</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> SQLAlchemy</span>
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
             <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
           </div>
           <div class="project-links">
             <a href="projects/blockchain-gdpr-aggregator.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/gdpr-native-chain-analytics.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -714,20 +719,21 @@
 
         <div class="project-card wide reveal" data-category="platform batch">
           <div class="project-num">22 — ENTERPRISE FINTECH</div>
-          <div class="project-name"><i class="fas fa-landmark"></i>E-Finance — 6-Service Digital Bank</div>
+          <div class="project-name"><i class="fas fa-landmark"></i>E-Finance — 6-Service Bank Scaffold</div>
           <div class="project-desc">
-            A bank in containers: core-banking API + Java transaction engine streaming through Kafka into Postgres, Mongo, Redis, and Elasticsearch — with fraud/AML models, BNPL scoring, Airflow settlement DAGs, and Web3 wallets.
+            A digital-bank scaffold in Docker Compose: a FastAPI core-banking API with JWT, 2FA and two-leg transfers in one commit, a Spring Boot service publishing to Kafka, rule-plus-ML fraud scoring, BNPL scoring, Web3 wallets, and Airflow interest, ETL and fraud-alert DAGs.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
             <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
             <span class="stack-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
-            <span class="stack-tag"><i class="fas fa-database"></i> MongoDB</span>
+            <span class="stack-tag"><i class="fas fa-leaf"></i> Spring Boot</span>
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
             <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
           </div>
           <div class="project-links">
             <a href="projects/e-finance.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/e-finance-digital-bank.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -769,19 +775,20 @@
 
         <div class="project-card reveal" data-category="platform">
           <div class="project-num">25 — SERVERLESS CLOUD</div>
-          <div class="project-name"><i class="fab fa-aws"></i>Serverless Ops — AWS Blueprint, Zero Servers</div>
+          <div class="project-name"><i class="fab fa-aws"></i>Serverless on AWS — CDK Blueprint</div>
           <div class="project-desc">
-            Full AWS serverless in production shape: API Gateway + Lambda + DynamoDB, React on S3/CloudFront, TypeScript CDK, CodePipeline delivery, CloudWatch observability — scale to zero, deploy with confidence.
+            Tutorial-based AWS serverless build: API Gateway + 6 Lambdas + DynamoDB, React on S3/CloudFront, one TypeScript CDK stack and a CloudWatch alarm. Not yet deployed; a CodePipeline stack is drafted for the next step.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-aws"></i> Lambda</span>
             <span class="stack-tag"><i class="fas fa-database"></i> DynamoDB</span>
             <span class="stack-tag"><i class="fab fa-react"></i> React</span>
             <span class="stack-tag"><i class="fas fa-cloud"></i> CDK</span>
-            <span class="stack-tag"><i class="fas fa-code-branch"></i> CodePipeline</span>
+            <span class="stack-tag"><i class="fas fa-network-wired"></i> API Gateway</span>
           </div>
           <div class="project-links">
             <a href="projects/aws-serverless.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/aws-serverless-blueprint.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -970,11 +977,11 @@
       <p class="projects-sub">Code-first, production-tested: Airflow at scale, NoSQL when it wins, and the resilience patterns that keep pipelines alive at 3am. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a> · <a href="articles/index.html" class="inline-link">All articles on this site →</a></p>
       <!-- native-articles:start -->
       <div class="native-articles">
-        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 18 articles →</a></div>
+        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 25 articles →</a></div>
         <div class="native-articles-grid">
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/watchdog-price-intel.html">Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</a></h3><p>A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.</p><div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div><a class="proj-link" href="articles/watchdog-price-intel.html">Read article →</a></article>
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/telecom-lakehouse-8-domains.html">A telecom lakehouse for 8 domains: the blueprint, and what runs today</a></h3><p>A portfolio design for a telecom medallion lakehouse with eight domain marts and an Azure/Fabric target. The synthetic generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written but have not been executed or deployed.</p><div class="post-tags"><span class="post-tag">Lakehouse</span><span class="post-tag">Data Quality</span><span class="post-tag">Azure</span></div><a class="proj-link" href="articles/telecom-lakehouse-8-domains.html">Read article →</a></article>
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/six-stage-client-etl.html">Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</a></h3><p>How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</p><div class="post-tags"><span class="post-tag">ETL</span><span class="post-tag">Data Quality</span><span class="post-tag">MySQL</span></div><a class="proj-link" href="articles/six-stage-client-etl.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/retail-cdc-debezium.html">Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</a></h3><p>A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.</p><div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">CDC</span><span class="post-tag">Delta Lake</span></div><a class="proj-link" href="articles/retail-cdc-debezium.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/reddit-medallion-pyspark.html">A 7-stage PySpark medallion for Reddit signals</a></h3><p>How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</p><div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div><a class="proj-link" href="articles/reddit-medallion-pyspark.html">Read article →</a></article>
         </div>
         <div class="native-articles-label native-articles-label-alt">Also on Medium</div>
       </div>

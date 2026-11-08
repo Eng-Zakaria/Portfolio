@@ -8,6 +8,248 @@
     <language>en</language>
     <lastBuildDate>Sun, 08 Nov 2026 09:00:00 +0200</lastBuildDate>
     <item>
+      <title>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.</description>
+      <category>Web Scraping</category><category>Data Pipelines</category><category>Python</category>
+      <content:encoded><![CDATA[<p>Evidence: Portfolio project. It has not been run end to end against live sites: <code>data/raw/</code> is empty, there are no saved runs, and the only price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the gaps I found reading the code.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The same product sells at different prices on different sites and in different regional storefronts, and those sites change their markup without notice. A scraper that parses prices on the fly has two weaknesses. First, when a CSS selector stops matching, you get a run of nulls and no way to recover them, because the page you fetched is gone. Second, a flat list of URLs can&rsquo;t say &ldquo;check electronics hourly, TVs every four hours&rdquo; or &ldquo;this storefront prices in GBP&rdquo;.</p>
+<p>Watchdog is my attempt at a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.</p>
+<p>This is a different job from the partner price-integrity check I built for Waffarha (<a href="partner-price-integrity-check.html">write-up</a>). That one compares partner prices against our own catalogue once a day. Watchdog is a general tracker for price history over time.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> targets table (product x domain x region x category, interval, threshold)
+        |
+        v
+ Celery beat (every 60 s: check_due_targets)     Airflow DAG (every 15 min)
+        |                                               |
+        v                                               v
+ scrape_target  --Playwright--&gt;  page HTML  --&gt;  data/raw/&lt;ts&gt;_&lt;hash&gt;.html
+        |
+        v
+ parse_snapshot  (BeautifulSoup + selector profile, price -&gt; USD)
+        |
+        v
+ Postgres star schema: dim_domain, dim_region, dim_category, dim_product,
+ dim_parser_profile, targets, fact_price_snapshot, dq_scraper_health
+        |
+        +--&gt; data-quality check (missing / zero prices, stale targets)
+        +--&gt; alert engine (Telegram + SMTP behind one Notifier interface)
+        +--&gt; Streamlit dashboard (trend, cross-region, availability, health)
+</code></pre></div>
+
+<p>The moving parts are Playwright for fetching, Celery with Redis for per-target jobs, Airflow for the stage order, Postgres through SQLAlchemy for storage, and Streamlit for the dashboard. Docker Compose defines Postgres, Redis and the Airflow services, and a GitHub Actions workflow runs lint, tests, a Docker build and a DAG import check.</p>
+<p>Scheduling exists twice. Celery beat runs <code>check_due_targets</code> every 60 seconds and queues any target whose <code>check_interval_minutes</code> has passed. The Airflow DAG <code>watchdog_price_pipeline</code> runs on <code>*/15 * * * *</code> with <code>max_active_runs=1</code>. A second DAG, <code>watchdog_backfill_parse</code>, has no schedule and is meant for manual re-parsing.</p>
+<h2 id="decision-1-store-raw-html-before-parsing">Decision 1: store raw HTML before parsing<a class="h-anchor" href="#decision-1-store-raw-html-before-parsing" title="Permanent link">#</a></h2>
+<p><code>save_raw_snapshot</code> writes each page to <code>data/raw/YYYYMMDD_HHMMSS_&lt;md5[:12]&gt;.html</code>, with a short comment header that records the URL and timestamp. The parser reads from that file, not from the live page, and strips the header before parsing:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="s2">&quot;&lt;!-- WATCHDOG SNAPSHOT&quot;</span> <span class="ow">in</span> <span class="n">html</span><span class="p">:</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="n">html</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;--&gt;&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</code></pre></div>
+
+<p>The benefit is that a broken selector costs you time, not data. Fix the selector in <code>dim_parser_profile</code>, re-run the parse over the stored files, and the price series comes back.</p>
+<p>The cost is disk space and a retention decision. The code makes that decision for you: a Celery beat job, <code>cleanup_old_snapshots</code>, runs every hour and deletes raw files older than 30 days. So the real guarantee is &ldquo;you can re-parse the last 30 days&rdquo;, not &ldquo;raw HTML is never discarded&rdquo;. I think 30 days is a sensible default, but it should be a setting and it should be documented.</p>
+<h2 id="decision-2-celery-for-fetches-airflow-for-stage-order">Decision 2: Celery for fetches, Airflow for stage order<a class="h-anchor" href="#decision-2-celery-for-fetches-airflow-for-stage-order" title="Permanent link">#</a></h2>
+<p>A price fetch is a small, slow, independent job that can fail on its own. That fits a task queue: <code>scrape_target</code> is a Celery task with <code>max_retries=3</code>, <code>autoretry_for=(Exception,)</code> and <code>retry_backoff=True</code>, and the worker settings use <code>task_acks_late=True</code> and <code>worker_prefetch_multiplier=1</code>, so a crashed worker doesn&rsquo;t silently drop a job. Airflow sits above that and owns the order: fetch, parse, load, data-quality check, a branch on the check result, dashboard refresh, alerts, stats.</p>
+<p>The trade-off is two schedulers and two places to look when something is late. In this code the Airflow tasks call Celery with <code>.apply()</code>, which runs the work inside the Airflow worker process rather than sending it to the Celery pool. That keeps the DAG simple, but it means the Airflow path doesn&rsquo;t get Celery&rsquo;s parallelism. If I kept both, I&rsquo;d pick one scheduling entry point (probably Airflow) and turn the beat job into an on-demand trigger.</p>
+<h2 id="decision-3-a-star-schema-with-per-target-configuration">Decision 3: a star schema with per-target configuration<a class="h-anchor" href="#decision-3-a-star-schema-with-per-target-configuration" title="Permanent link">#</a></h2>
+<p>The warehouse has five dimensions (<code>dim_domain</code>, <code>dim_region</code>, <code>dim_category</code>, <code>dim_product</code>, <code>dim_parser_profile</code>), a <code>targets</code> table that joins them and carries <code>check_interval_minutes</code> and <code>price_drop_threshold_percent</code>, a <code>fact_price_snapshot</code> table, and an operational table, <code>dq_scraper_health</code>. Selectors live in <code>dim_parser_profile</code>, keyed by domain and optional region, so a regional storefront can share a parser with its parent site.</p>
+<p>Every price is converted to a USD column at parse time. The conversion uses a hard-coded rate table (<code>EXCHANGE_RATES_TO_USD</code>, ten currencies, with a comment saying production would use an API). That is fine for comparing shapes on a chart. It is not fine for alerts, because a rate change looks like a price change. I&rsquo;d store the original amount and currency as the source of truth (the schema already does) and convert at query time from a dated rate table.</p>
+<h2 id="crawling-politely">Crawling politely<a class="h-anchor" href="#crawling-politely" title="Permanent link">#</a></h2>
+<p>I&rsquo;d describe this part as polite crawling, not anti-bot work, and the code needs changes before I&rsquo;d point it at a real retailer.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Behaviour</th>
+<th>What the code does today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Per-target check intervals</td>
+<td>Yes. Seed targets use 60 to 240 minutes.</td>
+</tr>
+<tr>
+<td>Retries with backoff</td>
+<td>Yes, via Celery <code>retry_backoff</code> (3 retries).</td>
+</tr>
+<tr>
+<td>robots.txt</td>
+<td>Not checked. <code>respect_robots</code> and <code>robots_txt_url</code> are stored but never read.</td>
+</tr>
+<tr>
+<td>Pacing between requests</td>
+<td>Not applied. <code>_random_delay()</code> returns a number and is never called; <code>min_delay_between_requests</code> is unused.</td>
+</tr>
+<tr>
+<td>Per-domain circuit breaker</td>
+<td>Half done. <code>check_domain_health</code> classifies a domain from its last hour of failures, but nothing calls it to stop fetches.</td>
+</tr>
+<tr>
+<td>User-agent strings</td>
+<td>A list of 5 is defined, but the Playwright fetch picks one and never applies it to the browser context.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Before any live run I would add four things: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I&rsquo;d also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site&rsquo;s terms, and where a retailer offers a product feed or affiliate API, that is the better source.</p>
+<div class="admonition note">
+<p class="admonition-title">Which sites</p>
+<p>The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as <code>https://amazon.com/sony-wh1000xm5</code>. They are not real product pages, and nothing in the repo shows a fetch against them. The Phase 0 script fetches <code>https://httpbin.org/html</code> as a connectivity test.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I could verify:</p>
+<ul>
+<li>The 24 unit tests in <code>tests/test_parser.py</code> and <code>tests/test_scraper.py</code> pass locally (24 passed in 3.35 s). They cover price parsing in USD, EUR and GBP formats, availability parsing, USD normalization, the result dataclasses and raw snapshot writing.</li>
+<li>The integration tests in <code>tests/integration/</code> need Postgres, and I didn&rsquo;t run them.</li>
+<li>There are no recorded runs, row counts, success rates or alert logs. The dashboard renders whatever is in Postgres, which for a demo is the seeded random history.</li>
+</ul>
+<p>Reading the full path end to end, I found four bugs that would stop the pipeline producing real data:</p>
+<ol>
+<li><strong>Fetch never creates a snapshot row.</strong> <code>scrape_target</code> saves the HTML file and updates the target, but it doesn&rsquo;t insert a <code>fact_price_snapshot</code> row. The parse stage only works on existing rows, so live fetches never reach it. Only the seed script and the tests create snapshot rows.</li>
+<li><strong>The parse queue is always empty.</strong> <code>parsed_at</code> has <code>default=datetime.utcnow</code>, so every new row is born &ldquo;parsed&rdquo;, and the parse and backfill stages, which filter on <code>parsed_at IS NULL</code>, find nothing.</li>
+<li><strong>The alert compares the wrong rows.</strong> <code>check_price_drops</code> excludes the latest snapshot and then also applies <code>.offset(1)</code>, so it compares the newest price with the third newest. It also fires on rises as well as drops, because it tests <code>abs(percent_change)</code>.</li>
+<li><strong>Selector-break detection counts fetch failures.</strong> <code>consecutive_nulls</code> goes up when the page fails to load and resets on any successful load. A page that loads but no longer matches the price selector never increments it.</li>
+</ol>
+<p>The DAG file also imports <code>CeleryTaskGroup</code> from <code>airflow.providers.celery.operators.celery</code>, which I don&rsquo;t believe that provider package contains, and the import is unused. I haven&rsquo;t confirmed whether the DAG loads, because the CI import check hasn&rsquo;t run on this copy. The README also lists structured JSON logging, a Prometheus endpoint and dead-letter handling; I couldn&rsquo;t find code for any of the three.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Fix the four bugs above, starting with snapshot creation in <code>scrape_target</code> and removing the <code>parsed_at</code> default, then add an integration test that goes from a stored HTML fixture through to an alert.</li>
+<li>Add the polite-crawling controls from the table, and make them on by default.</li>
+<li>Make raw retention a config value and write it into the README.</li>
+<li>Replace the static exchange-rate table with dated rates, and keep alert thresholds in the target&rsquo;s own currency.</li>
+<li>Pick one scheduler entry point and record each run (targets due, fetched, parsed, loaded) in <code>dq_scraper_health</code>, so the dashboard&rsquo;s health view has real numbers to show.</li>
+<li>Run it for a week against a small set of sites that allow it, and publish the success rate and run counts.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case page: <a href="../projects/watchdog-prices.html">Watchdog — Price Intelligence</a></li>
+<li>Related: <a href="partner-price-integrity-check.html">Partner price-integrity check</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
+      <title>A telecom lakehouse for 8 domains: the blueprint, and what runs today</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A portfolio design for a telecom medallion lakehouse with eight domain marts and an Azure/Fabric target. The synthetic generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written but have not been executed or deployed.</description>
+      <category>Lakehouse</category><category>Data Quality</category><category>Azure</category>
+      <content:encoded><![CDATA[<p>Evidence: Portfolio, synthetic data. Every record in this project comes from seeded Python generators. Nothing has been deployed to Azure or Microsoft Fabric: there is no Terraform state, no configured backend, and no Git remote for the CI workflows to run on. The parts that have actually run are the data generators and the ML modules, through a local pytest suite. This write-up covers the design, the parts I can show running, and what still has to happen before the lakehouse layers run.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A telecom operator has several teams asking the same raw data different questions. Retention wants churn risk per subscriber. Revenue assurance wants to know whether what was billed matches what the network recorded. Network operations wants tower health, and finance wants ARPU trends. If each team builds its own copy of CDRs and billing, the numbers drift apart and nobody trusts the monthly report.</p>
+<p>The design I wanted: one shared bronze/silver/gold lakehouse, a small set of conformed core tables, and thin domain marts on top, for eight domains (retention, revenue assurance, network ops, marketing, customer care, finance, roaming, product). I also wanted to develop it on a laptop and have a clear path to Azure, without paying for cloud capacity while the logic was still changing.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> synthetic generators (seeded numpy)          docker-compose (emulators)
+ CDR | network KPI | billing | roaming         Azurite | MinIO | Redpanda | Postgres
+ campaigns | complaints                        (defined, not wired to the code)
+        |
+        v  parquet files in data/
+ +----------------------------------------------------------------+
+ | bronze  pipelines/bronze   PySpark + Delta MERGE, dead-letter   |  written,
+ | silver  pipelines/silver   SHA-256 masking, dedup, validation   |  not run
+ | quality pipelines/quality  GE expectations, schema-drift check  |
+ +----------------------------------------------------------------+
+        |
+        v
+ dbt: 10 core models -&gt; 15 mart models in 8 domain folders          not compiled
+        |
+        v
+ ml/: churn, fraud, revenue leakage, network failure, propensity,   runs under
+      pricing elasticity, roaming, forecasting + JSON model registry   pytest
+
+ infra/: Terraform modules (Key Vault, VNet, Blob, Event Hubs, ADF,
+         Databricks, Fabric) x 4 environments                        never applied
+</code></pre></div>
+
+<p>The generators are the most complete part. The CDR generator builds a customer and tower pool around a fixed metro centre, applies peak-hour and duration distributions, and can inject fraud patterns. The network KPI generator emits per-tower readings (RSRP, SINR, dropped-call rate, congestion, latency, throughput) at a configurable interval and degrades 5% of towers on purpose so the failure model has something to find. The sample files saved in <code>data/</code> hold 1,000 CDRs (17 columns), 500 billing rows (14 columns) and 4,320,000 network KPI rows (13 columns).</p>
+<h2 id="decision-1-hash-identifiers-at-the-source-mask-again-in-silver">Decision 1: hash identifiers at the source, mask again in silver<a class="h-anchor" href="#decision-1-hash-identifiers-at-the-source-mask-again-in-silver" title="Permanent link">#</a></h2>
+<p>Subscriber IDs are hashed the moment they are generated, so no raw ID ever reaches a CDR file:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_hash_pii</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hash PII for privacy&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">16</span><span class="p">]</span>
+</code></pre></div>
+
+<p>The silver pipeline then has a second, configurable step: any column listed in <code>pii_columns</code> is replaced with <code>F.sha2(col, 256)</code> in Spark before the table is written.</p>
+<p>The trade-off is joinability against reversibility. A deterministic hash keeps <code>caller_id</code> joinable across CDR, billing and roaming tables, which the domain marts need. It is not anonymisation: an unsalted hash of a predictable ID like <code>CUST_000123</code> can be reversed by hashing every candidate. In a real system I would use a keyed hash (HMAC with the key in Key Vault) so only the platform can produce the mapping.</p>
+<p>One gap is visible in the sample billing file. It carries both <code>customer_id</code> and <code>hashed_id</code>, so the raw ID survives at bronze for billing. The silver masking step would cover it if <code>customer_id</code> were listed in <code>pii_columns</code>, but that pipeline has not run.</p>
+<h2 id="decision-2-one-terraform-tree-gated-by-a-single-flag">Decision 2: one Terraform tree, gated by a single flag<a class="h-anchor" href="#decision-2-one-terraform-tree-gated-by-a-single-flag" title="Permanent link">#</a></h2>
+<p>ADR-001 picks a single Terraform configuration for both local and cloud, with every Azure resource gated on <code>use_local_dev</code>:</p>
+<div class="hl"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;azurerm_key_vault&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="na">count</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.use_local_dev</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">1</span>
+<span class="w">  </span><span class="na">name</span><span class="w">                       </span><span class="o">=</span><span class="w"> </span><span class="nv">var.name</span>
+<span class="w">  </span><span class="na">soft_delete_retention_days</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">90</span>
+<span class="w">  </span><span class="na">purge_protection_enabled</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">  </span><span class="na">enable_rbac_authorization</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
+<span class="w">  </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>With the flag on (the default in <code>dev</code>), the plan creates nothing in Azure and you are expected to use the Docker Compose stack instead: Azurite for Blob, MinIO for object storage, Redpanda for Event Hubs/Kafka, Postgres as a source system. With the flag off, the same modules would create Key Vault with RBAC and purge protection, storage, Event Hubs, Data Factory, Databricks and a Fabric capacity and workspace, with remote state in an <code>azurerm</code> backend.</p>
+<p>The appeal is one set of names and tags for every environment. The cost is that the local path is mostly &ldquo;skip everything&rdquo;, so it does not test the cloud path at all. That cost shows up in the code. The Key Vault module references resources that are not declared anywhere (<code>azurerm_namespace.authorization</code>, <code>random_password.databricks_token</code>), and the Fabric module uses <code>azurerm_fabric_workspace</code> and <code>azurerm_fabric_lakehouse</code>, which the pinned azurerm 3.x provider does not define. ADR-002 itself says Fabric workspaces and lakehouses belong to the Fabric CLI, not Terraform. A <code>terraform validate</code> with the flag off would surface all of this. In this repository, &ldquo;Fabric/Azure parity&rdquo; means a set of Azure-shaped Terraform modules and a matching emulator stack. It has not been deployed.</p>
+<h2 id="decision-3-quality-checks-as-data-drift-as-a-deploy-blocker">Decision 3: quality checks as data, drift as a deploy blocker<a class="h-anchor" href="#decision-3-quality-checks-as-data-drift-as-a-deploy-blocker" title="Permanent link">#</a></h2>
+<p>I wrote the quality rules as plain expectation definitions per table type, not inline code. The CDR set requires a non-null, unique <code>call_sid</code>, a 16-character hex <code>caller_id</code> (matching the hash above), <code>duration_seconds</code> between 0 and 86,400, and a non-null <code>start_time</code>. Network KPIs get physical ranges (RSRP -140 to -50 dBm, SINR -20 to 30 dB, percentages 0 to 100). Billing gets charge ranges and a <code>payment_status</code> value set.</p>
+<p>Schema drift is a separate check that compares a batch against a baseline and marks the change as blocking:</p>
+<div class="hl"><pre><span></span><code><span class="n">added</span> <span class="o">=</span> <span class="n">current_cols</span> <span class="o">-</span> <span class="n">baseline_cols</span>
+<span class="k">if</span> <span class="n">added</span><span class="p">:</span>
+    <span class="n">drift_info</span><span class="p">[</span><span class="s2">&quot;drift_detected&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">drift_info</span><span class="p">[</span><span class="s2">&quot;added_columns&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">added</span><span class="p">)</span>
+    <span class="n">drift_info</span><span class="p">[</span><span class="s2">&quot;block_deploy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># Block deployment on new columns</span>
+</code></pre></div>
+
+<p>Removed columns and dtype changes also set <code>block_deploy</code>. The trade-off is strictness. Blocking on an added column is conservative, since an additive change is usually safe with Delta&rsquo;s <code>mergeSchema</code>, but for revenue tables I would rather a human look first.</p>
+<p>This layer is still a design. The validator calls methods that are not part of the Great Expectations API (<code>open_expectation_suite</code>, <code>add_dataset</code>), and <code>create_expectation_suite</code> refers to an undefined variable. Because <code>validate()</code> catches every exception, a run would report &ldquo;failed&rdquo; rather than crash. Nothing calls <code>detect_schema_drift</code>, and &ldquo;alerts&rdquo; in this codebase are <code>print</code> statements and in-memory lists. The bronze pipeline&rsquo;s own schema-evolution step has a bug too: when it finds new columns, it overwrites them with nulls instead of keeping them.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I can show running:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Recorded evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Synthetic sample data</td>
+<td><code>data/</code>: 1,000 CDRs, 500 billing rows, 4,320,000 network KPI rows</td>
+</tr>
+<tr>
+<td>Test suite</td>
+<td>pytest cache from 4 Sep 2026: 80 collected tests (41 ML model, 16 end-to-end, 9 ML integration, 8 repo-structure, 6 generator), no failures recorded</td>
+</tr>
+<tr>
+<td>dbt</td>
+<td>25 model files; 8 mart folders, one per domain</td>
+</tr>
+<tr>
+<td>Terraform</td>
+<td>10 modules, 4 environments; providers downloaded by <code>terraform init</code>, no state file</td>
+</tr>
+<tr>
+<td>CI workflows</td>
+<td>4 files; no Git remote, so they have never run</td>
+</tr>
+</tbody>
+</table></div>
+<p>The tests exercise the generators, the ML modules, the JSON model registry, the metrics and alert classes, and the quality-gate manager. They do not touch the PySpark pipelines, Great Expectations, dbt or Terraform, and PySpark and Great Expectations are optional extras that are not installed by default. The ML registry file only holds entries the tests wrote, with fixed fixture metrics, so I don&rsquo;t quote model scores from it.</p>
+<div class="admonition note">
+<p class="admonition-title">Revenue assurance today</p>
+<p>Revenue assurance exists in two forms. A Python <code>RevenueLeakageDetector</code> checks CDR gaps, duplicate CDRs, rating issues, discount abuse and partner settlement mismatches, and is covered by unit tests. The dbt marts <code>f_revenue_leakage</code> and <code>f_fraud_detection</code> describe the same reconciliation in SQL but have not compiled.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make dbt compile.</strong> Add a <code>sources.yml</code> for the bronze tables, write the six missing staging models (<code>stg_billing_monthly</code>, <code>stg_billing_history</code>, <code>stg_campaigns</code>, <code>stg_campaign_responses</code>, <code>stg_roaming_settlements</code>, <code>dim_roaming_partners</code>), and move the date logic off MySQL-style <code>DATE_FORMAT</code>/<code>INTERVAL</code> to one engine. DuckDB is the obvious choice for local runs. Then add <code>schema.yml</code> tests, since there are none today.</li>
+<li><strong>Run Great Expectations for real.</strong> Rewrite the validator against the current GE API, run the CDR, KPI and billing suites on the sample files, and save the validation results as artifacts.</li>
+<li><strong>Run bronze and silver once.</strong> Either install the Spark extra or port the pipelines to the <code>deltalake</code> Python package, fix the schema-evolution null bug, and confirm that MERGE is idempotent by loading the same batch twice.</li>
+<li><strong>Validate the Terraform.</strong> Run <code>terraform validate</code> with <code>use_local_dev=false</code>, fix the undeclared references, upgrade to azurerm 4.x for <code>azurerm_fabric_capacity</code>, and leave workspaces and lakehouses to the Fabric CLI or the Fabric provider, as ADR-002 says.</li>
+<li><strong>Build the promotion flow.</strong> <code>promote.yml</code> applies Terraform to staging and prod, but it has no rollback step, the prod job checks an issue label that a push event never carries, and it references <code>tfvars</code> files and integration tests that do not exist. A real version needs those files, a <code>terraform plan</code> artifact reviewed before apply, and a rollback path. ADR-005 calls for one; the workflow does not have it yet.</li>
+<li><strong>Add model tracking.</strong> There is no MLflow code yet; the registry is a JSON file. Adding MLflow tracking, and retraining driven by a measured drift metric, would come after the data layers run.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/telecom-platform.html">Telecom lakehouse</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html</guid>
@@ -1130,6 +1372,132 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 <p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>]]></content:encoded>
     </item>
     <item>
+      <title>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.</description>
+      <category>Data Privacy</category><category>Data Governance</category><category>Blockchain</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio prototype, reviewed from source code only.</strong> The project has never been run end to end, there are no saved outputs or logs, and the numbers below are counts and defaults read from the code, not measurements. This is a write-up of the design, the controls it implements, and where they stop short.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Blockchain data is public by design, but that does not make it free of personal data. A wallet address is a stable identifier. Once anyone links it to a person (an exchange KYC record, a forum post, an invoice), every past and future transaction from that address is linked too. Under GDPR, data that can be tied back to a person with reasonable effort is still personal data, even if it is pseudonymised.</p>
+<p>I wanted an analytics service that pulls Ethereum blocks, Bitcoin transactions and market prices, and puts a privacy layer in front of everything it serves: mask identifiers and free-text PII, record what was processed, and schedule deletion. The goal was a set of concrete controls, not a compliance label. Whether a real deployment meets GDPR depends on lawful basis, purpose, contracts and process, which code alone cannot settle.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The service is a FastAPI app with ingestors for Ethereum (web3.py over HTTP) and Bitcoin (raw JSON-RPC via <code>requests</code>), a market aggregator (ccxt for Binance, plus CoinGecko and Alpha Vantage over aiohttp), a networkx/pandas flow analyser, and a SQLAlchemy storage layer targeting PostgreSQL. Every ingestor passes its records through one module-level <code>CompliancePipeline</code> before returning them.</p>
+<div class="hl"><pre><span></span><code> Ethereum RPC     Bitcoin RPC     Binance / CoinGecko / Alpha Vantage
+      |               |                        |
+      v               v                        v
+ EthereumIngestor  BitcoinIngestor       MarketAggregator
+      \               |                        /
+       \              v                       /
+        +--&gt; CompliancePipeline (masking.py) &lt;+
+               - truncate from/to addresses
+               - regex PII scan + mask_dict
+               - compliance_metadata report
+                        |
+          +-------------+--------------+
+          v                            v
+   FastAPI responses            FlowAnalyzer (networkx)
+                                       |
+                    AuditLogger.log_data_processing()
+                    -&gt; audit_logs table (one row per call)
+
+   storage/operations.py: store_*() + DataRetention rows   (not called by ingestors)
+</code></pre></div>
+
+<p>The last line matters. The storage functions exist and schedule a retention row for each record they write, but no ingestor or endpoint calls them. In the current code, masked data goes straight to API responses and the flow analyser.</p>
+<h2 id="decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms">Decision 1: mask on ingest, with truncation instead of keyed pseudonyms<a class="h-anchor" href="#decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms" title="Permanent link">#</a></h2>
+<p><code>DataMasker</code> has 8 regex patterns (email, phone, SSN, card number, IBAN, street address, IPv4, wallet address), a list of 11 sensitive field names, and four modes: <code>partial</code>, <code>full</code>, <code>hash</code> and <code>tokenize</code>. Sender and recipient addresses get special handling that keeps their shape:</p>
+<div class="hl"><pre><span></span><code><span class="c1"># Ethereum address</span>
+<span class="k">if</span> <span class="n">address</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
+<span class="c1"># Bitcoin address</span>
+<span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">26</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">35</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
+</code></pre></div>
+
+<p>The trade-off I chose was readability and schema fit over strength. A masked Ethereum address is still 42 characters, so it fits the <code>String(42)</code> column, and an analyst can still eyeball <code>0x1a2b…9f0e</code>. The cost is that this is truncation, not pseudonymisation in any strong sense. Eight hex characters from a public ledger are enough to search for candidate matches, so anyone with chain access can re-identify most masked addresses. The <code>hash</code> mode (unsalted SHA-256, cut to 16 hex characters) and <code>tokenize</code> mode (unsalted MD5) have the same weakness: the full set of addresses is public, so an attacker can hash all of them and build a lookup table.</p>
+<p>Reviewing the data flow showed two more gaps:</p>
+<ul>
+<li><strong>Nested lists are not scanned.</strong> <code>mask_dict</code> recurses into dicts, and into lists of dicts, but returns plain strings inside lists unchanged. Bitcoin output addresses sit in <code>script_pub_key.addresses</code> (a list of strings), so they pass through unmasked. Ethereum log <code>topics</code> also go through untouched, and for ERC-20 <code>Transfer</code> events those topics hold the sender and recipient addresses.</li>
+<li><strong>Two masking schemes for one address.</strong> Top-level <code>from_address</code> keeps 6+4 characters, but a log&rsquo;s <code>address</code> field matches the generic <code>address</code> field name and gets <code>partial</code> masking (2+2). The same contract shows up in two different masked forms, which breaks joins in the flow graph.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What would make this hold</p>
+<p>Replace truncation with a keyed HMAC (secret key held outside the dataset, rotated, with access logged). Run every string the pipeline sees through the scanner, including list items, log topics and calldata. Then the flow graph can still join on a stable pseudonym, and someone without the key cannot reverse it.</p>
+</div>
+<h2 id="decision-2-an-audit-table-written-from-the-processing-path">Decision 2: an audit table written from the processing path<a class="h-anchor" href="#decision-2-an-audit-table-written-from-the-processing-path" title="Permanent link">#</a></h2>
+<p><code>AuditLogger</code> writes rows to an <code>audit_logs</code> table with user, action, resource, IP, user agent, request and response JSON, a success flag and simple compliance flags (keywords such as <code>ssn</code> or <code>private_key</code> in the request, <code>limit &gt; 1000</code> marked as bulk access). The flow analyser and market aggregator call <code>log_data_processing()</code>, which stores record counts and <code>processing_time_ms</code>.</p>
+<p>The trade-off is simplicity against volume and coverage. Writing synchronously from the processing path is easy to reason about, but <code>FlowAnalyzer.add_transaction()</code> writes one audit row per transaction, plus one per batch. That is a database round trip for every transaction. The bigger issue is coverage. The API never calls <code>log_access()</code>, so reads of the served data are not audited. <code>log_data_export()</code> (labelled Article 20) and <code>log_data_deletion()</code> (labelled right to erasure) exist, but nothing calls them, and no export or deletion feature exists for them to record.</p>
+<p>There is also a tension in what the log keeps. It stores IP addresses and raw request payloads for a default of 2,555 days (about seven years). An audit trail is itself personal data, so a long retention period needs a documented reason and its own minimisation.</p>
+<h2 id="decision-3-retention-as-a-ledger-of-scheduled-deletions">Decision 3: retention as a ledger of scheduled deletions<a class="h-anchor" href="#decision-3-retention-as-a-ledger-of-scheduled-deletions" title="Permanent link">#</a></h2>
+<p>Instead of a cron job that deletes by <code>created_at</code>, I put a <code>DataRetention</code> table next to the data. Each stored record would get a row with <code>table_name</code>, <code>record_id</code>, <code>retention_days</code> (default 365) and <code>deletion_scheduled_at</code>. <code>cleanup_expired_data()</code> deletes matching Ethereum, Bitcoin and market rows, then marks the ledger entry <code>is_deleted</code> with a timestamp and reason. This gives a record of what was deleted and when, which a plain <code>DELETE … WHERE created_at &lt; …</code> does not.</p>
+<p>The trade-off is one extra write per record and a second table that has to stay consistent with the first. In this codebase it never runs. The <code>store_*</code> functions that schedule retention are not called, and nothing schedules <code>cleanup_expired_data()</code> or <code>AuditLogger.cleanup_old_logs()</code>. The compose file starts Celery worker and beat containers with <code>-A src.utils.celery</code>, but that module does not exist.</p>
+<p>On erasure: deleting a row from my database does not remove anything from Ethereum or Bitcoin. The realistic scope for this kind of system is erasing its own copies and derived data (stored rows, flow-analysis results, logs), and not re-ingesting data that is linked to a subject who asked for erasure. A suppression list keyed on the HMAC pseudonym from Decision 1 would handle the second part. Neither is built yet.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no runtime results: no throughput, latency or masking-accuracy numbers. What I could verify from the code is below.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>State in code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Regex PII detection</td>
+<td>8 patterns, 4 mask modes, 11 sensitive field names</td>
+</tr>
+<tr>
+<td>Address masking</td>
+<td>Implemented as truncation; misses list items, log topics and calldata</td>
+</tr>
+<tr>
+<td>Fernet encryption</td>
+<td>Methods exist but nothing calls them; key handling would fail at startup (see below)</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Table and writer implemented; called from processing paths only, not API reads</td>
+</tr>
+<tr>
+<td>Export / erasure trail</td>
+<td>Logging helpers only; no export or erasure feature</td>
+</tr>
+<tr>
+<td>Retention</td>
+<td>Ledger table and cleanup implemented; not wired or scheduled</td>
+</tr>
+<tr>
+<td>Access control</td>
+<td>None; the API docs say there is no authentication; CORS allows <code>*</code></td>
+</tr>
+<tr>
+<td>Rate limiting</td>
+<td>Described in API docs (100/min, 1,000/hour) but not implemented</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>31 test functions (11 for compliance); no recorded run</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two startup blockers explain why there is no recorded run. <code>config/settings.py</code> imports <code>BaseSettings</code> from <code>pydantic</code>, but <code>requirements.txt</code> pins pydantic 2.5.0, where that import was removed. The encryption key setup also contradicts itself: the validator requires exactly 32 characters, the default key is 34 characters, and Fernet needs a 44-character url-safe base64 key, so a key that passes the validator would still be rejected by <code>Fernet()</code>. Since <code>compliance_pipeline</code> is created when the module is imported, either problem stops the app from starting. One compliance test also expects partial masking to keep four leading characters (<code>0x12</code>), while <code>mask_field</code> keeps two.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make it start.</strong> Move to <code>pydantic-settings</code>, take a real Fernet key from a secret store, and fail fast with a clear message. Run the 31 tests and record the result.</li>
+<li><strong>Keyed pseudonyms.</strong> HMAC-SHA256 with a managed key for every address, applied to every string in the payload, including list items, log topics and decoded calldata. Encrypt anything that needs to be reversible, such as optional labels, with envelope encryption, and log every decrypt.</li>
+<li><strong>Wire storage and retention.</strong> Have ingestors call <code>store_*</code>, add a real Celery app, and schedule both cleanups. Record deletions in the ledger and alert when a cleanup stops running.</li>
+<li><strong>Erasure scope and suppression.</strong> An erasure endpoint that deletes a subject&rsquo;s stored rows and derived results, and adds their pseudonym to a suppression list that ingestion checks.</li>
+<li><strong>Audit the read path.</strong> Authentication, a <code>log_access</code> call on every endpoint, request bodies minimised before they are stored, and a shorter, justified audit retention period.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/blockchain-gdpr-aggregator.html">Blockchain GDPR Aggregator</a></li>
+<li>Source: local project, not published on GitHub.</li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Fraud scoring on Kafka: what is built, what is measured, what is missing</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</guid>
@@ -1347,6 +1715,156 @@ evaluation, so the switch is a measured decision and not a hunch.</p>
 <hr>
 <p><em>If you run nightly jobs that other teams depend on, I&rsquo;d love to hear how you handle the night
 something upstream is down. <a href="../index.html#contact">Get in touch</a>.</em></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.</description>
+      <category>Graph Databases</category><category>Spark</category><category>Blockchain</category>
+      <content:encoded><![CDATA[<p><em>Evidence: Portfolio project. The benchmark run used synthetic transactions; the code can also pull recent public Ethereum mainnet blocks through Infura. Neo4j, Spark and Elasticsearch are local stand-ins in the default run.</em></p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Tracing money on Ethereum is a graph problem. A wallet sends to a wallet, which sends to two more, which peel off a little value at each step. The questions an investigator asks are relationship questions: where did these funds go within three hops, which wallets fan out to dozens of recipients in a day, which chains of transfers shrink in value as they move.</p>
+<p>There are two common ways to answer them. A graph database such as Neo4j stores wallets and transfers as nodes and edges and walks them directly. A batch engine such as Spark keeps transactions in a table and answers multi-hop questions with repeated self-joins. The usual intuition is that the graph database wins on traversal and the batch engine wins on wide aggregations. I wanted a project that would test that intuition on Ethereum data rather than assume it.</p>
+<p>This post describes what I built: the pipeline, the detectors, and the timing harness. It also covers what the harness measures today, because the interesting part of a benchmark is whether it is fair.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The entry point is <code>main.py</code>. It picks a data source, runs a three-layer ETL, loads a graph, runs three timed comparisons and writes a Kibana dashboard config.</p>
+<div class="hl"><pre><span></span><code> SimpleBlockchainClient (1,000 synthetic txs, 100 wallets)
+   or RealBlockchainClient (Infura JSON-RPC, last 3 mainnet blocks)
+                 |
+                 v
+ ETLPipeline  (pandas-backed &quot;SimpleDataFrame&quot;)
+   Bronze  -&gt; drop rows without hash/from, lowercase addresses
+   Silver  -&gt; dedupe on hash, wei-&gt;ETH, gas cost, tx_type
+   Gold    -&gt; per-wallet sent/received stats, risk_tier 0-4
+                 |
+        +--------+-----------------+
+        v                          v
+ MockNeo4jClient            PerformanceTester
+ (Neo4jClient exists,       wallet_degree / multi_hop_3 /
+  not wired in)             suspicious_detection
+        |                          |
+        v                          v
+ Mock Elasticsearch  -&gt;  kibana_dashboard.json (config only)
+</code></pre></div>
+
+<p>Separately, <code>src/detection/</code> holds three detectors and a scoring module that work on plain lists of transaction dicts:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Rule in code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chain_hopping.detect</code></td>
+<td>sender reaches at least 10 unique recipients within 24 h of the latest timestamp</td>
+</tr>
+<tr>
+<td><code>smurfing.detect</code></td>
+<td>sender has at least 50 transactions and some below 1 ETH; &ldquo;high&rdquo; when over 80% are small</td>
+</tr>
+<tr>
+<td><code>peel_chains.detect</code></td>
+<td>2- and 3-hop paths where each forwarded value is lower than the last; top 50 returned</td>
+</tr>
+<tr>
+<td><code>scoring.score_wallets</code></td>
+<td>additive points for ETH volume, transaction count, unique counterparties and detector hits</td>
+</tr>
+</tbody>
+</table></div>
+<p>These detectors are covered by unit tests but are not yet called from <code>main.py</code>.</p>
+<h2 id="decision-1-build-against-stand-ins-first">Decision 1: build against stand-ins first<a class="h-anchor" href="#decision-1-build-against-stand-ins-first" title="Permanent link">#</a></h2>
+<p>I did not want local development to depend on a running JVM, a Spark cluster, a Neo4j server and an Elasticsearch node. So the project has local stand-ins for all of them:</p>
+<ul>
+<li><code>SimpleSparkClient</code> and <code>SimpleDataFrame</code> wrap pandas behind a Spark-like API (<code>select</code>, <code>groupBy().count()</code>, <code>dropDuplicates</code>, <code>withColumn</code>, <code>collect</code>).</li>
+<li><code>MockNeo4jClient</code> accepts Cypher text and returns canned rows by keyword.</li>
+<li>The Elasticsearch client keeps documents in a Python list; parquet writes only log.</li>
+</ul>
+<div class="hl"><pre><span></span><code><span class="c1"># src/core/mock_neo4j.py</span>
+<span class="k">if</span> <span class="s2">&quot;degree&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;degree&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}]</span>
+<span class="k">elif</span> <span class="s2">&quot;suspicious&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;total_tx&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">}]</span>
+<span class="k">elif</span> <span class="s2">&quot;path&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x456...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x789...&quot;</span><span class="p">]}]</span>
+</code></pre></div>
+
+<p><strong>Trade-off.</strong> The whole pipeline runs from <code>python main.py</code> with only pandas installed, and the 25 unit tests run in a few seconds. The cost is that anything timed in this mode is timing the stand-in. The Spark-like wrapper also hides real Spark costs such as job scheduling, shuffles and serialization, which are exactly what matters when comparing against a graph database.</p>
+<h2 id="decision-2-model-the-transaction-as-a-node">Decision 2: model the transaction as a node<a class="h-anchor" href="#decision-2-model-the-transaction-as-a-node" title="Permanent link">#</a></h2>
+<p>The real <code>Neo4jClient.ingest_transactions</code> uses <code>UNWIND</code> batches of 100 and <code>MERGE</code>s three things per transaction:</p>
+<div class="hl"><pre><span></span><code><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SENT</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">:</span><span class="n">Transaction</span><span class="w"> </span><span class="p">{</span><span class="n">hash</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">RECEIVED</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">receiver</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Uniqueness constraints sit on <code>Wallet.address</code> and <code>Transaction.hash</code>, with relationship indexes on <code>block_number</code> and <code>value</code>.</p>
+<p><strong>Trade-off.</strong> Making the transaction a node keeps per-transaction properties (gas used, timestamp) in one place and lets a transaction later link to contracts or token transfers. The cost is that every wallet-to-wallet hop becomes two relationships, so traversal queries have to be written as alternating <code>SENT</code>/<code>RECEIVED</code> steps. The multi-hop query in the harness currently uses <code>(:Wallet)-[:SENT*1..3]-&gt;(:Wallet)</code>, which assumes direct wallet-to-wallet <code>SENT</code> edges. Against this schema it would not return paths. One of the two has to change before the comparison is run on a real Neo4j instance. The other option is a direct <code>(:Wallet)-[:SENT {hash, value}]-&gt;(:Wallet)</code> model, which makes hop queries simpler but puts transaction data on the edge.</p>
+<h2 id="decision-3-detectors-as-plain-python-over-transaction-lists">Decision 3: detectors as plain Python over transaction lists<a class="h-anchor" href="#decision-3-detectors-as-plain-python-over-transaction-lists" title="Permanent link">#</a></h2>
+<p>The first versions of the detectors were GraphFrames motif queries and PySpark aggregations. I rewrote them as plain functions over lists of dicts. For example, peel-chain detection builds an adjacency list and walks two and three hops looking for decreasing values:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="n">edge2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver1</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">value2</span> <span class="o">&gt;=</span> <span class="n">value1</span> <span class="ow">or</span> <span class="n">value1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">continue</span>          <span class="c1"># not peeling</span>
+    <span class="o">...</span>
+    <span class="k">if</span> <span class="n">receiver2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver2</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">value3</span> <span class="o">&lt;</span> <span class="n">value2</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># 3-hop chain, risk &quot;high&quot;</span>
+</code></pre></div>
+
+<p><strong>Trade-off.</strong> The rules are easy to read and test, and they do not need Spark or Neo4j. They are also engine-neutral, so the same logic can be ported to Cypher or to Spark joins and the results compared row for row. The cost is scale: nested loops over an in-memory adjacency list are fine for a few thousand transactions, not for a day of mainnet. The chain-hopping rule also measures fan-out from one wallet in a time window. It does not look across chains, so the name promises more than the rule does.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I can verify from the repository:</p>
+<ul>
+<li><strong>Tests:</strong> 25 unit tests pass (12 for the detectors and scoring, 13 for the DataFrame wrapper).</li>
+<li><strong>Pipeline:</strong> with no Infura key, <code>main.py</code> generates 1,000 synthetic transactions across 100 random wallets and runs them through Bronze, Silver and Gold. With a key, it fetches the last three mainnet blocks over JSON-RPC and falls back to 500 synthetic rows if that fails.</li>
+<li><strong>Dashboard:</strong> the Kibana dashboard config is generated as JSON. Indexing goes to the in-memory Elasticsearch stand-in.</li>
+</ul>
+<p>The README table records one run of the timing harness on the 1,000 synthetic transactions. It reports Neo4j winning multi-hop by 73.42x and suspicious detection by 18.88x, with Spark ahead on wallet degree. These ratios do not compare Neo4j with Spark:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th>&ldquo;Neo4j&rdquo; side</th>
+<th>&ldquo;Spark&rdquo; side</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>multi_hop_3</td>
+<td><code>MockNeo4jClient</code> returning a fixed 3-item list</td>
+<td>pandas <code>select("to_address").collect()</code> over all 1,000 rows</td>
+</tr>
+<tr>
+<td>suspicious_detection</td>
+<td>mock returning an empty list</td>
+<td>pandas group-by on <code>from_address</code></td>
+</tr>
+<tr>
+<td>wallet_degree</td>
+<td>mock returning <code>{"degree": 42}</code></td>
+<td>row count</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every timing was below 10 ms, measured once with <code>time.time()</code>, with no warm-up, no repetitions and no recorded hardware. No log of that run is saved in the repository. Since then, <code>main.py</code> no longer passes a client to <code>PerformanceTester</code>, so the Neo4j side returns an inline literal and the Spark-side multi-hop does one hop rather than three.</p>
+<div class="admonition note">
+<p class="admonition-title">What the numbers support</p>
+<p>The harness, the timing code and the report generator work end to end. The repository has no measured Neo4j-vs-Spark result yet: no run against a real Neo4j server or a real SparkSession, and no saved output.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Wire in the real engines.</strong> Pass <code>Neo4jClient</code> to the tester and run real PySpark (the version is already pinned at 3.5.0) instead of the pandas wrapper. Load the same snapshot into both.</li>
+<li><strong>Fix the queries.</strong> Make the multi-hop Cypher match the Wallet→Transaction→Wallet schema. Rewrite the suspicious-wallet query with <code>COUNT { (w)-[:SENT]-&gt;() }</code>, because Neo4j 5 no longer accepts pattern expressions inside <code>size()</code>. On the Spark side, implement a real 3-hop traversal as iterative self-joins or a GraphFrames BFS.</li>
+<li><strong>Use real data at a real size.</strong> Run <code>scripts/etl/bulk_fetcher.py</code> over a fixed block range so both engines see the same mainnet transactions, and record the transaction count, wallet count and edge count.</li>
+<li><strong>Measure properly.</strong> Warm up, repeat each query 10 or more times, report the median and p95, and log hardware, memory settings and engine versions next to the results. Count Spark session start-up separately from query time, and count Neo4j ingest separately from traversal.</li>
+<li><strong>Connect the detectors.</strong> Call <code>run_all_detections</code> from <code>main.py</code> and send the flagged wallets to the dashboard index. That is the path from &ldquo;benchmark&rdquo; to &ldquo;forensics tool&rdquo;.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/blockchain-analyzer.html">Blockchain Analyzer</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/blockchain-analyzer">github.com/Eng-Zakaria/blockchain-analyzer</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>Modeling estates data to Uniclass, COBie and SFG20</title>
@@ -1707,6 +2225,136 @@ DuckDB queries, dbt gold marts (P04)
 <p>The full project, including the dbt marts, data-quality framework and the other demos, is on the <a href="../projects/estates-data-platform.html">Estates Data Portfolio case page</a>, and the code is on <a href="https://github.com/Eng-Zakaria/estates-data-portfolio">GitHub</a>.</p>]]></content:encoded>
     </item>
     <item>
+      <title>E-Finance: a six-service digital bank scaffold, and where the money logic lives</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/e-finance-digital-bank.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end.</description>
+      <category>Microservices</category><category>Docker</category><category>Data Engineering</category>
+      <content:encoded><![CDATA[<p>This is a portfolio project with no production deployment and no real customer data. E-Finance is a scaffold for a digital bank: six backend services, a React web app, a Postgres schema and three Airflow DAGs, all declared in one Docker Compose file. The core-banking API holds most of the real logic. The other services are thinner, and several still run on in-memory dictionaries or generated sample data. Below I cover what the code does, the decisions behind it, and what is left before the stack runs end to end.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A bank has two kinds of work that pull against each other. On the request path it has to move money correctly: a transfer debits one account and credits another, or neither happens. Off the request path it needs batch jobs: interest accrual, daily summaries, and fraud review over recent activity. I wanted one repository that showed both sides. That meant a service split I could defend, a schema that stores money safely, and a data layer that Airflow could run batch jobs against.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Docker Compose declares six backend services, plus the frontend, Postgres, MongoDB, Redis, ZooKeeper and Kafka, an Airflow webserver and scheduler, Prometheus and Grafana.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Stack</th>
+<th>What the code does today</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>core-banking-api</td>
+<td>FastAPI, SQLAlchemy async</td>
+<td>Auth, users, accounts, cards, transactions: 44 routes over Postgres. Deposits, withdrawals and internal transfers update balances.</td>
+</tr>
+<tr>
+<td>transaction-service</td>
+<td>Spring Boot, JPA</td>
+<td>10 REST routes. Saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>.</td>
+</tr>
+<tr>
+<td>fraud-detection</td>
+<td>FastAPI, scikit-learn</td>
+<td>Scores a transaction on request: 8 hand-written rules blended with a random forest and an isolation forest.</td>
+</tr>
+<tr>
+<td>bnpl-service</td>
+<td>FastAPI</td>
+<td>Credit score from 300 to 850, built from four weighted factors. Orders and merchants live in in-memory dicts.</td>
+</tr>
+<tr>
+<td>web3-service</td>
+<td>FastAPI, web3.py</td>
+<td>Creates wallets and encrypts their keys with Fernet. Wallets are held in memory.</td>
+</tr>
+<tr>
+<td>analytics-service</td>
+<td>FastAPI, PySpark</td>
+<td>Daily volume, account summaries, moving averages and segments, computed over five hard-coded sample rows.</td>
+</tr>
+</tbody>
+</table></div>
+<p>This is how data moves in the code as it stands:</p>
+<div class="hl"><pre><span></span><code>React app ──HTTP──&gt; core-banking-api ──&gt; Postgres: efinance_core
+                                           (users, accounts, transactions,
+                                            cards, fraud_alerts, audit_logs,
+                                            daily_transaction_summary,
+                                            user_velocity_metrics)
+                                                 ^
+Airflow (LocalExecutor) ──PostgresHook──────────┘
+  transaction_etl     02:00 daily   extract -&gt; transform -&gt; load / velocity upsert
+  interest_calc       00:00 daily   accrue -&gt; credit on the 1st of the month
+  fraud_detection     every 15 min  flagged txns -&gt; fraud_alerts
+
+transaction-service ──&gt; Postgres: efinance_transactions (separate table)
+        └──produce──&gt; Kafka topic &quot;transactions&quot;   (no consumer in the repo)
+
+fraud / bnpl / web3 / analytics: called directly on their own ports;
+no service calls another over HTTP today.
+</code></pre></div>
+
+<p>The README draws an API gateway (Kong), Elasticsearch and a notification service. None of them are in the Compose file or the code. Elasticsearch shows up only as a config field and a pinned client library.</p>
+<h2 id="decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit">Decision 1: store money as integer minor units, and write both legs of a transfer in one commit<a class="h-anchor" href="#decision-1-store-money-as-integer-minor-units-and-write-both-legs-of-a-transfer-in-one-commit" title="Permanent link">#</a></h2>
+<p>Every balance and amount column in the schema is <code>BIGINT</code> in the smallest currency unit, and the ORM maps them to <code>Integer</code>. The account model formats them by dividing by 100, or by 10^8 for crypto. That keeps floating-point rounding out of the ledger. The cost is that every caller has to agree on the unit, and the Java service&rsquo;s <code>Long</code> fields depend on the same convention without anything enforcing it.</p>
+<p>An internal transfer in <code>account_service.py</code> writes two transaction rows: a <code>TRANSFER_OUT</code> on the source account and a <code>TRANSFER_IN</code> on the destination. Each row records <code>balance_before</code> and <code>balance_after</code>. Both balances change, and then a single commit runs:</p>
+<div class="hl"><pre><span></span><code><span class="n">from_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">from_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">-=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">to_account</span><span class="o">.</span><span class="n">balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+<span class="n">to_account</span><span class="o">.</span><span class="n">available_balance</span> <span class="o">+=</span> <span class="n">data</span><span class="o">.</span><span class="n">amount</span>
+
+<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">debit_tx</span><span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">credit_tx</span><span class="p">)</span>
+<span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</code></pre></div>
+
+<p>The two legs and both balance updates sit in one database transaction, so a failure part-way leaves no half-transfer behind. Same-currency transfers only: cross-currency requests are rejected. Ownership, account status, daily and monthly limits and minimum balance are checked before any write.</p>
+<p>The design is two-leg, but it is not a full double-entry ledger. There is no separate journal, and nothing checks that debits and credits sum to zero. Balances are a read-modify-write on the account row with no <code>SELECT ... FOR UPDATE</code> and no version column. Two transfers running at once from the same account can therefore both pass the balance check. The API also takes no idempotency key. Reference numbers come from a timestamp plus six random characters, and the schema has a <code>UNIQUE</code> constraint on them, but a client that retries a transfer creates a second one.</p>
+<h2 id="decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge">Decision 2: a separate Java service for transaction records, with Kafka as the outbound edge<a class="h-anchor" href="#decision-2-a-separate-java-service-for-transaction-records-with-kafka-as-the-outbound-edge" title="Permanent link">#</a></h2>
+<p>I put a Spring Boot transaction service next to the Python API. It writes transaction records and emits events, and the idea was that downstream consumers (fraud scoring, search, analytics) would read the <code>transactions</code> topic and leave the core API&rsquo;s database alone. <code>processTransaction</code> saves a record as <code>PENDING</code>, sets it to <code>PROCESSING</code>, and publishes it with the reference number as the Kafka key, which keeps the events for one transaction in order on a single partition.</p>
+<p>Three things limit this today. First, the Kafka send runs inside the <code>@Transactional</code> method, before the database commit. If the commit fails, an event may already be out; if the send fails, the error is logged and swallowed. An outbox table would close that gap. Second, nothing in the repo consumes the topic. Third, the Java service has its own <code>efinance_transactions</code> database and its own transactions table, separate from the one the core API writes. It takes <code>balanceBefore</code> and <code>balanceAfter</code> from the request body and never touches an account balance. The fraud call in <code>FraudCheckService</code> is built but commented out, so no service scores a transaction on the money path.</p>
+<h2 id="decision-3-put-batch-work-in-airflow-against-the-same-postgres">Decision 3: put batch work in Airflow, against the same Postgres<a class="h-anchor" href="#decision-3-put-batch-work-in-airflow-against-the-same-postgres" title="Permanent link">#</a></h2>
+<p>Daily jobs run as Airflow DAGs that use <code>PostgresHook</code>, not as background tasks inside the API. That keeps scheduling, retries and run history in one place, and it keeps the API process free of cron logic.</p>
+<ul>
+<li><strong>transaction_etl</strong> (02:00): pulls the day&rsquo;s completed transactions, then upserts into <code>daily_transaction_summary</code> with <code>ON CONFLICT (date) DO UPDATE</code> and into <code>user_velocity_metrics</code> with <code>ON CONFLICT (user_id, date)</code>. These upserts make re-runs safe: running a day again overwrites its rows instead of duplicating them. The velocity step is a real aggregate join across users, accounts and transactions.</li>
+<li><strong>interest_calculation</strong> (midnight): accrues <code>balance × rate / 365</code> into <code>interest_accrued</code> for savings and fixed-deposit accounts. On the 1st of the month it writes an <code>interest</code> transaction and moves the accrued amount into the balance.</li>
+<li><strong>fraud_detection</strong> (every 15 minutes): reads unreviewed suspicious transactions from the last hour, groups them by account, and writes <code>fraud_alerts</code>.</li>
+</ul>
+<p>The trade-off is that DAGs write straight to the operational tables. That is fine at this size, but it couples the jobs to the API&rsquo;s schema.</p>
+<div class="admonition note">
+<p class="admonition-title">Gaps in the DAGs</p>
+<p>The ETL <code>transform</code> step returns a fixed dictionary (<code>total_volume: 1000000</code>, <code>transaction_count: 500</code>), not an aggregate of the extracted rows. The load step points at an <code>efinance_warehouse</code> connection, and the init scripts create no warehouse database. The extract filters <code>status = 'COMPLETED'</code> while the interest DAG writes <code>'completed'</code>. The interest DAG runs each statement as its own <code>hook.run</code>, so the transaction insert and the balance update are not atomic. Daily accrual sets <code>last_interest_calculated</code> but never checks it, so re-running a date accrues interest twice.</p>
+</div>
+<h2 id="security-as-written">Security as written<a class="h-anchor" href="#security-as-written" title="Permanent link">#</a></h2>
+<p>The core API has the most complete auth. JWTs are HS256, with 30-minute access tokens and 7-day refresh tokens checked by type. Passwords are hashed with bcrypt. Five failed logins lock the account for 30 minutes. TOTP 2FA can be enabled and disabled, and admin and super-admin routes check roles. Every account route checks that the caller owns the account before it reads or moves money.</p>
+<p>The weak points are configuration and the other services. <code>config.py</code> ships default values for the app and JWT secrets. The Compose file and <code>application.yml</code> hold plaintext database passwords, the Airflow Fernet key is a placeholder string, and Grafana uses a default admin password. Fraud, BNPL, web3 and analytics have no authentication, and fraud-detection allows CORS from any origin. The web3 service derives its encryption key with a fixed salt, and its RPC default points at an Ethereum mainnet URL placeholder. For a local scaffold that is acceptable. Before anything else it would need a secrets store and service-to-service auth.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>Here is what I can verify from the repository, without running it:</p>
+<ul>
+<li>6 backend services; about 5,400 lines in the core API and about 14,200 lines across services, DAGs, schema and frontend.</li>
+<li>93 FastAPI routes across the Python services (44 in core banking) and 10 Spring routes.</li>
+<li>A 320-line Postgres schema with 10 tables, indexes and <code>updated_at</code> triggers.</li>
+<li>3 Airflow DAGs with idempotent upserts in the ETL load and velocity steps.</li>
+<li>Prometheus scrape config for all six services.</li>
+<li>The Java service has compiled classes under <code>target/</code>. There are no automated tests in the repo.</li>
+</ul>
+<p>The stack does not come up as committed. Only three of the six services have a Dockerfile (core banking, fraud and transaction), so <code>docker compose up</code> fails to build the other three. The core API imports <code>app.middleware</code> and <code>app.events</code>, and neither exists. MongoDB and Redis connect at startup, but no code path uses them yet. The fraud models are fitted on <code>np.random.rand</code> placeholder data until real models are saved, so their scores carry no signal.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Make the stack boot: add the three missing Dockerfiles, restore or remove the missing middleware imports, and add one smoke test per service.</li>
+<li>Lock balances during transfers with <code>SELECT ... FOR UPDATE</code> or a version column, and accept an <code>Idempotency-Key</code> header that is stored with a unique constraint.</li>
+<li>Keep one transaction store. Either the core API calls the Java service, or the Java service owns all writes and the core API reads from it. Then publish through an outbox table and add a real Kafka consumer.</li>
+<li>Fix the ETL transform so it aggregates the extracted rows, create the warehouse database, normalise status casing, and make interest accrual atomic and guarded by <code>last_interest_calculated</code>.</li>
+<li>Move secrets into environment files kept out of git, and put the gateway in front of the services that have no auth today.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case page: <a href="../projects/e-finance.html">E-Finance case study</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Deterministic Gates Before the LLM</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html</guid>
@@ -1904,6 +2552,182 @@ labeling, and human calibration labels are still pending.</p>
   from what I think customers ask.</li>
 </ul>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A score-and-decide credit-risk pipeline on synthetic data</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.</description>
+      <category>MLOps</category><category>Machine Learning</category><category>Python</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio, synthetic data.</strong> This is a personal project. Every applicant in it is generated by a script, and the repository holds no saved training run, so this write-up describes the design and the code, not measured model performance.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A credit model is only useful if it sits inside a process: data comes in, features are built the same way every time, a model is trained and checked against minimum standards, the winner is deployed, applications are scored and turned into a decision, and someone watches for drift so the model gets retrained before it goes stale. Most portfolio credit projects stop at a notebook with an AUC. I wanted the surrounding machinery: a training pipeline with a validation gate, a scoring API that returns a decision rather than a raw probability, and scheduled jobs for retraining and monitoring.</p>
+<p>Because there is no real bureau data to use, the project starts with its own generator.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> credit_data_generator.py         100,000 synthetic applications, target default rate 15%
+            |
+            v
+ FeaturePipeline                   stratified 70/10/20 split, then fit on train only:
+ (winsorize + scale + target enc)  median fill, 1-99% clipping, StandardScaler, TargetEncoder
+            |
+            v
+ TrainingPipeline / training DAG   XGBoost, LightGBM, CatBoost (early stopping on val)
+            |                      metrics + params logged to MLflow (local ./mlruns)
+            v
+ ModelValidator                    fail if test AUC &lt; 0.70, Gini &lt; 0.40, KS &lt; 0.30
+            |                      warn on train/test AUC gap &gt; 0.05, PSI &gt; 0.20
+            v
+ deploy_model                      copy best model dir -&gt; models/production
+            .
+            .  (not connected: API loads models/ensemble)
+            .
+ FastAPI /predict                  PD -&gt; risk band -&gt; APPROVE / REVIEW / DECLINE
+
+ monitoring DAG (daily 06:00)      PSI + KS drift on 4 columns -&gt; branch -&gt; retrain stub
+</code></pre></div>
+
+<p>The code lives in one Python package (<code>src/</code>): a data generator, a feature pipeline, model wrappers, evaluation and validation, drift and performance monitors, a DuckDB data mart, and a FastAPI app. Two Airflow DAGs in <code>pipelines/</code> wire the training and monitoring steps, and <code>docker-compose.yml</code> defines containers for the API, a training job, an MLflow server, a Streamlit dashboard, and an optional Airflow profile.</p>
+<h2 id="decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on">Decision 1: generate the data, and know exactly what the label depends on<a class="h-anchor" href="#decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on" title="Permanent link">#</a></h2>
+<p>The generator builds demographics, credit history, loan terms and utilization with correlated draws (credit score rises with age and income, interest rate falls with credit score, and so on). The default flag then comes from a hand-written logistic formula:</p>
+<div class="hl"><pre><span></span><code><span class="n">log_odds</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">-</span><span class="mf">3.0</span>
+    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_score&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">650</span><span class="p">)</span>
+    <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;dti_ratio&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delinquency_2years&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;bankruptcies&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;num_credit_inquiries_6m&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_utilization_ratio&#39;</span><span class="p">]</span>
+    <span class="o">-</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;annual_income&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;loan_amount&#39;</span><span class="p">]</span>
+    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;employment_length&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>After sampling, labels are flipped at random to hit the configured 15% default rate.</p>
+<p>The upside is control. I know the true signal, so I can check whether the model recovers it, and I can rerun everything from a seed. The downside is that any score on this data measures how well a tree ensemble fits a logistic formula with noise. It says nothing about real borrowers, and a high AUC here would be expected rather than impressive.</p>
+<p>I also checked for label leakage. No feature is computed from <code>default</code>, and the target encoder is fitted on the training split only, so the test set does not leak into the encodings. Two details are worth knowing. <code>bankruptcies</code> carries the largest coefficient in the formula, but it is not in the configured feature list, so the model never sees it. And <code>risk_score_bucket</code> and <code>interest_rate</code> are both derived from <code>credit_score</code>, which adds redundancy but not leakage.</p>
+<h2 id="decision-2-a-hard-validation-gate-before-anything-ships">Decision 2: a hard validation gate before anything ships<a class="h-anchor" href="#decision-2-a-hard-validation-gate-before-anything-ships" title="Permanent link">#</a></h2>
+<p>Training and deployment are separated by <code>ModelValidator</code>. The training DAG trains the three boosters in parallel, picks the best one by test AUC, and then runs the validator. If the model misses any minimum, the task raises and the deploy step never runs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Threshold</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test AUC-ROC</td>
+<td>≥ 0.70</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>Gini (2·AUC − 1)</td>
+<td>≥ 0.40</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>KS statistic</td>
+<td>≥ 0.30</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>Train − test AUC gap</td>
+<td>≤ 0.05</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>PSI, train vs test scores</td>
+<td>≤ 0.20</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>Default rate by score decile</td>
+<td>non-decreasing (0.01 tolerance)</td>
+<td>warning</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is that only the three discrimination metrics can block a deploy, while overfitting, score shift and decile ordering just log warnings. I chose that because a fixed tolerance on a synthetic dataset is easy to trip by chance, and a pipeline that stops for every warning tends to get its checks switched off. The cost is that a model with a 0.08 overfit gap would still ship. In a real lender I would make the gap and decile ordering blocking and send warnings somewhere a person reads them.</p>
+<p>The gate also checks discrimination but not calibration. <code>metrics.py</code> can compute a Brier score and expected loss (<code>PD × LGD × EAD</code> with LGD defaulting to 0.6), but the validator does not test them, even though the decision bands below depend on the probabilities being well calibrated.</p>
+<h2 id="decision-3-return-a-decision-not-just-a-probability">Decision 3: return a decision, not just a probability<a class="h-anchor" href="#decision-3-return-a-decision-not-just-a-probability" title="Permanent link">#</a></h2>
+<p>The API converts the PD into a band and an action:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>PD</th>
+<th>Risk category</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 0.10</td>
+<td>Very Low Risk</td>
+<td>APPROVE</td>
+</tr>
+<tr>
+<td>0.10 – 0.20</td>
+<td>Low Risk</td>
+<td>APPROVE</td>
+</tr>
+<tr>
+<td>0.20 – 0.30</td>
+<td>Moderate Risk</td>
+<td>REVIEW</td>
+</tr>
+<tr>
+<td>0.30 – 0.50</td>
+<td>High Risk</td>
+<td>REVIEW</td>
+</tr>
+<tr>
+<td>≥ 0.50</td>
+<td>Very High Risk</td>
+<td>DECLINE</td>
+</tr>
+</tbody>
+</table></div>
+<p>A wide REVIEW band is a deliberate choice. Scores between 0.2 and 0.5 go to a person instead of being auto-declined, which costs analyst time but keeps borderline applicants out of an automatic rejection. The cut-offs are hard-coded constants, not tuned to a cost matrix or an approval-rate target, and the <code>confidence_score</code> field (<code>|0.5 − PD| × 2</code>) is a distance from 0.5, not a statistical confidence.</p>
+<p>The API also fills in features the request does not include: <code>interest_rate</code> is fixed at 15.0, <code>credit_history_length</code> is estimated from employment length, and <code>total_credit_utilized</code> from income. That keeps the request small, but it means the API scores a different feature distribution from the one the model was trained on.</p>
+<h2 id="where-the-loop-is-still-open">Where the loop is still open<a class="h-anchor" href="#where-the-loop-is-still-open" title="Permanent link">#</a></h2>
+<p>The repository has every component of a score-and-decide loop. The connections between them are what is missing.</p>
+<div class="admonition note">
+<p class="admonition-title">Gaps in the current code</p>
+<ul>
+<li><strong>Deploy and serve point at different places.</strong> <code>deploy_model</code> copies the winner to <code>models/production/</code>, but the API loads <code>models/ensemble/</code> through <code>GradientBoostingEnsemble.load</code>. The default training run (<code>xgboost lightgbm catboost</code>) never writes <code>models/ensemble/</code>, so the API starts with no model and <code>/predict</code> returns 503.</li>
+<li><strong>The request schema doesn&rsquo;t match the fitted pipeline.</strong> The feature pipeline selects <code>income_category</code> and <code>risk_score_bucket</code> by name, and <code>/predict</code> doesn&rsquo;t build either column.</li>
+<li><strong>Drift is simulated, and retraining is a stub.</strong> The monitoring DAG samples 1,000 rows from the training file, subtracts 10 from <code>credit_score</code>, and runs PSI and KS on four columns. When drift is found, it calls a function whose <code>TriggerDagRunOperator</code> is commented out.</li>
+<li><strong><code>/metrics/{model}</code> returns constants</strong> (0.85 / 0.70 / 0.55), not stored results.</li>
+<li><strong>MLflow is used for tracking only.</strong> Runs log parameters and metrics; models are saved with joblib, not registered.</li>
+<li><strong>Built but not wired in.</strong> The TabTransformer class and the stacking ensemble exist, but the CLI defaults train only the three boosters, the stacking ensemble is built with <code>use_tab_transformer=False</code>, and passing <code>tab_transformer</code> to the training pipeline raises &ldquo;Unknown model type&rdquo;.</li>
+<li><strong>No recorded results.</strong> There is no <code>mlruns/</code>, no saved model, and no log in the repo, and the environment I checked lacks xgboost, lightgbm, catboost, mlflow and category_encoders, so I did not rerun it. The model table in the README has no run behind it.</li>
+</ul>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no recorded model scores to report. What I can state from the code:</p>
+<ul>
+<li>The generator produces 100,000 rows at a 15% target default rate, with a 70/10/20 stratified split (<code>random_state=42</code>).</li>
+<li>Each model is evaluated on the held-out 20% using AUC, Gini, KS, log loss, Brier score and lift at 10% and 20%, and the deploy gate requires AUC ≥ 0.70, Gini ≥ 0.40 and KS ≥ 0.30.</li>
+<li>The test suite covers model fit/predict, metric calculations, PSI and data generation. The API test accepts either 200 or 503 from <code>/predict</code>, so it passes without a loaded model.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Close the deploy-to-serve path.</strong> Have the API load <code>models/production/</code> and its <code>metadata.json</code>, and add a test that trains a small model and gets a 200 from <code>/predict</code>.</li>
+<li><strong>Use one feature builder for training and serving.</strong> Move the derived-column logic out of the API into the feature pipeline, so a request goes through exactly the code the model was trained on.</li>
+<li><strong>Record a real run.</strong> Pin dependency versions, run the training once, and commit the metrics JSON next to the README so every number has a source.</li>
+<li><strong>Make retraining real.</strong> Compare recent scored applications against the training reference instead of a shifted sample, and enable the <code>TriggerDagRunOperator</code>.</li>
+<li><strong>Gate on calibration.</strong> Add a Brier or calibration-slope check, and choose the APPROVE/REVIEW cut-offs from an explicit cost of a missed default versus a lost good customer.</li>
+<li><strong>Register models.</strong> Log each model with MLflow and promote through the registry instead of copying directories.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/credit-risk.html">Credit Risk case page</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/Risk_Analysis">github.com/Eng-Zakaria/Risk_Analysis</a></li>
+</ul>]]></content:encoded>
     </item>
     <item>
       <title>Config, not code: schema-drift gates and a cdp CLI</title>
@@ -2217,552 +3041,6 @@ ConfigDrivenScraper                            MouserClient
 <p>Fourth, alert a chat webhook when the negative share jumps, reading the metrics line each run already writes.</p>
 <p>Then label around 1k mentions and train a topic classifier, keeping the rules as a fallback, and swap in sentiment-tuned checkpoints.</p>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.</description>
-      <category>RAG</category><category>Evaluation</category><category>Arabic NLP</category>
-      <content:encoded><![CDATA[<p>This is production work at Waffarha, where I am a data engineer. It covers how I measured the retrieval side of our customer-service assistant, which answers questions about offers and FAQs in Egyptian Arabic and English. The headline number from that work is 87.8%. This article is mostly about what that number does not mean.</p>
-<h2 id="the-problem-one-number-two-very-different-questions">The problem: one number, two very different questions<a class="h-anchor" href="#the-problem-one-number-two-very-different-questions" title="Permanent link">#</a></h2>
-<p>A RAG assistant can fail in two places. It can fail to find the right document, or it can find the right document and still give a wrong or unhelpful answer. These need separate measurements, and it is easy to report the first one as if it were the second.</p>
-<p>In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have described a system much better than the one we had.</p>
-<p>The gap is not a mystery once you look at it per category. <code>offer_direct_answer</code> retrieved correctly in 49 of 52 checked cases but answered correctly in 11 of 56. <code>faq_direct_answer</code> retrieved correctly in 21 of 24 but answered correctly in 2 of 25. The report&rsquo;s own conclusion was that the gap is in generation and answering, not in finding.</p>
-<h2 id="setup">Setup<a class="h-anchor" href="#setup" title="Permanent link">#</a></h2>
-<h3 id="the-evaluation-suite">The evaluation suite<a class="h-anchor" href="#the-evaluation-suite" title="Permanent link">#</a></h3>
-<p>The suite in <code>eval/queries.json</code> has 225 cases across 20 categories. Each case carries a query, a language tag, expected keywords and, where it makes sense, an expected source document. The language mix reflects real traffic: 203 Arabic, 11 English and 11 mixed-script cases.</p>
-<p>The categories cover more than lookups. The largest are direct offer questions (56), category browsing (39) and FAQ questions (25). Then come follow-ups that depend on conversation memory (12), adversarial input (11), out-of-scope questions (11), greetings, price ranges, ranking (&ldquo;cheapest&rdquo;), fuzzy merchant names, hallucination checks for merchants that do not exist, prompt injection, and a few small edge-case groups.</p>
-<p>Not every case has a retrievable right answer. Many greetings, prompt-injection attempts and out-of-scope questions have no expected document at all. Retrieval was scored only on the cases the harness could check against an expected document, 172 of them, while the full pipeline was scored on all 225. The report does not break down exactly which cases fell outside the 172, which is something I would make explicit next time.</p>
-<h3 id="the-index">The index<a class="h-anchor" href="#the-index" title="Permanent link">#</a></h3>
-<p>The index used for that run was built with <code>BAAI/bge-m3</code> embeddings and stored in Qdrant. Its manifest records 9,106 documents: 96 FAQ entries and 9,010 offers. The report lists it as covering 2,923 merchants, with an engine load time of about 84 seconds. Retrieval was hybrid: dense embeddings plus BM25, fused with reciprocal rank fusion. The generator in that run was <code>qwen2.5:3b-instruct</code>.</p>
-<h3 id="how-the-hit-rate-is-computed">How the hit rate is computed<a class="h-anchor" href="#how-the-hit-rate-is-computed" title="Permanent link">#</a></h3>
-<p>The retrieval metric is simple, and the simplicity matters. A case counts as a hit if its expected source shows up in the retrieved set. Cases with no expected source are skipped, not counted as passes.</p>
-<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">retrieval_hit_rate</span><span class="p">(</span><span class="n">cases</span><span class="p">,</span> <span class="n">retrieve</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-    <span class="n">checked</span> <span class="o">=</span> <span class="n">hits</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">for</span> <span class="n">case</span> <span class="ow">in</span> <span class="n">cases</span><span class="p">:</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="n">case</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;expected_source&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">expected</span><span class="p">:</span>          <span class="c1"># greetings, injections, out-of-scope</span>
-            <span class="k">continue</span>              <span class="c1"># not checked, not a pass</span>
-        <span class="n">checked</span> <span class="o">+=</span> <span class="mi">1</span>
-        <span class="n">top_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">doc</span><span class="o">.</span><span class="n">id</span> <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">retrieve</span><span class="p">(</span><span class="n">case</span><span class="p">[</span><span class="s2">&quot;query&quot;</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">)]</span>
-        <span class="k">if</span> <span class="n">expected</span> <span class="ow">in</span> <span class="n">top_ids</span><span class="p">:</span>
-            <span class="n">hits</span> <span class="o">+=</span> <span class="mi">1</span>
-    <span class="k">return</span> <span class="n">hits</span><span class="p">,</span> <span class="n">checked</span>          <span class="c1"># e.g. 151, 172</span>
-</code></pre></div>
-
-<p>Nothing in this function looks at the answer. A hit means the right document was available to the model. It says nothing about whether the model used it, quoted the right price, or stayed in the right language.</p>
-<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
-<h3 id="decision-1-benchmark-embeddings-and-vector-stores-separately">Decision 1: benchmark embeddings and vector stores separately<a class="h-anchor" href="#decision-1-benchmark-embeddings-and-vector-stores-separately" title="Permanent link">#</a></h3>
-<p>In August 2026 I ran a benchmark on a separate 89-question set: four embedding models and five vector stores. To keep the comparison clean, I held the embedding model fixed (<code>multilingual-e5-base</code>) while comparing stores, so any difference came from the store.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Embedding model</th>
-<th>Recall</th>
-<th>MRR</th>
-<th>Recall (ar)</th>
-<th>Recall (en)</th>
-<th>Avg query latency (ms)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>multilingual-e5-large</td>
-<td>0.949</td>
-<td>0.836</td>
-<td>0.9</td>
-<td>0.973</td>
-<td>80.389</td>
-</tr>
-<tr>
-<td>multilingual-e5-base</td>
-<td>0.881</td>
-<td>0.766</td>
-<td>0.8</td>
-<td>0.919</td>
-<td>48.555</td>
-</tr>
-<tr>
-<td>BAAI/bge-m3</td>
-<td>0.864</td>
-<td>0.768</td>
-<td>0.85</td>
-<td>0.892</td>
-<td>77.906</td>
-</tr>
-<tr>
-<td>paraphrase-multilingual-mpnet-base-v2</td>
-<td>0.661</td>
-<td>0.508</td>
-<td>0.55</td>
-<td>0.757</td>
-<td>38.157</td>
-</tr>
-</tbody>
-</table></div>
-<p>For the stores, FAISS, Chroma, Qdrant and LanceDB all returned the same recall@3 (0.881) and MRR@3 (0.766) on 1,690 documents. They differed only in load time, index size and latency; FAISS had the fastest queries at 0.62 ms. pgvector was the exception, with lower recall@3 (0.847) and the slowest queries at 65.06 ms.</p>
-<p>The trade-off: splitting the benchmark this way makes each table easy to read, but it never tests the combination we actually ran. The shipped pairing, bge-m3 on Qdrant, does not appear as a measured row in either table.</p>
-<h3 id="decision-2-shipping-a-model-that-lost-the-benchmark">Decision 2: shipping a model that lost the benchmark<a class="h-anchor" href="#decision-2-shipping-a-model-that-lost-the-benchmark" title="Permanent link">#</a></h3>
-<p>E5-large won every column of the embedding benchmark, including Arabic recall. The September index used bge-m3, which placed third on overall recall.</p>
-<p>I would like to give a clear reason for that choice, but the sources do not record one. The only related note is in the earlier evaluation report, which listed bge-m3 as an alternative to try because it is &ldquo;often superior for Arabic/MENA content.&rdquo; That is a general claim, not something our benchmark showed: on our Arabic questions, bge-m3 scored 0.85 against E5-large&rsquo;s 0.9.</p>
-<p>There is one detail that makes the benchmark weaker evidence than it looks. The 89-question set was 54 English, 29 Arabic and 6 Franco (Arabizi) questions. The production suite is mostly Arabic. So the benchmark was weighted toward the language our customers use least. The Franco column, where E5-large scored 1.0 and bge-m3 scored 0.5, rests on only 6 questions.</p>
-<p>What I would measure before defending either choice: run E5-large and bge-m3 through the same 225-case suite on the same index contents, and report hit rate per language and per category, not one overall figure.</p>
-<h3 id="decision-3-score-retrieval-and-the-full-pipeline-in-the-same-run">Decision 3: score retrieval and the full pipeline in the same run<a class="h-anchor" href="#decision-3-score-retrieval-and-the-full-pipeline-in-the-same-run" title="Permanent link">#</a></h3>
-<p>I kept both suites in one run, against one index, so the two numbers could be compared directly. The cost is that the end-to-end number is unflattering and harder to explain. The benefit is that it points to where the work is. Retrieval for category browsing passed 33 of 34 checked cases. End-to-end, the same category passed 16 of 39. Better embeddings would not have closed that gap.</p>
-<div class="admonition warning">
-<p class="admonition-title">Read the denominator</p>
-<p>151/172 and 64/225 come from the same run but use different denominators. The retrieval figure covers only cases checkable against an expected document. The end-to-end figure includes every case, including greetings and injection attempts. Neither number should be reported without the other.</p>
-</div>
-<h2 id="results-with-caveats">Results, with caveats<a class="h-anchor" href="#results-with-caveats" title="Permanent link">#</a></h2>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Measure</th>
-<th>Result</th>
-<th>What it covers</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Retrieval hit rate</td>
-<td>151/172 (87.8%)</td>
-<td>Checked cases only</td>
-</tr>
-<tr>
-<td>Full pipeline</td>
-<td>64/225 (28.4%)</td>
-<td>All cases, qwen2.5:3b-instruct</td>
-</tr>
-<tr>
-<td>Earlier retrieval run (Aug 2026)</td>
-<td>84/105 (80.0%)</td>
-<td>e5-base + FAISS, 145-case suite</td>
-</tr>
-</tbody>
-</table></div>
-<p>Some honest caveats:</p>
-<ul>
-<li>The August and September runs used different suites (145 and 225 cases), different indexes (1,458 and 9,106 documents) and different models. The jump from 80.0% to 87.8% is not a controlled comparison.</li>
-<li>Weak end-to-end categories included follow-ups that need memory (2 of 12), greetings (1 of 8) and disambiguating offers from the same merchant (0 of 4). Several of these are not retrieval problems at all.</li>
-<li>The current code has moved on. The configuration now defaults to <code>BAAI/bge-m3</code> with pgvector as the vector store backend, while the project&rsquo;s state log records the pgvector cutover as deferred in favour of a local knowledge base. Neither setup has been re-measured with the 225-case suite. pgvector was also the one store that scored lower recall in the August benchmark. That was on e5-base, but it is still a reason to measure before assuming the number carries over.</li>
-</ul>
-<h2 id="what-i-would-do-next">What I would do next<a class="h-anchor" href="#what-i-would-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li>Re-run the 225-case suite on the current configuration and report retrieval and end-to-end numbers together.</li>
-<li>Run E5-large and bge-m3 head to head on that suite, split by Arabic, English and mixed script, since the existing benchmark leaned English.</li>
-<li>Measure the shipped pairing directly instead of inferring it from two separate tables.</li>
-<li>Put most of the effort into the answering stage. The category numbers say that is where most cases are lost.</li>
-</ol>
-<p>The lesson I took from this: a retrieval metric is a component test. It is worth tracking, but on its own it does not describe what the customer sees.</p>
-<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>AquaWatch: sensor alerts with cooldown logic</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/aquawatch-iot-alerts.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules.</description>
-      <category>IoT</category><category>Streaming</category><category>Alerting</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: portfolio project, simulated sensors only.</strong> No physical probes, no farm, and no real SMS or phone calls. AquaWatch is a local prototype. A Python simulator writes fake readings for fish ponds, an Airflow DAG loads them into TimescaleDB, and a separate alert module checks thresholds and holds back repeat alerts with a cooldown. This post covers how that cooldown works, the trade-offs behind it, and what turned up when I tested the alert rules directly. Some of it is not flattering.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Water quality in a fish pond can go bad between two manual checks. The PRD lists four parameters that matter: pH, dissolved oxygen, ammonia, and temperature. It targets small operators with 1 to 5 ponds. The success metrics it sets are alert latency under 5 minutes and 95%+ uptime in local testing. Those are targets. I never measured either one.</p>
-<p>Any threshold alert has an obvious failure mode. A pond that sits above the ammonia limit for an hour crosses the threshold on every reading. If every crossing sends an email, the operator gets a pile of identical messages and starts ignoring them. The cooldown is meant to stop that.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<div class="hl"><pre><span></span><code> sensors/sensor_simulator.py
-   pH, dissolved_oxygen, ammonia, temperature per pond
-   writes one JSON line per pond per tick
-            |
-            v
-   logs/sensor_readings.jsonl
-            |
-            v
- airflow/dags/ingest_sensor_data.py   (schedule: &#39;@every_5_minutes&#39;)
-   reads the whole file, flattens to (time, pond_id, parameter, value)
-   execute_batch(page_size=100)
-            |
-            v
- TimescaleDB  sensor_readings  (create_hypertable on &#39;time&#39;)
-            |
-            +--&gt; backend/main.py (FastAPI: /readings, /alerts, /analytics)
-            +--&gt; Grafana 10.1.5 container (no dashboards checked in)
-
- alerting/alert_manager.py   &lt;-- NOT called by the DAG or the API
-   thresholds + 15-min cooldown per (pond_id, parameter)
-   -&gt; alerts.jsonl, SMTP email, mock_sms.log
-</code></pre></div>
-
-<p>The bottom box matters most for the rest of this post. <code>AlertManager</code> is a self-contained class with a <code>__main__</code> example. Nothing in the DAG, the API, or Docker Compose imports it. The architecture doc draws an arrow from the database to the alert module, but the code doesn&rsquo;t have that link yet.</p>
-<p>There&rsquo;s no MQTT either. Readings move as lines in a JSONL file. The only mention of MQTT is a comment in the mock actuator endpoint (&ldquo;In a real system this would push a command to an MQTT topic&rdquo;).</p>
-<h2 id="decision-1-cooldown-keyed-on-pond-and-parameter">Decision 1: cooldown keyed on pond and parameter<a class="h-anchor" href="#decision-1-cooldown-keyed-on-pond-and-parameter" title="Permanent link">#</a></h2>
-<p>This is the core of the alert module:</p>
-<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">_get_alert_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pond_id</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">parameter</span><span class="si">}</span><span class="s2">&quot;</span>
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_should_alert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pond_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_alert_key</span><span class="p">(</span><span class="n">pond_id</span><span class="p">,</span> <span class="n">parameter</span><span class="p">)</span>
-    <span class="n">current_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">current_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alert_cooldown_minutes</span><span class="p">):</span>
-            <span class="k">return</span> <span class="kc">False</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">last_alert_times</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_time</span>
-    <span class="k">return</span> <span class="kc">True</span>
-</code></pre></div>
-
-<p>What it does:</p>
-<ul>
-<li><strong>Scope:</strong> one timer per pond and parameter pair. Ammonia in pond 1 and ammonia in pond 2 are tracked separately, and so are ammonia and temperature in the same pond. Nothing is scoped per farm. The code has no farm concept at all.</li>
-<li><strong>Duration:</strong> <code>alert_cooldown_minutes</code> defaults to 15. The FastAPI app also reads an <code>ALERT_COOLDOWN_MINUTES</code> environment variable (default 15), but it never uses it.</li>
-<li><strong>Re-arm:</strong> the timer only resets when an alert actually fires. Inside the window, breaches are dropped without being counted.</li>
-<li><strong>State:</strong> a plain Python dict in memory, so restarting the process clears it.</li>
-</ul>
-<p><strong>Trade-off.</strong> Keying on pond and parameter is the right granularity for an operator. &ldquo;Pond 2 ammonia&rdquo; is something you can act on, and one noisy pond can&rsquo;t hide an alert from another. The cost comes from keying on the <em>parameter</em> and not the <em>severity</em>. I didn&rsquo;t see it until I tested the code: the first alert in a window blocks the rest, including a later critical one. Keeping the state in memory makes the class easy to test, but a scheduled job that starts a new process on each run would never suppress anything, and a long-running process loses its state on every deploy.</p>
-<h2 id="decision-2-a-file-and-a-batch-dag-not-a-message-stream">Decision 2: a file and a batch DAG, not a message stream<a class="h-anchor" href="#decision-2-a-file-and-a-batch-dag-not-a-message-stream" title="Permanent link">#</a></h2>
-<p>The simulator appends JSON lines to a file. The DAG reads the whole file, flattens each reading into four rows, creates the table and hypertable, and inserts with <code>execute_batch(..., page_size=100)</code>.</p>
-<p><strong>Trade-off.</strong> A file is easy to inspect and needs no broker, which suits a laptop prototype. The cost is latency and correctness. In the best case, data lands in the database on a 5-minute schedule. It also has three problems I can see from reading the code. I haven&rsquo;t run the stack to confirm them:</p>
-<ul>
-<li>The DAG reads the full file on every run and never truncates it or stores an offset, so every run would re-insert every earlier reading.</li>
-<li><code>create_hypertable('sensor_readings', 'time')</code> runs every time without <code>if_not_exists</code>, which TimescaleDB rejects once the table is already a hypertable.</li>
-<li><code>'@every_5_minutes'</code> is not one of Airflow&rsquo;s schedule presets. I&rsquo;d expect the DAG to fail at parse time until that line is changed to a cron string or a <code>timedelta(minutes=5)</code>.</li>
-</ul>
-<p>The cadence numbers need a caveat too. The simulator class defaults to <code>sampling_interval=300</code> seconds and a 10% anomaly rate. The container runs the file&rsquo;s <code>__main__</code> block, though, which uses <code>sampling_interval=10</code> and <code>anomalies_probability=0.3</code>. So the Docker setup samples every 10 seconds with a 30% anomaly rate, not every 5 minutes with 10%.</p>
-<h2 id="decision-3-real-email-mocked-sms">Decision 3: real email, mocked SMS<a class="h-anchor" href="#decision-3-real-email-mocked-sms" title="Permanent link">#</a></h2>
-<p><code>send_email_alert</code> uses <code>smtplib</code> with STARTTLS. That path is real, but the shipped config has placeholder credentials, so it fails and logs an error until someone sets up SMTP. SMS is fully mocked. <code>log_sms_alert</code> writes a Twilio-shaped JSON record (<code>'to': f'+1{pond_id}000'</code>, <code>'from': '+1AQUAwatch'</code>) to <code>mock_sms.log</code>. Nothing is sent to a phone, and there&rsquo;s no Telegram, voice, or SNS integration.</p>
-<p><strong>Trade-off.</strong> Mocking SMS keeps the project free and offline, and it still shows the message format. But it also means the portfolio card&rsquo;s &ldquo;farms that phone home&rdquo; line has nothing real behind it. The only network notification is email, and only if you configure it.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no tests in the repo and no saved outputs (<code>grafana/provisioning/</code>, <code>dashboard/</code>, <code>dags/</code>, and <code>plugins/</code> are empty). So I wrote a small probe that imports <code>AlertManager</code> and the simulator directly, with email turned off and every output going to a scratch folder. No services ran. Here are five calls against one fresh manager:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Input</th>
-<th>Expected</th>
-<th>What the code did</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>ammonia 2.5 ppm</td>
-<td>critical (above 2.0)</td>
-<td>one alert labelled <strong>high</strong>. The critical check was suppressed by the cooldown that the high alert had just set</td>
-</tr>
-<tr>
-<td>ammonia 3.0 ppm, seconds later</td>
-<td>suppressed</td>
-<td>suppressed (the cooldown works)</td>
-</tr>
-<tr>
-<td>dissolved oxygen 7.0 mg/L</td>
-<td>no alert (healthy)</td>
-<td><strong>CRITICAL</strong> alert</td>
-</tr>
-<tr>
-<td>dissolved oxygen 3.0 mg/L</td>
-<td>critical (below 4.0)</td>
-<td>no alert</td>
-</tr>
-<tr>
-<td>pH 6.0</td>
-<td>alert if low-pH rules existed</td>
-<td>no alert. pH thresholds are never found</td>
-</tr>
-<tr>
-<td>temperature 29.0 °C</td>
-<td>high (above 28.0)</td>
-<td>high (correct)</td>
-</tr>
-</tbody>
-</table></div>
-<p>There are three separate bugs here:</p>
-<ol>
-<li><strong>Severity is lost.</strong> The loop checks levels in dict order (<code>high</code> before <code>critical</code>), and both checks share one cooldown key. Whichever level matches first takes the window, so a critical reading is always reported as high.</li>
-<li><strong>Dissolved oxygen is inverted.</strong> Its thresholds are <code>{'low': 5.0, 'critical': 4.0}</code>, but every comparison is <code>value &gt; threshold</code>. A healthy pond triggers a critical alert, and a pond running out of oxygen triggers nothing. That&rsquo;s the opposite of what the alert is for, on the parameter most likely to kill fish quickly.</li>
-<li><strong>pH never alerts.</strong> The thresholds dict uses the key <code>'pH'</code>, but the lookup is <code>thresholds.get(parameter.lower())</code>, which asks for <code>'ph'</code>.</li>
-</ol>
-<p>The simulator has its own issues. Over 20,000 generated readings with a fixed seed:</p>
-<ul>
-<li>about <strong>45%</strong> of ammonia readings marked normal were above the 1.0 ppm high threshold, because &ldquo;normal&rdquo; values come from the full 0–2.0 range;</li>
-<li>about <strong>18%</strong> of parameter readings had an <code>is_anomalous</code> flag that didn&rsquo;t match their <code>note</code>, because the flag rolls the dice a second time;</li>
-<li>about <strong>0.7%</strong> of values were negative (ammonia or temperature anomalies that drop below zero).</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">What actually holds up</p>
-<p>The per-pond, per-parameter cooldown does what it says: a repeat breach inside 15 minutes is dropped, and different ponds and parameters don&rsquo;t block each other. Temperature and ammonia high-threshold checks fire correctly. The FastAPI read endpoints are coherent SQL against <code>sensor_readings</code>. But the <code>alerts</code> table they query is never created anywhere: <code>init.sql</code> only enables the TimescaleDB extension.</p>
-</div>
-<p>Other gaps: there&rsquo;s no <code>.env.example</code> even though the README says to copy one. The compose file has no backend service. And the compose paths are written as if run from the repo root while the file sits in <code>provisioning/</code>.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<p>In order of how much damage each bug can do:</p>
-<ol>
-<li><strong>Fix the comparisons.</strong> Give each threshold a direction (<code>above</code> / <code>below</code>), and check levels from most to least severe so critical wins.</li>
-<li><strong>Key the cooldown on (pond, parameter, severity)</strong>, or let a higher severity break through an active lower-severity window. An escalation should never be quiet.</li>
-<li><strong>Persist cooldown state</strong> in the <code>alerts</code> table (create it first). Then &ldquo;should I alert?&rdquo; becomes a query for the last alert per key, and restarts stop mattering.</li>
-<li><strong>Wire the alerting into the pipeline.</strong> Run it as a second DAG task after the load, over only the rows that task just inserted.</li>
-<li><strong>Make ingestion incremental.</strong> Track a file offset or a max ingested timestamp, add <code>if_not_exists =&gt; TRUE</code>, and fix the schedule string.</li>
-<li><strong>Write the tests I just ran by hand</strong> as pytest cases, and fix the simulator&rsquo;s double roll and its &ldquo;normal&rdquo; range.</li>
-<li><strong>Check in a Grafana datasource and dashboard JSON</strong>, then actually measure alert latency against the 5-minute target.</li>
-</ol>
-<p>None of this needs MQTT or a real SMS provider. Both would make sense later, once the rules are correct.</p>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case study: <a href="../projects/aquawatch.html">AquaWatch — Fish-Farm Monitoring</a></li>
-<li>Code: local project, no public repository.</li>
-</ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Waffy: a support agent that can&#x27;t go rogue</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/agent-that-cant-go-rogue.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate.</description>
-      <category>AI Agents</category><category>Guardrails</category><category>Python</category>
-      <content:encoded><![CDATA[<p>Evidence label: this is a working prototype I built at Waffarha, not the production assistant. It runs against a read-only ClickHouse database and a local 3B model. Refunds and purchases are dry-run only, and nothing it does touches a customer&rsquo;s money. The test and eval numbers below come from my own progress log, and the headline eval number is a routing-only dry run, not a live run.</p>
-<h2 id="the-problem-an-agent-with-tools-is-an-agent-with-permissions">The problem: an agent with tools is an agent with permissions<a class="h-anchor" href="#the-problem-an-agent-with-tools-is-an-agent-with-permissions" title="Permanent link">#</a></h2>
-<p>Waffarha is an Egyptian deals and coupons platform. Most support questions are about data: prices, branches, coupon status, refunds. A model with tools over the database could answer most of them.</p>
-<p>That is also the risk. With tools, every weakness of the model becomes a weakness of the system. It can pass the wrong customer id, follow an instruction hidden in an offer description, or state a price it never looked up. If it can write, it can refund the wrong coupon.</p>
-<p>So I started from one question: what is the model allowed to decide? My answer was &ldquo;as little as possible&rdquo;. The model phrases answers. The code decides who the customer is, what can be queried, and whether anything happens.</p>
-<h2 id="the-design">The design<a class="h-anchor" href="#the-design" title="Permanent link">#</a></h2>
-<p>Waffy is a FastAPI service with a small web chat UI. A turn goes through three steps in a hand-written loop, with no agent framework:</p>
-<ol>
-<li><strong>Route.</strong> A deterministic router picks the tool and its arguments from the customer&rsquo;s message.</li>
-<li><strong>Act.</strong> The tool runs a fixed, parameterized query against read-only ClickHouse.</li>
-<li><strong>Answer.</strong> The model phrases the answer from the tool result. If the router finds nothing to route, such as a greeting, the model gets the tools for that caller and runs a short loop with a hard step limit.</li>
-</ol>
-<p>The answer streams back over Server-Sent Events as <code>status</code>, <code>token</code>, <code>replace</code> and <code>done</code> events. <code>replace</code> lets the server take back a streamed answer.</p>
-<p>Every tool goes through one registry. Here is how the guards line up:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Tool or layer</th>
-<th>Who can use it</th>
-<th>Guard</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Offer search, offer details, nearby offers, recommendations, FAQ, handoff</td>
-<td>Guests and customers</td>
-<td>Fixed SQL templates; the model only supplies values</td>
-</tr>
-<tr>
-<td>My coupons, coupon details, my refunds, order status</td>
-<td>Signed-in customers only</td>
-<td>Customer id comes from the server-side context, never from tool arguments</td>
-</tr>
-<tr>
-<td><code>request_refund</code>, <code>purchase_offer</code></td>
-<td>Signed-in customers only</td>
-<td>Propose only; execution needs a separate confirmation turn handled by the loop</td>
-</tr>
-<tr>
-<td>Action adapter</td>
-<td>Server config</td>
-<td>Only <code>ACTION_MODE=dry_run</code> exists; any other value fails at startup</td>
-</tr>
-<tr>
-<td>ClickHouse client</td>
-<td>Every query</td>
-<td>Read-only user, <code>readonly=2</code> session, 10 s timeout, 200-row cap</td>
-</tr>
-<tr>
-<td>Final answer</td>
-<td>Every turn</td>
-<td>Grounding check, then e-mail and mobile redaction</td>
-</tr>
-</tbody>
-</table></div>
-<p>The model never writes SQL. There are 14 query templates, and a strict renderer escapes every value through one function. It refuses a template with a missing parameter and refuses a parameter the template does not declare. Table and column names are hard-coded in the templates, so model output can change values but never the shape of a statement.</p>
-<h2 id="decision-1-identity-lives-in-the-context-not-in-the-arguments">Decision 1: identity lives in the context, not in the arguments<a class="h-anchor" href="#decision-1-identity-lives-in-the-context-not-in-the-arguments" title="Permanent link">#</a></h2>
-<p>No tool takes a customer id. The HTTP request carries a demo login key. The server checks it against an allow-list (<code>DEMO_CUSTOMER_IDS</code>), and an unknown key gets a 403. The result goes into a <code>ToolContext</code> that every tool handler receives. The model never sees it as a parameter, so it cannot change it.</p>
-<p>A simplified version of the pattern, in my own words:</p>
-<div class="hl"><pre><span></span><code><span class="nd">@dataclass</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">ToolContext</span><span class="p">:</span>
-    <span class="n">customer_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>   <span class="c1"># set by the server, never by the model</span>
-    <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
-
-<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">dispatch</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">timeout</span><span class="p">):</span>
-    <span class="n">tool</span> <span class="o">=</span> <span class="n">TOOLS_BY_NAME</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown tool: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">tool</span><span class="o">.</span><span class="n">customer_only</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ctx</span><span class="o">.</span><span class="n">is_authenticated</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="s2">&quot;This tool needs a signed-in customer.&quot;</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">wait_for</span><span class="p">(</span><span class="n">tool</span><span class="o">.</span><span class="n">handler</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">),</span> <span class="n">timeout</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">fail</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> failed (</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">). Say you could not confirm it.&quot;</span><span class="p">)</span>
-</code></pre></div>
-
-<p>Customer tools are filtered out of the tool list for guests, and <code>dispatch</code> checks again in case the model names one anyway. Tool errors come back to the model as data, not as a stack trace.</p>
-<p>The trade-off is that Waffy cannot help with anything outside the signed-in customer&rsquo;s own scope. For a customer-facing assistant that is the right default. A live test checks that coupon details come back empty for a coupon the customer does not own.</p>
-<h2 id="decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms">Decision 2: refunds and purchases are proposals, and the loop confirms<a class="h-anchor" href="#decision-2-refunds-and-purchases-are-proposals-and-the-loop-confirms" title="Permanent link">#</a></h2>
-<p><code>request_refund</code> and <code>purchase_offer</code> never execute anything. They call <code>propose</code> on the action adapter. The adapter reads the database, applies versioned eligibility rules, and stores a proposal with its rule version, inputs, facts and decision.</p>
-<p>The customer has to answer in a separate turn. Before any routing, the loop checks for a pending proposal for the same customer and the same session. A strict classifier reads the message. A clear yes confirms, a clear no cancels, and anything else supersedes the proposal, so a stale &ldquo;yes&rdquo; several turns later cannot run an old request. Only the loop passes <code>confirmed=True</code>. The model has no path to it.</p>
-<p>Even a confirmed action only marks the proposal <code>confirmed</code> and returns a summary that says plainly that nothing was executed in Waffarha&rsquo;s systems. The adapter factory raises at startup for any mode other than dry run. A config typo should never quietly change what the system does with money.</p>
-<p>The trade-off is that this cannot ship as a refund tool yet. Going live needs a write API, the refund policy as versioned data, a refund state machine, a payout method and a confirmation channel tied to the customer&rsquo;s account.</p>
-<h2 id="decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model">Decision 3: a router picks the tool, and some answers skip the model<a class="h-anchor" href="#decision-3-a-router-picks-the-tool-and-some-answers-skip-the-model" title="Permanent link">#</a></h2>
-<p>The 3B local model (<code>qwen2.5:3b-instruct</code>) picked the wrong tool or answered from memory often enough that I moved tool selection into a deterministic router.</p>
-<p>For factual lists I went further. Offer search, offer details, recommendations and the customer&rsquo;s coupons stream the tool&rsquo;s own ready-made message word for word. The small model had called a used coupon &ldquo;not used&rdquo; and drifted into a different Arabic dialect.</p>
-<p>Two output guards run on whatever text is left. The grounding check blocks an answer that states a price, date, availability or coupon status when no tool ran that turn. The loop retries once with a nudge to call a tool, and then falls back to &ldquo;I can&rsquo;t confirm that&rdquo;. Redaction removes e-mail addresses, and for guests mobile numbers, from the final answer before it is stored and sent as the closing <code>done</code> event.</p>
-<div class="admonition warning">
-<p class="admonition-title">Where redaction actually happens</p>
-<p>Redaction runs on the model&rsquo;s output, not on the data going in. Tool results reach the model unredacted, and streamed tokens go out before the redacted <code>done</code> text replaces them. Moving redaction to the tool-result boundary is on my list.</p>
-</div>
-<p>The trade-off of the router is coverage. It only knows the intents I wrote rules for, in Egyptian Arabic, MSA, English and Franco-Arabic. Anything else falls through to the free loop, where the model&rsquo;s weaknesses come back.</p>
-<h2 id="testing-and-results-with-caveats">Testing and results, with caveats<a class="h-anchor" href="#testing-and-results-with-caveats" title="Permanent link">#</a></h2>
-<p>There are two layers of checks.</p>
-<p><strong>Tests.</strong> pytest covers the SQL renderer, router, guards, loop, actions and tools, plus live read-only ClickHouse tests that skip when the database is down. The latest entry in my progress log records 212 tests passing, with ruff clean.</p>
-<p><strong>Evals.</strong> <code>evals/cases.yaml</code> has 53 cases across Egyptian Arabic, MSA, Franco, English, mixed language, spelling variants, negation and actions. Ten are critical safety cases, such as another customer&rsquo;s coupons, prompt injection inside an offer description, requests for SQL, and prices without a tool. The runner prints the pass rate per category and exits non-zero on any critical failure, so it can gate a merge.</p>
-<p>The recorded results are 53/53 on the dry run and 10/10 on the critical cases. Be clear about what each means:</p>
-<ul>
-<li>The <strong>dry run</strong> checks routing only. No model is called and the text checks are skipped. It tells me the router sends each message to the right tool, not that the answers are good.</li>
-<li>The <strong>critical 10/10</strong> was run live against ClickHouse and the local model. That is the stronger number, but it is ten cases.</li>
-<li>I have not recorded a full live run of all 53 cases. On a CPU-only box a live case takes roughly 30-60 s, so I ran subsets.</li>
-</ul>
-<p>Failure paths were checked live too: with the model unreachable the agent answered from the help centre in 5.4 s, and with the database down <code>/health</code> returned 503 and the chat still answered politely.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ul>
-<li><strong>Move redaction to the tool-result boundary</strong>, so the model never sees partner phones or other fields it does not need, and redact the token stream rather than only the final text.</li>
-<li><strong>Run the full eval live on a hosted model.</strong> The 3B local model is the main limit on latency and answer quality. I would rerun the critical subset first, then all 53 cases, and record live pass rates separately from the dry run.</li>
-<li><strong>Shared state.</strong> Sessions, proposals and the rate limiter are single-process; more workers need Redis or Postgres.</li>
-<li><strong>Live actions, only with the missing pieces.</strong> A write API, the refund policy as data and an account-tied confirmation channel come first.</li>
-</ul>
-<p>The lesson for me: keep identity, SQL and execution in plain code, where I can test them, and let the model phrase.</p>
-<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>Live flight radar: Flume, Kafka, Spark Structured Streaming, InfluxDB</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/adsb-flight-radar-streaming.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong.</description>
-      <category>Streaming</category><category>Kafka</category><category>Spark</category>
-      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio (live public data).</strong> This is a personal learning project, not client work. It pulls real, live aircraft positions from the free <a href="https://api.adsb.lol/docs">adsb.lol</a> ADS-B API, but the volume is small: one request every 10 seconds, capped at 300 aircraft per request, all running in Docker Compose on one machine. The repository has no saved logs, benchmarks or screenshots, so this article describes what the code does and what its configuration allows. It does not report measured throughput or latency.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>I wanted a project that touches every piece of a classic Hadoop-era streaming stack in one place: Flume for ingestion, Kafka as the buffer, Spark Structured Streaming for processing, HDFS for the raw archive, and a time-series store with a live dashboard on top. Most tutorials use fake click events. I wanted real data that changes every few seconds and is easy to check by eye, and aircraft positions fit well: if the dots on the map line up with Cairo International Airport, the pipeline works.</p>
-<p>The data source is adsb.lol, a community-run ADS-B aggregator. It needs no API key and publishes data under the ODbL licence, so any dashboard built on it has to credit adsb.lol. By default the poller asks for every aircraft within 250 nautical miles of Cairo (<code>/v2/point/30.0444/31.2357/250</code>). It also supports three global endpoints through one environment variable: military aircraft (<code>/v2/mil</code>), the LADD privacy list (<code>/v2/ladd</code>) and PIA addresses (<code>/v2/pia</code>).</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<div class="hl"><pre><span></span><code>adsb.lol API  /v2/point/{lat}/{lon}/250   (poll every 10 s, max 300 aircraft)
-      |
-      v
-data-source (Python)  -- flatten &quot;ac&quot; array, drop rows with no lat/lon
-      |  HTTP POST, Flume JSONHandler format
-      v
-Flume agent &quot;producer&quot;   HTTP source -&gt; memory channel -&gt; Kafka sink (acks=1)
-      |
-      v
-Kafka topic &quot;aircraft-states&quot;   1 broker, 3 partitions, replication 1
-      |
-      +----------------------------------+
-      v                                  v
-Flume agent &quot;consumer&quot;            Spark Structured Streaming (local[2])
-Kafka source -&gt; file channel      query 1: every 10 s  -&gt; aircraft_states_raw
--&gt; HDFS sink                      query 2: every 30 s  -&gt; aircraft_states_agg
-      |                                  |
-      v                                  v
-HDFS /aircraft-states/            InfluxDB 2.7 bucket &quot;aircraft-states&quot;
-  dt=YYYY-MM-DD/hr=HH/*.json             |
-                                         v
-                                  Grafana 10.4 (6 panels, 10 s refresh)
-</code></pre></div>
-
-<p>Everything runs from one <code>docker-compose.yml</code>: ZooKeeper, a single Kafka broker, an init container that creates the topic, a Hadoop namenode and datanode, InfluxDB, Grafana, two Flume containers, the Spark job and the Python poller. The README asks for 8 GB of RAM, mostly for Hadoop and Spark.</p>
-<p>The poller does the only real transformation before Kafka. adsb.lol sends <code>alt_baro</code> as a number in flight and as the string <code>"ground"</code> on the runway, so the producer turns that into a boolean and a zero:</p>
-<div class="hl"><pre><span></span><code><span class="n">alt_baro_raw</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;alt_baro&quot;</span><span class="p">)</span>
-<span class="n">on_ground</span> <span class="o">=</span> <span class="p">(</span><span class="n">alt_baro_raw</span> <span class="o">==</span> <span class="s2">&quot;ground&quot;</span><span class="p">)</span>
-<span class="n">alt_baro</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">on_ground</span> <span class="k">else</span> <span class="n">_num</span><span class="p">(</span><span class="n">alt_baro_raw</span><span class="p">)</span>
-</code></pre></div>
-
-<p>It also renames the short API fields (<code>r</code> to <code>registration</code>, <code>t</code> to <code>aircraft_type</code>, <code>gs</code> to <code>ground_speed</code>), trims the padded callsign, and stamps an <code>ingested_at</code> time in UTC.</p>
-<p>The Spark job reads the topic twice, once per streaming query. The first query writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, <code>aircraft_type</code> and <code>on_ground</code>. The second groups by aircraft type over a 1-minute window that slides every 30 seconds and writes count, average and maximum ground speed, and average barometric altitude. Grafana reads both measurements with Flux. The map panel takes the last latitude, longitude and altitude per <code>hex</code> from the past 2 minutes, so it shows each aircraft&rsquo;s current position, not a track.</p>
-<h2 id="decision-1-two-flume-agents-around-kafka">Decision 1: two Flume agents around Kafka<a class="h-anchor" href="#decision-1-two-flume-agents-around-kafka" title="Permanent link">#</a></h2>
-<p>The poller does not talk to Kafka. It POSTs to a Flume HTTP source, and a second Flume agent drains Kafka into HDFS. That is more moving parts than a Python Kafka producer plus a small consumer, so it needs a reason.</p>
-<p>The README gives the reasons: the producer agent buffers between the HTTP poller and Kafka, and the consumer agent gives file-channel buffering from Kafka to HDFS. A side benefit is that the poller needs no Kafka client, only <code>requests</code>. The two agents are set up differently on purpose:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Agent</th>
-<th>Source</th>
-<th>Channel</th>
-<th>Sink</th>
-<th>What the channel buys</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>producer</td>
-<td>HTTP, port 44444</td>
-<td>memory, capacity 10,000</td>
-<td>Kafka, <code>acks=1</code></td>
-<td>Fast, but events in the channel are lost if the container dies</td>
-</tr>
-<tr>
-<td>consumer</td>
-<td>Kafka, batch 1,000</td>
-<td>file, capacity 100,000</td>
-<td>HDFS, roll every 120 s or 10,000 events</td>
-<td>Survives a restart; Kafka offsets plus the file channel protect the archive path</td>
-</tr>
-</tbody>
-</table></div>
-<p>The trade-off is that only the archive side is durable. On the way in there are three places where data can drop: the poller logs a warning and moves on if the POST to Flume fails (no retry), the memory channel loses whatever it holds on a crash, and <code>acks=1</code> on a single broker with replication factor 1 means one broker failure loses data. For a radar that refreshes every 10 seconds, losing one poll is fine because the next one replaces it. For anything that needs a complete history, it is not, and I would not call this ingestion lossless.</p>
-<h2 id="decision-2-two-queries-in-one-spark-job-written-with-foreachbatch">Decision 2: two queries in one Spark job, written with foreachBatch<a class="h-anchor" href="#decision-2-two-queries-in-one-spark-job-written-with-foreachbatch" title="Permanent link">#</a></h2>
-<p>InfluxDB has no built-in Spark sink, so both queries use <code>foreachBatch</code> and the official <code>influxdb-client</code>:</p>
-<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
-    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>The 10-second trigger matches the 10-second poll, so each micro-batch roughly holds one poll&rsquo;s worth of aircraft. The aggregate query runs every 30 seconds in <code>update</code> mode with a 1-minute watermark.</p>
-<p>This is simple and easy to read, but it has costs I can see in the code:</p>
-<ul>
-<li>Each batch is pulled to the driver with <code>collect()</code>, and a new InfluxDB client is opened and closed per batch. At 300 rows per poll that is fine. At real volume it would not be.</li>
-<li>The window and watermark use <code>event_time = current_timestamp()</code>, which is Spark&rsquo;s processing time, not the <code>ingested_at</code> field the poller writes, and not the aircraft&rsquo;s own <code>seen_pos</code>. The &ldquo;1-minute window&rdquo; is really &ldquo;rows Spark happened to read in that minute&rdquo;.</li>
-<li>The InfluxDB timestamp is <code>datetime.utcnow()</code> at write time, so a delayed batch shows up as if it were fresh.</li>
-<li>Writes are synchronous and not idempotent. If a batch is retried after a failure, its points are written again.</li>
-<li>Aggregate points are tagged with <code>batch_id</code>, which creates a new series every 30 seconds. That works for a demo but grows InfluxDB series cardinality without limit.</li>
-</ul>
-<p>The upside is that both queries share one parsed DataFrame and one schema, and the whole job is about 200 lines of Python.</p>
-<h2 id="decision-3-cap-the-feed-instead-of-scaling-the-stack">Decision 3: cap the feed instead of scaling the stack<a class="h-anchor" href="#decision-3-cap-the-feed-instead-of-scaling-the-stack" title="Permanent link">#</a></h2>
-<p>A 250 nm circle around Cairo, or any of the global endpoints, can return hundreds of aircraft per call. Rather than size Kafka and Spark for that, I capped it in the poller:</p>
-<div class="hl"><pre><span></span><code><span class="n">aircraft</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">aircraft</span> <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lat&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lon&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
-<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">aircraft</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_AIRCRAFT</span><span class="p">:</span>
-    <span class="n">aircraft</span> <span class="o">=</span> <span class="n">aircraft</span><span class="p">[:</span><span class="n">MAX_AIRCRAFT</span><span class="p">]</span>
-</code></pre></div>
-
-<p>Rows without a position are dropped first, since adsb.lol leaves out <code>lat</code>/<code>lon</code> when the last position report is stale, and they cannot be mapped. Then the list is cut at 300. That puts a hard ceiling on load: 300 events every 10 seconds, so at most about 30 events per second. Spark runs as <code>local[2]</code> with 2 shuffle partitions to match.</p>
-<p>The trade-off is that the cut is not random or ranked. If the API returns more than 300 aircraft, the ones after position 300 never appear on the map. The README says to shrink the radius rather than rely on the cap, and that is the honest fix for a single-node demo.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What the repository shows:</p>
-<ul>
-<li>A full stack that starts with <code>docker compose up --build -d</code>: 11 services, with health checks on ZooKeeper, Kafka, the namenode and InfluxDB, and a startup order enforced through <code>depends_on</code>.</li>
-<li>A provisioned Grafana dashboard with six panels: live aircraft positions on a Geomap, aircraft count by type, total tracked over time, average ground speed by type, average barometric altitude by type, and on-ground versus airborne.</li>
-<li>Raw JSON landing in HDFS, partitioned by date and hour, as <code>states-*.json</code> files.</li>
-<li>Two exported copies of the dashboard JSON from a running Grafana, and a follow-up commit that fixed the map query to keep <code>aircraft_type</code> per point. This tells me the stack ran and was tuned against live data, but there are no logs or screenshots in the repo to quote numbers from.</li>
-</ul>
-<p>What it does not show: any measured messages per second, end-to-end latency, or uptime. The configuration caps the input at about 30 events per second, which is far from &ldquo;at scale&rdquo;. The one latency fact I can state is the cadence: a new poll every 10 seconds, a Spark write every 10 seconds, and a Grafana refresh every 10 seconds, so a position on the map is roughly 10 to 30 seconds old.</p>
-<div class="admonition note">
-<p class="admonition-title">Small bugs I found while writing this</p>
-<p>The consumer Dockerfile passes <code>--conf /opt/opt/flume/conf</code> (a doubled path) to <code>flume-ng</code>. The config file itself is passed separately, so the agent still loads its settings. The consumer config header still says <code>topic = user-events</code>, and the compose comment on the poller says &ldquo;Random User API&rdquo;, both left over from an earlier template. The &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft.</p>
-</div>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li>Use event time. Parse <code>ingested_at</code> (or <code>ingested_at - seen_pos</code>) into a timestamp in Spark and use it for the watermark, the windows and the InfluxDB point time.</li>
-<li>Make the ingest path durable or drop Flume from it. Either switch the producer agent to a file channel with <code>acks=all</code>, or let the poller write to Kafka directly with retries and keep Flume only for the HDFS archive.</li>
-<li>Write to InfluxDB from the executors with <code>foreachPartition</code> and batched writes, and remove the <code>batch_id</code> tag.</li>
-<li>Build real tracks. Keep the last N positions per <code>hex</code> with <code>applyInPandasWithState</code> or a Flux query over a longer range, and draw them as lines on the map.</li>
-<li>Measure it. Log rows per batch and Spark&rsquo;s <code>processedRowsPerSecond</code> and batch duration, then switch to a global endpoint with the cap raised to see where the single-node stack actually bends.</li>
-<li>Move secrets out of <code>docker-compose.yml</code> into an <code>.env</code> file that is not committed.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Code: <a href="https://github.com/Eng-Zakaria/aircraft-tracking-pipeline">github.com/Eng-Zakaria/aircraft-tracking-pipeline</a></li>
-<li>Case page: <a href="../projects/aircraft-tracking.html">Aircraft Tracking Pipeline</a></li>
-<li>Data: aircraft data courtesy of <a href="https://adsb.lol">adsb.lol</a>, licensed under ODbL v1.0.</li>
-</ul>]]></content:encoded>
     </item>
   </channel>
 </rss>

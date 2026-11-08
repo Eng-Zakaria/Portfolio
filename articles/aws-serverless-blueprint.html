@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>A serverless task API in AWS CDK, reviewed before its first deploy | Mohammed Zakaria</title>
+  <meta name="description" content="A TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront, built as a tutorial-style learning project. What the stack defines, the design choices behind it, and the bugs a careful read finds before anything reaches AWS.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html">
+  <meta property="og:title" content="A serverless task API in AWS CDK, reviewed before its first deploy | Mohammed Zakaria">
+  <meta property="og:description" content="A TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront, built as a tutorial-style learning project. What the stack defines, the design choices behind it, and the bugs a careful read finds before anything reaches AWS.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A serverless task API in AWS CDK, reviewed before its first deploy", "description": "A TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront, built as a tutorial-style learning project. What the stack defines, the design choices behind it, and the bugs a careful read finds before anything reaches AWS.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html", "wordCount": 1440, "keywords": "AWS, Serverless, Infrastructure as Code"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">AWS</span><span class="post-tag">Serverless</span><span class="post-tag">Infrastructure as Code</span></div>
+        <h1>A serverless task API in AWS CDK, reviewed before its first deploy</h1>
+        <p class="post-lede">A TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront, built as a tutorial-style learning project. What the stack defines, the design choices behind it, and the bugs a careful read finds before anything reaches AWS.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decisions-and-trade-offs">Decisions and trade-offs</a><ul>
+<li><a href="#one-lambda-per-route">One Lambda per route</a></li>
+<li><a href="#uploads-through-presigned-urls">Uploads through presigned URLs</a></li>
+<li><a href="#the-dynamodb-key-design-and-the-bug-it-caused">The DynamoDB key design, and the bug it caused</a></li>
+</ul>
+</li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>Evidence: portfolio, tutorial-based learning project. I built it from a guided, learning-objectives outline (the README lists ten AWS topics it is meant to teach). The repo does not credit a specific AWS workshop, and I&rsquo;m not claiming one. It has never been deployed: there is no <code>cdk.out</code>, no CloudFormation output, no logs and no git history. It has no tests. Everything below comes from reading the code.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted one small project that touches the standard AWS serverless pieces end to end: an HTTP API, functions behind it, a managed database, file uploads, a static frontend behind a CDN, and the whole thing declared as code. A task manager is a good fit because the data model is trivial, so the interesting parts are the infrastructure and the access patterns, not the business logic.</p>
+<p>The goal was a stack that a single <code>cdk deploy</code> could create and a single <code>cdk destroy</code> could remove, without hand-built resources in the console.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The CDK app (<code>infrastructure/bin/app.ts</code>) instantiates one stack, <code>TaskManagerStack</code>. A second <code>PipelineStack</code> for CodePipeline is written but commented out of the app.</p>
+<div class="hl"><pre><span></span><code> Browser (React SPA)
+   |                         \
+   | static assets            \ REST calls (userId from localStorage)
+   v                           v
+ CloudFront ──&gt; S3 frontend    API Gateway REST API, stage &quot;prod&quot;
+ bucket (SSE-S3)               /tasks          POST -&gt; createTask
+                               /tasks          GET  -&gt; listTasks
+                               /tasks/{taskId} GET  -&gt; getTask
+                               /tasks/{taskId} PUT  -&gt; updateTask
+                               /tasks/{taskId} DELETE -&gt; deleteTask
+                               /upload         POST -&gt; uploadFile
+                                     |                    |
+                                     v                    v
+                       DynamoDB &quot;TaskManager-Tasks&quot;   presigned PUT URL
+                       PK taskId, SK userId           -&gt; S3 uploads bucket
+                       GSI StatusIndex (status,       (versioned, SSE-S3)
+                       createdAt), on-demand, PITR
+
+ CloudWatch: Lambda logs (1-week retention), API stage metrics,
+             one alarm on API 4XX &gt;= 10 in one period (no action wired)
+</code></pre></div>
+
+<p>What the stack defines, counted from <code>task-manager-stack.ts</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Count</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lambda functions</td>
+<td>6</td>
+<td>Node.js 18, 30 s timeout, one shared IAM role</td>
+</tr>
+<tr>
+<td>API Gateway methods</td>
+<td>6</td>
+<td>on 3 resources, CORS open to all origins</td>
+</tr>
+<tr>
+<td>DynamoDB tables</td>
+<td>1</td>
+<td>plus 1 GSI, pay-per-request, point-in-time recovery</td>
+</tr>
+<tr>
+<td>S3 buckets</td>
+<td>2</td>
+<td>uploads and frontend, both <code>RemovalPolicy.DESTROY</code></td>
+</tr>
+<tr>
+<td>CloudFront distributions</td>
+<td>1</td>
+<td>HTTPS redirect, SPA 404 → <code>index.html</code></td>
+</tr>
+<tr>
+<td>CloudWatch alarms</td>
+<td>1</td>
+<td>client errors, no SNS target</td>
+</tr>
+<tr>
+<td>Stack outputs</td>
+<td>4</td>
+<td>API URL, CloudFront URL, two bucket names</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decisions-and-trade-offs">Decisions and trade-offs<a class="h-anchor" href="#decisions-and-trade-offs" title="Permanent link">#</a></h2>
+<h3 id="one-lambda-per-route">One Lambda per route<a class="h-anchor" href="#one-lambda-per-route" title="Permanent link">#</a></h3>
+<p>Each API method has its own function and its own folder under <code>backend/functions/</code>. The upside is small, readable handlers and per-route logs and metrics in CloudWatch without extra tagging. The cost shows up immediately in the stack file: six nearly identical <code>new lambda.Function(...)</code> blocks, and six handlers that each repeat the same CORS headers and error envelope. A shared helper or a single router function would remove most of that. For a learning project the split was worth it, because it made the API Gateway-to-Lambda wiring explicit route by route.</p>
+<p>The six functions also share one execution role, which has read-write on the table and the uploads bucket. That is simpler than six roles, but it is not least privilege: <code>getTask</code> can write to S3 and <code>uploadFile</code> can delete tasks.</p>
+<h3 id="uploads-through-presigned-urls">Uploads through presigned URLs<a class="h-anchor" href="#uploads-through-presigned-urls" title="Permanent link">#</a></h3>
+<p><code>uploadFile</code> never touches the file. It checks the MIME type against a short allowlist, builds a key, and returns a presigned S3 PUT URL valid for an hour:</p>
+<div class="hl"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">fileKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`uploads/</span><span class="si">${</span><span class="nx">userId</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nb">Date</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="si">}</span><span class="sb">-</span><span class="si">${</span><span class="nx">fileName</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">PutObjectCommand</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">Bucket</span><span class="o">:</span><span class="w"> </span><span class="nx">BUCKET_NAME</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Key</span><span class="o">:</span><span class="w"> </span><span class="nx">fileKey</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ContentType</span><span class="o">:</span><span class="w"> </span><span class="nx">fileType</span><span class="p">,</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">presignedUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">getSignedUrl</span><span class="p">(</span><span class="nx">s3Client</span><span class="p">,</span><span class="w"> </span><span class="nx">command</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">expiresIn</span><span class="o">:</span><span class="w"> </span><span class="mf">3600</span><span class="w"> </span><span class="p">});</span>
+</code></pre></div>
+
+<p>This keeps file bytes out of API Gateway and Lambda, so payload limits and Lambda run time don&rsquo;t matter for uploads. The trade-off is that the server no longer sees the file: the type check only covers what the client claims, there is no size limit, and nothing records the upload against a task. The raw <code>fileName</code> also goes straight into the key, so it should be sanitised.</p>
+<h3 id="the-dynamodb-key-design-and-the-bug-it-caused">The DynamoDB key design, and the bug it caused<a class="h-anchor" href="#the-dynamodb-key-design-and-the-bug-it-caused" title="Permanent link">#</a></h3>
+<p>The table uses <code>taskId</code> as the partition key and <code>userId</code> as the sort key. A <code>StatusIndex</code> GSI on <code>status</code> and <code>createdAt</code> supports &ldquo;tasks with status X&rdquo;.</p>
+<p>That key order is the main defect in the project. <code>listTasks</code>, when no status filter is given, does this:</p>
+<div class="hl"><pre><span></span><code><span class="ow">new</span><span class="w"> </span><span class="nx">QueryCommand</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">TableName</span><span class="o">:</span><span class="w"> </span><span class="nx">TABLE_NAME</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">KeyConditionExpression</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;userId = :userId&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ExpressionAttributeValues</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;:userId&#39;</span><span class="o">:</span><span class="w"> </span><span class="nx">userId</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">Limit</span><span class="o">:</span><span class="w"> </span><span class="nx">limit</span><span class="p">,</span>
+<span class="p">})</span>
+</code></pre></div>
+
+<p>A DynamoDB <code>Query</code> must give an equality condition on the partition key, and <code>userId</code> is the sort key here. This call would be rejected, and the handler would return a 500. The React app calls exactly this path on page load (<code>getTasks(API_URL, userId)</code> with no status), so the main screen would fail on a real deployment. The status path is not much better: it reads the GSI by status across all users and then filters by <code>userId</code>, so with <code>Limit</code> applied before the filter, a page can come back short or empty.</p>
+<p>The fix is to flip the keys (<code>userId</code> partition, <code>taskId</code> sort), which makes &ldquo;my tasks&rdquo; a single-partition query, and to put <code>userId</code> into the GSI key as well (for example <code>userId#status</code>). Get, update and delete already pass both keys, so they would keep working.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no runtime results to report, because the stack has not been deployed or synthesised. These are the findings from reading the code:</p>
+<ul>
+<li><strong><code>cdk synth</code> would fail as written.</strong> <code>app.ts</code> imports <code>pipeline-stack.ts</code> even though it doesn&rsquo;t use it, and that file has <code>base-directory: 'backend'</code> as an unquoted key inside the buildspec object literal (twice). That is a TypeScript syntax error, so <code>ts-node</code> can&rsquo;t load the app.</li>
+<li><strong>List-by-user is broken</strong>, as described above.</li>
+<li><strong>There is no authentication.</strong> The README lists &ldquo;API Gateway authentication&rdquo;, but no authorizer, API key or Cognito pool is defined. <code>userId</code> is generated in the browser and stored in <code>localStorage</code>, so any caller can read or change any user&rsquo;s tasks by passing a different ID.</li>
+<li><strong>The frontend origin is likely misconfigured.</strong> The frontend bucket sets <code>websiteIndexDocument</code> but keeps public access blocked. With a website-configured bucket, CDK&rsquo;s <code>S3Origin</code> points CloudFront at the public website endpoint rather than using an origin access identity, so I&rsquo;d expect CloudFront to get 403s. I haven&rsquo;t confirmed this against a deployment.</li>
+<li><strong>The pipeline is a sketch, not CI/CD.</strong> Its CodeBuild projects get <code>actions: ['*'], resources: ['*']</code>, the build stages never run <code>cdk deploy</code>, and the optional S3 deploy step publishes the backend artifact into the frontend bucket.</li>
+<li><strong>The alarm has no action</strong>, so it would change state with nobody notified. It watches 4XX client errors, not the 5XX errors the handlers return on failure.</li>
+<li><strong>Some guards don&rsquo;t work.</strong> <code>updateTask</code> always adds <code>updatedAt</code> to its update list, so its &ldquo;No fields to update&rdquo; check can never fire.</li>
+<li><strong>There are no tests.</strong> <code>backend/package.json</code> declares Jest but there are no test files, and the <code>npm run test:api</code> script in the README doesn&rsquo;t exist. The README also mentions Python Lambdas, but all six are JavaScript.</li>
+</ul>
+<p>What does hold up: the DynamoDB table has on-demand billing, point-in-time recovery and AWS-managed encryption. Both buckets use S3-managed encryption. Lambda logs have a one-week retention. API Gateway stage logging and metrics are on. Update and delete use <code>attribute_exists(taskId)</code> conditions, so they return 404 instead of silently creating items. The service choices are sound, and most of the defects are a few lines each to fix.</p>
+<div class="admonition note">
+<p class="admonition-title">Scope</p>
+<p>This is a learning build that covers the shape of a serverless AWS app. My production AWS work (EC2, RDS, S3) is separate and not represented by this repo.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li>Remove the unused <code>PipelineStack</code> import, or fix its buildspec keys, and get a clean <code>cdk synth</code>. Add a CDK assertions test that checks the resource counts in the table above.</li>
+<li>Flip the table keys to <code>userId</code>/<code>taskId</code>, rework the GSI so it includes the user, and add Jest unit tests for each handler using a mocked DynamoDB client.</li>
+<li>Add a Cognito user pool authorizer and take <code>userId</code> from the token claims, not the request body or query string.</li>
+<li>Switch the frontend to a private bucket with origin access control and drop the website configuration.</li>
+<li>Give each function its own grants and add an SNS target to a 5XX alarm.</li>
+<li>Rebuild the pipeline around CDK Pipelines with scoped permissions, a synth step, tests, then deploy. Only after that, deploy to a sandbox account and record real outputs.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case page: <a href="../projects/aws-serverless.html">Serverless task manager on AWS</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html" data-title="A serverless task API in AWS CDK, reviewed before its first deploy">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/aws-serverless-blueprint.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="bilingual-rag-retrieval-hit-rate.html"><small>← Newer</small><b>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</b></a>
+          <a class="post-pager-next" href="aquawatch-iot-alerts.html"><small>Older →</small><b>AquaWatch: sensor alerts with cooldown logic</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

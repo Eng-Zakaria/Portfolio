@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Watchdog — Multi-Domain Price Intelligence | Mohammed Zakaria</title>
-  <meta name="description" content="Production 6-stage price ETL: Playwright + Celery/Redis scraping, raw HTML snapshot store, Postgres star schema, Telegram alerts and Streamlit analytics.">
+  <meta name="description" content="Portfolio price-tracking pipeline design: Playwright on Celery/Redis, raw HTML stored before parsing, Postgres star schema, Telegram/email alerts and a Streamlit dashboard. Not yet run end to end.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -71,12 +71,12 @@
     <div class="container">
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-dog"></i> Watchdog — Price Intelligence</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Production multi-domain price ETL: browser automation at scale feeding a dimensional warehouse with data-quality gates, threshold alerts, and trend analytics.</p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Portfolio multi-site price-tracking pipeline: Playwright fetches feeding a dimensional warehouse, with data-quality checks, threshold alerts, and a trend dashboard. Built and unit-tested; not yet run end to end against live sites.</p>
       <div class="project-meta">
         <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Automation + Data Engineer</span></div>
         <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">2026</span></div>
         <div class="meta-item"><span class="meta-label">Platform</span><span class="meta-value">E-commerce Tracking</span></div>
-        <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Production ETL</span></div>
+        <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Portfolio build</span></div>
       </div>
       <div class="tech-stack">
         <span class="tech-tag"><i class="fas fa-globe"></i> Playwright</span>
@@ -93,12 +93,13 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/watchdog-price-intel.html">Read the write-up →</a>
     </div>
     <section class="content-section">
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
-        <div class="metric-card"><div class="metric-value">6-stage</div><div class="metric-label">ETL Pipeline</div></div>
-        <div class="metric-card"><div class="metric-value">100%</div><div class="metric-label">Raw HTML Retained</div></div>
+        <div class="metric-card"><div class="metric-value">6-stage</div><div class="metric-label">Airflow DAG</div></div>
+        <div class="metric-card"><div class="metric-value">30-day</div><div class="metric-label">Raw HTML Retention</div></div>
         <div class="metric-card"><div class="metric-value"><i class="fas fa-star"></i></div><div class="metric-label">fact_price_snapshot</div></div>
         <div class="metric-card"><div class="metric-value"><i class="fas fa-bell"></i></div><div class="metric-label">Per-Target Thresholds</div></div>
       </div>
@@ -106,7 +107,7 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>Prices for the same product diverge across domains, regions, and categories — and sites change markup without warning. A naive scraper that parses on the fly loses history the moment a CSS selector breaks, and a flat URL list cannot express per-domain check intervals or currency normalization.</p>
-      <p>Watchdog treats targets as structured records (domain × region × category) with selector profiles, persists every raw snapshot losslessly, and runs the whole flow as an orchestrated, quality-gated pipeline instead of a cron script.</p>
+      <p>Watchdog treats targets as structured records (domain × region × category) with selector profiles, stores raw HTML before parsing so selector fixes can be re-applied, and splits fetch, parse, load, quality checks and alerts into separate orchestrated stages.</p>
     </section>
     <section class="content-section">
       <h3>Architecture</h3>
@@ -120,27 +121,27 @@
     <section class="content-section">
       <h3>Approach &amp; Implementation</h3>
       <ul>
-        <li><strong>Raw-before-parse:</strong> every fetch persists timestamped HTML first; parser fixes trigger Airflow backfills that re-parse history instead of losing it.</li>
-        <li><strong>Celery vs. Airflow separation:</strong> Celery runs per-target browser jobs (retryable, horizontally scalable); Airflow orchestrates stage dependencies, scheduling, and backfills above it.</li>
-        <li><strong>Dimensional warehouse:</strong> star schema with dim_domain/region/category/product, parser profiles, targets registry, and immutable fact_price_snapshot rows for trend and cross-region analysis.</li>
-        <li><strong>Structured targeting:</strong> (domain, region) resolves to a parser profile; currency normalization lives in one layer instead of per-parser hacks.</li>
-        <li><strong>Resilience:</strong> rotating user-agents, randomized pacing, per-domain circuit breakers, dead-letter retries, and selector-break detection on consecutive nulls.</li>
-        <li><strong>Alerts &amp; analytics:</strong> per-target drop thresholds via a common Notifier interface (Telegram + SMTP), plus a Streamlit dashboard for trends, highs/lows, and scraper health.</li>
+        <li><strong>Raw-before-parse:</strong> every fetch writes timestamped HTML to disk first; a manual Airflow backfill DAG is meant to re-parse stored files after a selector fix. An hourly cleanup job deletes raw files older than 30 days.</li>
+        <li><strong>Celery vs. Airflow separation:</strong> Celery runs per-target browser jobs with 3 retries and backoff (beat checks for due targets every 60 s); an Airflow DAG every 15 minutes orders the stages.</li>
+        <li><strong>Dimensional warehouse:</strong> star schema with dim_domain/region/category/product, parser profiles, a targets registry, fact_price_snapshot, and a dq_scraper_health table.</li>
+        <li><strong>Structured targeting:</strong> (domain, region) resolves to a parser profile; prices convert to USD in one layer, using a static rate table for now.</li>
+        <li><strong>Crawling controls:</strong> per-target check intervals and task retries with backoff are in place. robots.txt checks, request pacing and a per-domain circuit breaker are stubbed but not yet enforced; they are the next step before any live run.</li>
+        <li><strong>Alerts &amp; analytics:</strong> per-target change thresholds via a common Notifier interface (Telegram + SMTP), plus a Streamlit dashboard for trends, cross-region comparison, availability, and scraper health.</li>
       </ul>
     </section>
     <section class="content-section">
       <h3>Challenges &amp; Solutions</h3>
       <div class="challenge-card"><h4>Challenge: Selector rot destroys history</h4><p>Sites rename price classes; a parse-on-fetch design would silently record months of nulls with no recovery path.</p></div>
-      <div class="solution-card"><h4>Solution: Lossless snapshot store</h4><p>Raw HTML is keyed by run and never discarded, so a fixed parser plus an Airflow backfill DAG restores the full price series.</p></div>
+      <div class="solution-card"><h4>Solution: Lossless snapshot store</h4><p>Raw HTML is saved per fetch with a timestamp and URL hash, so a fixed parser plus the backfill DAG can re-parse anything still inside the 30-day retention window.</p></div>
       <div class="challenge-card"><h4>Challenge: Orchestration vs. execution confusion</h4><p>One scheduler doing both DAG ordering and browser fan-out becomes a bottleneck and a retry mess.</p></div>
-      <div class="solution-card"><h4>Solution: Two-tier split</h4><p>Airflow owns stage ordering and monitoring; Celery + Redis owns concurrent Playwright execution with independent retries and Flower visibility.</p></div>
-      <div class="challenge-card"><h4>Challenge: Alert noise across regions</h4><p>Currency and locale formatting differences caused false drop alerts on identical underlying prices.</p></div>
-      <div class="solution-card"><h4>Solution: Normalized thresholds</h4><p>All prices normalize to a USD base before comparison, and thresholds are configured per target with separate price-drop vs. operational-health channels.</p></div>
+      <div class="solution-card"><h4>Solution: Two-tier split</h4><p>Airflow owns stage ordering; Celery + Redis owns per-target Playwright jobs with independent retries. The Airflow tasks currently call Celery in-process, so the two paths still need to be unified.</p></div>
+      <div class="challenge-card"><h4>Challenge: Comparing prices across regions</h4><p>Regional storefronts format prices differently ($1,234.56 vs 1.234,56 €) and in different currencies, so raw strings can't be compared directly.</p></div>
+      <div class="solution-card"><h4>Solution: Normalized thresholds</h4><p>A single parser handles symbol and code detection and both decimal styles, then adds a USD column; thresholds are set per target, and operational-health alerts are separate from price alerts.</p></div>
     </section>
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>Watchdog runs as a fully containerized production ETL with CI (lint → test → build), structured JSON logging, and Prometheus-ready metrics. Data-quality checks gate every load, and the dashboard turns the fact table into price trends, cross-region comparisons, and scraper reliability views.</p>
-      <p>The design rationale — raw-before-parse, Celery/Airflow separation, dimensional modeling — is what makes the system survivable: sites change, parsers break, and the data still recovers.</p>
+      <p>Watchdog is a portfolio build, not a running service: there are no saved runs, and the dashboard demo uses seeded random price history. The 24 parser and scraper unit tests pass; Docker Compose and a GitHub Actions workflow (lint → test → build → DAG import) are defined. Reading the path end to end turned up gaps to fix before a live run: fetches don't yet create snapshot rows, the parse queue filter never matches, and the alert compares the wrong two snapshots.</p>
+      <p>The design choices — raw-before-parse, Celery/Airflow separation, dimensional modeling — are the parts worth keeping: when a site changes and a parser breaks, stored HTML lets the data be recovered.</p>
     </section>
   </main>
   <footer>

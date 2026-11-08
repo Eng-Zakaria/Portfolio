@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do | Mohammed Zakaria</title>
+  <meta name="description" content="A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html">
+  <meta property="og:title" content="Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do | Mohammed Zakaria">
+  <meta property="og:description" content="A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Masking on-chain data for GDPR: what a privacy gate can and can't do", "description": "A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html", "wordCount": 1569, "keywords": "Data Privacy, Data Governance, Blockchain"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Privacy</span><span class="post-tag">Data Governance</span><span class="post-tag">Blockchain</span></div>
+        <h1>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</h1>
+        <p class="post-lede">A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms">Decision 1: mask on ingest, with truncation instead of keyed pseudonyms</a></li>
+<li><a href="#decision-2-an-audit-table-written-from-the-processing-path">Decision 2: an audit table written from the processing path</a></li>
+<li><a href="#decision-3-retention-as-a-ledger-of-scheduled-deletions">Decision 3: retention as a ledger of scheduled deletions</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Portfolio prototype, reviewed from source code only.</strong> The project has never been run end to end, there are no saved outputs or logs, and the numbers below are counts and defaults read from the code, not measurements. This is a write-up of the design, the controls it implements, and where they stop short.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Blockchain data is public by design, but that does not make it free of personal data. A wallet address is a stable identifier. Once anyone links it to a person (an exchange KYC record, a forum post, an invoice), every past and future transaction from that address is linked too. Under GDPR, data that can be tied back to a person with reasonable effort is still personal data, even if it is pseudonymised.</p>
+<p>I wanted an analytics service that pulls Ethereum blocks, Bitcoin transactions and market prices, and puts a privacy layer in front of everything it serves: mask identifiers and free-text PII, record what was processed, and schedule deletion. The goal was a set of concrete controls, not a compliance label. Whether a real deployment meets GDPR depends on lawful basis, purpose, contracts and process, which code alone cannot settle.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The service is a FastAPI app with ingestors for Ethereum (web3.py over HTTP) and Bitcoin (raw JSON-RPC via <code>requests</code>), a market aggregator (ccxt for Binance, plus CoinGecko and Alpha Vantage over aiohttp), a networkx/pandas flow analyser, and a SQLAlchemy storage layer targeting PostgreSQL. Every ingestor passes its records through one module-level <code>CompliancePipeline</code> before returning them.</p>
+<div class="hl"><pre><span></span><code> Ethereum RPC     Bitcoin RPC     Binance / CoinGecko / Alpha Vantage
+      |               |                        |
+      v               v                        v
+ EthereumIngestor  BitcoinIngestor       MarketAggregator
+      \               |                        /
+       \              v                       /
+        +--&gt; CompliancePipeline (masking.py) &lt;+
+               - truncate from/to addresses
+               - regex PII scan + mask_dict
+               - compliance_metadata report
+                        |
+          +-------------+--------------+
+          v                            v
+   FastAPI responses            FlowAnalyzer (networkx)
+                                       |
+                    AuditLogger.log_data_processing()
+                    -&gt; audit_logs table (one row per call)
+
+   storage/operations.py: store_*() + DataRetention rows   (not called by ingestors)
+</code></pre></div>
+
+<p>The last line matters. The storage functions exist and schedule a retention row for each record they write, but no ingestor or endpoint calls them. In the current code, masked data goes straight to API responses and the flow analyser.</p>
+<h2 id="decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms">Decision 1: mask on ingest, with truncation instead of keyed pseudonyms<a class="h-anchor" href="#decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms" title="Permanent link">#</a></h2>
+<p><code>DataMasker</code> has 8 regex patterns (email, phone, SSN, card number, IBAN, street address, IPv4, wallet address), a list of 11 sensitive field names, and four modes: <code>partial</code>, <code>full</code>, <code>hash</code> and <code>tokenize</code>. Sender and recipient addresses get special handling that keeps their shape:</p>
+<div class="hl"><pre><span></span><code><span class="c1"># Ethereum address</span>
+<span class="k">if</span> <span class="n">address</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
+<span class="c1"># Bitcoin address</span>
+<span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">26</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">35</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
+</code></pre></div>
+
+<p>The trade-off I chose was readability and schema fit over strength. A masked Ethereum address is still 42 characters, so it fits the <code>String(42)</code> column, and an analyst can still eyeball <code>0x1a2b…9f0e</code>. The cost is that this is truncation, not pseudonymisation in any strong sense. Eight hex characters from a public ledger are enough to search for candidate matches, so anyone with chain access can re-identify most masked addresses. The <code>hash</code> mode (unsalted SHA-256, cut to 16 hex characters) and <code>tokenize</code> mode (unsalted MD5) have the same weakness: the full set of addresses is public, so an attacker can hash all of them and build a lookup table.</p>
+<p>Reviewing the data flow showed two more gaps:</p>
+<ul>
+<li><strong>Nested lists are not scanned.</strong> <code>mask_dict</code> recurses into dicts, and into lists of dicts, but returns plain strings inside lists unchanged. Bitcoin output addresses sit in <code>script_pub_key.addresses</code> (a list of strings), so they pass through unmasked. Ethereum log <code>topics</code> also go through untouched, and for ERC-20 <code>Transfer</code> events those topics hold the sender and recipient addresses.</li>
+<li><strong>Two masking schemes for one address.</strong> Top-level <code>from_address</code> keeps 6+4 characters, but a log&rsquo;s <code>address</code> field matches the generic <code>address</code> field name and gets <code>partial</code> masking (2+2). The same contract shows up in two different masked forms, which breaks joins in the flow graph.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">What would make this hold</p>
+<p>Replace truncation with a keyed HMAC (secret key held outside the dataset, rotated, with access logged). Run every string the pipeline sees through the scanner, including list items, log topics and calldata. Then the flow graph can still join on a stable pseudonym, and someone without the key cannot reverse it.</p>
+</div>
+<h2 id="decision-2-an-audit-table-written-from-the-processing-path">Decision 2: an audit table written from the processing path<a class="h-anchor" href="#decision-2-an-audit-table-written-from-the-processing-path" title="Permanent link">#</a></h2>
+<p><code>AuditLogger</code> writes rows to an <code>audit_logs</code> table with user, action, resource, IP, user agent, request and response JSON, a success flag and simple compliance flags (keywords such as <code>ssn</code> or <code>private_key</code> in the request, <code>limit &gt; 1000</code> marked as bulk access). The flow analyser and market aggregator call <code>log_data_processing()</code>, which stores record counts and <code>processing_time_ms</code>.</p>
+<p>The trade-off is simplicity against volume and coverage. Writing synchronously from the processing path is easy to reason about, but <code>FlowAnalyzer.add_transaction()</code> writes one audit row per transaction, plus one per batch. That is a database round trip for every transaction. The bigger issue is coverage. The API never calls <code>log_access()</code>, so reads of the served data are not audited. <code>log_data_export()</code> (labelled Article 20) and <code>log_data_deletion()</code> (labelled right to erasure) exist, but nothing calls them, and no export or deletion feature exists for them to record.</p>
+<p>There is also a tension in what the log keeps. It stores IP addresses and raw request payloads for a default of 2,555 days (about seven years). An audit trail is itself personal data, so a long retention period needs a documented reason and its own minimisation.</p>
+<h2 id="decision-3-retention-as-a-ledger-of-scheduled-deletions">Decision 3: retention as a ledger of scheduled deletions<a class="h-anchor" href="#decision-3-retention-as-a-ledger-of-scheduled-deletions" title="Permanent link">#</a></h2>
+<p>Instead of a cron job that deletes by <code>created_at</code>, I put a <code>DataRetention</code> table next to the data. Each stored record would get a row with <code>table_name</code>, <code>record_id</code>, <code>retention_days</code> (default 365) and <code>deletion_scheduled_at</code>. <code>cleanup_expired_data()</code> deletes matching Ethereum, Bitcoin and market rows, then marks the ledger entry <code>is_deleted</code> with a timestamp and reason. This gives a record of what was deleted and when, which a plain <code>DELETE … WHERE created_at &lt; …</code> does not.</p>
+<p>The trade-off is one extra write per record and a second table that has to stay consistent with the first. In this codebase it never runs. The <code>store_*</code> functions that schedule retention are not called, and nothing schedules <code>cleanup_expired_data()</code> or <code>AuditLogger.cleanup_old_logs()</code>. The compose file starts Celery worker and beat containers with <code>-A src.utils.celery</code>, but that module does not exist.</p>
+<p>On erasure: deleting a row from my database does not remove anything from Ethereum or Bitcoin. The realistic scope for this kind of system is erasing its own copies and derived data (stored rows, flow-analysis results, logs), and not re-ingesting data that is linked to a subject who asked for erasure. A suppression list keyed on the HMAC pseudonym from Decision 1 would handle the second part. Neither is built yet.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no runtime results: no throughput, latency or masking-accuracy numbers. What I could verify from the code is below.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Control</th>
+<th>State in code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Regex PII detection</td>
+<td>8 patterns, 4 mask modes, 11 sensitive field names</td>
+</tr>
+<tr>
+<td>Address masking</td>
+<td>Implemented as truncation; misses list items, log topics and calldata</td>
+</tr>
+<tr>
+<td>Fernet encryption</td>
+<td>Methods exist but nothing calls them; key handling would fail at startup (see below)</td>
+</tr>
+<tr>
+<td>Audit log</td>
+<td>Table and writer implemented; called from processing paths only, not API reads</td>
+</tr>
+<tr>
+<td>Export / erasure trail</td>
+<td>Logging helpers only; no export or erasure feature</td>
+</tr>
+<tr>
+<td>Retention</td>
+<td>Ledger table and cleanup implemented; not wired or scheduled</td>
+</tr>
+<tr>
+<td>Access control</td>
+<td>None; the API docs say there is no authentication; CORS allows <code>*</code></td>
+</tr>
+<tr>
+<td>Rate limiting</td>
+<td>Described in API docs (100/min, 1,000/hour) but not implemented</td>
+</tr>
+<tr>
+<td>Tests</td>
+<td>31 test functions (11 for compliance); no recorded run</td>
+</tr>
+</tbody>
+</table></div>
+<p>Two startup blockers explain why there is no recorded run. <code>config/settings.py</code> imports <code>BaseSettings</code> from <code>pydantic</code>, but <code>requirements.txt</code> pins pydantic 2.5.0, where that import was removed. The encryption key setup also contradicts itself: the validator requires exactly 32 characters, the default key is 34 characters, and Fernet needs a 44-character url-safe base64 key, so a key that passes the validator would still be rejected by <code>Fernet()</code>. Since <code>compliance_pipeline</code> is created when the module is imported, either problem stops the app from starting. One compliance test also expects partial masking to keep four leading characters (<code>0x12</code>), while <code>mask_field</code> keeps two.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Make it start.</strong> Move to <code>pydantic-settings</code>, take a real Fernet key from a secret store, and fail fast with a clear message. Run the 31 tests and record the result.</li>
+<li><strong>Keyed pseudonyms.</strong> HMAC-SHA256 with a managed key for every address, applied to every string in the payload, including list items, log topics and decoded calldata. Encrypt anything that needs to be reversible, such as optional labels, with envelope encryption, and log every decrypt.</li>
+<li><strong>Wire storage and retention.</strong> Have ingestors call <code>store_*</code>, add a real Celery app, and schedule both cleanups. Record deletions in the ledger and alert when a cleanup stops running.</li>
+<li><strong>Erasure scope and suppression.</strong> An erasure endpoint that deletes a subject&rsquo;s stored rows and derived results, and adds their pseudonym to a suppression list that ingestion checks.</li>
+<li><strong>Audit the read path.</strong> Authentication, a <code>log_access</code> call on every endpoint, request bodies minimised before they are stored, and a shorter, justified audit retention period.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/blockchain-gdpr-aggregator.html">Blockchain GDPR Aggregator</a></li>
+<li>Source: local project, not published on GitHub.</li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html" data-title="Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="one-warehouse-ten-clinics.html"><small>← Newer</small><b>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</b></a>
+          <a class="post-pager-next" href="fraud-scoring-kafka.html"><small>Older →</small><b>Fraud scoring on Kafka: what is built, what is measured, what is missing</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

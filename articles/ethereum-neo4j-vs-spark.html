@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first | Mohammed Zakaria</title>
+  <meta name="description" content="An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html">
+  <meta property="og:title" content="Neo4j vs Spark for multi-hop money flows: building the benchmark harness first | Mohammed Zakaria">
+  <meta property="og:description" content="An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Neo4j vs Spark for multi-hop money flows: building the benchmark harness first", "description": "An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html", "wordCount": 1479, "keywords": "Graph Databases, Spark, Blockchain"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Graph Databases</span><span class="post-tag">Spark</span><span class="post-tag">Blockchain</span></div>
+        <h1>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first</h1>
+        <p class="post-lede">An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-build-against-stand-ins-first">Decision 1: build against stand-ins first</a></li>
+<li><a href="#decision-2-model-the-transaction-as-a-node">Decision 2: model the transaction as a node</a></li>
+<li><a href="#decision-3-detectors-as-plain-python-over-transaction-lists">Decision 3: detectors as plain Python over transaction lists</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><em>Evidence: Portfolio project. The benchmark run used synthetic transactions; the code can also pull recent public Ethereum mainnet blocks through Infura. Neo4j, Spark and Elasticsearch are local stand-ins in the default run.</em></p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Tracing money on Ethereum is a graph problem. A wallet sends to a wallet, which sends to two more, which peel off a little value at each step. The questions an investigator asks are relationship questions: where did these funds go within three hops, which wallets fan out to dozens of recipients in a day, which chains of transfers shrink in value as they move.</p>
+<p>There are two common ways to answer them. A graph database such as Neo4j stores wallets and transfers as nodes and edges and walks them directly. A batch engine such as Spark keeps transactions in a table and answers multi-hop questions with repeated self-joins. The usual intuition is that the graph database wins on traversal and the batch engine wins on wide aggregations. I wanted a project that would test that intuition on Ethereum data rather than assume it.</p>
+<p>This post describes what I built: the pipeline, the detectors, and the timing harness. It also covers what the harness measures today, because the interesting part of a benchmark is whether it is fair.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The entry point is <code>main.py</code>. It picks a data source, runs a three-layer ETL, loads a graph, runs three timed comparisons and writes a Kibana dashboard config.</p>
+<div class="hl"><pre><span></span><code> SimpleBlockchainClient (1,000 synthetic txs, 100 wallets)
+   or RealBlockchainClient (Infura JSON-RPC, last 3 mainnet blocks)
+                 |
+                 v
+ ETLPipeline  (pandas-backed &quot;SimpleDataFrame&quot;)
+   Bronze  -&gt; drop rows without hash/from, lowercase addresses
+   Silver  -&gt; dedupe on hash, wei-&gt;ETH, gas cost, tx_type
+   Gold    -&gt; per-wallet sent/received stats, risk_tier 0-4
+                 |
+        +--------+-----------------+
+        v                          v
+ MockNeo4jClient            PerformanceTester
+ (Neo4jClient exists,       wallet_degree / multi_hop_3 /
+  not wired in)             suspicious_detection
+        |                          |
+        v                          v
+ Mock Elasticsearch  -&gt;  kibana_dashboard.json (config only)
+</code></pre></div>
+
+<p>Separately, <code>src/detection/</code> holds three detectors and a scoring module that work on plain lists of transaction dicts:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Rule in code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chain_hopping.detect</code></td>
+<td>sender reaches at least 10 unique recipients within 24 h of the latest timestamp</td>
+</tr>
+<tr>
+<td><code>smurfing.detect</code></td>
+<td>sender has at least 50 transactions and some below 1 ETH; &ldquo;high&rdquo; when over 80% are small</td>
+</tr>
+<tr>
+<td><code>peel_chains.detect</code></td>
+<td>2- and 3-hop paths where each forwarded value is lower than the last; top 50 returned</td>
+</tr>
+<tr>
+<td><code>scoring.score_wallets</code></td>
+<td>additive points for ETH volume, transaction count, unique counterparties and detector hits</td>
+</tr>
+</tbody>
+</table></div>
+<p>These detectors are covered by unit tests but are not yet called from <code>main.py</code>.</p>
+<h2 id="decision-1-build-against-stand-ins-first">Decision 1: build against stand-ins first<a class="h-anchor" href="#decision-1-build-against-stand-ins-first" title="Permanent link">#</a></h2>
+<p>I did not want local development to depend on a running JVM, a Spark cluster, a Neo4j server and an Elasticsearch node. So the project has local stand-ins for all of them:</p>
+<ul>
+<li><code>SimpleSparkClient</code> and <code>SimpleDataFrame</code> wrap pandas behind a Spark-like API (<code>select</code>, <code>groupBy().count()</code>, <code>dropDuplicates</code>, <code>withColumn</code>, <code>collect</code>).</li>
+<li><code>MockNeo4jClient</code> accepts Cypher text and returns canned rows by keyword.</li>
+<li>The Elasticsearch client keeps documents in a Python list; parquet writes only log.</li>
+</ul>
+<div class="hl"><pre><span></span><code><span class="c1"># src/core/mock_neo4j.py</span>
+<span class="k">if</span> <span class="s2">&quot;degree&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;degree&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}]</span>
+<span class="k">elif</span> <span class="s2">&quot;suspicious&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;address&quot;</span><span class="p">:</span> <span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;total_tx&quot;</span><span class="p">:</span> <span class="mi">150</span><span class="p">}]</span>
+<span class="k">elif</span> <span class="s2">&quot;path&quot;</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;0x123...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x456...&quot;</span><span class="p">,</span> <span class="s2">&quot;0x789...&quot;</span><span class="p">]}]</span>
+</code></pre></div>
+
+<p><strong>Trade-off.</strong> The whole pipeline runs from <code>python main.py</code> with only pandas installed, and the 25 unit tests run in a few seconds. The cost is that anything timed in this mode is timing the stand-in. The Spark-like wrapper also hides real Spark costs such as job scheduling, shuffles and serialization, which are exactly what matters when comparing against a graph database.</p>
+<h2 id="decision-2-model-the-transaction-as-a-node">Decision 2: model the transaction as a node<a class="h-anchor" href="#decision-2-model-the-transaction-as-a-node" title="Permanent link">#</a></h2>
+<p>The real <code>Neo4jClient.ingest_transactions</code> uses <code>UNWIND</code> batches of 100 and <code>MERGE</code>s three things per transaction:</p>
+<div class="hl"><pre><span></span><code><span class="p">(</span><span class="n">sender</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span><span class="o">-[</span><span class="p">:</span><span class="n">SENT</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">t</span><span class="p">:</span><span class="n">Transaction</span><span class="w"> </span><span class="p">{</span><span class="n">hash</span><span class="p">})</span><span class="o">-[</span><span class="p">:</span><span class="n">RECEIVED</span><span class="o">]-&gt;</span><span class="p">(</span><span class="n">receiver</span><span class="p">:</span><span class="n">Wallet</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Uniqueness constraints sit on <code>Wallet.address</code> and <code>Transaction.hash</code>, with relationship indexes on <code>block_number</code> and <code>value</code>.</p>
+<p><strong>Trade-off.</strong> Making the transaction a node keeps per-transaction properties (gas used, timestamp) in one place and lets a transaction later link to contracts or token transfers. The cost is that every wallet-to-wallet hop becomes two relationships, so traversal queries have to be written as alternating <code>SENT</code>/<code>RECEIVED</code> steps. The multi-hop query in the harness currently uses <code>(:Wallet)-[:SENT*1..3]-&gt;(:Wallet)</code>, which assumes direct wallet-to-wallet <code>SENT</code> edges. Against this schema it would not return paths. One of the two has to change before the comparison is run on a real Neo4j instance. The other option is a direct <code>(:Wallet)-[:SENT {hash, value}]-&gt;(:Wallet)</code> model, which makes hop queries simpler but puts transaction data on the edge.</p>
+<h2 id="decision-3-detectors-as-plain-python-over-transaction-lists">Decision 3: detectors as plain Python over transaction lists<a class="h-anchor" href="#decision-3-detectors-as-plain-python-over-transaction-lists" title="Permanent link">#</a></h2>
+<p>The first versions of the detectors were GraphFrames motif queries and PySpark aggregations. I rewrote them as plain functions over lists of dicts. For example, peel-chain detection builds an adjacency list and walks two and three hops looking for decreasing values:</p>
+<div class="hl"><pre><span></span><code><span class="k">for</span> <span class="n">edge2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver1</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">value2</span> <span class="o">&gt;=</span> <span class="n">value1</span> <span class="ow">or</span> <span class="n">value1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">continue</span>          <span class="c1"># not peeling</span>
+    <span class="o">...</span>
+    <span class="k">if</span> <span class="n">receiver2</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">edge3</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">receiver2</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">value3</span> <span class="o">&lt;</span> <span class="n">value2</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># 3-hop chain, risk &quot;high&quot;</span>
+</code></pre></div>
+
+<p><strong>Trade-off.</strong> The rules are easy to read and test, and they do not need Spark or Neo4j. They are also engine-neutral, so the same logic can be ported to Cypher or to Spark joins and the results compared row for row. The cost is scale: nested loops over an in-memory adjacency list are fine for a few thousand transactions, not for a day of mainnet. The chain-hopping rule also measures fan-out from one wallet in a time window. It does not look across chains, so the name promises more than the rule does.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What I can verify from the repository:</p>
+<ul>
+<li><strong>Tests:</strong> 25 unit tests pass (12 for the detectors and scoring, 13 for the DataFrame wrapper).</li>
+<li><strong>Pipeline:</strong> with no Infura key, <code>main.py</code> generates 1,000 synthetic transactions across 100 random wallets and runs them through Bronze, Silver and Gold. With a key, it fetches the last three mainnet blocks over JSON-RPC and falls back to 500 synthetic rows if that fails.</li>
+<li><strong>Dashboard:</strong> the Kibana dashboard config is generated as JSON. Indexing goes to the in-memory Elasticsearch stand-in.</li>
+</ul>
+<p>The README table records one run of the timing harness on the 1,000 synthetic transactions. It reports Neo4j winning multi-hop by 73.42x and suspicious detection by 18.88x, with Spark ahead on wallet degree. These ratios do not compare Neo4j with Spark:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Row</th>
+<th>&ldquo;Neo4j&rdquo; side</th>
+<th>&ldquo;Spark&rdquo; side</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>multi_hop_3</td>
+<td><code>MockNeo4jClient</code> returning a fixed 3-item list</td>
+<td>pandas <code>select("to_address").collect()</code> over all 1,000 rows</td>
+</tr>
+<tr>
+<td>suspicious_detection</td>
+<td>mock returning an empty list</td>
+<td>pandas group-by on <code>from_address</code></td>
+</tr>
+<tr>
+<td>wallet_degree</td>
+<td>mock returning <code>{"degree": 42}</code></td>
+<td>row count</td>
+</tr>
+</tbody>
+</table></div>
+<p>Every timing was below 10 ms, measured once with <code>time.time()</code>, with no warm-up, no repetitions and no recorded hardware. No log of that run is saved in the repository. Since then, <code>main.py</code> no longer passes a client to <code>PerformanceTester</code>, so the Neo4j side returns an inline literal and the Spark-side multi-hop does one hop rather than three.</p>
+<div class="admonition note">
+<p class="admonition-title">What the numbers support</p>
+<p>The harness, the timing code and the report generator work end to end. The repository has no measured Neo4j-vs-Spark result yet: no run against a real Neo4j server or a real SparkSession, and no saved output.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Wire in the real engines.</strong> Pass <code>Neo4jClient</code> to the tester and run real PySpark (the version is already pinned at 3.5.0) instead of the pandas wrapper. Load the same snapshot into both.</li>
+<li><strong>Fix the queries.</strong> Make the multi-hop Cypher match the Wallet→Transaction→Wallet schema. Rewrite the suspicious-wallet query with <code>COUNT { (w)-[:SENT]-&gt;() }</code>, because Neo4j 5 no longer accepts pattern expressions inside <code>size()</code>. On the Spark side, implement a real 3-hop traversal as iterative self-joins or a GraphFrames BFS.</li>
+<li><strong>Use real data at a real size.</strong> Run <code>scripts/etl/bulk_fetcher.py</code> over a fixed block range so both engines see the same mainnet transactions, and record the transaction count, wallet count and edge count.</li>
+<li><strong>Measure properly.</strong> Warm up, repeat each query 10 or more times, report the median and p95, and log hardware, memory settings and engine versions next to the results. Count Spark session start-up separately from query time, and count Neo4j ingest separately from traversal.</li>
+<li><strong>Connect the detectors.</strong> Call <code>run_all_detections</code> from <code>main.py</code> and send the flagged wallets to the dashboard index. That is the path from &ldquo;benchmark&rdquo; to &ldquo;forensics tool&rdquo;.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/blockchain-analyzer.html">Blockchain Analyzer</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/blockchain-analyzer">github.com/Eng-Zakaria/blockchain-analyzer</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html" data-title="Neo4j vs Spark for multi-hop money flows: building the benchmark harness first">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/ethereum-neo4j-vs-spark.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="fail-open-nightly-recommender.html"><small>← Newer</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+          <a class="post-pager-next" href="estates-warehouse-governed.html"><small>Older →</small><b>Modeling estates data to Uniclass, COBie and SFG20</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

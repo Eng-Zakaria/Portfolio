@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Credit Risk Analysis — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="End-to-end ML pipeline for credit risk modeling. 0.88 AUC-ROC, Airflow orchestration, MLflow tracking, FastAPI serving.">
+  <meta name="description" content="Credit risk scoring pipeline on synthetic data: gradient-boosted PD models behind a validation gate, MLflow tracking, Airflow DAGs and a FastAPI approve/review/decline endpoint.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -75,10 +75,10 @@
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-credit-card"></i> Credit Risk Analysis</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        End-to-end ML platform with automated lifecycle orchestration and model governance.
+        Credit risk scoring pipeline: synthetic data, gradient-boosted PD models behind a validation gate, and a FastAPI approve/review/decline endpoint.
       </p>
       <p style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); max-width: 640px; margin-top: 0.75rem;">
-        Portfolio build on synthetic credit data. Model scores below are from the project's documented runs, not a production deployment.
+        Portfolio build on synthetic credit data. The repository holds no saved training run, so no model scores are shown here.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -87,7 +87,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2025</span>
+          <span class="meta-value">2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
@@ -103,7 +103,7 @@
         <span class="tech-tag"><i class="fas fa-flask"></i> MLflow</span>
         <span class="tech-tag"><i class="fas fa-sync"></i> Airflow</span>
         <span class="tech-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-        <span class="tech-tag"><i class="fas fa-database"></i> BigQuery</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> DuckDB</span>
       </div>
     </div>
   </header>
@@ -111,51 +111,50 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/credit-risk-mlops-loop.html">Read the write-up →</a>
       <a href="https://github.com/Eng-Zakaria/Risk_Analysis" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
     <section class="content-section">
-      <h3>Model Performance</h3>
+      <h3>Validation Gate</h3>
+      <p>
+        No training run is recorded in the repository, so there are no model scores to show. What the code defines
+        is the gate a model must pass before the training DAG deploys it, measured on a held-out 20% test split:
+      </p>
       <div style="overflow-x: auto; margin: 0 -0.25rem; padding: 0 0.25rem;">
       <table class="model-table">
         <thead>
           <tr>
-            <th>Model</th>
-            <th>AUC-ROC</th>
-            <th>Gini</th>
-            <th>KS Statistic</th>
+            <th>Check</th>
+            <th>Threshold</th>
+            <th>Effect</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>XGBoost</td>
-            <td>0.85</td>
-            <td>0.70</td>
-            <td>0.55</td>
+            <td>Test AUC-ROC</td>
+            <td>&ge; 0.70</td>
+            <td>Blocks deploy</td>
           </tr>
           <tr>
-            <td>LightGBM</td>
-            <td>0.84</td>
-            <td>0.68</td>
-            <td>0.54</td>
+            <td>Gini (2&middot;AUC &minus; 1)</td>
+            <td>&ge; 0.40</td>
+            <td>Blocks deploy</td>
           </tr>
           <tr>
-            <td>CatBoost</td>
-            <td>0.85</td>
-            <td>0.70</td>
-            <td>0.56</td>
+            <td>KS statistic</td>
+            <td>&ge; 0.30</td>
+            <td>Blocks deploy</td>
           </tr>
           <tr>
-            <td>TabTransformer</td>
-            <td>0.86</td>
-            <td>0.72</td>
-            <td>0.57</td>
+            <td>Train &minus; test AUC gap</td>
+            <td>&le; 0.05</td>
+            <td>Warning</td>
           </tr>
-          <tr class="best">
-            <td><strong>Hybrid Ensemble</strong></td>
-            <td><strong>0.88</strong></td>
-            <td><strong>0.76</strong></td>
-            <td><strong>0.60</strong></td>
+          <tr>
+            <td>PSI, train vs test scores</td>
+            <td>&le; 0.20</td>
+            <td>Warning</td>
           </tr>
         </tbody>
       </table>
@@ -171,55 +170,68 @@
         reproducibility issues, and deployment challenges.
       </p>
       <p>
-        The goal was to build a comprehensive ML platform that demonstrates production-grade
-        practices including automated pipelines, experiment tracking, model governance, and
-        scalable serving infrastructure.
+        The goal was to build the machinery around a credit model, not just the model: a repeatable
+        feature pipeline, a training run with a validation gate, a scoring API that returns a decision,
+        and scheduled jobs for retraining and drift monitoring, all on synthetic data.
       </p>
     </section>
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/credit-risk-analysis---mlops-platform.svg" alt="Credit Risk Analysis Architecture Diagram" style="width:100%; height:auto;">
+<pre style="overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch">Synthetic generator      100,000 applications, 15% target default rate
+        |
+        v
+<span class="highlight">FeaturePipeline</span>          70/10/20 stratified split; winsorize, scale, target-encode (fit on train)
+        |
+        v
+<span class="highlight">Training DAG</span>             XGBoost | LightGBM | CatBoost  -&gt;  MLflow params + metrics
+        |
+        v
+<span class="highlight">ModelValidator</span>           AUC / Gini / KS minimums block deploy
+        |
+        v
+deploy_model             copy best model to models/production
+
+<span class="highlight">FastAPI /predict</span>         PD -&gt; risk band -&gt; APPROVE / REVIEW / DECLINE
+Monitoring DAG (daily)   PSI + KS drift check -&gt; retrain trigger (stub)</pre>
       </div>
     </section>
 
     <section class="content-section">
       <h3>Implementation</h3>
       <ul>
-        <li><strong>Advanced ML Models:</strong> Implemented XGBoost, LightGBM, CatBoost, and PyTorch neural networks including TabTransformer and Foundation-style embeddings</li>
-        <li><strong>Ensemble Methods:</strong> Built hybrid ensembles using stacking and weighting to achieve best-in-class performance (0.88 AUC-ROC)</li>
-        <li><strong>MLOps Pipeline:</strong> Automated end-to-end ML lifecycle with Airflow DAGs for data ingestion, feature engineering, training, validation, and deployment</li>
-        <li><strong>Experiment Tracking:</strong> Integrated MLflow for experiment tracking, model versioning, and registry management</li>
-        <li><strong>Model Serving:</strong> Deployed FastAPI microservice for real-time risk scoring with Redis for high-performance lookups</li>
-        <li><strong>Model Governance:</strong> Implemented monitoring, validation, drift detection, and explainability features</li>
-        <li><strong>Risk Metrics:</strong> Calculated Probability of Default (PD), Expected Loss (EL), PSI, CSI, Gini Coefficient, and KS Statistic</li>
+        <li><strong>Synthetic Data:</strong> Generator for 100,000 correlated applications (demographics, credit history, loan terms, utilization) with a logistic default formula adjusted to a 15% default rate</li>
+        <li><strong>Feature Pipeline:</strong> scikit-learn ColumnTransformer with median fill, 1&ndash;99% winsorizing, standard scaling and target encoding, fitted on the training split only</li>
+        <li><strong>Models:</strong> XGBoost, LightGBM and CatBoost wrappers with early stopping; a weighted-average ensemble, a stacking ensemble with a logistic meta-learner, and PyTorch MLP and TabTransformer classes (the default run trains the three boosters)</li>
+        <li><strong>Orchestration:</strong> Airflow training DAG (weekly: load, features, three parallel trainers, evaluate, validate, deploy) and monitoring DAG (daily drift check and report)</li>
+        <li><strong>Experiment Tracking:</strong> MLflow logs parameters and metrics per run; models are saved with joblib</li>
+        <li><strong>Scoring API:</strong> FastAPI with Pydantic input validation, mapping probability of default to five risk bands and APPROVE / REVIEW / DECLINE</li>
+        <li><strong>Risk Metrics:</strong> AUC, Gini, KS, Brier score, lift, PSI and expected loss (PD &times; LGD &times; EAD); DuckDB data mart with SQL written to be BigQuery-compatible</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Key Design Decisions</h3>
       <ul>
-        <li>Chose ensemble approach over single models for better generalization and robustness</li>
-        <li>Implemented synthetic data generation with BigQuery-compatible schemas for development and testing</li>
-        <li>Used Redis for low-latency feature lookups in production serving</li>
-        <li>Built modular pipeline architecture allowing easy addition of new models and features</li>
+        <li>Generated the data with a known default formula, so the true signal is known and every run is reproducible from a seed; the trade-off is that scores say nothing about real borrowers</li>
+        <li>Made AUC, Gini and KS minimums blocking and kept overfit gap, PSI and decile ordering as warnings, so the gate does not trip on noise</li>
+        <li>Returned a decision rather than a raw probability, with a wide REVIEW band (PD 0.20&ndash;0.50) that sends borderline applicants to a person</li>
+        <li>Kept models behind one fit / predict_proba / save interface so new model types plug into the same training and validation steps</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The platform achieves state-of-the-art performance (0.88 AUC-ROC) while maintaining
-        production-grade MLOps practices. The automated pipeline ensures reproducibility,
-        and the monitoring framework enables proactive model maintenance.
+        The repository contains each stage of a score-and-decide loop: data generation, feature pipeline,
+        training with a validation gate, a deploy step, a scoring API and drift monitoring, with tests for
+        the models, metrics and data generator.
       </p>
       <p>
-        This project demonstrates the full ML engineering lifecycle from data to deployment,
-        making it suitable for production credit risk assessment systems.
+        The stages are not yet connected end to end. The deploy step writes to models/production while the
+        API loads models/ensemble, the drift check runs on a shifted sample of the training data, and the
+        retraining trigger is a stub. Closing those gaps and recording a real training run are the next steps.
       </p>
     </section>
   </main>

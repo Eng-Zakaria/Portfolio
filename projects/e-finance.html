@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>E-Finance — Digital Banking Platform — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Enterprise digital banking platform: core-banking API, transaction service, Kafka streaming, fraud/AML ML, BNPL scoring, Airflow orchestration, FastAPI gateway, Web3 wallets.">
+  <title>E-Finance — Digital Bank Scaffold — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Portfolio scaffold for a digital bank: FastAPI core-banking API, Spring Boot transaction service with a Kafka producer, rule-plus-ML fraud scoring, BNPL scoring, Web3 wallets, Postgres schema and three Airflow DAGs in Docker Compose.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -210,24 +210,24 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1>E-Finance — Digital Banking Platform</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Enterprise digital banking platform with streaming transactions, fraud/AML ML, and BNPL scoring.</p>
+      <h1>E-Finance — Digital Bank Scaffold</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Portfolio scaffold for a digital bank: six services, a Postgres schema and three Airflow DAGs in one Docker Compose file. The core-banking API holds most of the real logic; several services still run on in-memory or sample data.</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Data Engineer</span>
+          <span class="meta-value">Solo developer</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2026</span>
+          <span class="meta-value">March 2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Domain</span>
-          <span class="meta-value">Enterprise Fintech</span>
+          <span class="meta-value">Fintech (portfolio)</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Local Project</span>
+          <span class="meta-value">Personal project, not deployed</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -238,6 +238,8 @@
         <span class="tech-tag">Airflow</span>
         <span class="tech-tag">FastAPI</span>
         <span class="tech-tag">Docker</span>
+        <span class="tech-tag">Spring Boot</span>
+        <span class="tech-tag">PySpark</span>
         <span class="tech-tag">Web3</span>
       </div>
     </div>
@@ -247,6 +249,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/e-finance-digital-bank.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -262,8 +265,8 @@
           <div class="metric-label">Airflow DAGs</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">5</div>
-          <div class="metric-label">Data Stores</div>
+          <div class="metric-value">10</div>
+          <div class="metric-label">Postgres Tables</div>
         </div>
       </div>
     </section>
@@ -271,18 +274,27 @@
     <!-- PROBLEM -->
     <section class="content-section">
       <h3>The Problem</h3>
-      <p>A digital bank needs core-banking operations, real-time transaction processing, and market-data intake to work as one system while staying auditable and resilient under failure.</p>
-      <p>It also needs fraud/AML screening and BNPL credit scoring on top of the same data, served through a unified API gateway with wallet support — without tangling services, storage, and orchestration together.</p>
+      <p>A bank has to move money correctly on the request path — a transfer debits one account and credits another, or neither happens — while batch work (interest accrual, daily summaries, fraud review) runs off that path.</p>
+      <p>This project is one repository that shows both sides: a service split, a schema that stores money as integer minor units, and Airflow DAGs that run batch jobs against the same Postgres data.</p>
     </section>
 
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/e-finance.svg" alt="E-Finance Architecture Diagram" style="width:100%; height:auto;">
+<pre style="overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch">React app ──HTTP──> <span class="highlight">core-banking-api</span> (FastAPI) ──> Postgres: efinance_core
+                                       users, accounts, transactions, cards,
+                                       fraud_alerts, audit_logs, summaries
+                                                ^
+<span class="highlight">Airflow</span> (3 DAGs) ──PostgresHook────────────────┘
+
+<span class="highlight">transaction-service</span> (Spring Boot) ──> Postgres: efinance_transactions
+        └──produce──> Kafka topic "transactions"  (no consumer yet)
+
+fraud-detection · bnpl-service · web3-service · analytics-service
+  called directly on their own ports; no service-to-service calls yet
+
+Prometheus scrapes all six services · Grafana on top</pre>
       </div>
     </section>
 
@@ -290,11 +302,11 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Service split:</strong> core-banking API in Python plus a dedicated transaction service in Java, keeping account logic separate from high-volume transaction writes.</li>
-        <li><strong>Streaming backbone:</strong> core-banking events, transaction records, and market feeds publish to Kafka topics for decoupled, replayable ingestion.</li>
-        <li><strong>Polyglot storage:</strong> PostgreSQL for system of record, MongoDB for flexible documents, Redis for caching/sessions, and Elasticsearch for transaction search.</li>
-        <li><strong>Risk & credit ML:</strong> fraud/AML models screen transaction streams while a BNPL scoring module evaluates installment eligibility from account and behavior features.</li>
-        <li><strong>Orchestration & serving:</strong> 3 Airflow DAGs orchestrate ingestion, feature prep, and scoring refreshes; FastAPI behind a Kong gateway serves clients with Web3 wallet flows, all containerized with Docker and monitored end to end.</li>
+        <li><strong>Core banking API (FastAPI):</strong> 44 routes for auth, users, accounts, cards and transactions. Internal transfers write a debit and a credit row and update both balances in one database commit; amounts are BIGINT minor units.</li>
+        <li><strong>Transaction service (Spring Boot):</strong> 10 routes; saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>, keyed by reference number. No consumer exists in the repo yet, and its fraud call is stubbed out.</li>
+        <li><strong>Storage:</strong> PostgreSQL is the system of record (320-line schema, 10 tables). MongoDB and Redis are in Compose and connected at API startup but not used by any code path yet; Elasticsearch appears only as config.</li>
+        <li><strong>Risk & credit scoring:</strong> fraud-detection blends 8 hand-written rules with a random forest and isolation forest that are fitted on placeholder data until real models are saved. BNPL computes a 300–850 score from four weighted factors over in-memory orders.</li>
+        <li><strong>Batch & monitoring:</strong> 3 Airflow DAGs — daily transaction ETL with idempotent upserts, daily interest accrual with a monthly credit, and a 15-minute fraud-alert sweep. Prometheus scrape config covers all six services.</li>
       </ul>
     </section>
 
@@ -302,28 +314,28 @@
     <section class="content-section">
       <h3>Challenges & Solutions</h3>
       <div class="challenge-card">
-        <h4>Challenge: Mixed workloads on one database</h4>
-        <p>Transactional writes, analytical reads, document shapes, and search queries pull storage in conflicting directions.</p>
+        <h4>Challenge: Keeping a transfer consistent</h4>
+        <p>A transfer must never debit one account without crediting the other, and money must not pick up floating-point rounding.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Purpose-built stores behind Kafka</h4>
-        <p>Kafka decouples producers from consumers so each store serves one job: Postgres for records, MongoDB for documents, Redis for speed, Elasticsearch for search.</p>
+        <h4>Solution: Two legs, one commit, integer cents</h4>
+        <p>Both transaction rows and both balance updates go in a single SQLAlchemy commit, with ownership, status and limit checks first. Still missing: row locking for concurrent transfers and an idempotency key for client retries.</p>
       </div>
       <div class="challenge-card">
-        <h4>Challenge: Risk checks vs. checkout speed</h4>
-        <p>Fraud/AML screening and BNPL scoring must run on fresh data without blocking the payment path.</p>
+        <h4>Challenge: Batch work off the request path</h4>
+        <p>Interest accrual, daily summaries and fraud review should not run inside the API process.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Async scoring with gateway serving</h4>
-        <p>Airflow DAGs refresh features and scores on schedule while the FastAPI + Kong layer serves decisions and wallet operations from precomputed, monitored state.</p>
+        <h4>Solution: Airflow DAGs on PostgresHook</h4>
+        <p>Scheduled DAGs write to the same Postgres with <code>ON CONFLICT</code> upserts so ETL re-runs overwrite rather than duplicate. Known gaps: the ETL transform step still returns fixed values, and interest accrual is not atomic or guarded against re-runs.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The platform connects banking services, streaming, storage, ML risk scoring, and API delivery into one coherent architecture with clear service boundaries.</p>
-      <p>Airflow orchestration, containerized deployment, and end-to-end monitoring make the data flows repeatable and observable for enterprise operation.</p>
+      <p>The repository has six services, a Postgres schema, three DAGs and monitoring config in one Compose file, with the core-banking money paths implemented and ownership-checked behind JWT auth (bcrypt, lockout, TOTP 2FA).</p>
+      <p>It does not boot end to end as committed: three services have no Dockerfile, the core API imports two missing modules, and there are no automated tests. Next steps are making it boot, locking balances during transfers, adding idempotency keys, and wiring a real Kafka consumer.</p>
     </section>
   </main>
 

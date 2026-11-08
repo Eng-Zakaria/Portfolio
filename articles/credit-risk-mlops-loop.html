@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>A score-and-decide credit-risk pipeline on synthetic data | Mohammed Zakaria</title>
+  <meta name="description" content="A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html">
+  <meta property="og:title" content="A score-and-decide credit-risk pipeline on synthetic data | Mohammed Zakaria">
+  <meta property="og:description" content="A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A score-and-decide credit-risk pipeline on synthetic data", "description": "A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html", "wordCount": 1589, "keywords": "MLOps, Machine Learning, Python"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">MLOps</span><span class="post-tag">Machine Learning</span><span class="post-tag">Python</span></div>
+        <h1>A score-and-decide credit-risk pipeline on synthetic data</h1>
+        <p class="post-lede">A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on">Decision 1: generate the data, and know exactly what the label depends on</a></li>
+<li><a href="#decision-2-a-hard-validation-gate-before-anything-ships">Decision 2: a hard validation gate before anything ships</a></li>
+<li><a href="#decision-3-return-a-decision-not-just-a-probability">Decision 3: return a decision, not just a probability</a></li>
+<li><a href="#where-the-loop-is-still-open">Where the loop is still open</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Portfolio, synthetic data.</strong> This is a personal project. Every applicant in it is generated by a script, and the repository holds no saved training run, so this write-up describes the design and the code, not measured model performance.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>A credit model is only useful if it sits inside a process: data comes in, features are built the same way every time, a model is trained and checked against minimum standards, the winner is deployed, applications are scored and turned into a decision, and someone watches for drift so the model gets retrained before it goes stale. Most portfolio credit projects stop at a notebook with an AUC. I wanted the surrounding machinery: a training pipeline with a validation gate, a scoring API that returns a decision rather than a raw probability, and scheduled jobs for retraining and monitoring.</p>
+<p>Because there is no real bureau data to use, the project starts with its own generator.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<div class="hl"><pre><span></span><code> credit_data_generator.py         100,000 synthetic applications, target default rate 15%
+            |
+            v
+ FeaturePipeline                   stratified 70/10/20 split, then fit on train only:
+ (winsorize + scale + target enc)  median fill, 1-99% clipping, StandardScaler, TargetEncoder
+            |
+            v
+ TrainingPipeline / training DAG   XGBoost, LightGBM, CatBoost (early stopping on val)
+            |                      metrics + params logged to MLflow (local ./mlruns)
+            v
+ ModelValidator                    fail if test AUC &lt; 0.70, Gini &lt; 0.40, KS &lt; 0.30
+            |                      warn on train/test AUC gap &gt; 0.05, PSI &gt; 0.20
+            v
+ deploy_model                      copy best model dir -&gt; models/production
+            .
+            .  (not connected: API loads models/ensemble)
+            .
+ FastAPI /predict                  PD -&gt; risk band -&gt; APPROVE / REVIEW / DECLINE
+
+ monitoring DAG (daily 06:00)      PSI + KS drift on 4 columns -&gt; branch -&gt; retrain stub
+</code></pre></div>
+
+<p>The code lives in one Python package (<code>src/</code>): a data generator, a feature pipeline, model wrappers, evaluation and validation, drift and performance monitors, a DuckDB data mart, and a FastAPI app. Two Airflow DAGs in <code>pipelines/</code> wire the training and monitoring steps, and <code>docker-compose.yml</code> defines containers for the API, a training job, an MLflow server, a Streamlit dashboard, and an optional Airflow profile.</p>
+<h2 id="decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on">Decision 1: generate the data, and know exactly what the label depends on<a class="h-anchor" href="#decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on" title="Permanent link">#</a></h2>
+<p>The generator builds demographics, credit history, loan terms and utilization with correlated draws (credit score rises with age and income, interest rate falls with credit score, and so on). The default flag then comes from a hand-written logistic formula:</p>
+<div class="hl"><pre><span></span><code><span class="n">log_odds</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">-</span><span class="mf">3.0</span>
+    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_score&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">650</span><span class="p">)</span>
+    <span class="o">+</span> <span class="mf">0.05</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;dti_ratio&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;delinquency_2years&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;bankruptcies&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;num_credit_inquiries_6m&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;credit_utilization_ratio&#39;</span><span class="p">]</span>
+    <span class="o">-</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;annual_income&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="mf">0.00002</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;loan_amount&#39;</span><span class="p">]</span>
+    <span class="o">-</span> <span class="mf">0.02</span> <span class="o">*</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;employment_length&#39;</span><span class="p">]</span>
+    <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>After sampling, labels are flipped at random to hit the configured 15% default rate.</p>
+<p>The upside is control. I know the true signal, so I can check whether the model recovers it, and I can rerun everything from a seed. The downside is that any score on this data measures how well a tree ensemble fits a logistic formula with noise. It says nothing about real borrowers, and a high AUC here would be expected rather than impressive.</p>
+<p>I also checked for label leakage. No feature is computed from <code>default</code>, and the target encoder is fitted on the training split only, so the test set does not leak into the encodings. Two details are worth knowing. <code>bankruptcies</code> carries the largest coefficient in the formula, but it is not in the configured feature list, so the model never sees it. And <code>risk_score_bucket</code> and <code>interest_rate</code> are both derived from <code>credit_score</code>, which adds redundancy but not leakage.</p>
+<h2 id="decision-2-a-hard-validation-gate-before-anything-ships">Decision 2: a hard validation gate before anything ships<a class="h-anchor" href="#decision-2-a-hard-validation-gate-before-anything-ships" title="Permanent link">#</a></h2>
+<p>Training and deployment are separated by <code>ModelValidator</code>. The training DAG trains the three boosters in parallel, picks the best one by test AUC, and then runs the validator. If the model misses any minimum, the task raises and the deploy step never runs:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Threshold</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test AUC-ROC</td>
+<td>≥ 0.70</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>Gini (2·AUC − 1)</td>
+<td>≥ 0.40</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>KS statistic</td>
+<td>≥ 0.30</td>
+<td>failure blocks deploy</td>
+</tr>
+<tr>
+<td>Train − test AUC gap</td>
+<td>≤ 0.05</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>PSI, train vs test scores</td>
+<td>≤ 0.20</td>
+<td>warning</td>
+</tr>
+<tr>
+<td>Default rate by score decile</td>
+<td>non-decreasing (0.01 tolerance)</td>
+<td>warning</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is that only the three discrimination metrics can block a deploy, while overfitting, score shift and decile ordering just log warnings. I chose that because a fixed tolerance on a synthetic dataset is easy to trip by chance, and a pipeline that stops for every warning tends to get its checks switched off. The cost is that a model with a 0.08 overfit gap would still ship. In a real lender I would make the gap and decile ordering blocking and send warnings somewhere a person reads them.</p>
+<p>The gate also checks discrimination but not calibration. <code>metrics.py</code> can compute a Brier score and expected loss (<code>PD × LGD × EAD</code> with LGD defaulting to 0.6), but the validator does not test them, even though the decision bands below depend on the probabilities being well calibrated.</p>
+<h2 id="decision-3-return-a-decision-not-just-a-probability">Decision 3: return a decision, not just a probability<a class="h-anchor" href="#decision-3-return-a-decision-not-just-a-probability" title="Permanent link">#</a></h2>
+<p>The API converts the PD into a band and an action:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>PD</th>
+<th>Risk category</th>
+<th>Decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 0.10</td>
+<td>Very Low Risk</td>
+<td>APPROVE</td>
+</tr>
+<tr>
+<td>0.10 – 0.20</td>
+<td>Low Risk</td>
+<td>APPROVE</td>
+</tr>
+<tr>
+<td>0.20 – 0.30</td>
+<td>Moderate Risk</td>
+<td>REVIEW</td>
+</tr>
+<tr>
+<td>0.30 – 0.50</td>
+<td>High Risk</td>
+<td>REVIEW</td>
+</tr>
+<tr>
+<td>≥ 0.50</td>
+<td>Very High Risk</td>
+<td>DECLINE</td>
+</tr>
+</tbody>
+</table></div>
+<p>A wide REVIEW band is a deliberate choice. Scores between 0.2 and 0.5 go to a person instead of being auto-declined, which costs analyst time but keeps borderline applicants out of an automatic rejection. The cut-offs are hard-coded constants, not tuned to a cost matrix or an approval-rate target, and the <code>confidence_score</code> field (<code>|0.5 − PD| × 2</code>) is a distance from 0.5, not a statistical confidence.</p>
+<p>The API also fills in features the request does not include: <code>interest_rate</code> is fixed at 15.0, <code>credit_history_length</code> is estimated from employment length, and <code>total_credit_utilized</code> from income. That keeps the request small, but it means the API scores a different feature distribution from the one the model was trained on.</p>
+<h2 id="where-the-loop-is-still-open">Where the loop is still open<a class="h-anchor" href="#where-the-loop-is-still-open" title="Permanent link">#</a></h2>
+<p>The repository has every component of a score-and-decide loop. The connections between them are what is missing.</p>
+<div class="admonition note">
+<p class="admonition-title">Gaps in the current code</p>
+<ul>
+<li><strong>Deploy and serve point at different places.</strong> <code>deploy_model</code> copies the winner to <code>models/production/</code>, but the API loads <code>models/ensemble/</code> through <code>GradientBoostingEnsemble.load</code>. The default training run (<code>xgboost lightgbm catboost</code>) never writes <code>models/ensemble/</code>, so the API starts with no model and <code>/predict</code> returns 503.</li>
+<li><strong>The request schema doesn&rsquo;t match the fitted pipeline.</strong> The feature pipeline selects <code>income_category</code> and <code>risk_score_bucket</code> by name, and <code>/predict</code> doesn&rsquo;t build either column.</li>
+<li><strong>Drift is simulated, and retraining is a stub.</strong> The monitoring DAG samples 1,000 rows from the training file, subtracts 10 from <code>credit_score</code>, and runs PSI and KS on four columns. When drift is found, it calls a function whose <code>TriggerDagRunOperator</code> is commented out.</li>
+<li><strong><code>/metrics/{model}</code> returns constants</strong> (0.85 / 0.70 / 0.55), not stored results.</li>
+<li><strong>MLflow is used for tracking only.</strong> Runs log parameters and metrics; models are saved with joblib, not registered.</li>
+<li><strong>Built but not wired in.</strong> The TabTransformer class and the stacking ensemble exist, but the CLI defaults train only the three boosters, the stacking ensemble is built with <code>use_tab_transformer=False</code>, and passing <code>tab_transformer</code> to the training pipeline raises &ldquo;Unknown model type&rdquo;.</li>
+<li><strong>No recorded results.</strong> There is no <code>mlruns/</code>, no saved model, and no log in the repo, and the environment I checked lacks xgboost, lightgbm, catboost, mlflow and category_encoders, so I did not rerun it. The model table in the README has no run behind it.</li>
+</ul>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>There are no recorded model scores to report. What I can state from the code:</p>
+<ul>
+<li>The generator produces 100,000 rows at a 15% target default rate, with a 70/10/20 stratified split (<code>random_state=42</code>).</li>
+<li>Each model is evaluated on the held-out 20% using AUC, Gini, KS, log loss, Brier score and lift at 10% and 20%, and the deploy gate requires AUC ≥ 0.70, Gini ≥ 0.40 and KS ≥ 0.30.</li>
+<li>The test suite covers model fit/predict, metric calculations, PSI and data generation. The API test accepts either 200 or 503 from <code>/predict</code>, so it passes without a loaded model.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Close the deploy-to-serve path.</strong> Have the API load <code>models/production/</code> and its <code>metadata.json</code>, and add a test that trains a small model and gets a 200 from <code>/predict</code>.</li>
+<li><strong>Use one feature builder for training and serving.</strong> Move the derived-column logic out of the API into the feature pipeline, so a request goes through exactly the code the model was trained on.</li>
+<li><strong>Record a real run.</strong> Pin dependency versions, run the training once, and commit the metrics JSON next to the README so every number has a source.</li>
+<li><strong>Make retraining real.</strong> Compare recent scored applications against the training reference instead of a shifted sample, and enable the <code>TriggerDagRunOperator</code>.</li>
+<li><strong>Gate on calibration.</strong> Add a Brier or calibration-slope check, and choose the APPROVE/REVIEW cut-offs from an explicit cost of a missed default versus a lost good customer.</li>
+<li><strong>Register models.</strong> Log each model with MLflow and promote through the registry instead of copying directories.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Case study: <a href="../projects/credit-risk.html">Credit Risk case page</a></li>
+<li>Code: <a href="https://github.com/Eng-Zakaria/Risk_Analysis">github.com/Eng-Zakaria/Risk_Analysis</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html" data-title="A score-and-decide credit-risk pipeline on synthetic data">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="deterministic-gates-before-llm.html"><small>← Newer</small><b>Deterministic Gates Before the LLM</b></a>
+          <a class="post-pager-next" href="config-not-code-ingestion.html"><small>Older →</small><b>Config, not code: schema-drift gates and a cdp CLI</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

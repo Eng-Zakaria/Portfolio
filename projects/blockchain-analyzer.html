@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blockchain Analyzer — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Blockchain forensics platform comparing Neo4j vs PySpark for Ethereum analysis. 73x faster graph traversal with Neo4j. Bronze/Silver/Gold ETL pipeline.">
+  <meta name="description" content="Ethereum forensics prototype: Bronze/Silver/Gold ETL, three money-laundering detectors and a Neo4j-vs-PySpark benchmark harness, developed against local stand-ins.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -77,24 +77,24 @@
       <div class="sec-label">// project case study</div>
       <h1><i class="fas fa-link"></i> Blockchain Analyzer</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Blockchain forensics platform comparing Neo4j (graph) vs PySpark (batch) for Ethereum transaction analysis.
+        Ethereum forensics prototype with a harness for comparing Neo4j (graph) and PySpark (batch) on transaction analysis.
       </p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
-          <span class="meta-value">Blockchain Analysis Intern</span>
+          <span class="meta-value">Solo Developer</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">Jun 2023 – Aug 2023</span>
+          <span class="meta-value">Apr 2025 – Feb 2026</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Organization</span>
-          <span class="meta-value">University of Zurich</span>
+          <span class="meta-value">Independent</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Research Project</span>
+          <span class="meta-value">Portfolio Project</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -112,6 +112,7 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/ethereum-neo4j-vs-spark.html">Read the write-up →</a>
       <a href="https://github.com/Eng-Zakaria/blockchain-analyzer" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
     </div>
 
@@ -119,16 +120,16 @@
       <h3>Key Metrics</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">73.4x</div>
-          <div class="metric-label">Faster Multi-hop (Neo4j)</div>
+          <div class="metric-value">3</div>
+          <div class="metric-label">Laundering Detectors</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">18.9x</div>
-          <div class="metric-label">Faster Suspicious Detection</div>
+          <div class="metric-value">25</div>
+          <div class="metric-label">Unit Tests Passing</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">3</div>
-          <div class="metric-label">Threat Patterns Detected</div>
+          <div class="metric-label">Benchmark Operations</div>
         </div>
       </div>
     </section>
@@ -138,8 +139,8 @@
       <p>
         Blockchain forensic analysis requires processing large volumes of Ethereum transaction
         data to identify suspicious patterns like chain hopping, smurfing, and peel chains.
-        The research question was whether graph databases (Neo4j) or batch processing engines
-        (PySpark) were better suited for real-time threat detection and pattern analysis.
+        The question I wanted to test was whether a graph database (Neo4j) or a batch engine
+        (PySpark) is the better fit for multi-hop tracing and pattern detection.
       </p>
       <p>
         Traditional batch processing struggles with relationship-heavy queries that require
@@ -150,46 +151,53 @@
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/blockchain-analyzer---forensics-platform.svg" alt="Blockchain Analyzer Architecture Diagram" style="width:100%; height:auto;">
+<pre style="overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch">
+ <span class="highlight">Sources</span>     synthetic generator (1,000 txs) | Infura JSON-RPC (last 3 blocks)
+      |
+ <span class="highlight">ETL</span>         Bronze -> Silver -> Gold   (pandas-backed Spark-like API)
+      |
+      +--> <span class="highlight">Graph</span>      (:Wallet)-[:SENT]->(:Transaction)-[:RECEIVED]->(:Wallet)
+      +--> <span class="highlight">Benchmark</span>  wallet degree | multi-hop | high-frequency wallets
+      +--> <span class="highlight">Search</span>     Elasticsearch mappings + Kibana dashboard config
+ <span class="highlight">Detectors</span>   chain hopping | smurfing | peel chains | wallet scoring
+</pre>
       </div>
     </section>
 
     <section class="content-section">
       <h3>Benchmarking Results</h3>
       <p>
-        The platform includes a comprehensive benchmarking module that compares Neo4j and
-        PySpark across three key operations using 1,000 transactions:
+        The benchmarking module times the same three operations on both sides and reports
+        the ratio and a winner per operation:
       </p>
       <ul>
-        <li><strong>Multi-hop Traversal:</strong> Neo4j was 73.42x faster than PySpark, demonstrating superior performance for relationship-heavy queries</li>
-        <li><strong>Suspicious Pattern Detection:</strong> Neo4j was 18.88x faster for identifying chain hopping, smurfing, and peel chain patterns</li>
-        <li><strong>Wallet Degree Queries:</strong> PySpark showed a slight advantage (0.02x speedup) for simple aggregation operations</li>
+        <li><strong>Multi-hop Traversal:</strong> a Cypher <code>[:SENT*1..3]</code> path query against a hop-by-hop DataFrame lookup</li>
+        <li><strong>High-frequency Wallets:</strong> wallets with more than 100 transactions, as a Cypher count against a group-by</li>
+        <li><strong>Wallet Degree:</strong> transactions touching one wallet, as a relationship count against a filter</li>
       </ul>
       <p>
-        <strong>Key Insight:</strong> Neo4j excels at graph traversal and relationship queries,
-        while PySpark is better suited for simple aggregations and batch processing. A hybrid
-        approach is recommended: Neo4j for real-time queries, PySpark for batch analytics.
+        <strong>Current status:</strong> the harness runs end to end, but the default run uses a mock
+        Neo4j client and a pandas stand-in for Spark on synthetic data, so its sub-millisecond ratios
+        do not compare the two engines. A fair result needs a live Neo4j and SparkSession, the same
+        mainnet snapshot in both, and repeated warm runs.
       </p>
     </section>
 
     <section class="content-section">
       <h3>Implementation</h3>
       <ul>
-        <li><strong>Data Ingestion:</strong> Built automated pipelines using Web3.py to fetch Ethereum transaction data from Etherscan and Infura APIs</li>
-        <li><strong>Medallion Architecture:</strong> Implemented Bronze/Silver/Gold layering for data quality progression—raw ingestion, cleansing/validation, and enriched analytics</li>
-        <li><strong>Threat Detection:</strong> Developed pattern detection algorithms for chain hopping, smurfing, and peel chain techniques used in money laundering</li>
-        <li><strong>Graph Modeling:</strong> Designed Neo4j schema with wallets as nodes and transactions as relationships for efficient traversal queries</li>
-        <li><strong>Visualization:</strong> Created Kibana dashboards for transaction flow visualization and pattern analysis</li>
-        <li><strong>Docker Deployment:</strong> Containerized the entire stack with one-command deployment</li>
+        <li><strong>Data Ingestion:</strong> Infura JSON-RPC client for recent mainnet blocks, a Web3.py bulk fetcher script, and a synthetic generator for offline runs</li>
+        <li><strong>Medallion Architecture:</strong> Bronze (validation, address normalization), Silver (dedupe, wei-to-ETH, gas cost, tx type) and Gold (per-wallet stats, risk tier) layers</li>
+        <li><strong>Threat Detection:</strong> Unit-tested detectors for fan-out (chain hopping), smurfing and 2–3 hop peel chains, plus additive wallet risk scoring; not yet called from the main run</li>
+        <li><strong>Graph Modeling:</strong> Neo4j schema with wallets and transactions as nodes, linked by SENT and RECEIVED, with uniqueness constraints and batched UNWIND/MERGE ingest</li>
+        <li><strong>Visualization:</strong> Generated Elasticsearch mappings and a Kibana dashboard config; indexing currently goes to an in-memory stand-in</li>
+        <li><strong>Docker Deployment:</strong> docker-compose for Elasticsearch, Kibana and Neo4j 5.15</li>
       </ul>
     </section>
 
     <section class="content-section">
-      <h3>Use Cases</h3>
+      <h3>Intended Use Cases</h3>
       <ul>
         <li>AML/CFT compliance monitoring for financial institutions</li>
         <li>Forensic transaction tracing for law enforcement</li>
@@ -201,10 +209,10 @@
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The platform provides actionable intelligence for blockchain forensics, with clear
-        guidance on when to use graph databases vs. batch processing. The benchmarking
-        results informed architectural decisions for production deployments, and the
-        hybrid approach maximizes both query performance and processing scalability.
+        A working prototype: the pipeline, detectors, graph schema and benchmark harness run
+        locally without infrastructure. The next step is running the harness against live
+        Neo4j and Spark on a fixed mainnet block range, aligning the multi-hop query with the
+        Wallet→Transaction→Wallet schema, and wiring the detectors into the main run.
       </p>
     </section>
   </main>
