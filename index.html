@@ -22,9 +22,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.17.0/devicon.min.css">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="stylesheet" href="css/portfolio-themes.css">
-  <link rel="stylesheet" href="css/hood-portfolio.css">
+  <link rel="stylesheet" href="css/hood-portfolio.css?v=20261108">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -39,8 +40,9 @@
     "knowsAbout": ["Data Engineering", "Applied AI", "Apache Spark", "Apache Kafka", "Apache Airflow", "RAG", "ClickHouse", "AWS"]
   }
   </script>
-  <script defer src="js/main.js"></script>
+  <script defer src="js/main.js?v=20261108"></script>
   <script defer src="js/theme-controls.js"></script>
+  <script defer src="js/enhance.js?v=20261108"></script>
 </head>
 <body>
   <header class="hood-header">
@@ -80,8 +82,8 @@
           </div>
           <div class="hood-micro-stats" aria-label="Selected impact">
             <div><b>13.7M</b><span>live rows served</span></div>
-            <div><b>87.8%</b><span>retrieval accuracy</span></div>
-            <div><b>25</b><span>systems in production</span></div>
+            <div><b>87.8%</b><span>retrieval hit rate</span></div>
+            <div><b>6</b><span>systems live in production</span></div>
           </div>
           <svg class="hood-data-doodle" viewBox="0 0 440 90" aria-hidden="true">
             <path d="M4 45h80l25-25h78l28 25h62l24-25h130"/><circle cx="4" cy="45" r="5"/><circle cx="84" cy="45" r="5"/><circle cx="109" cy="20" r="5"/><circle cx="187" cy="20" r="5"/><circle cx="215" cy="45" r="5"/><circle cx="277" cy="45" r="5"/><circle cx="301" cy="20" r="5"/><circle cx="431" cy="20" r="5"/>
@@ -97,7 +99,7 @@
             <pre><code id="terminal-typed"></code></pre>
             <div class="hood-console-foot"><span>DATA IN</span><span>RETRIEVAL</span><span>ANSWER OUT</span></div>
           </div>
-          <div class="hood-proofline"><span><b>87.8%</b> grounded answers</span><i></i><span><b>225</b> eval cases</span><i></i><span><b>AR / EN</b> native bilingual</span></div>
+          <div class="hood-proofline"><span><b>87.8%</b> retrieval hit rate</span><i></i><span><b>225</b>-case bilingual suite</span><i></i><span><b>AR / EN</b> native bilingual</span></div>
           <a class="hood-text-link" href="projects/waffarha-assistant.html">Open the Waffarha case study <span>↗</span></a>
           <svg class="hood-back-doodle" viewBox="0 0 520 160" aria-hidden="true">
             <path d="M18 78h105l32-40h89l32 40h87l30-50h109M123 78l32 44h89l32-44m87 0 30 39h109"/>
@@ -133,7 +135,7 @@
         <div class="sec-label">About the builder</div>
         <h2>Data engineer who ships AI that survives contact with customers</h2>
         <div class="about-text">
-          <p>Data Engineer at <strong>Waffarha</strong> running production RAG and data pipelines over <strong>13.7M live rows</strong> — bilingual Arabic/English answers with <strong>87.8% retrieval accuracy</strong> on a 225-case eval harness. I own the whole loop: ingestion, dimensional modeling, orchestration, vector search, evaluation, and guardrails.</p>
+          <p>Data Engineer at <strong>Waffarha</strong> running production RAG and data pipelines over <strong>13.7M live rows</strong> — bilingual Arabic/English answers with <strong>87.8% retrieval hit rate</strong> on a 225-case bilingual eval suite. I own the whole loop: ingestion, dimensional modeling, orchestration, vector search, evaluation, and guardrails.</p>
           <p>Before Waffarha I built a centralized healthcare warehouse from 10+ clinic sources that <strong>cut reporting time 40% and killed every dashboard timeout</strong>, completed Big Data training at the National Telecommunication Institute, and researched on-chain data at the <strong>University of Zurich</strong>. Helwan University graduate — graduation project graded <strong>A+</strong> for an Arabic RAG system that became the blueprint for my production work.</p>
           <div class="about-highlights">
             <div class="highlight-item"><span>🎯</span> I ship <strong>measured outcomes, not pipelines</strong> — every build carries quality checks, monitoring, and a latency budget.</div>
@@ -159,19 +161,19 @@
         <div class="skill-category reveal">
           <div class="skill-cat-label"><i class="fas fa-code"></i> Languages</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fab fa-python"></i><span>Python</span></span>
+            <span class="skill-tag"><i class="devicon-python-plain colored"></i><span>Python</span></span>
             <span class="skill-tag"><i class="fas fa-database"></i><span>SQL</span></span>
-            <span class="skill-tag"><i class="fab fa-scala"></i><span>Scala</span></span>
-            <span class="skill-tag"><i class="fas fa-terminal"></i><span>Bash</span></span>
+            <span class="skill-tag"><i class="devicon-scala-plain colored"></i><span>Scala</span></span>
+            <span class="skill-tag"><i class="devicon-bash-plain colored"></i><span>Bash</span></span>
           </div>
         </div>
 
         <div class="skill-category reveal reveal-d1">
           <div class="skill-cat-label"><i class="fas fa-cubes"></i> Big Data &amp; Processing</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-bolt"></i><span>Apache Spark</span></span>
-            <span class="skill-tag"><i class="fas fa-stream"></i><span>Apache Flink</span></span>
-            <span class="skill-tag"><i class="fas fa-server"></i><span>Hadoop</span></span>
+            <span class="skill-tag"><i class="devicon-apachespark-plain colored"></i><span>Apache Spark</span></span>
+            <span class="skill-tag"><i class="fas fa-bolt"></i><span>Apache Flink</span></span>
+            <span class="skill-tag"><i class="devicon-hadoop-plain colored"></i><span>Hadoop</span></span>
             <span class="skill-tag"><i class="fas fa-table"></i><span>Hive</span></span>
             <span class="skill-tag"><i class="fas fa-cube"></i><span>HBase</span></span>
           </div>
@@ -180,7 +182,7 @@
         <div class="skill-category reveal reveal-d2">
           <div class="skill-cat-label"><i class="fas fa-water"></i> Streaming &amp; Ingestion</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-stream"></i><span>Kafka</span></span>
+            <span class="skill-tag"><i class="devicon-apachekafka-plain colored"></i><span>Kafka</span></span>
             <span class="skill-tag"><i class="fas fa-project-diagram"></i><span>NiFi</span></span>
             <span class="skill-tag"><i class="fas fa-exchange-alt"></i><span>Sqoop</span></span>
             <span class="skill-tag"><i class="fas fa-filter"></i><span>Flume</span></span>
@@ -190,32 +192,36 @@
         <div class="skill-category reveal">
           <div class="skill-cat-label"><i class="fas fa-sync-alt"></i> Orchestration</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-wind"></i><span>Airflow</span></span>
-            <span class="skill-tag"><i class="fab fa-aws"></i><span>AWS Glue</span></span>
+            <span class="skill-tag"><i class="devicon-apacheairflow-plain colored"></i><span>Airflow</span></span>
+            <span class="skill-tag"><i class="devicon-amazonwebservices-plain colored"></i><span>AWS Glue</span></span>
           </div>
         </div>
 
         <div class="skill-category reveal reveal-d1">
-          <div class="skill-cat-label"><i class="fas fa-cloud"></i> Cloud &amp; DevOps</div>
+          <div class="skill-cat-label"><i class="fas fa-cloud"></i> Cloud (production) &amp; DevOps</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fab fa-aws"></i><span>AWS</span></span>
-            <span class="skill-tag"><i class="fas fa-blob"></i><span>Azure Blob</span></span>
-            <span class="skill-tag"><i class="fab fa-docker"></i><span>Docker</span></span>
-            <span class="skill-tag"><i class="fas fa-code-branch"></i><span>Git</span></span>
-            <span class="skill-tag"><i class="fab fa-linux"></i><span>Linux</span></span>
+            <span class="skill-tag"><i class="devicon-azure-plain colored"></i><span>Azure · ADF · Event Hubs</span></span>
+            <span class="skill-tag"><i class="devicon-amazonwebservices-plain colored"></i><span>AWS · EC2 · RDS · S3</span></span>
+            <span class="skill-tag"><i class="devicon-googlecloud-plain colored"></i><span>GCP · Cloud Storage</span></span>
+            <span class="skill-tag"><i class="fas fa-cloud"></i><span>Huawei Cloud</span></span>
+            <span class="skill-tag"><i class="fas fa-layer-group"></i><span>Microsoft Fabric</span></span>
+            <span class="skill-tag"><i class="devicon-docker-plain colored"></i><span>Docker</span></span>
+            <span class="skill-tag"><i class="devicon-jenkins-plain colored"></i><span>Jenkins</span></span>
+            <span class="skill-tag"><i class="devicon-git-plain colored"></i><span>Git</span></span>
+            <span class="skill-tag"><i class="devicon-linux-plain colored"></i><span>Linux</span></span>
           </div>
         </div>
 
         <div class="skill-category reveal reveal-d2">
           <div class="skill-cat-label"><i class="fas fa-database"></i> Databases</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-database"></i><span>PostgreSQL</span></span>
-            <span class="skill-tag"><i class="fas fa-database"></i><span>MySQL</span></span>
-            <span class="skill-tag"><i class="fas fa-database"></i><span>SQL Server</span></span>
-            <span class="skill-tag"><i class="fas fa-project-diagram"></i><span>Neo4j</span></span>
-            <span class="skill-tag"><i class="fas fa-search"></i><span>Elasticsearch</span></span>
-            <span class="skill-tag"><i class="fas fa-chart-line"></i><span>InfluxDB</span></span>
-            <span class="skill-tag"><i class="fas fa-bolt"></i><span>ClickHouse</span></span>
+            <span class="skill-tag"><i class="devicon-postgresql-plain colored"></i><span>PostgreSQL</span></span>
+            <span class="skill-tag"><i class="devicon-mysql-plain colored"></i><span>MySQL</span></span>
+            <span class="skill-tag"><i class="devicon-microsoftsqlserver-plain colored"></i><span>SQL Server</span></span>
+            <span class="skill-tag"><i class="devicon-neo4j-plain colored"></i><span>Neo4j</span></span>
+            <span class="skill-tag"><i class="devicon-elasticsearch-plain colored"></i><span>Elasticsearch</span></span>
+            <span class="skill-tag"><i class="devicon-influxdb-plain colored"></i><span>InfluxDB</span></span>
+            <span class="skill-tag"><i class="devicon-clickhouse-plain colored"></i><span>ClickHouse</span></span>
           </div>
         </div>
 
@@ -224,8 +230,8 @@
           <div class="skill-tags">
             <span class="skill-tag"><i class="fas fa-chart-bar"></i><span>Power BI</span></span>
             <span class="skill-tag"><i class="fas fa-chart-pie"></i><span>Tableau</span></span>
-            <span class="skill-tag"><i class="fas fa-tachometer-alt"></i><span>Grafana</span></span>
-            <span class="skill-tag"><i class="fas fa-chart-area"></i><span>Matplotlib</span></span>
+            <span class="skill-tag"><i class="devicon-grafana-plain colored"></i><span>Grafana</span></span>
+            <span class="skill-tag"><i class="devicon-matplotlib-plain colored"></i><span>Matplotlib</span></span>
             <span class="skill-tag"><i class="fas fa-chart-line"></i><span>Seaborn</span></span>
           </div>
         </div>
@@ -236,9 +242,12 @@
             <span class="skill-tag"><i class="fas fa-layer-group"></i><span>Dimensional Modeling</span></span>
             <span class="skill-tag"><i class="fas fa-shapes"></i><span>Star / Snowflake Schema</span></span>
             <span class="skill-tag"><i class="fas fa-clock"></i><span>SCD2</span></span>
-            <span class="skill-tag"><i class="fas fa-vial"></i><span>Data Validation</span></span>
+            <span class="skill-tag"><i class="fas fa-square-check"></i><span>Data Validation</span></span>
             <span class="skill-tag"><i class="fas fa-broom"></i><span>Data Cleansing</span></span>
-            <span class="skill-tag"><i class="fas fa-table"></i><span>dbt</span></span>
+            <span class="skill-tag"><i class="fas fa-table-list"></i><span>dbt tests &amp; contracts</span></span>
+            <span class="skill-tag"><i class="fas fa-vial-circle-check"></i><span>Great Expectations</span></span>
+            <span class="skill-tag"><i class="fas fa-scale-balanced"></i><span>Reconciliation</span></span>
+            <span class="skill-tag"><i class="fas fa-code-compare"></i><span>Schema-drift gates</span></span>
           </div>
         </div>
 
@@ -248,33 +257,33 @@
             <span class="skill-tag"><i class="fas fa-comments"></i><span>RAG Pipelines</span></span>
             <span class="skill-tag"><i class="fas fa-vector-square"></i><span>FAISS / Qdrant</span></span>
             <span class="skill-tag"><i class="fas fa-robot"></i><span>Ollama / LLMs</span></span>
-            <span class="skill-tag"><i class="fas fa-chart-line"></i><span>Local LLM Eval</span></span>
+            <span class="skill-tag"><i class="fas fa-gauge-high"></i><span>Local LLM Eval</span></span>
             <span class="skill-tag"><i class="fas fa-microphone"></i><span>Whisper STT (lab)</span></span>
-            <span class="skill-tag"><i class="fas fa-rocket"></i><span>FastAPI</span></span>
+            <span class="skill-tag"><i class="devicon-fastapi-plain colored"></i><span>FastAPI</span></span>
             <span class="skill-tag"><i class="fas fa-flask"></i><span>MLflow</span></span>
-            <span class="skill-tag"><i class="fab fa-redis"></i><span>Redis</span></span>
+            <span class="skill-tag"><i class="devicon-redis-plain colored"></i><span>Redis</span></span>
           </div>
         </div>
 
         <div class="skill-category reveal reveal-d1">
           <div class="skill-cat-label"><i class="fas fa-cubes"></i> Platform & IaC</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-ship"></i><span>Kubernetes</span></span>
-            <span class="skill-tag"><i class="fas fa-cloud"></i><span>Terraform</span></span>
-            <span class="skill-tag"><i class="fas fa-rabbit"></i><span>RabbitMQ</span></span>
-            <span class="skill-tag"><i class="fas fa-fire"></i><span>Prometheus</span></span>
-            <span class="skill-tag"><i class="fas fa-chart-line"></i><span>CI/CD</span></span>
+            <span class="skill-tag"><i class="devicon-kubernetes-plain colored"></i><span>Kubernetes</span></span>
+            <span class="skill-tag"><i class="devicon-terraform-plain colored"></i><span>Terraform</span></span>
+            <span class="skill-tag"><i class="devicon-rabbitmq-plain colored"></i><span>RabbitMQ</span></span>
+            <span class="skill-tag"><i class="devicon-prometheus-plain colored"></i><span>Prometheus</span></span>
+            <span class="skill-tag"><i class="fas fa-infinity"></i><span>CI/CD</span></span>
           </div>
         </div>
 
         <div class="skill-category reveal reveal-d2">
           <div class="skill-cat-label"><i class="fas fa-building"></i> BIM & Automation</div>
           <div class="skill-tags">
-            <span class="skill-tag"><i class="fas fa-cube"></i><span>pyRevit</span></span>
+            <span class="skill-tag"><i class="fas fa-puzzle-piece"></i><span>pyRevit</span></span>
             <span class="skill-tag"><i class="fas fa-drafting-compass"></i><span>Revit API</span></span>
-            <span class="skill-tag"><i class="fab fa-python"></i><span>IronPython</span></span>
-            <span class="skill-tag"><i class="fas fa-code"></i><span>C#</span></span>
-            <span class="skill-tag"><i class="fas fa-project-diagram"></i><span>Dynamo</span></span>
+            <span class="skill-tag"><i class="devicon-python-plain colored"></i><span>IronPython</span></span>
+            <span class="skill-tag"><i class="devicon-csharp-plain colored"></i><span>C#</span></span>
+            <span class="skill-tag"><i class="fas fa-share-nodes"></i><span>Dynamo</span></span>
             <span class="skill-tag"><i class="fas fa-window-maximize"></i><span>WPF</span></span>
           </div>
         </div>
@@ -282,21 +291,21 @@
       </div>
     </div>
   </section>
-    <div class="hood-street-intro"><div class="hood-section-shell"><div class="hood-section-index"><span>06</span><i></i><span>THE STREET · SELECTED BUILDS</span></div><div class="hood-street-heading"><h2>Every build ships<br><em>with receipts.</em></h2><p>Metrics first, architecture second, demo always. Open a storefront for the full engineering story.</p><div class="hood-street-count"><b id="street-count">25</b><span>builds shipped</span></div></div></div></div>
+    <div class="hood-street-intro"><div class="hood-section-shell"><div class="hood-section-index"><span>06</span><i></i><span>THE STREET · SELECTED BUILDS</span></div><div class="hood-street-heading"><h2>Every build ships<br><em>with receipts.</em></h2><p>Metrics first, architecture second, demo always. Open a storefront for the full engineering story.</p><div class="hood-street-count"><b id="street-count">27</b><span>builds shipped</span></div></div></div></div>
     <section id="projects">
     <div class="container">
       <div class="sec-label">// selected work</div>
       <h2>Projects</h2>
-      <p class="projects-sub">25 production-grade systems — RAG that answers from live data, streaming at sub-second latency, price intelligence that protects revenue, and platforms that survive audits. Filter by track:</p>
+      <p class="projects-sub">27 builds — 6 running in production for employers and clients, the rest open, reproducible platforms with real tests and live demos. RAG that answers from live data, streaming at sub-second latency, price intelligence that protects revenue, and platforms that survive audits. Filter by track:</p>
       <div class="project-filters" role="tablist" aria-label="Filter projects">
-        <button class="filter-btn active" data-filter="all">All (25)</button>
+        <button class="filter-btn active" data-filter="all">All (27)</button>
         <button class="filter-btn" data-filter="rag">RAG / AI</button>
         <button class="filter-btn" data-filter="streaming">Streaming</button>
         <button class="filter-btn" data-filter="batch">Batch ETL</button>
         <button class="filter-btn" data-filter="platform">Platforms</button>
         <button class="filter-btn" data-filter="price">Price Intel</button>
       </div>
-      <div class="hood-project-instruction"><span>25 storefronts — pick a track to filter</span><span><b id="street-shown">25</b> / 25 showing</span></div>
+      <div class="hood-project-instruction"><span>27 storefronts — pick a track to filter</span><span><b id="street-shown">27</b> / 27 showing</span></div>
       <div class="hood-project-progress" aria-hidden="true"><i id="street-bar"></i></div>
       <div class="projects-grid" id="projects-grid">
 
@@ -304,7 +313,7 @@
           <div class="project-num">01 — PRODUCTION RAG</div>
           <div class="project-name"><i class="fas fa-comments"></i>Waffarha Assistant — Bilingual RAG at Scale</div>
           <div class="project-desc">
-            Egypt's leading deals platform, answered live: 13.7M rows across 19 ClickHouse tables + 9,106 docs in a bge-m3/Qdrant index. 87.8% grounded retrieval on a 225-case harness, deterministic gates resolve routine queries without an LLM call — Arabic voice-ready.
+            Egypt's leading deals platform, answered live: 13.7M rows across 19 ClickHouse tables + 9,106 docs in a bge-m3/Qdrant index. 87.8% retrieval hit rate on a 225-case bilingual suite, deterministic gates resolve routine queries without an LLM call — Arabic voice-ready.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
@@ -320,8 +329,56 @@
           </div>
         </div>
 
+        <div class="project-card reveal reveal-d1" data-category="batch rag platform">
+          <div class="project-num">02 — PRODUCTION · RECOMMENDATIONS</div>
+          <div class="project-name"><i class="fas fa-wand-magic-sparkles"></i>Waffarha Recommender — Nightly, Multi-Cloud, Live</div>
+          <div class="project-desc">
+            Every night at 00:00 Cairo time: MoEngage event exports pulled from Google Cloud Storage, user histories deduped, item-to-item co-view similarity built, expired offers filtered against ClickHouse, and top-N picks upserted into MySQL on AWS RDS in 5,000-row batches. Shipped through Jenkins + Docker, with a hybrid V2 ranker (CF + content + MMR) trained on 23.6K users ready behind it.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fab fa-google"></i> GCS</span>
+            <span class="stack-tag"><i class="fab fa-aws"></i> AWS RDS · EC2</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> ClickHouse</span>
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fab fa-jenkins"></i> Jenkins</span>
+            <span class="stack-tag"><i class="fab fa-docker"></i> Docker</span>
+          </div>
+          <div class="project-links">
+            <a href="projects/waffarha-recommender.html" class="proj-link">Case Study ↗</a>
+          </div>
+        </div>
+
+        <div class="project-card reveal" data-category="rag batch">
+          <div class="project-num">03 — PRODUCTION DATA · LLM FINE-TUNE</div>
+          <div class="project-name"><i class="fas fa-user-shield"></i>Support Intelligence — 160,944 Real Chats, Zero PII Leaks</div>
+          <div class="project-desc">
+            Turned 160,944 real customer-support chats (Egypt + Saudi, Mar–Oct 2026) into PII-free analytics, then built a redacted multi-turn training set of 117,915 resolved conversations. An audit across 8 PII patterns found zero leaks before a LoRA fine-tune of a 4B Arabic model, served through Ollama inside Chatwoot.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-database"></i> ClickHouse</span>
+            <span class="stack-tag"><i class="fas fa-user-secret"></i> PII Redaction</span>
+            <span class="stack-tag"><i class="fas fa-brain"></i> LoRA / SFT</span>
+            <span class="stack-tag"><i class="fas fa-robot"></i> Ollama</span>
+            <span class="stack-tag"><i class="fas fa-headset"></i> Chatwoot</span>
+          </div>
+        </div>
+
+        <div class="project-card reveal reveal-d1" data-category="rag">
+          <div class="project-num">04 — AI AGENT · GUARDRAILS</div>
+          <div class="project-name"><i class="fas fa-shield-halved"></i>Waffy — A Support Agent That Can't Go Rogue</div>
+          <div class="project-desc">
+            Hand-written tool-calling loop over read-only ClickHouse: customer identity injected server-side, refunds and purchases dry-run only, PII redacted before the model sees it, answers streamed over SSE. 212 automated tests pass; the eval dry run clears 53/53 cases, including 10/10 critical safety cases.
+          </div>
+          <div class="project-stack">
+            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+            <span class="stack-tag"><i class="fas fa-database"></i> ClickHouse</span>
+            <span class="stack-tag"><i class="fas fa-screwdriver-wrench"></i> Tool Calling</span>
+            <span class="stack-tag"><i class="fas fa-vial"></i> 212 Tests</span>
+          </div>
+        </div>
+
         <div class="project-card reveal reveal-d1">
-          <div class="project-num">02 — CLIENT ENGAGEMENT</div>
+          <div class="project-num">05 — CLIENT ENGAGEMENT</div>
           <div class="project-name"><i class="fas fa-hospital"></i>Clinic Network Warehouse — Zero-Timeout BI</div>
           <div class="project-desc">
             Unified 10+ clinic systems into one PostgreSQL warehouse with clean star schemas. Reporting cycles 40% faster, dashboard timeouts eliminated entirely — one model serves every clinic plus company-wide rollups.
@@ -338,7 +395,7 @@
         </div>
 
         <div class="project-card reveal reveal-d2">
-          <div class="project-num">03 — BLOCKCHAIN FORENSICS</div>
+          <div class="project-num">06 — BLOCKCHAIN FORENSICS</div>
           <div class="project-name"><i class="fas fa-link"></i>Ethereum Forensics — 73× Faster Traversal</div>
           <div class="project-desc">
             Bronze→Silver→Gold pipeline for on-chain threat detection. Head-to-head benchmark: Neo4j traverses multi-hop money flows 73× faster than Spark — Kibana surfaces the patterns investigators actually chase.
@@ -357,10 +414,10 @@
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">04 — MLOps</div>
-          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk — 0.88 AUC in Production</div>
+          <div class="project-num">07 — MLOps</div>
+          <div class="project-name"><i class="fas fa-credit-card"></i>Credit Risk — Score-and-Decide MLOps Loop</div>
           <div class="project-desc">
-            Hybrid ensemble (XGBoost + LightGBM) at 0.88 AUC-ROC, served behind FastAPI with Redis lookups. Airflow orchestration, MLflow lineage, BigQuery marts — a full score-and-decide loop, not a notebook.
+            Portfolio build on synthetic credit data: a stacked XGBoost + LightGBM ensemble served behind FastAPI with Redis lookups. Airflow orchestration, MLflow lineage, BigQuery marts — a full score-and-decide loop, not a notebook.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-robot"></i> XGBoost</span>
@@ -376,7 +433,7 @@
         </div>
 
         <div class="project-card wide reveal">
-          <div class="project-num">05 — REAL-TIME STREAMING</div>
+          <div class="project-num">08 — REAL-TIME STREAMING</div>
           <div class="project-name"><i class="fas fa-shield-alt"></i>Fraud Shield — Sub-Second Scoring</div>
           <div class="project-desc">
             Kafka streaming scores every transaction in under a second. Drift-aware monitoring with Slack/email escalation, Plotly/Dash war-room, and a retraining loop — fraud caught while the payment is still warm.
@@ -397,7 +454,7 @@
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">06 — STREAMING PIPELINE</div>
+          <div class="project-num">09 — STREAMING PIPELINE</div>
           <div class="project-name"><i class="fas fa-plane"></i>Live Flight Radar — ADS-B at Scale</div>
           <div class="project-desc">
             Real ADS-B feed → Kafka → Spark Structured Streaming → InfluxDB, visualized live in Grafana with geomaps and per-aircraft tracks. Dual Flume agents keep ingestion lossless when the sky gets busy.
@@ -416,7 +473,7 @@
         </div>
 
         <div class="project-card reveal reveal-d1">
-          <div class="project-num">07 — BATCH ETL</div>
+          <div class="project-num">10 — BATCH ETL</div>
           <div class="project-name"><i class="fab fa-reddit-alien"></i>Reddit Signals — Medallion at Scale</div>
           <div class="project-desc">
             7-stage PySpark ETL in full medallion: engagement-score UDFs, windowed rankings, broadcast enrichment, partitioned Parquet. Built to answer "what's actually trending" without rescanning raw dumps.
@@ -434,7 +491,7 @@
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">08 — PRICE INTELLIGENCE</div>
+          <div class="project-num">11 — PRICE INTELLIGENCE</div>
           <div class="project-name"><i class="fas fa-tags"></i>Partner Price Guard — Revenue Protection</div>
           <div class="project-desc">
             7-stage Airflow pipeline catching partner price violations before they cost margin. Tiered matching (code → override → fuzzy), dual-engine scraping, and board-ready HTML/Excel evidence packs.
@@ -451,7 +508,7 @@
         </div>
 
         <div class="project-card reveal reveal-d1">
-          <div class="project-num">09 — MARKET INTELLIGENCE</div>
+          <div class="project-num">12 — MARKET INTELLIGENCE</div>
           <div class="project-name"><i class="fas fa-chart-line"></i>Brand Radar — Reviews to Revenue Signal</div>
           <div class="project-desc">
             App Store, Google Play, Reddit, and News funneled into one multilingual sentiment engine (AraBERT + RoBERTa routing) with a Streamlit command view — reputation shifts become tickets, not surprises.
@@ -468,7 +525,7 @@
         </div>
 
         <div class="project-card reveal">
-          <div class="project-num">10 — GRADUATION PROJECT · A+</div>
+          <div class="project-num">13 — GRADUATION PROJECT · A+</div>
           <div class="project-name"><i class="fas fa-mosque"></i>Hadith QA — Arabic RAG Pioneer</div>
           <div class="project-desc">
             Graded A+: the first Arabic RAG I shipped — Django + Qdrant over classical texts, retrieval-tuned to 70% answer accuracy. The prototype that proved grounded Arabic QA works — and became my Waffarha playbook.
@@ -486,7 +543,7 @@
         </div>
 
         <div class="project-card wide reveal reveal-d2">
-          <div class="project-num">11 — ENTERPRISE PLATFORM</div>
+          <div class="project-num">14 — ENTERPRISE PLATFORM</div>
           <div class="project-name"><i class="fas fa-network-wired"></i>Telecom Lakehouse — 8 Domains, One Truth</div>
           <div class="project-desc">
             Enterprise telecom analytics: 8 business domains in Bronze/Silver/Gold, Docker-to-Azure parity, MLflow tracking with drift-triggered retraining. The kind of platform BI teams stop fighting and start quoting.
@@ -505,7 +562,7 @@
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch streaming">
-          <div class="project-num">12 — ENERGY PLATFORM</div>
+          <div class="project-num">15 — ENERGY PLATFORM</div>
           <div class="project-name"><i class="fas fa-oil-can"></i>Petroleum Pulse — Wells + Markets Live</div>
           <div class="project-desc">
             Well telemetry meets market reality: historic Volve field data plus EIA/Baker Hughes feeds → RabbitMQ → Beam-on-Flink anomaly detection → Elasticsearch + warehouse. 3-node NiFi, Grafana + Prometheus, IaC with Terraform/K8s.
@@ -526,7 +583,7 @@
         </div>
 
         <div class="project-card wide reveal reveal-d1" data-category="price platform batch">
-          <div class="project-num">13 — PRICE INTELLIGENCE</div>
+          <div class="project-num">16 — PRICE INTELLIGENCE</div>
           <div class="project-name"><i class="fas fa-dog"></i>Watchdog — Competitor Prices on Autopilot</div>
           <div class="project-desc">
             Multi-domain price intel that never sleeps: Playwright on Celery/Redis, Airflow 6-stage ETL with raw-HTML snapshots for lossless re-parsing, dimensional Postgres warehouse, Telegram/email strike alerts, Streamlit analytics — anti-bot resilient by design.
@@ -544,29 +601,8 @@
           </div>
         </div>
 
-        <div class="project-card wide reveal reveal-d2" data-category="platform streaming rag">
-          <div class="project-num">14 — ENVIRONMENTAL AI</div>
-          <div class="project-name"><i class="fas fa-leaf"></i>AirSense — 2.8M Readings a Day, 99.95% Up</div>
-          <div class="project-desc">
-            City-scale air quality: 15k+ sensors, sub-200ms critical alerts, LSTM+XGBoost at 92% 6-hour forecast accuracy. Kafka/Spark/Airflow → TimescaleDB, FastAPI + Redis serving, K8s on AWS with full Prometheus/Grafana watch.
-          </div>
-          <div class="project-stack">
-            <span class="stack-tag"><i class="fas fa-stream"></i> Kafka</span>
-            <span class="stack-tag"><i class="fas fa-bolt"></i> Spark</span>
-            <span class="stack-tag"><i class="fas fa-sync"></i> Airflow</span>
-            <span class="stack-tag"><i class="fas fa-database"></i> TimescaleDB</span>
-            <span class="stack-tag"><i class="fas fa-rocket"></i> FastAPI</span>
-            <span class="stack-tag"><i class="fas fa-brain"></i> LSTM + XGBoost</span>
-            <span class="stack-tag"><i class="fas fa-ship"></i> Kubernetes</span>
-          </div>
-          <div class="project-links">
-            <a href="projects/airsense-platform.html" class="proj-link">Case Study ↗</a>
-            <a href="https://github.com/Eng-Zakaria/airsense-platform" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
-          </div>
-        </div>
-
         <div class="project-card wide reveal" data-category="platform streaming batch">
-          <div class="project-num">15 — RETAIL ANALYTICS</div>
+          <div class="project-num">17 — RETAIL ANALYTICS</div>
           <div class="project-name"><i class="fas fa-store"></i>Retail Command — POS to Forecast Live</div>
           <div class="project-desc">
             POS, e-commerce, and inventory streaming into one decision layer. 15-service stack: Kafka + Debezium CDC → Spark & Flink → Delta Lake + Postgres → FastAPI, with ML demand forecasts and Grafana war-boards.
@@ -585,7 +621,7 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform streaming">
-          <div class="project-num">16 — AQUACULTURE IOT</div>
+          <div class="project-num">18 — AQUACULTURE IOT</div>
           <div class="project-name"><i class="fas fa-fish"></i>AquaWatch — Farms That Phone Home</div>
           <div class="project-desc">
             Autonomous water-quality ops for fish farms: 5-minute sensor cadence → Airflow → TimescaleDB → Grafana with SMS/email escalation and cooldown logic, plus a FastAPI read layer for the farm floor.
@@ -603,7 +639,7 @@
         </div>
 
         <div class="project-card reveal reveal-d2" data-category="platform batch">
-          <div class="project-num">17 — COMPLIANCE PLATFORM</div>
+          <div class="project-num">19 — COMPLIANCE PLATFORM</div>
           <div class="project-name"><i class="fas fa-shield-alt"></i>ChainGuard — GDPR-Native Crypto Intel</div>
           <div class="project-desc">
             On-chain analytics with privacy baked in: Ethereum + Bitcoin + market feeds pass PII masking, Fernet encryption, and full audit trails before touching Postgres, Elasticsearch, or Mongo. 365-day retention, subpoena-ready.
@@ -622,7 +658,7 @@
         </div>
 
         <div class="project-card reveal" data-category="platform batch">
-          <div class="project-num">18 — CLIENT TOOL</div>
+          <div class="project-num">20 — CLIENT TOOL</div>
           <div class="project-name"><i class="fas fa-building"></i>Model Health Score — Revit, Graded 0–100</div>
           <div class="project-desc">
             The audit a BIM team actually opens: orphaned-element detection, parameter consistency, and performance profiling via the Revit API — scored 0–100 with JSON + HTML evidence and a WPF command deck.
@@ -640,7 +676,7 @@
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch">
-          <div class="project-num">19 — BIM GENERATION</div>
+          <div class="project-num">21 — BIM GENERATION</div>
           <div class="project-name"><i class="fas fa-cubes"></i>Interiors Engine — 10 Villas, $156K BOQ, Zero Errors</div>
           <div class="project-desc">
             Parametric generation that pays: 10 full interior projects (45 m² studio → 250 m² villa) as native RVT + IFC4, rendered plans, and a priced $156,733 BOQ — with a compiled net48 add-in for headless repeat builds.
@@ -658,7 +694,7 @@
         </div>
 
         <div class="project-card wide reveal" data-category="platform batch">
-          <div class="project-num">20 — ENTERPRISE FINTECH</div>
+          <div class="project-num">22 — ENTERPRISE FINTECH</div>
           <div class="project-name"><i class="fas fa-landmark"></i>E-Finance — 6-Service Digital Bank</div>
           <div class="project-desc">
             A bank in containers: core-banking API + Java transaction engine streaming through Kafka into Postgres, Mongo, Redis, and Elasticsearch — with fraud/AML models, BNPL scoring, Airflow settlement DAGs, and Web3 wallets.
@@ -677,7 +713,7 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform batch">
-          <div class="project-num">21 — MARKET INTELLIGENCE</div>
+          <div class="project-num">23 — MARKET INTELLIGENCE</div>
           <div class="project-name"><i class="fas fa-phone"></i>Wholesale Radar — Egypt Apparel Map</div>
           <div class="project-desc">
             Ethical market mapping for Egyptian apparel wholesale: governorate-wide discovery with WhatsApp-context filtering — real sellers saved, noise dropped, per-region CSVs ready for the sales team.
@@ -694,7 +730,7 @@
         </div>
 
         <div class="project-card reveal reveal-d2" data-category="platform batch">
-          <div class="project-num">22 — ESTATES ETL</div>
+          <div class="project-num">24 — ESTATES ETL</div>
           <div class="project-name"><i class="fas fa-city"></i>Estates Warehouse — Governed by Design</div>
           <div class="project-desc">
             Asset, space, and maintenance data modeled to Uniclass/SFG20/COBie/HESA rules, served as a star schema with a Power BI spec and DAX library. Validation first, dashboards second — governance you can demo.
@@ -712,7 +748,7 @@
         </div>
 
         <div class="project-card reveal" data-category="platform">
-          <div class="project-num">23 — SERVERLESS CLOUD</div>
+          <div class="project-num">25 — SERVERLESS CLOUD</div>
           <div class="project-name"><i class="fab fa-aws"></i>Serverless Ops — AWS Blueprint, Zero Servers</div>
           <div class="project-desc">
             Full AWS serverless in production shape: API Gateway + Lambda + DynamoDB, React on S3/CloudFront, TypeScript CDK, CodePipeline delivery, CloudWatch observability — scale to zero, deploy with confidence.
@@ -730,7 +766,7 @@
         </div>
 
         <div class="project-card reveal" data-category="platform batch">
-          <div class="project-num">24 — GOVERNED PLATFORM</div>
+          <div class="project-num">26 — GOVERNED PLATFORM</div>
           <div class="project-name"><i class="fas fa-university"></i>Estates Lakehouse — 8/8 Sources, Zero Loss</div>
           <div class="project-desc">
             A lakehouse that proves itself: 8/8 sources reconciled with zero loss, dbt gold marts guarded by 196 tests and 21 contracts, 20 live demos spanning Power BI, IoT, digital twin, and governance. Open it and click anything.
@@ -751,7 +787,7 @@
         </div>
 
         <div class="project-card reveal reveal-d1" data-category="platform batch">
-          <div class="project-num">25 — INGESTION FRAMEWORK</div>
+          <div class="project-num">27 — INGESTION FRAMEWORK</div>
           <div class="project-name"><i class="fas fa-microchip"></i>Component Ingest — Config, Not Code</div>
           <div class="project-desc">
             Ingestion where a site redesign is a YAML edit, not a redeploy. Schema-drift gates fail loudly instead of loading empty fields; a `cdp` CLI runs doctor → run → status → schedule under Airflow. Built to onboard the next 50 sources in minutes.
@@ -776,6 +812,8 @@
       <div class="sec-label">Work history</div>
       <h2>Experience</h2>
 
+      <div class="exp-group">
+        <div class="exp-group-title"><span class="exp-group-idx">A</span><h3>Professional Experience</h3><span class="exp-group-note">4 roles · Jun 2024 – Present</span></div>
       <div class="exp-item reveal">
         <div>
           <div class="exp-date">07/2026 – Present</div>
@@ -786,10 +824,13 @@
           <div class="exp-company">Waffarha</div>
           <ul class="exp-bullets">
             <li><strong>Own production RAG</strong> serving bilingual (AR/EN) answers from 13.7M live ClickHouse rows — FastAPI + Redis sessions + Streamlit for concurrent business users</li>
-            <li><strong>Won the bake-off:</strong> 4 embedding models × 5 vector stores tested; bge-m3 + Qdrant ships at <strong>87.8% grounded retrieval</strong> over 9,106 docs and 2,923 merchants on a 225-case harness</li>
+            <li><strong>Run a live nightly recommender</strong> — MoEngage event exports from Google Cloud Storage → deduped user histories → item-to-item similarity → active-offer filter from ClickHouse → 5,000-row batch upserts into MySQL on AWS RDS, built and shipped through Jenkins + Docker</li>
+            <li><strong>Mined 160,944 real support chats</strong> into PII-free analytics and a redacted 117,915-conversation training set — zero leaks across 8 PII patterns — then LoRA-fine-tuned a 4B Arabic model served through Ollama in Chatwoot</li>
+            <li><strong>Guard partner prices daily</strong> — a 6-stage ingest → scrape → match → compare → report control flags any price outside a 2% tolerance, with resumable per-partner checkpoints and Excel/HTML evidence packs</li>
+            <li><strong>Automated the data loop</strong> — Airflow DAGs ingest from ClickHouse with dedup, SCD2 versioning, and incremental vector re-indexing on change</li>
+            <li><strong>Won the bake-off:</strong> 4 embedding models × 5 vector stores tested; bge-m3 + Qdrant ships at an <strong>87.8% retrieval hit rate</strong> over 9,106 docs and 2,923 merchants on a 225-case harness</li>
             <li><strong>Cut LLM spend with deterministic gates</strong> — greeting, injection, refusal, and FAQ/stock shortcuts resolve routine queries with zero model calls; an evidence gate blocks any answer beyond retrieved sources</li>
             <li><strong>Shipped automatic fact-checking</strong> that extracts verifiable claims from every answer and cross-checks them against sources before delivery</li>
-            <li><strong>Automated the data loop</strong> — Airflow DAGs ingest from ClickHouse with dedup, SCD2 versioning, and incremental vector re-indexing on change</li>
             <li><strong>Built brand radar</strong> monitoring App Store, Google Play, Reddit, and News through a pluggable connector registry feeding sentiment dashboards</li>
             <li><strong>Proved the cost/latency curve:</strong> benchmarked local vs cloud LLMs on identical context and shipped Docker-baked offline Ollama images for zero-network deployment</li>
             <li><strong>Extended to Arabic voice</strong> — dialect-aware STT plus Egyptian TTS selected by blind listening tests, demo-ready on demand</li>
@@ -800,16 +841,16 @@
 
       <div class="exp-item reveal">
         <div>
-          <div class="exp-date">04/2026 – 07/2026</div>
-          <div class="exp-location">Smart Village, Giza</div>
+          <div class="exp-date">01/2026 – Present</div>
+          <div class="exp-location">Cairo / Remote</div>
         </div>
         <div>
-          <div class="exp-role">Big Data Engineering Intern</div>
-          <div class="exp-company">National Telecommunication Institute (NTI)</div>
+          <div class="exp-role">Freelance Data Engineer</div>
+          <div class="exp-company">Self-employed · Client Work</div>
           <ul class="exp-bullets">
-            <li><strong>Shipped end-to-end ETL on Hadoop/Spark</strong> — Python + SQL pipelines orchestrated in Airflow from raw ingest to analytics-ready marts</li>
-            <li><strong>Operated the full distributed toolkit:</strong> HDFS/MapReduce/YARN, HBase, Hive, and InfluxDB for warehouse, NoSQL, and time-series workloads</li>
-            <li><strong>Moved data at ecosystem scale</strong> with Kafka, Flume, and Sqoop between relational systems and Hadoop — plus AWS (EC2/S3/IAM/VPC) and BI in Power BI, Tableau, Grafana</li>
+            <li><strong>Delivered a clinic warehouse to a paying client</strong> — 6-stage Excel → MySQL/PostgreSQL ETL (preflight, quality checks, diff vs last load, backup, load) into a star schema with bridge tables, daily sync, and Power BI views with DAX drillthrough</li>
+            <li><strong>Harvested tender and contractor data</strong> for a construction client — Python crawlers with enrichment, dedup, and validation into clean CSV/JSONL datasets</li>
+            <li><strong>Built a governed lakehouse showcase</strong> — 8/8 sources reconciled with zero loss, 160 dbt tests + 21 contracts + 133 Great Expectations checks, 20 live demos</li>
           </ul>
         </div>
       </div>
@@ -846,6 +887,25 @@
           </ul>
         </div>
       </div>
+      </div>
+
+      <div class="exp-group">
+        <div class="exp-group-title"><span class="exp-group-idx">B</span><h3>Internships &amp; Training</h3><span class="exp-group-note">3 programmes · 2021 – 2026</span></div>
+      <div class="exp-item reveal">
+        <div>
+          <div class="exp-date">04/2026 – 07/2026</div>
+          <div class="exp-location">Smart Village, Giza</div>
+        </div>
+        <div>
+          <div class="exp-role">Big Data Engineering Intern</div>
+          <div class="exp-company">National Telecommunication Institute (NTI)</div>
+          <ul class="exp-bullets">
+            <li><strong>Shipped end-to-end ETL on Hadoop/Spark</strong> — Python + SQL pipelines orchestrated in Airflow from raw ingest to analytics-ready marts</li>
+            <li><strong>Operated the full distributed toolkit:</strong> HDFS/MapReduce/YARN, HBase, Hive, and InfluxDB for warehouse, NoSQL, and time-series workloads</li>
+            <li><strong>Moved data at ecosystem scale</strong> with Kafka, Flume, and Sqoop between relational systems and Hadoop — plus AWS (EC2/S3/IAM/VPC) and BI in Power BI, Tableau, Grafana</li>
+          </ul>
+        </div>
+      </div>
 
       <div class="exp-item reveal">
         <div>
@@ -876,6 +936,7 @@
             <li><strong>Delivered 3 demo-ready apps early</strong>, all acceptance criteria green</li>
           </ul>
         </div>
+      </div>
       </div>
 
     </div>
@@ -935,6 +996,11 @@
           <h3>Helwan University — Computers & AI</h3>
           <div class="cred-meta">Cairo · Graduation Project: A+ in Arabic RAG</div>
           <p>A+ graduation build: an Arabic RAG over classical texts that became the prototype for Waffarha's production assistant. Theory where it counts, shipped code where it matters.</p>
+          <div class="cred-label" style="margin-top:1.4rem">🗣 Languages</div>
+          <ul class="cred-list">
+            <li><strong>Arabic</strong><span>Native</span></li>
+            <li><strong>English</strong><span>C1 · Professional, just below native</span></li>
+          </ul>
         </div>
         <div class="cred-card reveal reveal-d1">
           <div class="cred-label">📜 Certifications</div>

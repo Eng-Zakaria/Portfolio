@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Waffarha Recommender — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Production nightly recommender at Waffarha: Google Cloud Storage event exports to item-to-item collaborative filtering, ClickHouse active-offer filter, and batch upserts into MySQL on AWS RDS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <script src="../js/theme-init.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../css/design-bento.css">
+  <link rel="stylesheet" href="../css/design-bento-dark.css">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/arch-diagrams.css">
+  <style>
+    .project-header { padding: 8rem 0 4rem; border-bottom: 1px solid var(--border); }
+    .project-meta { display: flex; flex-wrap: wrap; gap: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; }
+    .meta-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .meta-label { color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .meta-value { color: var(--text); font-weight: 600; }
+    .project-nav { display: flex; gap: 1rem; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .project-nav a { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; transition: color 0.2s; }
+    .project-nav a:hover { color: var(--accent); }
+    .content-section { max-width: 800px; margin-bottom: 4rem; }
+    .content-section h3 { font-family: var(--font-display); font-size: 1.75rem; margin-bottom: 1.25rem; color: var(--text); }
+    .content-section p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .content-section ul { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5rem 0; }
+    .content-section li { color: var(--text-secondary); padding-left: 1.5rem; position: relative; line-height: 1.7; }
+    .content-section li::before { content: '▸'; position: absolute; left: 0; color: var(--accent); }
+    .arch-full { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 2rem; margin: 2rem 0; font-family: var(--font-mono); font-size: 0.8rem; line-height: 1.6; overflow-x: auto; }
+    .arch-full pre { white-space: pre; color: var(--text-secondary); }
+    .arch-full .highlight { color: var(--accent); font-weight: 600; }
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .metric-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .metric-value { font-family: var(--font-display); font-size: 2.5rem; color: var(--accent); line-height: 1; }
+    .metric-label { font-family: var(--font-mono); font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.5rem; }
+    .tech-stack { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.5rem 0; }
+    .tech-tag { font-family: var(--font-mono); font-size: 0.75rem; padding: 0.4rem 0.8rem; background: var(--accent-light); color: var(--accent); border-radius: 4px; border: 1px solid var(--accent); }
+    .stage-table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-family: var(--font-mono); font-size: 0.85rem; }
+    .stage-table th, .stage-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .stage-table th { color: var(--muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.1em; }
+    @media (max-width: 768px) { .project-meta { flex-direction: column; gap: 1rem; } .metrics-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
+  <link rel="stylesheet" href="../css/hood-portfolio.css">
+  <script defer src="../js/main.js"></script>
+  <script defer src="../js/theme-controls.js"></script>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo"><a href="../index.html" style="color: inherit;">~/mzakaria</a></div>
+    <ul class="nav-links">
+      <li><a href="../index.html#hero"><span class="nav-dot">.</span>home</a></li>
+      <li><a href="../index.html#about"><span class="nav-dot">.</span>about</a></li>
+      <li><a href="../index.html#skills"><span class="nav-dot">.</span>skills</a></li>
+      <li><a href="../index.html#projects"><span class="nav-dot">.</span>projects</a></li>
+      <li><a href="../index.html#contact"><span class="nav-dot">.</span>contact</a></li>
+      <li>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode">
+          🌙 <span>Dark</span>
+        </button>
+      </li>
+    </ul>
+    <button class="hamburger" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <header class="project-header">
+    <div class="container">
+      <div class="sec-label">// project case study · production</div>
+      <h1><i class="fas fa-wand-magic-sparkles"></i> Waffarha Recommender</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 640px; margin-top: 1rem;">
+        A nightly recommendation pipeline that runs across two clouds: customer events from Google Cloud Storage in, ranked offers in MySQL on AWS RDS out, before the first customer wakes up.
+      </p>
+      <div class="project-meta">
+        <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Data Engineer</span></div>
+        <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">2026 – Present</span></div>
+        <div class="meta-item"><span class="meta-label">Company</span><span class="meta-value">Waffarha</span></div>
+        <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Production Pipeline</span></div>
+        <div class="meta-item"><span class="meta-label">Delivery</span><span class="meta-value">Jenkins · Docker</span></div>
+      </div>
+      <div class="tech-stack">
+        <span class="tech-tag"><i class="fab fa-google"></i> Google Cloud Storage</span>
+        <span class="tech-tag"><i class="fab fa-aws"></i> AWS RDS · EC2</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> MySQL</span>
+        <span class="tech-tag"><i class="fas fa-database"></i> ClickHouse</span>
+        <span class="tech-tag"><i class="fas fa-rocket"></i> FastAPI</span>
+        <span class="tech-tag"><i class="fab fa-python"></i> NumPy · scikit-learn</span>
+        <span class="tech-tag"><i class="fab fa-jenkins"></i> Jenkins</span>
+        <span class="tech-tag"><i class="fab fa-docker"></i> Docker</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="project-nav">
+      <a href="../index.html#projects">← Back to Projects</a>
+    </div>
+
+    <section class="content-section">
+      <h3>At a Glance</h3>
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-value">00:00</div><div class="metric-label">Nightly run, Cairo time</div></div>
+        <div class="metric-card"><div class="metric-value">2</div><div class="metric-label">Clouds in one job (GCP + AWS)</div></div>
+        <div class="metric-card"><div class="metric-value">5,000</div><div class="metric-label">Rows per upsert batch</div></div>
+        <div class="metric-card"><div class="metric-value">23.6K</div><div class="metric-label">Users in V2 training set</div></div>
+      </div>
+    </section>
+
+    <section class="content-section">
+      <h3>The Problem</h3>
+      <p>
+        Waffarha shows thousands of time-limited offers, and the app needs a personal shortlist for every customer. The behavioral data lives in MoEngage exports on Google Cloud Storage, the offer catalog lives in ClickHouse, and the app reads recommendations from MySQL on AWS. The job was to connect all three every night without ever recommending an expired offer.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Pipeline</h3>
+      <table class="stage-table">
+        <thead><tr><th>Stage</th><th>What happens</th><th>Where</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>List and download the last day of MoEngage JSON / NDJSON event exports, cached locally</td><td>Google Cloud Storage</td></tr>
+          <tr><td><strong>2</strong></td><td>Keep only offer-view and search-click events; extract user, offer, and timestamp</td><td>Python</td></tr>
+          <tr><td><strong>3</strong></td><td>Build ordered per-user histories, drop consecutive duplicates, keep the latest 50</td><td>Python</td></tr>
+          <tr><td><strong>4</strong></td><td>Item-to-item co-view cosine similarity, minimum-support filter, top 200 neighbors per item</td><td>NumPy</td></tr>
+          <tr><td><strong>5</strong></td><td>Recency-weighted scoring, then filter to offers that are still active</td><td>ClickHouse</td></tr>
+          <tr><td><strong>6</strong></td><td>Upsert top-N recommendations per user in 5,000-row batches through an SSH tunnel</td><td>MySQL on AWS RDS via EC2</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="content-section">
+      <h3>Engineering Decisions</h3>
+      <ul>
+        <li><strong>Fail open, never fail the night:</strong> if ClickHouse is unreachable the batch still completes without the active-offer filter, so the app never wakes up to an empty recommendations table.</li>
+        <li><strong>Similarity you can explain:</strong> co-occurrence cosine, <code>co_views(i, j) / sqrt(users(i) · users(j))</code>, with a minimum user count so one shared click can't create a fake neighbor.</li>
+        <li><strong>Idempotent loads:</strong> upserts keyed on the user, so a re-run replaces yesterday's picks instead of duplicating them.</li>
+        <li><strong>Operable by non-engineers:</strong> a Google-sign-in dashboard shows run status and a "run now" button that refuses to start a second run while one is in flight.</li>
+        <li><strong>Shipped like software:</strong> containerized and built through a Jenkins pipeline from the team's Bitbucket repository.</li>
+      </ul>
+    </section>
+
+    <section class="content-section">
+      <h3>V2: Purchase-Based Hybrid Ranker</h3>
+      <p>
+        A second generation is code-complete alongside the nightly V1 job: purchase-based collaborative filtering with popularity damping, a content boost from the customer's last purchases, MMR diversification (λ = 0.7) with a per-merchant cap, and a trending fallback for new users. A gradient-boosted ranker scores five features (CF, popularity, discount, units sold, content). The local training manifest covers 23,624 users, 431 items, and 32,671 similarity edges.
+      </p>
+    </section>
+
+    <section class="content-section">
+      <h3>Outcome</h3>
+      <p>
+        Every customer with recent activity starts the day with fresh, active-offer recommendations, built from the previous day's behavior across two clouds, with no manual step between the event export and the app.
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-left">Mohammed Zakaria © <span id="yr"></span></div>
+    <div class="footer-right"><a href="../index.html" style="color: var(--accent);">← Back to Portfolio</a></div>
+  </footer>
+</body>
+</html>

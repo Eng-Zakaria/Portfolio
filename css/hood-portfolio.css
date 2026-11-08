@@ -424,3 +424,37 @@ html[data-theme="dark"] #projects .project-card:hover { box-shadow: 7px 9px 0 rg
 html[data-theme="dark"] #contact { background: #060607; }
 html[data-theme="dark"] .hood-method { background: #17181c; }
 html[data-theme="dark"] #skills, html[data-theme="dark"] #about, html[data-theme="dark"] #experience, html[data-theme="dark"] #credentials { background: transparent; }
+
+/* ── Organization + mobile polish (2026-11) ─────────────────── */
+/* Experience: Professional vs Internships groups */
+#experience .exp-group { margin-top: clamp(28px, 4vw, 48px); }
+#experience .exp-group:first-of-type { margin-top: 8px; }
+#experience .exp-group-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px 16px; margin: 0 0 4px; padding-bottom: 14px; }
+#experience .exp-group-title h3 { margin: 0; color: var(--text); font: 700 clamp(1.25rem, 2.4vw, 1.75rem)/1 var(--font-display); letter-spacing: -.04em; text-transform: uppercase; }
+#experience .exp-group-idx { display: inline-grid; place-items: center; width: 30px; height: 30px; background: var(--accent); color: #fff; font: 700 .78rem/1 var(--font-mono); }
+#experience .exp-group-note { margin-left: auto; color: var(--muted, var(--text-secondary)); font: 500 .68rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
+#experience .exp-group + .exp-group .exp-role { font-size: 1.1rem; }
+
+/* Progressive disclosure */
+#projects .projects-grid.is-collapsed > .project-card.is-extra:not(.hidden) { display: none; }
+.proj-more-wrap { display: flex; justify-content: center; margin-top: 22px; }
+.proj-more, .exp-more { cursor: pointer; border: 1px solid var(--accent); background: transparent; color: var(--accent); font: 700 .72rem/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; transition: background .2s, color .2s, transform .2s; }
+.proj-more { min-height: 48px; padding: 0 26px; }
+.proj-more:hover, .exp-more:hover { background: var(--accent); color: #fff; transform: translateY(-2px); }
+.proj-more:focus-visible, .exp-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+#experience .exp-bullets.is-collapsed > li.is-extra { display: none; }
+.exp-more { min-height: 40px; margin-top: 10px; padding: 0 16px; font-size: .64rem; }
+
+@media (max-width: 640px) {
+  /* bigger, tappable text and tags */
+  #skills .skill-tag { font-size: .74rem; min-height: 36px; padding: 6px 10px; }
+  #skills .skill-tags { gap: 8px; }
+  #experience .exp-bullets li { font-size: .9rem; line-height: 1.6; }
+  #experience .exp-role { font-size: 1.15rem; }
+  #experience .exp-group-note { margin-left: 0; flex-basis: 100%; }
+  #projects .project-desc { font-size: .9rem; }
+  #projects .filter-btn { min-height: 40px; }
+  .proj-more { width: 100%; }
+  .exp-more { width: 100%; }
+  .hood-micro-stats span { font-size: .6rem; }
+}
