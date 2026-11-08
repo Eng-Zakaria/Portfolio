@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Config, not code: schema-drift gates and a cdp CLI | Mohammed Zakaria</title>
+  <meta name="description" content="A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html">
+  <meta property="og:title" content="Config, not code: schema-drift gates and a cdp CLI | Mohammed Zakaria">
+  <meta property="og:description" content="A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Config, not code: schema-drift gates and a cdp CLI", "description": "A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html", "wordCount": 1649, "keywords": "Data Ingestion, Data Quality, Airflow"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Ingestion</span><span class="post-tag">Data Quality</span><span class="post-tag">Airflow</span></div>
+        <h1>Config, not code: schema-drift gates and a cdp CLI</h1>
+        <p class="post-lede">A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-the-drift-gate-raises-before-anything-lands">Decision 1: the drift gate raises before anything lands</a></li>
+<li><a href="#decision-2-one-cli-with-the-checks-before-the-run">Decision 2: one CLI, with the checks before the run</a></li>
+<li><a href="#decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped">Decision 3: use the API where one exists, and write down what I skipped</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Portfolio.</strong> I built this alone as a portfolio project while applying for a Data Automation Engineer role. It was not built for an employer or a client, and it uses only public websites and a free public API. It is a v1 scaffold: it covers ingestion, raw landing and a quality gate. The transform job, the warehouse and the analytics API are still on the roadmap, and I don&rsquo;t claim any of them work.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Electronic component data, meaning part numbers, prices, stock and datasheets, is mostly published as HTML pages owned by somebody else. A scraper written against one page layout works until the site changes its theme. When it breaks, it usually breaks without an error. A CSS class gets renamed, the selector returns <code>None</code>, the job still finishes green, and you end up with a table of empty prices that looks like a healthy one.</p>
+<p>So I wanted three things:</p>
+<ol>
+<li>A layout change should mean editing a config file, not the scraper code.</li>
+<li>A layout change I haven&rsquo;t caught yet should stop the run, not load empty fields.</li>
+<li>Someone who didn&rsquo;t write the project should be able to check, run and schedule it without reading the source.</li>
+</ol>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Each source is one YAML file in <code>configs/sources/</code>. The v1 sources are SparkFun and Texas Instruments, both scraped from HTML, and Mouser, through its official API. Everything else is generic.</p>
+<div class="hl"><pre><span></span><code>configs/sources/*.yaml
+        |
+        v
+SourceConfig.from_yaml()  ----------------------------+
+        |                                             |
+  source_type: html                            source_type: api
+        |                                             |
+ConfigDrivenScraper                            MouserClient
+  fetch (3 retries, exp. backoff)                (3 retries, keyword search)
+  parse cards with CSS selectors from YAML
+  map fields via field_map
+  _check_schema_drift()  -- fails --&gt; SchemaDriftError (nothing written)
+        |                                             |
+        +--------------------+------------------------+
+                             v
+            write_raw_records()  -&gt;  data/raw/&lt;source&gt;/&lt;date&gt;/records.jsonl
+                             |
+                             v
+            validate_jsonl()  (null rate per required field, duplicate count)
+                             |
+                             v
+            data/.run_log.json  -&gt;  cdp status
+</code></pre></div>
+
+<p>Here is the SparkFun config, trimmed a little:</p>
+<div class="hl"><pre><span></span><code><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sparkfun</span>
+<span class="nt">source_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html</span>
+<span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">base_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://www.sparkfun.com&quot;</span>
+<span class="nt">start_urls</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/development-boards/microcontrollers.html&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/sensors.html&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/components/resistors.html&quot;</span>
+<span class="nt">pagination</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;p&quot;</span>
+<span class="w">  </span><span class="nt">start_page</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">max_pages</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">          </span><span class="c1"># safety cap</span>
+<span class="nt">rate_limit_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
+<span class="nt">selectors</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">product_card</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;li.product-item&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
+<span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
+<span class="w">  </span><span class="nt">price</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;span[data-price-type=&#39;finalPrice&#39;]</span><span class="nv"> </span><span class="s">.price&quot;</span>
+<span class="nt">field_map</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span>
+<span class="w">  </span><span class="nt">product_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">url</span>
+<span class="w">  </span><span class="nt">list_price</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">price</span>
+<span class="nt">required_fields</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_name</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_url</span>
+</code></pre></div>
+
+<p>The scraper reads <code>selectors</code>, applies each one inside every <code>product_card</code>, renames the results through <code>field_map</code>, and stamps each record with <code>_source</code> and <code>_schema_version</code>. The landing module adds <code>_ingested_at</code>. Nothing in <code>ConfigDrivenScraper</code> mentions SparkFun.</p>
+<h2 id="decision-1-the-drift-gate-raises-before-anything-lands">Decision 1: the drift gate raises before anything lands<a class="h-anchor" href="#decision-1-the-drift-gate-raises-before-anything-lands" title="Permanent link">#</a></h2>
+<p>The core check sits at the end of <code>ConfigDrivenScraper.run()</code>, before any records are written:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">: zero records scraped — &quot;</span>
+        <span class="s2">&quot;selectors likely no longer match the page structure.&quot;</span>
+    <span class="p">)</span>
+
+<span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">required_fields</span><span class="p">:</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">required</span><span class="p">))</span>
+    <span class="n">null_rate</span> <span class="o">=</span> <span class="n">missing</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">null_rate</span> <span class="o">&gt;</span> <span class="n">null_rate_threshold</span><span class="p">:</span>   <span class="c1"># default 0.5</span>
+        <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+<p>There are two cases. Zero cards means the <code>product_card</code> selector no longer matches. If any required field is null in more than 50% of records, a field selector has drifted. In both cases the error message names the field and the YAML file to fix.</p>
+<p>After landing there is a second, stricter check. <code>validate_jsonl()</code> fails a file when a required field is null in more than 30% of records, and it also counts duplicates on <code>product_url</code> (or <code>product_name</code> if there&rsquo;s no URL field). In the CLI, a file that fails this check is recorded as <code>quality_fail</code>, which is different from <code>error</code>.</p>
+<p><strong>Trade-off.</strong> A null-rate threshold is a blunt tool. It catches a selector that broke completely. It won&rsquo;t catch one that now picks up the wrong element, like a &ldquo;was&rdquo; price instead of the current price. It also only covers fields I list as required, so <code>list_price</code> on SparkFun could go fully null and the drift check would let it through. I accepted that for v1: required fields get a hard failure, and the other fields depend on downstream checks I haven&rsquo;t built yet. The 50% and 30% thresholds are my own judgement calls. I didn&rsquo;t tune them on data.</p>
+<div class="admonition note">
+<p class="admonition-title">The gate&rsquo;s first real run</p>
+<p>The run log in the repo (<code>data/.run_log.json</code>) has one live attempt per source, all on 7 August 2026. All three failed. SparkFun: <code>field 'product_name' is null in 64% of 791 records (threshold 50%)</code>. TI: <code>zero records scraped</code>. Mouser: <code>MOUSER_API_KEY not set</code>. Nothing was written to the landing zone. The gate did its job, but it also means the SparkFun selectors don&rsquo;t match the live site any more, and the roadmap line saying they were &ldquo;verified against live markup&rdquo; is out of date.</p>
+</div>
+<h2 id="decision-2-one-cli-with-the-checks-before-the-run">Decision 2: one CLI, with the checks before the run<a class="h-anchor" href="#decision-2-one-cli-with-the-checks-before-the-run" title="Permanent link">#</a></h2>
+<p><code>cdp</code> is a Click app (<code>pyproject.toml</code> maps <code>cdp = "cli.main:cli"</code>) with seven commands:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it actually does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cdp doctor</code></td>
+<td>Checks Python ≥ 3.10, that 7 packages import, <code>.env</code> present, API key set (optional), write access to the landing folder, and that every YAML parses</td>
+</tr>
+<tr>
+<td><code>cdp sources list</code> / <code>info &lt;name&gt;</code></td>
+<td>Table of sources; <code>info</code> fetches the live <code>robots.txt</code>, checks each start URL against it, and prints a pre-run checklist</td>
+</tr>
+<tr>
+<td><code>cdp run &lt;name&gt;</code> / <code>run all</code></td>
+<td>Fetch, land, validate, log; <code>run all</code> catches each source&rsquo;s failure so one bad source doesn&rsquo;t stop the others, then prints a summary table</td>
+</tr>
+<tr>
+<td><code>cdp check</code></td>
+<td>Runs <code>doctor</code>, then re-validates every file under <code>data/raw/</code></td>
+</tr>
+<tr>
+<td><code>cdp status</code></td>
+<td>Last outcome per source from <code>data/.run_log.json</code></td>
+</tr>
+<tr>
+<td><code>cdp schedule</code></td>
+<td>Prints a cron line for <code>cdp run all</code> (hourly or daily); <code>--install</code> adds it to the crontab after a confirm prompt</td>
+</tr>
+<tr>
+<td><code>cdp test</code></td>
+<td>Runs <code>pytest tests/ -v</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The intended order is doctor, then run, then status, then schedule. <code>doctor</code> comes first because most failed runs I hit were environment problems, like a missing key or a broken YAML, not scraper problems.</p>
+<p><strong>Trade-off.</strong> Two ways of scheduling now exist side by side. <code>cdp schedule</code> writes a cron line for one machine. The Airflow DAG (<code>dags/component_pipeline_dag.py</code>) is the intended production orchestrator, with <code>retries: 2</code>, a 10-minute retry delay, <code>email_on_failure</code> and <code>@daily</code>. They don&rsquo;t share code. The DAG calls the scraper and validator modules directly, not through <code>cdp</code>, so the two paths can drift apart. The DAG is also explicitly a skeleton. It has not been deployed, and its transform and load tasks are TODO comments.</p>
+<h2 id="decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped">Decision 3: use the API where one exists, and write down what I skipped<a class="h-anchor" href="#decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped" title="Permanent link">#</a></h2>
+<p>Mouser has a free official API, so I used it instead of scraping. It still has a YAML file, so <code>sources list</code>, <code>run</code> and <code>check</code> treat it like the other sources. <code>docs/sources_evaluated.md</code> lists the sources I considered and why I deferred them. For example, LCSC has no public API, rate-limits aggressively and has blocked scraper IPs, and Digi-Key and Newark both have official APIs, so I&rsquo;d use those instead of scraping. Every HTML config also sets a <code>rate_limit_seconds</code> and an identifying <code>user_agent</code>.</p>
+<p><strong>Trade-off.</strong> API sources are only partly config-driven. In <code>cli/commands/run.py</code>, the dispatch for <code>source_type: api</code> is hard-coded to <code>source_name == "mouser"</code>. Any other source type raises <code>NotImplementedError</code>. A second API source needs a new client class and a new branch. &ldquo;YAML only&rdquo; holds for HTML sites that render without JavaScript. TI&rsquo;s config even has a <code>render_mode: rendered</code> option, but the scraper raises <code>NotImplementedError</code> for it.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What the files show:</p>
+<ul>
+<li><strong>Sources configured:</strong> 3 (2 HTML, 1 API). None has produced a passing live run yet (see the note above).</li>
+<li><strong>Tests:</strong> 3, all passing offline against a saved SparkFun HTML fixture. They check that the fixture parses to 3 records, that <code>field_map</code> normalisation works (name, URL, price <code>$45.65</code>, <code>_source</code>, <code>_schema_version</code>), and that a renamed <code>product_card</code> selector raises <code>SchemaDriftError</code>. Nothing tests the validator, the Mouser client, the CLI or the DAG.</li>
+<li><strong>Onboarding a new HTML source:</strong> adding <code>configs/sources/&lt;name&gt;.yaml</code> is enough for <code>cdp sources list</code>, <code>cdp run &lt;name&gt;</code>, <code>cdp run all</code> and <code>cdp status</code> to pick it up. That part is real. The Airflow DAG, though, has a hard-coded <code>SOURCE_CONFIGS</code> list and needs a code edit. I haven&rsquo;t added a fourth source, so I have no measured onboarding time.</li>
+<li><strong>Landing:</strong> local JSONL partitioned by source and date. The S3 swap would touch only <code>src/ingestion/landing.py</code>, but that&rsquo;s still a roadmap item.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Fix SparkFun&rsquo;s selectors and get one green live run.</strong> The gate says they&rsquo;re broken, so the project currently has zero working live sources.</li>
+<li><strong>Make the DAG read <code>configs/sources/</code> the way the CLI does</strong>, so adding a YAML file onboards a source everywhere. While I&rsquo;m there, have the DAG&rsquo;s quality gate use each source&rsquo;s own <code>required_fields</code> and only today&rsquo;s partition. Right now it globs every file and checks only <code>product_name</code>.</li>
+<li><strong>Drive API sources from a registry</strong> keyed by name, instead of an <code>if</code> on <code>"mouser"</code>.</li>
+<li><strong>Make the thresholds per-source config</strong> and add a row-count floor compared to the last good run, so a site that quietly drops half its catalogue gets caught.</li>
+<li><strong>Add tests for the validator and <code>cdp run</code></strong>, including the <code>quality_fail</code> path.</li>
+<li>Then build the parts the roadmap already lists: S3 landing, the Glue/Spark transform to silver and gold, the Redshift schema, and the API.</li>
+</ol>
+<p>The full case study is at <a href="../projects/component-data-pipeline.html">Component Data Pipeline</a>. The case page doesn&rsquo;t link a public repository, so there&rsquo;s no GitHub link here.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html" data-title="Config, not code: schema-drift gates and a cdp CLI">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="deterministic-gates-before-llm.html"><small>← Newer</small><b>Deterministic Gates Before the LLM</b></a>
+          <a class="post-pager-next" href="brand-radar-connector-registry.html"><small>Older →</small><b>Brand radar: one file per source and a connector registry</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

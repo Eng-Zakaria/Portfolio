@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Modeling estates data to Uniclass, COBie and SFG20 | Mohammed Zakaria</title>
+  <meta name="description" content="How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html">
+  <meta property="og:title" content="Modeling estates data to Uniclass, COBie and SFG20 | Mohammed Zakaria">
+  <meta property="og:description" content="How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Modeling estates data to Uniclass, COBie and SFG20", "description": "How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html", "wordCount": 1874, "keywords": "Data Modeling, Data Warehousing, SQL"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Modeling</span><span class="post-tag">Data Warehousing</span><span class="post-tag">SQL</span></div>
+        <h1>Modeling estates data to Uniclass, COBie and SFG20</h1>
+        <p class="post-lede">How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#how-the-standards-are-actually-used">How the standards are actually used</a></li>
+<li><a href="#decision-1-quarantine-dont-crash">Decision 1: quarantine, don&rsquo;t crash</a></li>
+<li><a href="#decision-2-validate-in-dependency-order">Decision 2: validate in dependency order</a></li>
+<li><a href="#decision-3-sqlite-and-a-flat-star-not-a-full-bim-model">Decision 3: SQLite and a flat star, not a full BIM model</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a portfolio project, and every row in it is synthetic. Two seeded Python scripts generate the buildings, rooms, assets, handover records, work orders and meter readings. No real estate or university data is involved. What I wanted to work through was a modeling question: if the people sending you facilities data are expected to follow industry standards, how much of that can a pipeline actually enforce, and what should it do with the rows that don&rsquo;t comply?</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>An estates team (the people who run a campus&rsquo;s buildings) gets data from several systems that were never designed to agree with each other:</p>
+<ul>
+<li>an <strong>asset register</strong>, listing every boiler, air handling unit and fire detector;</li>
+<li>a <strong>space register</strong>, listing rooms and what they are used for;</li>
+<li><strong>COBie</strong> sheets, delivered by contractors when a building is handed over;</li>
+<li><strong>CAFM</strong> work orders (Computer-Aided Facilities Management, the ticketing system for maintenance jobs);</li>
+<li><strong>BMS</strong> extracts (Building Management System, the meter and sensor feed).</li>
+</ul>
+<p>Three UK standards come up again and again in this world. Here is a short version for data engineers:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Standard</th>
+<th>What it is</th>
+<th>Data-engineering analogy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniclass 2015</td>
+<td>A hierarchical classification of construction things. Codes look like <code>Ss_32_12_20</code>, where <code>Ss</code> is the Systems table.</td>
+<td>A controlled taxonomy key, like a product category code</td>
+</tr>
+<tr>
+<td>COBie</td>
+<td>A spreadsheet schema for handing over building data (Type, Component, serial number and so on) at the end of a project, used for ISO 19650 information handover</td>
+<td>A data contract between the contractor and the owner</td>
+</tr>
+<tr>
+<td>SFG20</td>
+<td>The industry library of planned maintenance schedules: which task, how often, for which kind of asset</td>
+<td>A reference table of SLAs per asset class</td>
+</tr>
+</tbody>
+</table></div>
+<p>I also used HESA EMR space categories. HESA is the UK higher-education statistics agency, and its Estate Management Record is the annual return universities file about their buildings.</p>
+<p>The failure mode is easy to describe. One bad classification code or an incomplete handover row gets into the warehouse, and every dashboard measure that groups by it quietly goes wrong.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The repo is plain Python, pandas and SQLite. An optional Airflow DAG wraps the same three steps.</p>
+<div class="hl"><pre><span></span><code>generators/generate_synthetic.py  ─┐   9 raw CSVs (seeded, random.seed(42) / seed(7))
+generators/generate_surveys.py    ─┘
+            │
+            ▼
+ingest/bronze_ingest.py      + ingestion_timestamp, batch_id, source_file
+            │
+            ▼
+validate/checks.py           Uniclass regex · SFG20 present · COBie mandatory
+            │                HESA whitelist · orphan keys · range checks
+      ┌─────┴──────┐
+      ▼            ▼
+data/silver/   data/quarantine/*.csv
+      │
+      ▼
+transform/build_silver_gold.py + sql/schema.sql
+      │
+      ▼
+estates.db   3 dims + 5 facts + ref_cobie + 6 views ──► Power BI spec (9 pages, 10 DAX measures)
+      │
+      ▼
+analytics/netzero.py         HDD baseline, BMS anomalies, fault → SFG20 asset
+</code></pre></div>
+
+<p>The Airflow DAG <code>estates_daily</code> runs <code>bronze_ingest &gt;&gt; validate_quarantine &gt;&gt; build_warehouse</code> on <code>@daily</code>. The net zero analytics script is a separate manual step.</p>
+<p>The warehouse has <code>dim_building</code>, <code>dim_space</code> and <code>dim_asset</code>, plus five facts: <code>fact_workorder</code>, <code>fact_energy</code>, <code>fact_space_use</code>, <code>fact_condition</code> and <code>fact_compliance</code>. <code>ref_cobie</code> holds the handover components. Six views sit on top for reporting: EMR summary, open compliance work, energy intensity, space utilisation, compliance RAG and backlog.</p>
+<h2 id="how-the-standards-are-actually-used">How the standards are actually used<a class="h-anchor" href="#how-the-standards-are-actually-used" title="Permanent link">#</a></h2>
+<p>I want to be exact here, because &ldquo;modeled to Uniclass, COBie and SFG20&rdquo; can mean much more than this project does.</p>
+<p><strong>Uniclass</strong> is a column on <code>dim_asset</code> and on the COBie components. The pipeline checks the shape of the code with a regex. Nothing more.</p>
+<div class="hl"><pre><span></span><code><span class="n">UNICLASS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^Ss_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">(-\d+)?$&quot;</span><span class="p">)</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">UNICLASS_RE</span><span class="p">)</span>
+<span class="n">bad_uni</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_uni</span><span class="p">):</span>
+    <span class="n">bad_uni</span> <span class="o">=</span> <span class="n">bad_uni</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;quarantine_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bad_uniclass:&quot;</span> <span class="o">+</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span>
+    <span class="n">bad_uni</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">QUAR</span> <span class="o">/</span> <span class="s2">&quot;assets_bad_uniclass.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The repo has no Uniclass lookup table. A code like <code>Ss_99_99_99</code> would pass, because it has the right shape even though it isn&rsquo;t a real entry. Only the Systems (<code>Ss</code>) table is accepted. The generator draws from five fixed sample codes, and I haven&rsquo;t checked them against the published Uniclass tables.</p>
+<p><strong>COBie</strong> is treated as a completeness contract. A component row must have <code>cobie_type</code>, <code>component_id</code> and <code>serial_number</code> filled in, and a well-formed Uniclass code. Passing rows go to <code>ref_cobie</code>, which keeps <code>asset_id</code> but isn&rsquo;t declared as a foreign key in the schema. The project ingests one flat Component-style CSV, not a full COBie workbook with its Facility, Floor, Space, Type and Component sheets.</p>
+<p><strong>SFG20</strong> is the thinnest of the three. <code>dim_asset.sfg20_schedule</code> is a text column with values like <code>AHU-01</code> or <code>LIFT-03</code>, and the only rule is that it isn&rsquo;t empty:</p>
+<div class="hl"><pre><span></span><code><span class="n">m</span> <span class="o">&amp;=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;sfg20_schedule&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">len</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</code></pre></div>
+
+<p>These are invented identifiers, not real SFG20 schedule references. The repo stores no task frequencies and computes no due dates from SFG20. The column is used downstream: <code>vw_compliance_open</code> groups open work orders by it, and the anomaly script lists the SFG20 schedule of each suspect HVAC asset. In practice it works as a label, not a reference to a maintenance regime.</p>
+<p><strong>HESA</strong> space types are a whitelist in Python, <code>{"OFF", "LAB", "LEC", "LIB", "STO"}</code>. In <code>schema.sql</code> the column is just <code>TEXT NOT NULL</code>, with no CHECK constraint.</p>
+<h2 id="decision-1-quarantine-dont-crash">Decision 1: quarantine, don&rsquo;t crash<a class="h-anchor" href="#decision-1-quarantine-dont-crash" title="Permanent link">#</a></h2>
+<p><code>validate/checks.py</code> always exits 0. Each rule splits a table into a pass set, which goes to <code>data/silver/</code>, and a fail set, which goes to <code>data/quarantine/</code>. The warehouse is built only from silver.</p>
+<p>I chose this because in estates data a broken row is usually a conversation with a contractor, not a bug. Stopping the whole daily load because 8 assets have a bad code would hold back 107 good ones. The rejected rows stay as CSVs that someone can send back.</p>
+<p>The trade-off is that a pipeline that never fails can hide a bad day. Nothing in the repo alerts when the quarantine count jumps, and the Power BI spec only plans a &ldquo;quarantined rows by batch_id&rdquo; trend after two or more runs. I also found a bug while writing this. The two dedicated asset files (<code>assets_bad_uniclass.csv</code>, <code>assets_orphan_space.csv</code>) fill in <code>quarantine_reason</code>, but the generic <code>*_fails.csv</code> files written by <code>_split()</code> leave that column empty, because the code writes a placeholder:</p>
+<div class="hl"><pre><span></span><code><span class="n">fails</span><span class="p">[</span><span class="n">reason_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">fails</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reason_col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>  <span class="c1"># placeholder</span>
+</code></pre></div>
+
+<p>So <code>cobie_components_fails.csv</code> tells you which rows failed but not why.</p>
+<h2 id="decision-2-validate-in-dependency-order">Decision 2: validate in dependency order<a class="h-anchor" href="#decision-2-validate-in-dependency-order" title="Permanent link">#</a></h2>
+<p>Rules run in key order: spaces first, then assets against <em>surviving</em> spaces, then work orders against <em>surviving</em> assets.</p>
+<div class="hl"><pre><span></span><code><span class="n">asset_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">assets_ok</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">])</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">wo</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">asset_ids</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">wo</span><span class="p">[</span><span class="s2">&quot;cost_gbp&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+<p>This means the star schema can&rsquo;t contain a work order pointing at a quarantined asset, so joins in Power BI won&rsquo;t drop rows silently. The cost is that rejections cascade. One bad asset takes all its work orders with it. In this run, 13 assets were quarantined and 13 work orders followed them. Losing the asset is the right result. Losing the maintenance history may not be, and a real team would probably want those work orders held, not dropped.</p>
+<h2 id="decision-3-sqlite-and-a-flat-star-not-a-full-bim-model">Decision 3: SQLite and a flat star, not a full BIM model<a class="h-anchor" href="#decision-3-sqlite-and-a-flat-star-not-a-full-bim-model" title="Permanent link">#</a></h2>
+<p>I loaded into SQLite with a hand-written <code>schema.sql</code>, and the comment says it is &ldquo;SQLite + Postgres compatible&rdquo;. Standards codes are plain attributes on <code>dim_asset</code>, not dimensions of their own. That keeps the model small enough to open in DB Browser or connect to Power BI over ODBC, and it means everything runs on a laptop.</p>
+<p>The trade-offs are real:</p>
+<ul>
+<li>There is no <code>dim_uniclass</code> or <code>dim_sfg20</code>, so there are no descriptions, no hierarchy roll-up (system → subgroup → object) and no maintenance frequencies to report against.</li>
+<li>There is no date dimension. Dates are text columns, and <code>vw_energy_intensity</code> takes the day with <code>substr(e.timestamp, 1, 10)</code>.</li>
+<li>SQLite doesn&rsquo;t enforce the <code>REFERENCES</code> clauses unless foreign keys are turned on, and the build script doesn&rsquo;t turn them on. Integrity rests on the Python checks.</li>
+</ul>
+<p>The views use correlated subqueries rather than joins on purpose, so asset counts don&rsquo;t fan out across spaces:</p>
+<div class="hl"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_name</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">floor_area_m2</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_space</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rooms</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_asset</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">condition_grade</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="s1">&#39;D&#39;</span><span class="p">))</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">backlog_assets</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">dim_building</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These are the counts from the committed run, read from the CSVs and <code>estates.db</code>. The generator injects bad rows on purpose, for example <code>"BAD-CODE" if i % 17 == 0</code> and orphan space <code>S9999</code> every 20th asset.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Raw rows</th>
+<th>Loaded</th>
+<th>Quarantined</th>
+<th>Main reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>assets → <code>dim_asset</code></td>
+<td>120</td>
+<td>107</td>
+<td>13</td>
+<td>8 bad Uniclass, 6 orphan space (1 overlap)</td>
+</tr>
+<tr>
+<td>COBie components → <code>ref_cobie</code></td>
+<td>60</td>
+<td>56</td>
+<td>4</td>
+<td>missing serial number</td>
+</tr>
+<tr>
+<td>work orders → <code>fact_workorder</code></td>
+<td>150</td>
+<td>137</td>
+<td>13</td>
+<td>asset not in silver</td>
+</tr>
+<tr>
+<td>space surveys → <code>fact_space_use</code></td>
+<td>600</td>
+<td>595</td>
+<td>5</td>
+<td>occupied &gt; booked hours</td>
+</tr>
+<tr>
+<td>statutory tests → <code>fact_compliance</code></td>
+<td>16</td>
+<td>15</td>
+<td>1</td>
+<td>unparseable due date</td>
+</tr>
+<tr>
+<td>spaces / buildings / condition / BMS</td>
+<td>60 / 3 / 15 / 1,008</td>
+<td>all</td>
+<td>0</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>COBie completeness comes out at 93.3% (56 of 60). The SFG20 and condition-grade rules rejected nothing, because the generator always fills those fields in. They exist, but this data never exercises them. The net zero step produces 42 building-days of HDD-baselined energy, 1 anomaly (the injected 220 kWh spike in B02) and 3 candidate HVAC assets for it.</p>
+<div class="admonition note">
+<p class="admonition-title">Testing is thin</p>
+<p><code>tests/test_checks.py</code> holds one smoke test. It regenerates data, runs ingest and validation, and asserts that at least one asset was quarantined and that COBie completeness is below 100%. It shows the pipeline runs end to end. It doesn&rsquo;t test each rule on its own.</p>
+</div>
+<p>When I queried the warehouse, I also found a gap the rules don&rsquo;t cover. The generator gives each asset a random <code>building_id</code> that doesn&rsquo;t depend on its space, and 65 of the 107 loaded assets sit in a space that belongs to a different building. No check compares <code>dim_asset.building_id</code> with <code>dim_space.building_id</code>, so building-level counts in <code>vw_emr_summary</code> aren&rsquo;t consistent with the space hierarchy.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Reference tables instead of regexes.</strong> Load the published Uniclass Ss table and a real SFG20 schedule extract as <code>dim_uniclass</code> and <code>dim_sfg20</code>, then validate by lookup. That gives descriptions, hierarchy roll-ups and task frequencies, so SFG20 compliance becomes &ldquo;PPM done within its interval&rdquo; and not &ldquo;column not empty&rdquo;.</li>
+<li><strong>Fix the quarantine reasons.</strong> Every rule should write its own reason code, so each fail file can be sent back to whoever supplied it.</li>
+<li><strong>Derive, don&rsquo;t duplicate.</strong> Take <code>building_id</code> for an asset from its space, or add a consistency rule. Turn on <code>PRAGMA foreign_keys</code> so SQLite enforces the schema too.</li>
+<li><strong>One unit test per rule</strong>, with small hand-built fixtures, plus an alert when the quarantine rate goes over a threshold.</li>
+<li><strong>Full COBie ingest.</strong> Read a multi-sheet COBie workbook and check cross-sheet references (Component → Type → Space), which is where real handover data tends to break.</li>
+</ol>
+<p>The case page with the architecture diagram is here: <a href="../projects/digital-estates.html">Digital Estates Platform case study</a>. The case page doesn&rsquo;t link a public repository yet.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html" data-title="Modeling estates data to Uniclass, COBie and SFG20">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="fail-open-nightly-recommender.html"><small>← Newer</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+          <a class="post-pager-next" href="estates-lakehouse-zero-loss.html"><small>Older →</small><b>8/8 sources, zero loss: a lakehouse that proves itself</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

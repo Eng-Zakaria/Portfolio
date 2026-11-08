@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Reddit Spark Pipeline — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="7-stage PySpark ETL pipeline with medallion architecture. Engagement scoring UDFs, window functions for ranking, broadcast joins for enrichment, partitioned Parquet output.">
+  <meta name="description" content="Personal 7-stage PySpark batch pipeline over daily top posts from 10 subreddits: bronze/silver/gold Parquet, engagement scoring, rank and dense_rank window functions, a broadcast join for enrichment, partitioned output.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -74,7 +74,7 @@
       <div class="sec-label">// project case study</div>
       <h1>Reddit Spark Pipeline</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        7-stage PySpark ETL pipeline with medallion architecture for Reddit data analysis.
+        7-stage PySpark batch pipeline with a bronze/silver/gold layout over daily top posts from 10 subreddits.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -83,7 +83,11 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Timeline</span>
-          <span class="meta-value">2025</span>
+          <span class="meta-value">2026</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Context</span>
+          <span class="meta-value">Personal Portfolio Project</span>
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
@@ -101,15 +105,16 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/reddit-medallion-pyspark.html">Read the write-up →</a>
     </div>
 
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        The client needed to analyze Reddit community engagement patterns across multiple subreddits. Raw Reddit data contained inconsistencies in timestamps, nested comments, and varied engagement metrics that required sophisticated processing.
+        I built this as a personal portfolio project to practise the core PySpark patterns end to end on real, messy data. The question it answers is simple: which posts and communities drive engagement across a set of subreddits, and when?
       </p>
       <p>
-        Key challenges included handling large volumes of unstructured JSON data, computing engagement scores, and providing ranked content analysis at scale.
+        Each run calls one endpoint, <code>/r/{sub}/top.json?t=day&amp;limit=100</code>, for 10 subreddits, so a run handles up to about 1,000 posts on Spark in <code>local[*]</code> mode. Comments are not ingested. The raw JSON still needs work: missing or deleted authors, null scores, epoch timestamps and duplicate post IDs.
       </p>
     </section>
 
@@ -125,15 +130,15 @@
       <div class="stage-flow">
         <span class="stage-tag">1. Ingestion</span>
         <span class="stage-arrow">→</span>
-        <span class="stage-tag">2. Validation</span>
+        <span class="stage-tag">2. Transform</span>
         <span class="stage-arrow">→</span>
-        <span class="stage-tag">3. Enrichment</span>
+        <span class="stage-tag">3. Aggregations</span>
         <span class="stage-arrow">→</span>
-        <span class="stage-tag">4. Scoring</span>
+        <span class="stage-tag">4. Windows</span>
         <span class="stage-arrow">→</span>
-        <span class="stage-tag">5. Ranking</span>
+        <span class="stage-tag">5. Enrichment</span>
         <span class="stage-arrow">→</span>
-        <span class="stage-tag">6. Aggregation</span>
+        <span class="stage-tag">6. Optimization</span>
         <span class="stage-arrow">→</span>
         <span class="stage-tag">7. Output</span>
       </div>
@@ -142,31 +147,30 @@
     <section class="content-section">
       <h3>Implementation Details</h3>
       <ul>
-        <li><strong>Engagement Scoring UDFs:</strong> Custom functions combining upvotes, comments, awards, and engagement velocity</li>
-        <li><strong>Window Functions:</strong> Ranked content within subreddits using ROW_NUMBER(), RANK(), and PARTITION BY</li>
-        <li><strong>Broadcast Joins:</strong> Joined subreddit metadata with millions of posts efficiently</li>
-        <li><strong>Partitioned Output:</strong> Parquet files partitioned by date and subreddit for optimal query performance</li>
-        <li><strong>Data Quality:</strong> Implemented checks for null values, duplicates, and timestamp consistency</li>
+        <li><strong>Medallion Layers:</strong> Bronze holds the raw posts and silver holds the cleaned, typed posts. Gold is the silver data re-partitioned by subreddit and day of week.</li>
+        <li><strong>Engagement Score:</strong> <code>score + 3 × num_comments</code>, written with built-in column expressions rather than a UDF</li>
+        <li><strong>UDFs:</strong> Python UDFs handle topic tagging and array slicing, where built-in functions do not fit</li>
+        <li><strong>Window Functions:</strong> <code>rank()</code> and <code>dense_rank()</code> over windows partitioned by subreddit, plus rolling averages</li>
+        <li><strong>Broadcast Join:</strong> About 1,000 posts joined against a 10-row subreddit lookup table, broadcast so the small side is not shuffled</li>
+        <li><strong>Partitioned Output:</strong> Gold Parquet partitioned by subreddit and day of week</li>
+        <li><strong>Data Quality:</strong> Filters for null titles, scores, authors and timestamps, removal of deleted and bot authors, and de-duplication on post ID</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Performance Optimizations</h3>
       <ul>
-        <li>Partitioned data by subreddit and date for faster queries</li>
-        <li>Used broadcast joins for small reference tables (subreddit metadata)</li>
-        <li>Implemented data skew handling for popular subreddits</li>
-        <li>Optimized partitioning strategy for common query patterns</li>
+        <li>Re-partitioned silver data by subreddit so per-subreddit work stays within one partition</li>
+        <li>Used a broadcast join for the small subreddit lookup table</li>
+        <li>Compared cache and persist, and read the explain plans to check what Spark actually does</li>
+        <li>Used coalesce to control the number of output files</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The pipeline processes over 10M Reddit posts per day with full lineage from raw to gold layer. The engagement scoring system provides actionable insights for community managers and content strategists.
-      </p>
-      <p>
-        All data is stored in partitioned Parquet format with metadata tables for easy querying and integration with BI tools.
+        Each stage runs on its own and moves a day's top posts from raw JSON to partitioned gold Parquet. Along the way it ranks posts within each subreddit, aggregates engagement by community and hour, and tags topics. The data is small. The point of the project is applying each Spark pattern correctly, not processing at scale.
       </p>
     </section>
   </main>

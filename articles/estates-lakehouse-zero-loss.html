@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>8/8 sources, zero loss: a lakehouse that proves itself | Mohammed Zakaria</title>
+  <meta name="description" content="How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html">
+  <meta property="og:title" content="8/8 sources, zero loss: a lakehouse that proves itself | Mohammed Zakaria">
+  <meta property="og:description" content="How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "8/8 sources, zero loss: a lakehouse that proves itself", "description": "How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html", "wordCount": 1634, "keywords": "Lakehouse, Data Quality, Python"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Lakehouse</span><span class="post-tag">Data Quality</span><span class="post-tag">Python</span></div>
+        <h1>8/8 sources, zero loss: a lakehouse that proves itself</h1>
+        <p class="post-lede">How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-quarantine-not-filter">Decision 1: quarantine, not filter</a></li>
+<li><a href="#decision-2-reconcile-at-the-grain-the-data-actually-has">Decision 2: reconcile at the grain the data actually has</a></li>
+<li><a href="#decision-3-idempotency-by-file-hash">Decision 3: idempotency by file hash</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a portfolio project, and every row in it is synthetic. The inputs come from <code>campus_synth</code>, a generator I wrote that produces deliberately messy campus estates exports (merged Excel title rows, mixed date formats, duplicate rows, stuck sensors) along with a known ground truth. No real client, building or person is involved. The question I wanted the lakehouse to answer is simple: can I prove that every raw row either reached the clean layer or was put aside with a reason, so none were silently dropped?</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Estates data shows up as a pile of unrelated extracts. In this project there are eight: a space register (multi-sheet XLSX), CAFM work orders, two suppliers&rsquo; half-hourly meter files (one long, one wide), BMS trend logs (wide), statutory inspections (XLSX), a timetable, and 15-minute occupancy sensors (Parquet).</p>
+<p>Each one breaks in its own way. Dates come as <code>dd/mm/yyyy</code>, ISO strings or Excel serials. Meter data is in UK local time, so the clocks-change days have 46 or 50 half-hours instead of 48. Building names don&rsquo;t match between systems. A normal cleaning script deals with all this by filtering, and filtering is where rows vanish. If a dashboard total later looks wrong, nobody can say whether the source was short or the pipeline lost something.</p>
+<p>So I set myself one rule for P01: every row has to be accounted for, and a test has to show it.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The design is a two-layer medallion with a quarantine next to silver:</p>
+<div class="hl"><pre><span></span><code>data/raw/*  (xlsx / csv / parquet, local time)
+    |
+    |  load_bronze(): sha256 the file; skip if already loaded
+    v
+bronze/&lt;source&gt;/ingest_date=YYYY-MM-DD/*.parquet
+    all columns as strings + _ingest_id, _source_system, _source_file,
+    _loaded_at, _row_number, _row_hash
+    |
+    |  silver_&lt;source&gt;.py: parse, type, UTC, dedupe, map refs
+    +----------------------------+
+    v                            v
+silver/&lt;source&gt;/silver.parquet   quarantine/&lt;source&gt;/quarantine.parquet
+typed, UTC, deduped              original values + _reject_reason
+    |
+    v
+reconciliation.json   raw == bronze  AND  silver + quarantine == bronze
+    |
+    v
+DuckDB queries, dbt gold marts (P04)
+</code></pre></div>
+
+<p>Bronze never changes a value. It reads everything as text, adds six audit columns and writes Parquet partitioned by ingest date. Silver handles the typing. Any row that fails a rule is moved into quarantine with a reason string, never deleted. Storage is local, MinIO or S3 behind one <code>STORAGE</code> switch, and Terraform for an S3/Glue/Athena deployment is in the repo, though I never applied it.</p>
+<h2 id="decision-1-quarantine-not-filter">Decision 1: quarantine, not filter<a class="h-anchor" href="#decision-1-quarantine-not-filter" title="Permanent link">#</a></h2>
+<p>Silver code is only allowed to drop a row by moving it to quarantine. All the transforms share one helper:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">quarantine</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split valid/quarantine. Quarantine gets _reject_reason; valid drops the mask.&quot;&quot;&quot;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">q</span><span class="p">[</span><span class="s2">&quot;_reject_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reason</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">q</span>
+</code></pre></div>
+
+<p>Duplicates go through the same path (<code>duplicate:meter_id+local_time</code>, for example), and so do nulls, unparseable or future dates, negative readings, unmapped categories and buildings (with rapidfuzz suggestions at a score of 60 or more), orphan references, and work orders whose completion date is on or before the raised date.</p>
+<p>The trade-off is that you end up with two tables per source instead of one, and quarantine is stored as strings because rows rejected at different stages carry different types. What you get back is that the loss check comes down to addition. It also gave me a rule for dates: an ambiguous or nonexistent London local time becomes <code>NaT</code> and goes to quarantine. I never guess which side of the clock change a reading belonged to.</p>
+<h2 id="decision-2-reconcile-at-the-grain-the-data-actually-has">Decision 2: reconcile at the grain the data actually has<a class="h-anchor" href="#decision-2-reconcile-at-the-grain-the-data-actually-has" title="Permanent link">#</a></h2>
+<p>The check itself is short:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reconcile_counts</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">bronze</span><span class="p">,</span> <span class="n">silver</span><span class="p">,</span> <span class="n">quarantine</span><span class="p">,</span> <span class="n">grain</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">):</span>
+    <span class="n">ok_raw</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="n">ok_sq</span> <span class="o">=</span> <span class="n">silver</span> <span class="o">+</span> <span class="n">quarantine</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;unexplained&quot;</span><span class="p">:</span> <span class="n">bronze</span> <span class="o">-</span> <span class="n">silver</span> <span class="o">-</span> <span class="n">quarantine</span><span class="p">,</span>
+            <span class="s2">&quot;pass&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ok_raw</span> <span class="ow">and</span> <span class="n">ok_sq</span><span class="p">)}</span>
+</code></pre></div>
+
+<p>&ldquo;Raw&rdquo; means counting the source file independently of the loader. For CSV that&rsquo;s data lines minus the header. For XLSX it&rsquo;s rows per sheet minus three for the space register (two merged title rows and a header) and minus one for the others. For Parquet it&rsquo;s <code>len()</code>.</p>
+<p>That works until a source changes shape. Supplier B&rsquo;s meter file has one row per meter per day with columns <code>HH01</code>, <code>HH02</code> and so on, and silver unpivots it to one row per half-hour. Comparing rows there would always fail. So for the two wide sources (supplier B and BMS trends) the check compares cells: bronze rows times value columns against silver plus quarantine rows.</p>
+<p>That&rsquo;s a real trade-off. A cell-level check is only as good as the code that counts the cells, and I come back to that below.</p>
+<h2 id="decision-3-idempotency-by-file-hash">Decision 3: idempotency by file hash<a class="h-anchor" href="#decision-3-idempotency-by-file-hash" title="Permanent link">#</a></h2>
+<p><code>load_bronze</code> hashes each raw file with SHA-256 and checks it against a bronze manifest. If the same source and hash are already there, the file is skipped and nothing new is written. A corrected file has a new hash, so it gets a new <code>_ingest_id</code>. Without this, running the ingest twice would double bronze, and the raw-equals-bronze check would fail for a reason that has nothing to do with data quality. The cost is that bronze state is cumulative. Whatever sits in the bronze folder counts toward the totals, and that turned out to matter.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>The acceptance run on 4 October 2026 (small profile, seed 42, recorded in <code>docs/ACCEPTANCE_P01.md</code>) produced this <code>reconciliation.json</code>, with every source at <code>pass: true</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Grain</th>
+<th style="text-align: right;">Raw</th>
+<th style="text-align: right;">Bronze</th>
+<th style="text-align: right;">Silver</th>
+<th style="text-align: right;">Quarantine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space_register</td>
+<td>row</td>
+<td style="text-align: right;">501</td>
+<td style="text-align: right;">501</td>
+<td style="text-align: right;">495</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>cafm_workorders</td>
+<td>row</td>
+<td style="text-align: right;">6,039</td>
+<td style="text-align: right;">6,039</td>
+<td style="text-align: right;">4,171</td>
+<td style="text-align: right;">1,868</td>
+</tr>
+<tr>
+<td>meter_hh_supplierA</td>
+<td>row</td>
+<td style="text-align: right;">34,419</td>
+<td style="text-align: right;">34,419</td>
+<td style="text-align: right;">33,866</td>
+<td style="text-align: right;">553</td>
+</tr>
+<tr>
+<td>meter_hh_supplierB</td>
+<td>cell</td>
+<td style="text-align: right;">732 rows</td>
+<td style="text-align: right;">35,136 cells</td>
+<td style="text-align: right;">34,349</td>
+<td style="text-align: right;">787</td>
+</tr>
+<tr>
+<td>bms_trends</td>
+<td>cell</td>
+<td style="text-align: right;">8,640 rows</td>
+<td style="text-align: right;">172,800 cells</td>
+<td style="text-align: right;">172,780</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>statutory_inspections</td>
+<td>row</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>timetable</td>
+<td>row</td>
+<td style="text-align: right;">12,566</td>
+<td style="text-align: right;">12,566</td>
+<td style="text-align: right;">12,347</td>
+<td style="text-align: right;">219</td>
+</tr>
+<tr>
+<td>sensors</td>
+<td>row</td>
+<td style="text-align: right;">779,933</td>
+<td style="text-align: right;">779,933</td>
+<td style="text-align: right;">773,974</td>
+<td style="text-align: right;">5,959</td>
+</tr>
+</tbody>
+</table></div>
+<p>That&rsquo;s eight out of eight with zero unexplained rows or cells. The ingest took 34–35 seconds. A second <code>run-all</code> reported all eight bronze files as <code>skipped</code> and the silver counts didn&rsquo;t change. On the clocks-change day, 2026-03-29, each meter produced 46 unique UTC periods. The platform tests (7 of them) cover bronze idempotency, silver rules, cumulative-register rollover, DST, reconciliation, and a check that planted invalid rows land in quarantine with a reason.</p>
+<p>Strictly, this proves that nothing went missing. It does not prove the rows are correct. Correctness is handled downstream: P03 runs 133 YAML data-quality checks against the planted ground truth, and P04 reconciles silver to the dbt marts. In the P04 acceptance doc, for example, space went 495 to 495, and meter half-hours went 68,119 to 67,822 (Δ −297, the defect meters).</p>
+<div class="admonition note">
+<p class="admonition-title">What the current working copy says</p>
+<p>When I reopened the lakehouse folder while writing this, the <code>reconciliation.json</code> on disk was from a later run on 17 October, and it shows <strong>6/8</strong>, not 8/8. Both failures trace back to the check, not to lost data.</p>
+<p><code>meter_hh_supplierA</code>: raw 34,419 vs bronze 34,420. Bronze also contains a one-row <code>_corrupt</code> file left over from the P02 Airflow schema-drift demo, and that file isn&rsquo;t in <code>data/raw</code>. Silver plus quarantine still equals bronze (33,866 + 554).</p>
+<p><code>bms_trends</code>: a second BMS file (288 rows, 294 points, exported by the P15 IoT project) now sits next to the original (8,640 rows, 20 points). The counter concatenates the two bronze frames and multiplies all 8,928 rows by the 314 point columns in the union, which gives 2,803,392 &ldquo;cells&rdquo; when most of them never existed. The real total is 8,640 × 20 + 288 × 294 = 257,472, which is exactly silver plus quarantine (257,215 + 257).</p>
+</div>
+<p>So the headline holds for the acceptance run, but the check has two weak points I hadn&rsquo;t tested. Cell counting assumes every bronze file for a source has the same columns. And the reconciliation reads whatever bronze happens to contain, including state left behind by other demos.</p>
+<p>I also found that <code>ingest.cli reconcile</code> writes the JSON and prints it, but always exits with code 0. The README says <code>make ci</code> fails on unexplained loss. In practice CI runs the reconciliation and keeps going whatever the result. The data-quality gate after it is what actually fails builds.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Make reconciliation a gate.</strong> Exit non-zero when any source has <code>pass: false</code>, and add a CI step that asserts on <code>reconciliation.json</code> rather than just generating it.</li>
+<li><strong>Count cells per file.</strong> Compute value cells for each bronze file before concatenating, or count only non-null cells, so a new wide schema can&rsquo;t inflate the expected total.</li>
+<li><strong>Reconcile per file, not per folder.</strong> Key the check on the bronze manifest (file, sha256, rows) so a stray demo file shows up as its own line and doesn&rsquo;t skew the source total.</li>
+<li><strong>Add a hash-level check.</strong> Bronze already stores a <code>_row_hash</code>. The next step is to carry it into silver and quarantine, so each source row can be traced to exactly one destination row. Counts can balance even when one row is lost and another is duplicated. Hashes can&rsquo;t.</li>
+<li><strong>Replace the truth-based crosswalk.</strong> The building crosswalk reads the generator&rsquo;s truth table at ingest. A real deployment would read a master-data table instead.</li>
+</ul>
+<p>The full project, including the dbt marts, data-quality framework and the other demos, is on the <a href="../projects/estates-data-platform.html">Estates Data Portfolio case page</a>, and the code is on <a href="https://github.com/Eng-Zakaria/estates-data-portfolio">GitHub</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html" data-title="8/8 sources, zero loss: a lakehouse that proves itself">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="estates-warehouse-governed.html"><small>← Newer</small><b>Modeling estates data to Uniclass, COBie and SFG20</b></a>
+          <a class="post-pager-next" href="deterministic-gates-before-llm.html"><small>Older →</small><b>Deterministic Gates Before the LLM</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

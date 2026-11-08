@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client | Mohammed Zakaria</title>
+  <meta name="description" content="How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html">
+  <meta property="og:title" content="Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client | Mohammed Zakaria">
+  <meta property="og:description" content="How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client", "description": "How I turned a clinic's daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html", "wordCount": 1838, "keywords": "ETL, Data Quality, MySQL"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">ETL</span><span class="post-tag">Data Quality</span><span class="post-tag">MySQL</span></div>
+        <h1>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</h1>
+        <p class="post-lede">How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-a-stable-row-key-not-row-position">Decision 1: a stable row key, not row position</a></li>
+<li><a href="#decision-2-match-staff-never-create-them">Decision 2: match staff, never create them</a></li>
+<li><a href="#decision-3-check-everything-block-almost-nothing">Decision 3: check everything, block almost nothing</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Client.</strong> This is freelance work for a paying client, a multi-floor medical clinic. The code and data are private, so there is no repo link. The examples below are sanitized and show only table and column names.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The clinic&rsquo;s data entry team records every conversation, order, visit and upsell in Excel. Each day I received the whole workbook again, refreshed, not just the new rows. The owners wanted Power BI reports on revenue, per-staff contribution and patient follow-ups.</p>
+<p>Three things made this harder than &ldquo;load Excel into a database&rdquo;:</p>
+<ul>
+<li><strong>Full re-sends.</strong> A plain <code>INSERT</code> each day would duplicate every order once per day. The first MySQL version&rsquo;s README says it directly: append &ldquo;isn&rsquo;t literally append&rdquo;.</li>
+<li><strong>Hand-typed staff names.</strong> The same person can be the salesperson on one order, the upseller on another, and the person who performed the treatment on a third. Names are free text, so typos and spelling variants are normal.</li>
+<li><strong>Multi-value cells.</strong> One order can have several departments (split on <code>/</code>), several services and performers (split on <code>|</code>), and up to two upsells as column pairs plus an overflow cell in <code>Name:Amount/Name:Amount</code> format.</li>
+</ul>
+<p>I built this in two steps. The first was a MySQL sync for one floor. It upserted keyed tables and deleted and re-inserted child rows for every order in the file, all inside one transaction. The second, which this article covers, is a PostgreSQL warehouse (<code>clinics_dw</code>) with a six-stage daily ETL, designed so a second floor could load into the same database later.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The entry sheet has 29 required columns. The warehouse is a star schema with five dimensions, one fact table at order grain, four bridge tables for the multi-value fields, and one operational table that is not part of the star.</p>
+<div class="hl"><pre><span></span><code> daily .xlsx (full re-send)
+        |
+        v
+ [1/6] FILE PREFLIGHT ....... readable? 29 expected columns present?
+ [2/6] DB SCHEMA CHECK ...... live information_schema vs EXPECTED_SCHEMA
+ [3/6] DATA QUALITY SCAN .... critical nulls, bad Status_Stage /
+                              Order_Sequence, duplicate Entry_ID
+ [4/6] DIFF REPORT .......... new / changed / unchanged / DB-only
+        |                     (--dry-run stops here: no writes)
+        |  any new or changed rows?
+        |-- no --&gt; skip backup and load
+        v
+ [5/6] BACKUP ............... timestamped pg_dump
+ [6/6] LOAD ................. upsert by source_row_id, rebuild bridges,
+        |                     link journey chains
+        v
+ PostgreSQL clinics_dw
+   dim_clinic  dim_staff  dim_patient  dim_department  dim_service
+   fact_orders
+     +-- fact_order_department   +-- fact_order_service
+     +-- fact_order_performer    +-- fact_order_upsell
+   etl_unmatched_staff (operational log)
+        |
+        v
+ Power BI (role-playing staff relationships, patient drillthrough)
+</code></pre></div>
+
+<p>The portfolio line for this project lists five stages: preflight, quality checks, diff, backup, load. The code has six. The one that gets left out is stage 2, a schema drift check. It reads <code>information_schema.columns</code> for the <code>public</code> schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.</p>
+<p>What each stage actually does:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it checks or does</th>
+<th>Does it stop the run?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. File preflight</td>
+<td>File exists, parses, has the expected columns, is not empty</td>
+<td>Only if the file can&rsquo;t be read</td>
+</tr>
+<tr>
+<td>2. DB schema check</td>
+<td>Missing tables or columns vs the script&rsquo;s expectations</td>
+<td>No, it logs warnings</td>
+</tr>
+<tr>
+<td>3. Data quality scan</td>
+<td>Nulls in 3 critical fields (<code>Phone</code>, <code>Order_Date</code>, <code>Status_Stage</code>), invalid status or sequence, duplicate <code>Entry_ID</code>; warnings for 4 important fields. Writes <code>data_quality_report.csv</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>4. Diff report</td>
+<td>Compares the file to <code>fact_orders</code> for this clinic</td>
+<td>Stops if <code>--dry-run</code></td>
+</tr>
+<tr>
+<td>5. Backup</td>
+<td>Full <code>pg_dump</code> before any write</td>
+<td>Skipped if nothing is pending; a failure only logs a warning</td>
+</tr>
+<tr>
+<td>6. Load</td>
+<td>Upsert orders, rebuild bridge rows, resolve journey links, export unmatched staff</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-a-stable-row-key-not-row-position">Decision 1: a stable row key, not row position<a class="h-anchor" href="#decision-1-a-stable-row-key-not-row-position" title="Permanent link">#</a></h2>
+<p>Daily reruns are only safe if the ETL can recognise a row it has seen before. I added an <code>Entry_ID</code> column to the sheet and use it as the natural key. When it is missing, the code falls back to a hash:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_source_row_id</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="n">entry_id</span> <span class="o">=</span> <span class="n">clean_str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Entry_ID&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">entry_id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;eid:</span><span class="si">{</span><span class="n">entry_id</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">fallback_parts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">clean_phone</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Phone&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">to_date</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Date&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">clean_str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Time&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Sequence&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;1&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fallback_parts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;hash:&quot;</span> <span class="o">+</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">32</span><span class="p">]</span>
+</code></pre></div>
+
+<p><code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so the load updates existing orders instead of duplicating them. Bridge rows have no natural key, so for each order the load deletes its department, service, performer and upsell rows and inserts the current ones. That is how corrections in the sheet reach the database, not just new rows.</p>
+<p>The trade-off is in the fallback. If anyone edits the phone, date or time on a row with no <code>Entry_ID</code>, its hash changes and the row looks new. The quality scan flags every missing <code>Entry_ID</code> as a warning for that reason.</p>
+<p>The same key drives the diff. It reports four buckets, and the fourth is the one I care about most: orders that are in the database but missing from today&rsquo;s file. The ETL never deletes those. A row disappearing from a hand-edited sheet could be a real removal or an accident, and I did not want an ETL to make that call silently.</p>
+<h2 id="decision-2-match-staff-never-create-them">Decision 2: match staff, never create them<a class="h-anchor" href="#decision-2-match-staff-never-create-them" title="Permanent link">#</a></h2>
+<p>This is where the two versions differ most. The later MySQL warehouse loader auto-creates unknown staff with <code>group_name = 'Unassigned'</code> so rows stop erroring. In the PostgreSQL version I went the other way. <code>dim_staff</code> is maintained by hand in a seed file, every staff member has one of six groups enforced by a <code>CHECK</code> constraint, and the ETL only looks names up:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;INSERT INTO etl_unmatched_staff (clinic_id, role_context, raw_name, source_row_id)</span>
+<span class="sd">       VALUES (%s, %s, %s, %s)&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clinic_id</span><span class="p">,</span> <span class="n">role_context</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">source_row_id</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;unmatched_staff&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>The order still loads. Only the staff link is <code>NULL</code>, and the raw name, the role it appeared in, and the source row go into a review table that is exported to CSV after each run. An unknown name is either a typo, where auto-creating would make a ghost employee who splits someone&rsquo;s revenue, or a new hire, who needs a group chosen by a person. Either way it needs a human. The cost is a review queue someone has to work through before per-staff numbers are complete.</p>
+<p>Staff and every other dimension are scoped by <code>clinic_id</code>, with <code>UNIQUE(clinic_id, name)</code> constraints. The same phone at two floors becomes two unrelated patients. That rules out cross-floor patient questions. In exchange, one floor&rsquo;s data can never be miscounted as another&rsquo;s, which mattered more here because staff names collide.</p>
+<h2 id="decision-3-check-everything-block-almost-nothing">Decision 3: check everything, block almost nothing<a class="h-anchor" href="#decision-3-check-everything-block-almost-nothing" title="Permanent link">#</a></h2>
+<p>Only an unreadable file stops the pipeline. Schema drift, critical quality problems and backup failures all log warnings and carry on. Rows with a null critical field still load by default, unless they have no phone at all, because then there is no patient to attach them to. A <code>--drop-null-rows</code> flag excludes them instead, and <code>--dry-run</code> runs stages 1 to 4 so the choice can be made after reading the report.</p>
+<p>I chose this because the client needed numbers every day, and a sheet that is 99% fine should not block a whole day&rsquo;s reporting. The first real runs showed what that costs.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>The ETL logs every run to a rotating file (2 MB per file, 5 files kept). The log has two full runs against the same 4,925-row sheet on the same evening.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Run 1</th>
+<th>Run 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rows in file</td>
+<td>4,925</td>
+<td>4,925</td>
+</tr>
+<tr>
+<td>Rows with critical problems (stage 3)</td>
+<td>18</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Rows with warnings only (stage 3)</td>
+<td>3,316</td>
+<td>3,316</td>
+</tr>
+<tr>
+<td>Diff: new / changed / unchanged / DB-only</td>
+<td>4,925 / 0 / 0 / 0</td>
+<td>4,925 / 0 / 0 / 0</td>
+</tr>
+<tr>
+<td>Backup</td>
+<td>skipped, <code>pg_dump</code> not found</td>
+<td>skipped, <code>pg_dump</code> not found</td>
+</tr>
+<tr>
+<td>Rows processed</td>
+<td>3,867</td>
+<td>4,908</td>
+</tr>
+<tr>
+<td>Errors</td>
+<td>1,058</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Unmatched staff entries</td>
+<td>834</td>
+<td>838</td>
+</tr>
+</tbody>
+</table></div>
+<p>The second run is the one that loaded: 4,908 orders, with 17 rows skipped because they had no usable phone. 838 unmatched staff names went to the review queue.</p>
+<p>The first run is more useful as a lesson. 1,041 of its errors were the same thing: rows breaking the <code>patient_status IN ('new','old')</code> check on <code>fact_orders</code>. Stage 3 never looked at <code>Patient_Status</code>, so the quality scan said nothing and the database caught the problem one row at a time. A quality stage that doesn&rsquo;t mirror the database&rsquo;s constraints is only a partial check.</p>
+<div class="admonition note">
+<p class="admonition-title">Two bugs the logs exposed</p>
+<p><strong>Backup.</strong> <code>backup_database</code> opens the output file before calling <code>pg_dump</code>. When the binary is missing, it logs &ldquo;skipped&rdquo; but leaves an empty, timestamped <code>.sql</code> file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn&rsquo;t one.</p>
+<p><strong>Rollback.</strong> The load runs in one transaction and commits at the end. On a row error it calls <code>conn.rollback()</code> with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1&rsquo;s &ldquo;3,867 processed&rdquo; doesn&rsquo;t mean 3,867 rows reached the database. I can&rsquo;t tell from the log alone how many did.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Savepoint per row,</strong> or commit in batches, so one bad row costs one row. Count inserts only after commit.</li>
+<li><strong>Make the quality stage mirror the schema.</strong> Every <code>CHECK</code> constraint in <code>001_init.sql</code> should have a matching rule in stage 3, with normalisation (case, whitespace) applied before both.</li>
+<li><strong>Make backup a hard gate.</strong> Check for <code>pg_dump</code> in preflight, write to a temp file and rename only on success, and stop the load if there is no backup. Add rotation, which the docs already list as missing.</li>
+<li><strong>Widen the diff.</strong> It compares four fields: <code>status_stage</code>, <code>order_sequence</code>, <code>paid_amount</code> and <code>total_amount</code>. If only a comment or a staff name changes and nothing else in the file does, the run reports nothing to write and skips the load.</li>
+<li><strong>A run-history table</strong> with file name, counts, errors and backup path, so &ldquo;did yesterday&rsquo;s load work&rdquo; becomes a query instead of a log search. Also tests for the small parsers (<code>split_multivalue</code>, <code>parse_overflow_upsells</code>, <code>to_date</code>, <code>to_time</code>), where a silent bug turns into a wrong number in Power BI weeks later.</li>
+</ul>
+<p>The staged structure worked. The dry-run report, the diff buckets and the unmatched-staff queue gave the client and me something concrete to look at before each load. The weak points were in the handoffs between stages, and I only saw them once real data ran through.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html" data-title="Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <span></span>
+          <a class="post-pager-next" href="reddit-medallion-pyspark.html"><small>Older →</small><b>A 7-stage PySpark medallion for Reddit signals</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>A 7-stage PySpark medallion for Reddit signals | Mohammed Zakaria</title>
+  <meta name="description" content="How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html">
+  <meta property="og:title" content="A 7-stage PySpark medallion for Reddit signals | Mohammed Zakaria">
+  <meta property="og:description" content="How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A 7-stage PySpark medallion for Reddit signals", "description": "How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html", "wordCount": 1768, "keywords": "Spark, Data Pipelines, Python"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div>
+        <h1>A 7-stage PySpark medallion for Reddit signals</h1>
+        <p class="post-lede">How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a><ul>
+<li><a href="#stage-by-stage">Stage by stage</a></li>
+</ul>
+</li>
+<li><a href="#decision-1-an-explicit-schema-at-the-bronze-boundary">Decision 1: an explicit schema at the bronze boundary</a></li>
+<li><a href="#decision-2-a-transparent-engagement-formula-in-silver">Decision 2: a transparent engagement formula in silver</a></li>
+<li><a href="#decision-3-trending-means-top-3-by-rank-from-a-single-snapshot">Decision 3: &ldquo;trending&rdquo; means top 3 by rank, from a single snapshot</a></li>
+<li><a href="#smaller-things-worth-knowing">Smaller things worth knowing</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#links">Links</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. The repository has no saved outputs, logs or benchmark files, so this article describes what the code does, not measured results.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted a practice ground for the Spark patterns I use at work: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
+<p>The question the pipeline answers is simple: across a fixed set of subreddits, which posts from the last day got the most engagement, and how does engagement split by community, hour and topic?</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The code comes in two forms. <code>notebooks/01_ingestion.py</code> to <code>07_output.py</code> are standalone scripts, one per stage, each with its own SparkSession and extra diagnostic output. <code>src/pipeline.py</code> collects the same seven stages into functions that <code>main()</code> runs one after another in a single session.</p>
+<div class="hl"><pre><span></span><code> Reddit /r/{sub}/top.json?t=day&amp;limit=100   (10 subreddits, 1 s sleep between calls)
+                     |
+ [1] Ingestion  -&gt; data/bronze/reddit_posts.parquet          (raw, explicit schema)
+                     |
+ [2] Transform  -&gt; data/silver/reddit_posts_clean.parquet    (filtered, deduped, features)
+                     |
+     +---------------+---------------+------------------+
+     |               |               |                  |
+ [3] Aggregations [4] Windows    [5] Enrichment     [6] Optimization
+  leaderboard      rank, lag,     topic UDF +        repartition by
+  hourly volume    rolling avg,   broadcast join     subreddit
+  tier pivot       is_trending    to categories
+     |               |               |                  |
+ data/aggregations data/windows  data/enrichment   data/optimization
+                     |
+ [7] Output     -&gt; data/gold/subreddit=.../day_of_week=.../  (silver, partitioned)
+</code></pre></div>
+
+<p>The diagram shows something the README&rsquo;s layout hides: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
+<p>So &ldquo;medallion&rdquo; fits for bronze and silver. Gold is a re-partitioned copy of silver, not an aggregated or joined layer.</p>
+<h3 id="stage-by-stage">Stage by stage<a class="h-anchor" href="#stage-by-stage" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What the code does</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 Ingestion</td>
+<td><code>requests.get</code> on <code>top.json</code> with <code>t=day</code>, <code>limit=100</code>; flattens 16 fields into <code>POST_SCHEMA</code></td>
+<td>bronze Parquet</td>
+</tr>
+<tr>
+<td>2 Transform</td>
+<td>quality filters, <code>dropDuplicates(["id"])</code>, time features, engagement score, tiers, four flags, text cleanup</td>
+<td>silver Parquet</td>
+</tr>
+<tr>
+<td>3 Aggregations</td>
+<td><code>groupBy</code> leaderboard (avg, sum, count, max), hourly counts, tier-by-subreddit pivot</td>
+<td>3 Parquet tables (2 more in the notebook version)</td>
+</tr>
+<tr>
+<td>4 Windows</td>
+<td><code>rank()</code> by engagement per subreddit, <code>lag</code> on score, 3-row rolling average, <code>is_trending</code></td>
+<td><code>trending_posts.parquet</code></td>
+</tr>
+<tr>
+<td>5 Enrichment</td>
+<td>keyword topic UDF on titles, broadcast join to a 10-row category lookup</td>
+<td><code>enriched_posts.parquet</code></td>
+</tr>
+<tr>
+<td>6 Optimization</td>
+<td><code>repartition(n, "subreddit")</code> where n is the distinct subreddit count; the notebook also times cache vs persist</td>
+<td>repartitioned Parquet, <code>cache_benchmark.csv</code> (notebook only)</td>
+</tr>
+<tr>
+<td>7 Output</td>
+<td>gold write partitioned by subreddit and day of week; the notebook also draws 3 charts</td>
+<td><code>data/gold/</code>, PNGs and CSV (notebook only)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-an-explicit-schema-at-the-bronze-boundary">Decision 1: an explicit schema at the bronze boundary<a class="h-anchor" href="#decision-1-an-explicit-schema-at-the-bronze-boundary" title="Permanent link">#</a></h2>
+<p>Reddit returns a lot of fields per post. I keep 16 and define them up front:</p>
+<div class="hl"><pre><span></span><code><span class="n">POST_SCHEMA</span> <span class="o">=</span> <span class="n">StructType</span><span class="p">([</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;num_comments&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;upvote_ratio&quot;</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;created_utc&quot;</span><span class="p">,</span> <span class="n">LongType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># ... 10 more</span>
+<span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">all_records</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">POST_SCHEMA</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Why:</strong> schema inference on Python dicts can guess different types from one run to the next, for example when a field is null in every row of a sample. A fixed schema makes the bronze files the same shape on every run, and silver can trust it.</p>
+<p><strong>Trade-off:</strong> bronze is not truly raw. Anything I did not list, such as awards, crossposts and media metadata, is gone at ingestion and cannot be replayed later. A stricter medallion would land the JSON response as-is and apply the schema in silver. For a learning project with a 1,000-row ceiling, I chose the simpler path. I would not choose it for a source I could not re-fetch.</p>
+<h2 id="decision-2-a-transparent-engagement-formula-in-silver">Decision 2: a transparent engagement formula in silver<a class="h-anchor" href="#decision-2-a-transparent-engagement-formula-in-silver" title="Permanent link">#</a></h2>
+<p>Silver drops rows that cannot be used: titles shorter than 5 characters, score below 1, authors that are null, <code>[deleted]</code>, <code>[removed]</code> or <code>AutoModerator</code>, and invalid timestamps. Then it adds one score:</p>
+<div class="hl"><pre><span></span><code><span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;num_comments_clean&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">coalesce</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;num_comments&quot;</span><span class="p">),</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">()))</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;num_comments_clean&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="n">COMMENT_WEIGHT</span><span class="p">))</span>  <span class="c1"># weight = 3</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_tier&quot;</span><span class="p">,</span>
+        <span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">50_000</span><span class="p">,</span> <span class="s2">&quot;viral&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">10_000</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1_000</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="s2">&quot;low&quot;</span><span class="p">))</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>It also sets four boolean flags. <code>is_brigaded</code> means <code>upvote_ratio &lt; 0.5</code> and <code>score &gt; 100</code>. <code>is_controversial</code> means more comments than upvotes. <code>is_link_post</code> and <code>is_external_link</code> check <code>is_self</code> and the domain against a short list of Reddit and Imgur hosts.</p>
+<p><strong>Why:</strong> a comment takes more effort than an upvote, so weighting comments three times is a defensible, readable rule. I used built-in <code>F.when</code> expressions instead of the <code>classify_engagement_tier</code> UDF in <code>src/udfs.py</code>, so Spark can optimise them and no Python worker is needed.</p>
+<p><strong>Trade-off:</strong> the weight and the tier cut-offs are my choices, not fitted to data. The same thresholds apply to r/todayilearned and r/datascience, which have very different audience sizes, so almost every datascience post may land in one tier. A per-subreddit percentile would be fairer. Also, the &ldquo;brigaded&rdquo; flag is a heuristic name for a low upvote ratio. It does not prove brigading.</p>
+<h2 id="decision-3-trending-means-top-3-by-rank-from-a-single-snapshot">Decision 3: &ldquo;trending&rdquo; means top 3 by rank, from a single snapshot<a class="h-anchor" href="#decision-3-trending-means-top-3-by-rank-from-a-single-snapshot" title="Permanent link">#</a></h2>
+<p>The trending logic in stage 4 is short:</p>
+<div class="hl"><pre><span></span><code><span class="n">w</span> <span class="o">=</span> <span class="n">Window</span><span class="o">.</span><span class="n">partitionBy</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">desc</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span><span class="o">.</span><span class="n">over</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_trending&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. Reading the code honestly:</p>
+<ul>
+<li><code>score_velocity</code> is <code>score - lag(score)</code> over posts ordered by <code>post_timestamp</code> within a subreddit. That is the score gap between a post and the post created just before it. It is not how fast one post is gaining score. One API snapshot cannot give real velocity.</li>
+<li><code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>. That is the last three posts, not the last three hours.</li>
+<li><code>rank()</code> keeps ties, so a subreddit can get more than three trending posts.</li>
+<li>The notebook&rsquo;s docstring says trending &ldquo;combines multiple signals&rdquo;. The code uses only rank.</li>
+</ul>
+<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the most honest signal that data supports.</p>
+<p><strong>Trade-off:</strong> &ldquo;trending&rdquo; here means &ldquo;most engaged in the last day&rdquo;, which Reddit&rsquo;s own <code>top?t=day</code> ordering already roughly gives you. To get real trending detection, I need repeated snapshots and a per-post time series.</p>
+<h2 id="smaller-things-worth-knowing">Smaller things worth knowing<a class="h-anchor" href="#smaller-things-worth-knowing" title="Permanent link">#</a></h2>
+<p>The topic UDF (stage 5) checks title keywords with plain substring matches, in a fixed order: ai, crypto, climate, war, sports, politics, tech, science. Substrings cause false hits. &ldquo;ai&rdquo; matches &ldquo;said&rdquo; and &ldquo;again&rdquo;. &ldquo;software&rdquo; contains &ldquo;war&rdquo;, and war is checked before tech, so a software headline gets the war tag. Word-boundary regex in <code>F.regexp_extract</code> or <code>rlike</code> would fix this and also remove the Python UDF cost.</p>
+<p>The broadcast join in stage 5 joins about 1,000 posts to a 10-row lookup. That shows the API and the <code>BroadcastHashJoin</code> plan, which the notebook prints with <code>explain()</code>. At this size it says nothing about performance.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>Here is what I can say from the repository:</p>
+<ul>
+<li>It ingests up to 1,000 live posts per run (10 subreddits × 100) with a 1-second pause between requests.</li>
+<li>It writes 7 kinds of output: bronze, silver, 3 aggregation tables, ranked and flagged posts, topic-enriched posts, a repartitioned copy, and a gold layer partitioned by <code>subreddit</code> and <code>day_of_week</code>.</li>
+<li>The stage scripts print their own checks, for example rows before and after the quality filter, null counts per column, and a read-back count after each write.</li>
+</ul>
+<p>Here is what I cannot claim. The repo has no committed run outputs, row counts, timings or charts. The leaderboard and trending tables under &ldquo;Sample Output&rdquo; in the README are placeholders (post ids like <code>abc123</code>), not results from a committed run. And this is not &ldquo;at scale&rdquo;. It is a single-machine job over about 1,000 rows.</p>
+<div class="admonition note">
+<p class="admonition-title">A bug I found while writing this</p>
+<p><code>src/pipeline.py</code> stage 1 starts with <code>from notebooks.ingestion import fetch_all_subreddits, POST_SCHEMA, BRONZE_PATH</code>. There is no <code>notebooks/ingestion.py</code> (the file is <code>01_ingestion.py</code>), and <code>notebooks/</code> has no <code>__init__.py</code>. As committed, <code>python -m src.pipeline</code> should fail before it fetches anything. The per-stage scripts in <code>notebooks/</code> do not have this problem. The import is dead code anyway, because the function redefines everything it needs, so the fix is to delete that line.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Fix the orchestrator import</strong> and add a smoke test that runs all seven stages on a small saved JSON fixture, so the main entry point is checked on every commit.</li>
+<li><strong>Land raw JSON in bronze</strong> and move the schema to silver, so I can re-process history after a schema change.</li>
+<li><strong>Snapshot on a schedule</strong> (for example hourly), append with a <code>snapshot_ts</code> column, and compute real per-post velocity with <code>lag</code> over <code>id</code> ordered by snapshot time. Use <code>rangeBetween</code> on timestamps for true time windows.</li>
+<li><strong>Build a real gold layer</strong>: join the trending, topic and category columns into one table, partitioned by <code>post_date</code> instead of day name, so queries can prune by date.</li>
+<li><strong>Replace the Python UDFs</strong> with built-in expressions, and match topics on word boundaries.</li>
+<li><strong>Commit one real run&rsquo;s outputs</strong> (row counts, filter drop rates, the leaderboard) so the results section can show numbers instead of only describing code.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Code: <a href="https://github.com/Eng-Zakaria/reddit-spark-pipeline">github.com/Eng-Zakaria/reddit-spark-pipeline</a></li>
+<li>Case page: <a href="../projects/reddit-spark-pipeline.html">Reddit Spark Pipeline</a></li>
+</ul>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html" data-title="A 7-stage PySpark medallion for Reddit signals">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="six-stage-client-etl.html"><small>← Newer</small><b>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</b></a>
+          <a class="post-pager-next" href="redacting-160k-support-chats.html"><small>Older →</small><b>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

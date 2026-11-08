@@ -402,6 +402,7 @@
           </div>
           <div class="project-links">
             <a href="projects/nexlify-dw.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/one-warehouse-ten-clinics.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -485,9 +486,9 @@
 
         <div class="project-card reveal reveal-d1">
           <div class="project-num">10 — BATCH ETL</div>
-          <div class="project-name"><i class="fab fa-reddit-alien"></i>Reddit Signals — Medallion at Scale</div>
+          <div class="project-name"><i class="fab fa-reddit-alien"></i>Reddit Signals — PySpark Medallion</div>
           <div class="project-desc">
-            7-stage PySpark ETL in full medallion: engagement-score UDFs, windowed rankings, broadcast enrichment, partitioned Parquet. Built to answer "what's actually trending" without rescanning raw dumps.
+            7-stage PySpark batch over 10 live subreddits: bronze → silver → partitioned gold Parquet, engagement scoring, rank/dense_rank windows, broadcast enrichment and topic-tagging UDFs. Answers "what's on top today" per community.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-bolt"></i> PySpark</span>
@@ -497,6 +498,7 @@
           </div>
           <div class="project-links">
             <a href="projects/reddit-spark-pipeline.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/reddit-medallion-pyspark.html" class="proj-link">Article ↗</a>
             <a href="https://github.com/Eng-Zakaria/reddit-spark-pipeline" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
         </div>
@@ -746,7 +748,7 @@
           <div class="project-num">24 — ESTATES ETL</div>
           <div class="project-name"><i class="fas fa-city"></i>Estates Warehouse — Governed by Design</div>
           <div class="project-desc">
-            Asset, space, and maintenance data modeled to Uniclass/SFG20/COBie/HESA rules, served as a star schema with a Power BI spec and DAX library. Validation first, dashboards second — governance you can demo.
+            Synthetic asset, space, and maintenance data checked against Uniclass, COBie, SFG20 and HESA-style rules, with failures quarantined with a reason before a star schema and a Power BI spec with 10 DAX measures. Validation first, dashboards second.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-python"></i> Python</span>
@@ -757,6 +759,7 @@
           </div>
           <div class="project-links">
             <a href="projects/digital-estates.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/estates-warehouse-governed.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -782,7 +785,7 @@
           <div class="project-num">26 — GOVERNED PLATFORM</div>
           <div class="project-name"><i class="fas fa-university"></i>Estates Lakehouse — 8/8 Sources, Zero Loss</div>
           <div class="project-desc">
-            A lakehouse that proves itself: 8/8 sources reconciled with zero loss, dbt gold marts guarded by 196 tests and 21 contracts, 20 live demos spanning Power BI, IoT, digital twin, and governance. Open it and click anything.
+            A lakehouse that proves itself: in its acceptance run all 8/8 sources reconciled with zero unexplained loss; dbt gold marts guarded by 160 tests and 21 contracts; 20 live demos spanning Power BI, IoT, digital twin, and governance. Open it and click anything.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fas fa-table"></i> dbt</span>
@@ -794,6 +797,7 @@
           </div>
           <div class="project-links">
             <a href="projects/estates-data-platform.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/estates-lakehouse-zero-loss.html" class="proj-link">Article ↗</a>
             <a href="https://eng-zakaria.github.io/estates-data-portfolio/" class="proj-link" target="_blank" rel="noopener noreferrer">Live Demo ↗</a>
             <a href="https://github.com/Eng-Zakaria/estates-data-portfolio" class="proj-link" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
           </div>
@@ -803,7 +807,7 @@
           <div class="project-num">27 — INGESTION FRAMEWORK</div>
           <div class="project-name"><i class="fas fa-microchip"></i>Component Ingest — Config, Not Code</div>
           <div class="project-desc">
-            Ingestion where a site redesign is a YAML edit, not a redeploy. Schema-drift gates fail loudly instead of loading empty fields; a `cdp` CLI runs doctor → run → status → schedule under Airflow. Built to onboard the next 50 sources in minutes.
+            Ingestion where adding a static site is a YAML file, not new code. A drift gate fails loudly instead of loading empty fields — on its last live run it blocked 791 records with 64% missing names. A `cdp` CLI (doctor, run, status, schedule) drives it, with an Airflow DAG skeleton alongside.
           </div>
           <div class="project-stack">
             <span class="stack-tag"><i class="fab fa-python"></i> Python</span>
@@ -814,6 +818,7 @@
           </div>
           <div class="project-links">
             <a href="projects/component-data-pipeline.html" class="proj-link">Case Study ↗</a>
+            <a href="articles/config-not-code-ingestion.html" class="proj-link">Article ↗</a>
           </div>
         </div>
 
@@ -861,9 +866,9 @@
           <div class="exp-role">Freelance Data Engineer</div>
           <div class="exp-company">Self-employed · Client Work</div>
           <ul class="exp-bullets">
-            <li><strong>Delivered a clinic warehouse to a paying client</strong> — 6-stage Excel → MySQL/PostgreSQL ETL (preflight, quality checks, diff vs last load, backup, load) into a star schema with bridge tables, daily sync, and Power BI views with DAX drillthrough</li>
+            <li><strong>Delivered a clinic warehouse to a paying client</strong> — 6-stage Excel → PostgreSQL ETL (preflight, schema-drift check, quality scan, diff against the warehouse, backup, load) into a star schema with bridge tables, plus MySQL loaders with validation and a Power BI report design (<a href="articles/six-stage-client-etl.html">write-up</a>)</li>
             <li><strong>Harvested tender and contractor data</strong> for a construction client — Python crawlers with enrichment, dedup, and validation into clean CSV/JSONL datasets</li>
-            <li><strong>Built a governed lakehouse showcase</strong> — 8/8 sources reconciled with zero loss, 160 dbt tests + 21 contracts + 133 Great Expectations checks, 20 live demos</li>
+            <li><strong>Built a governed lakehouse showcase</strong> — 8/8 sources reconciled with zero unexplained loss in the acceptance run, 160 dbt tests + 21 contracts + 133 YAML quality checks (Great Expectations and DuckDB), 20 live demos</li>
           </ul>
         </div>
       </div>
@@ -961,11 +966,11 @@
       <p class="projects-sub">Code-first, production-tested: Airflow at scale, NoSQL when it wins, and the resilience patterns that keep pipelines alive at 3am. <a href="https://eng-zakaria.medium.com" target="_blank" rel="noopener noreferrer" class="inline-link">Follow on Medium ↗</a> · <a href="articles/index.html" class="inline-link">All articles on this site →</a></p>
       <!-- native-articles:start -->
       <div class="native-articles">
-        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 7 articles →</a></div>
+        <div class="native-articles-head"><span class="native-articles-label">On this site</span><a class="proj-link" href="articles/index.html">All 13 articles →</a></div>
         <div class="native-articles-grid">
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/six-stage-client-etl.html">Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</a></h3><p>How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</p><div class="post-tags"><span class="post-tag">ETL</span><span class="post-tag">Data Quality</span><span class="post-tag">MySQL</span></div><a class="proj-link" href="articles/six-stage-client-etl.html">Read article →</a></article>
+          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>9 min read</span></div><h3><a href="articles/reddit-medallion-pyspark.html">A 7-stage PySpark medallion for Reddit signals</a></h3><p>How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</p><div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div><a class="proj-link" href="articles/reddit-medallion-pyspark.html">Read article →</a></article>
           <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/redacting-160k-support-chats.html">Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</a></h3><p>How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</p><div class="post-tags"><span class="post-tag">Data Privacy</span><span class="post-tag">LLM Fine-Tuning</span><span class="post-tag">Data Engineering</span></div><a class="proj-link" href="articles/redacting-160k-support-chats.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>8 min read</span></div><h3><a href="articles/partner-price-integrity-check.html">A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</a></h3><p>How a daily pipeline at Waffarha checks voucher prices against partners&#x27; own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser.</p><div class="post-tags"><span class="post-tag">Data Quality</span><span class="post-tag">Web Scraping</span><span class="post-tag">Airflow</span></div><a class="proj-link" href="articles/partner-price-integrity-check.html">Read article →</a></article>
-          <article class="post-card reveal"><div class="post-card-meta"><time datetime="2026-11-08">8 Nov 2026</time><span>3 min read</span></div><h3><a href="articles/fail-open-nightly-recommender.html">Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</a></h3><p>How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.</p><div class="post-tags"><span class="post-tag">Data Engineering</span><span class="post-tag">Recommender Systems</span><span class="post-tag">Multi-Cloud</span></div><a class="proj-link" href="articles/fail-open-nightly-recommender.html">Read article →</a></article>
         </div>
         <div class="native-articles-label native-articles-label-alt">Also on Medium</div>
       </div>

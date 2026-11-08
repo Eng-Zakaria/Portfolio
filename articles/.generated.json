@@ -2,8 +2,14 @@
   "agent-that-cant-go-rogue.html",
   "bilingual-rag-retrieval-hit-rate.html",
   "brand-radar-connector-registry.html",
+  "config-not-code-ingestion.html",
   "deterministic-gates-before-llm.html",
+  "estates-lakehouse-zero-loss.html",
+  "estates-warehouse-governed.html",
   "fail-open-nightly-recommender.html",
+  "one-warehouse-ten-clinics.html",
   "partner-price-integrity-check.html",
-  "redacting-160k-support-chats.html"
+  "redacting-160k-support-chats.html",
+  "reddit-medallion-pyspark.html",
+  "six-stage-client-etl.html"
 ]

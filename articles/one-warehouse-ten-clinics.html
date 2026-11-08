@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts | Mohammed Zakaria</title>
+  <meta name="description" content="How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html">
+  <meta property="og:title" content="One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts | Mohammed Zakaria">
+  <meta property="og:description" content="How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-08">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts", "description": "How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html", "wordCount": 1483, "keywords": "Data Warehousing, SQL, Power BI"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Data Warehousing</span><span class="post-tag">SQL</span><span class="post-tag">Power BI</span></div>
+        <h1>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</h1>
+        <p class="post-lede">How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-problem">The problem</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#decision-1-one-shared-star-schema-not-one-model-per-clinic">Decision 1: one shared star schema, not one model per clinic</a></li>
+<li><a href="#decision-2-bridge-tables-for-staff-with-more-than-one-role">Decision 2: bridge tables for staff with more than one role</a></li>
+<li><a href="#decision-3-fix-the-queries-before-blaming-the-volume">Decision 3: fix the queries before blaming the volume</a></li>
+<li><a href="#results">Results</a></li>
+<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#case-study">Case study</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p><strong>Evidence: Production.</strong> This was a client engagement I worked on as a Data Engineer at Nexlify, from January 2025 to January 2026, for a healthcare clinic network. The warehouse ran in production for that client. The code, schemas and data belong to the client, so I have no repository to link and I won&rsquo;t show patient data or real table definitions. What follows is the design and the reasoning behind it, kept to what I can stand behind.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The client ran more than ten clinics, and each clinic kept its own data. Some of it lived in Excel sheets and CSV files. Some came from clinic management system APIs. The rest sat in a mix of database engines: MySQL, PostgreSQL, SQL Server and SQLite. Column names and structures differed from clinic to clinic, and much of the text was mixed Arabic and English, with numbers written in more than one format.</p>
+<p>That setup had three effects:</p>
+<ul>
+<li><strong>No company-wide view.</strong> Leadership could not answer simple cross-clinic questions without someone stitching spreadsheets together by hand.</li>
+<li><strong>Slow, fragile reporting.</strong> Dashboards built on the legacy SQL timed out often, which blocked executive reporting.</li>
+<li><strong>Low trust in the numbers.</strong> Inconsistent formats across sources meant the same metric could come out differently depending on where you pulled it from.</li>
+</ul>
+<p>The subject areas were the usual ones for a clinic business: customers, staff, revenue, orders, sales, schedules and appointments.</p>
+<p>For scale, the daily volumes across the network were modest: 50+ new customers, around 200 appointments and roughly 1,000 revenue and ledger records a day. The historical backlog was larger, in the millions of records, and that backlog was where most of the cleaning effort went.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The shape is a standard batch warehouse. Airflow pulls from every clinic source into a staging layer, SQL transforms and Python cleaning scripts standardise the data, and the result loads into a PostgreSQL warehouse modelled as star schemas. Power BI sits on top.</p>
+<div class="hl"><pre><span></span><code> CLINIC SOURCES            ETL                         WAREHOUSE              BI
+ ──────────────            ───                         ─────────              ──
+ Clinic APIs  ─┐
+ Excel / CSV  ─┤
+ MySQL        ─┤      ┌──────────────┐  stage   ┌───────────────┐
+ PostgreSQL   ─┼────► │ Airflow      │ ───────► │ SQL transforms│
+ SQL Server   ─┤      │ ingest       │          │ (CTEs, joins) │
+ SQLite       ─┘      └──────────────┘          └───────┬───────┘
+                                                        │
+                                                        ▼
+                                              ┌──────────────────┐
+                                              │ Python cleanse   │
+                                              │ AR/EN text,      │
+                                              │ numeric formats, │
+                                              │ quality checks   │
+                                              └────────┬─────────┘
+                                                       │ load
+                                                       ▼
+                                   ┌───────────────────────────────────┐
+                                   │ PostgreSQL warehouse              │
+                                   │  star schemas                     │
+                                   │  facts + dimensions + bridges     │      serve
+                                   │                                   │ ───────────► Power BI
+                                   └───────────────────────────────────┘            (clinic switcher)
+</code></pre></div>
+
+<p>The pieces, briefly:</p>
+<ul>
+<li><strong>Ingestion.</strong> Airflow handled scheduling and ingestion from Excel, CSV and the clinic system APIs, as well as the database sources.</li>
+<li><strong>Staging and mapping.</strong> A staging layer with unified schema definitions and mapping rules translated each clinic&rsquo;s columns into one shared vocabulary. I wrote the source-to-warehouse mapping as an explicit artefact, not as logic buried in queries.</li>
+<li><strong>Cleaning.</strong> Custom Python scripts normalised data types, handled the mixed Arabic and English text, enforced naming conventions, and ran data quality checks before anything was loaded.</li>
+<li><strong>Warehouse.</strong> Dimensional modelling with star schemas: fact tables, dimension tables, and bridge tables where a relationship was many-to-many.</li>
+<li><strong>Serving.</strong> Power BI reports built on one model, with a clinic switcher.</li>
+</ul>
+<h2 id="decision-1-one-shared-star-schema-not-one-model-per-clinic">Decision 1: one shared star schema, not one model per clinic<a class="h-anchor" href="#decision-1-one-shared-star-schema-not-one-model-per-clinic" title="Permanent link">#</a></h2>
+<p>The easy path with ten-plus clinics is to build a reporting model per clinic and then try to roll them up. I went the other way: every clinic maps into the same facts and dimensions, and &ldquo;clinic&rdquo; is just a dimension.</p>
+<p>The cost of this choice is paid up front. Every source has to be mapped onto the shared schema before it can be loaded, and with sources this varied that mapping was real work. It is also why the staging layer and the written mapping rules mattered so much. Without them, the shared model would have drifted the first time a clinic changed a spreadsheet layout.</p>
+<p>What it bought was that a cross-clinic question became a normal query. Company-wide totals and single-clinic views came from the same tables, so they could not disagree with each other.</p>
+<p>The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work spread across Medical, IoT and Fintech domains. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.</p>
+<div class="admonition note">
+<p class="admonition-title">Why a star and not just a normalised copy</p>
+<p>The sources were already normalised, in their own different ways. Copying them into one database would have centralised the mess, not removed it. A star schema forces the questions that matter for reporting: what is the grain of each fact, and which dimensions describe it.</p>
+</div>
+<h2 id="decision-2-bridge-tables-for-staff-with-more-than-one-role">Decision 2: bridge tables for staff with more than one role<a class="h-anchor" href="#decision-2-bridge-tables-for-staff-with-more-than-one-role" title="Permanent link">#</a></h2>
+<p>Staff were the hardest part of the model. One person could hold several roles, and could work across more than one clinic. A plain staff dimension with a single role column cannot represent that. You either pick one role and lose information, or you duplicate the staff row and start double counting.</p>
+<p>I modelled it with bridge (junction) tables between staff, roles and clinics. The facts link to staff, and the bridge carries the many-to-many relationship to roles and clinics.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What goes wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One role column on the staff dimension</td>
+<td>Staff with several roles get flattened to one; reports by role are wrong</td>
+</tr>
+<tr>
+<td>One staff row per role</td>
+<td>Headcount and any staff-level measure get double counted</td>
+</tr>
+<tr>
+<td>Bridge table between staff, roles and clinics</td>
+<td>Correct attribution, at the price of an extra join and more care in the BI layer</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is real. Bridge tables add a join, and in a BI tool they need care, because a careless measure that crosses a bridge will still double count. The win is that attribution downstream is accurate: a report sliced by role or by clinic reflects what staff actually do, not an arbitrary single label.</p>
+<h2 id="decision-3-fix-the-queries-before-blaming-the-volume">Decision 3: fix the queries before blaming the volume<a class="h-anchor" href="#decision-3-fix-the-queries-before-blaming-the-volume" title="Permanent link">#</a></h2>
+<p>The timeouts were the problem everyone felt. Legacy SQL was timing out as data grew, and it was blocking executive reports.</p>
+<p>With daily volumes in the hundreds to low thousands of rows, I treated this as a query-shape problem first, not a hardware one. I refactored the legacy pipelines across PostgreSQL, SQL Server, MySQL and SQLite: breaking large queries into CTEs so each step was readable and testable, reworking the JOIN logic, and adding indexes where they were missing.</p>
+<p>The trade-off here is that this work is unglamorous and spread over four SQL dialects, each with its own quirks. It does not show up as a new component on an architecture diagram. It is also the change that the reported results credit most directly.</p>
+<div class="admonition tip">
+<p class="admonition-title">CTEs are for people first</p>
+<p>The main value of restructuring with CTEs was that I could reason about each step and check its row counts on its own. Faster plans followed from seeing where the joins were fanning out.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These are the outcomes reported for the engagement:</p>
+<ul>
+<li><strong>Reporting cycles about 40% faster</strong> across the network.</li>
+<li><strong>Query latency down about 30%</strong> after the SQL refactor.</li>
+<li><strong>Zero dashboard timeouts</strong> afterwards. They were eliminated, not just reduced.</li>
+<li><strong>10+ clinic sources</strong> feeding one warehouse.</li>
+<li><strong>Millions of historical records</strong> cleaned and standardised before loading.</li>
+<li><strong>One Power BI model</strong> serving every clinic and the company-wide view, through a clinic switcher.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">How to read these numbers</p>
+<p>These figures are the outcomes as I report them on my CV and portfolio. I don&rsquo;t have the before-and-after benchmark logs or query plans to publish, because they stayed with the client. Treat them as reported results, not as a reproducible benchmark.</p>
+</div>
+<p>The result I value most isn&rsquo;t a percentage. Before the warehouse, the client had no company-wide view at all. Afterwards, operators at a single clinic and leadership looking across the network were reading the same model.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>Looking back, three things would make this stronger, and I have since applied some of them in later work:</p>
+<ol>
+<li><strong>Automated tests on the model.</strong> The quality checks ran in Python before load. I&rsquo;d add declarative tests on the warehouse itself (uniqueness of keys, valid references through the bridge tables, row-count reconciliation from source to fact) so a broken mapping fails loudly in the pipeline, not quietly in a dashboard.</li>
+<li><strong>Keep the benchmark evidence.</strong> I&rsquo;d record query timings and plans before and after each refactor as part of the work, so a claim like &ldquo;30% lower latency&rdquo; comes with its own receipts.</li>
+<li><strong>Document the BI rules for the bridges.</strong> The bridge tables are only safe if every measure respects them. I&rsquo;d write down, next to the model, which measures may cross a bridge and how, so the next person building a report doesn&rsquo;t reintroduce double counting.</li>
+</ol>
+<h2 id="case-study">Case study<a class="h-anchor" href="#case-study" title="Permanent link">#</a></h2>
+<p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html" data-title="One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="partner-price-integrity-check.html"><small>← Newer</small><b>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</b></a>
+          <a class="post-pager-next" href="fail-open-nightly-recommender.html"><small>Older →</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nexlify Data Warehouse — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Centralized data warehouse built from scratch for a healthcare startup. 10+ clinic sources, 40% faster reporting, dimensional modeling with star schemas.">
+  <meta name="description" content="Centralized data warehouse built from scratch for a healthcare startup. 10+ clinic sources, 40% faster reporting cycles, dimensional modeling with star schemas.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -101,7 +101,7 @@
         <span class="tech-tag"><i class="fas fa-sync"></i> Airflow</span>
         <span class="tech-tag"><i class="fab fa-postgresql"></i> PostgreSQL</span>
         <span class="tech-tag"><i class="fas fa-database"></i> MySQL</span>
-        <span class="text-tag">SQL Server</span>
+        <span class="tech-tag">SQL Server</span>
         <span class="tech-tag"><i class="fas fa-chart-bar"></i> Power BI</span>
         <span class="tech-tag"><i class="fab fa-python"></i> Python</span>
         <span class="tech-tag"><i class="fas fa-cubes"></i> Star Schema</span>
@@ -112,6 +112,7 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/one-warehouse-ten-clinics.html">Read the write-up →</a>
     </div>
 
     <section class="content-section">
@@ -119,7 +120,7 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-value">40%</div>
-          <div class="metric-label">Faster Reporting</div>
+          <div class="metric-label">Faster Reporting Cycles</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">30%</div>
@@ -130,8 +131,8 @@
           <div class="metric-label">Data Sources</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">100%</div>
-          <div class="metric-label">Timeout Elimination</div>
+          <div class="metric-value">0</div>
+          <div class="metric-label">Dashboard Timeouts After</div>
         </div>
       </div>
     </section>
@@ -154,9 +155,6 @@
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/nexlify-dw---healthcare-data-warehouse.svg" alt="Healthcare Data Warehouse Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -168,7 +166,7 @@
         <li><strong>Data Warehouse Design:</strong> Built a centralized warehouse from scratch using dimensional modeling with star schemas, fact tables, dimension tables, and bridge tables to resolve many-to-many relationships between staff and roles.</li>
         <li><strong>ETL Pipeline:</strong> Engineered an Airflow-based pipeline to ingest data from heterogeneous sources—Excel sheets, CSV files, and clinic system APIs—covering customers, staff, revenue, orders, schedules, and appointments.</li>
         <li><strong>Schema Evolution:</strong> Adapted the star/snowflake schema design as requirements evolved across Medical, IoT, and Fintech domains within the clinic network.</li>
-        <li><strong>Data Quality:</strong> Cleaned and standardized millions of historical records using custom Python scripts, handling mixed Arabic/English text and numeric formats, enforcing data quality checks before loading.</li>
+        <li><strong>Data Quality:</strong> Cleaned and standardized millions of mixed Arabic/English records using custom Python scripts, normalizing text and numeric formats and enforcing data quality checks before loading.</li>
         <li><strong>SQL Optimization:</strong> Refactored legacy pipelines using CTEs and optimized JOIN logic across PostgreSQL, SQL Server, MySQL, and SQLite.</li>
         <li><strong>Analytics Layer:</strong> Built Power BI reports with a clinic-wise switcher so a single report model served every clinic and company-wide views.</li>
       </ul>
@@ -201,20 +199,20 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Query Optimization</h4>
-        <p>Refactored legacy SQL using CTEs, optimized JOIN logic, and added proper indexing. Achieved 30% reduction in query latency and eliminated 100% of dashboard timeouts.</p>
+        <p>Refactored legacy SQL using CTEs, optimized JOIN logic, and added proper indexing. This cut query latency by 30% and brought dashboard timeouts down to zero.</p>
       </div>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The centralized data warehouse transformed Nexlify's reporting capabilities.
-        Executive reporting cycles accelerated by 40%, and the unified view across
-        10+ clinics enabled data-driven decisions at the company level for the first time.
+        The centralized data warehouse gave the client's clinic network one reporting base
+        across 10+ clinics, delivering 40% faster reporting cycles and company-wide views
+        that the separate clinic systems could not produce.
       </p>
       <p>
-        The modular architecture allows seamless addition of new clinic sources, and
-        the Power BI reporting layer provides flexible analytics for stakeholders.
+        The modular staging layer means a new clinic source is added by mapping it to the
+        unified schema. The Power BI reporting layer serves both per-clinic and company-wide analysis.
       </p>
     </section>
   </main>

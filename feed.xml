@@ -8,6 +8,359 @@
     <language>en</language>
     <lastBuildDate>Sun, 08 Nov 2026 09:00:00 +0200</lastBuildDate>
     <item>
+      <title>Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I turned a clinic&#x27;s daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.</description>
+      <category>ETL</category><category>Data Quality</category><category>MySQL</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Client.</strong> This is freelance work for a paying client, a multi-floor medical clinic. The code and data are private, so there is no repo link. The examples below are sanitized and show only table and column names.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The clinic&rsquo;s data entry team records every conversation, order, visit and upsell in Excel. Each day I received the whole workbook again, refreshed, not just the new rows. The owners wanted Power BI reports on revenue, per-staff contribution and patient follow-ups.</p>
+<p>Three things made this harder than &ldquo;load Excel into a database&rdquo;:</p>
+<ul>
+<li><strong>Full re-sends.</strong> A plain <code>INSERT</code> each day would duplicate every order once per day. The first MySQL version&rsquo;s README says it directly: append &ldquo;isn&rsquo;t literally append&rdquo;.</li>
+<li><strong>Hand-typed staff names.</strong> The same person can be the salesperson on one order, the upseller on another, and the person who performed the treatment on a third. Names are free text, so typos and spelling variants are normal.</li>
+<li><strong>Multi-value cells.</strong> One order can have several departments (split on <code>/</code>), several services and performers (split on <code>|</code>), and up to two upsells as column pairs plus an overflow cell in <code>Name:Amount/Name:Amount</code> format.</li>
+</ul>
+<p>I built this in two steps. The first was a MySQL sync for one floor. It upserted keyed tables and deleted and re-inserted child rows for every order in the file, all inside one transaction. The second, which this article covers, is a PostgreSQL warehouse (<code>clinics_dw</code>) with a six-stage daily ETL, designed so a second floor could load into the same database later.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The entry sheet has 29 required columns. The warehouse is a star schema with five dimensions, one fact table at order grain, four bridge tables for the multi-value fields, and one operational table that is not part of the star.</p>
+<div class="hl"><pre><span></span><code> daily .xlsx (full re-send)
+        |
+        v
+ [1/6] FILE PREFLIGHT ....... readable? 29 expected columns present?
+ [2/6] DB SCHEMA CHECK ...... live information_schema vs EXPECTED_SCHEMA
+ [3/6] DATA QUALITY SCAN .... critical nulls, bad Status_Stage /
+                              Order_Sequence, duplicate Entry_ID
+ [4/6] DIFF REPORT .......... new / changed / unchanged / DB-only
+        |                     (--dry-run stops here: no writes)
+        |  any new or changed rows?
+        |-- no --&gt; skip backup and load
+        v
+ [5/6] BACKUP ............... timestamped pg_dump
+ [6/6] LOAD ................. upsert by source_row_id, rebuild bridges,
+        |                     link journey chains
+        v
+ PostgreSQL clinics_dw
+   dim_clinic  dim_staff  dim_patient  dim_department  dim_service
+   fact_orders
+     +-- fact_order_department   +-- fact_order_service
+     +-- fact_order_performer    +-- fact_order_upsell
+   etl_unmatched_staff (operational log)
+        |
+        v
+ Power BI (role-playing staff relationships, patient drillthrough)
+</code></pre></div>
+
+<p>The portfolio line for this project lists five stages: preflight, quality checks, diff, backup, load. The code has six. The one that gets left out is stage 2, a schema drift check. It reads <code>information_schema.columns</code> for the <code>public</code> schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.</p>
+<p>What each stage actually does:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What it checks or does</th>
+<th>Does it stop the run?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1. File preflight</td>
+<td>File exists, parses, has the expected columns, is not empty</td>
+<td>Only if the file can&rsquo;t be read</td>
+</tr>
+<tr>
+<td>2. DB schema check</td>
+<td>Missing tables or columns vs the script&rsquo;s expectations</td>
+<td>No, it logs warnings</td>
+</tr>
+<tr>
+<td>3. Data quality scan</td>
+<td>Nulls in 3 critical fields (<code>Phone</code>, <code>Order_Date</code>, <code>Status_Stage</code>), invalid status or sequence, duplicate <code>Entry_ID</code>; warnings for 4 important fields. Writes <code>data_quality_report.csv</code></td>
+<td>No</td>
+</tr>
+<tr>
+<td>4. Diff report</td>
+<td>Compares the file to <code>fact_orders</code> for this clinic</td>
+<td>Stops if <code>--dry-run</code></td>
+</tr>
+<tr>
+<td>5. Backup</td>
+<td>Full <code>pg_dump</code> before any write</td>
+<td>Skipped if nothing is pending; a failure only logs a warning</td>
+</tr>
+<tr>
+<td>6. Load</td>
+<td>Upsert orders, rebuild bridge rows, resolve journey links, export unmatched staff</td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-a-stable-row-key-not-row-position">Decision 1: a stable row key, not row position<a class="h-anchor" href="#decision-1-a-stable-row-key-not-row-position" title="Permanent link">#</a></h2>
+<p>Daily reruns are only safe if the ETL can recognise a row it has seen before. I added an <code>Entry_ID</code> column to the sheet and use it as the natural key. When it is missing, the code falls back to a hash:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">make_source_row_id</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="n">entry_id</span> <span class="o">=</span> <span class="n">clean_str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Entry_ID&quot;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">entry_id</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;eid:</span><span class="si">{</span><span class="n">entry_id</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="n">fallback_parts</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">clean_phone</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Phone&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">to_date</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Date&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">),</span>
+        <span class="n">clean_str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Time&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;Order_Sequence&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;1&quot;</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fallback_parts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;hash:&quot;</span> <span class="o">+</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()[:</span><span class="mi">32</span><span class="p">]</span>
+</code></pre></div>
+
+<p><code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so the load updates existing orders instead of duplicating them. Bridge rows have no natural key, so for each order the load deletes its department, service, performer and upsell rows and inserts the current ones. That is how corrections in the sheet reach the database, not just new rows.</p>
+<p>The trade-off is in the fallback. If anyone edits the phone, date or time on a row with no <code>Entry_ID</code>, its hash changes and the row looks new. The quality scan flags every missing <code>Entry_ID</code> as a warning for that reason.</p>
+<p>The same key drives the diff. It reports four buckets, and the fourth is the one I care about most: orders that are in the database but missing from today&rsquo;s file. The ETL never deletes those. A row disappearing from a hand-edited sheet could be a real removal or an accident, and I did not want an ETL to make that call silently.</p>
+<h2 id="decision-2-match-staff-never-create-them">Decision 2: match staff, never create them<a class="h-anchor" href="#decision-2-match-staff-never-create-them" title="Permanent link">#</a></h2>
+<p>This is where the two versions differ most. The later MySQL warehouse loader auto-creates unknown staff with <code>group_name = 'Unassigned'</code> so rows stop erroring. In the PostgreSQL version I went the other way. <code>dim_staff</code> is maintained by hand in a seed file, every staff member has one of six groups enforced by a <code>CHECK</code> constraint, and the ETL only looks names up:</p>
+<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;INSERT INTO etl_unmatched_staff (clinic_id, role_context, raw_name, source_row_id)</span>
+<span class="sd">       VALUES (%s, %s, %s, %s)&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clinic_id</span><span class="p">,</span> <span class="n">role_context</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">source_row_id</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">stats</span><span class="p">[</span><span class="s2">&quot;unmatched_staff&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>The order still loads. Only the staff link is <code>NULL</code>, and the raw name, the role it appeared in, and the source row go into a review table that is exported to CSV after each run. An unknown name is either a typo, where auto-creating would make a ghost employee who splits someone&rsquo;s revenue, or a new hire, who needs a group chosen by a person. Either way it needs a human. The cost is a review queue someone has to work through before per-staff numbers are complete.</p>
+<p>Staff and every other dimension are scoped by <code>clinic_id</code>, with <code>UNIQUE(clinic_id, name)</code> constraints. The same phone at two floors becomes two unrelated patients. That rules out cross-floor patient questions. In exchange, one floor&rsquo;s data can never be miscounted as another&rsquo;s, which mattered more here because staff names collide.</p>
+<h2 id="decision-3-check-everything-block-almost-nothing">Decision 3: check everything, block almost nothing<a class="h-anchor" href="#decision-3-check-everything-block-almost-nothing" title="Permanent link">#</a></h2>
+<p>Only an unreadable file stops the pipeline. Schema drift, critical quality problems and backup failures all log warnings and carry on. Rows with a null critical field still load by default, unless they have no phone at all, because then there is no patient to attach them to. A <code>--drop-null-rows</code> flag excludes them instead, and <code>--dry-run</code> runs stages 1 to 4 so the choice can be made after reading the report.</p>
+<p>I chose this because the client needed numbers every day, and a sheet that is 99% fine should not block a whole day&rsquo;s reporting. The first real runs showed what that costs.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>The ETL logs every run to a rotating file (2 MB per file, 5 files kept). The log has two full runs against the same 4,925-row sheet on the same evening.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th></th>
+<th>Run 1</th>
+<th>Run 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rows in file</td>
+<td>4,925</td>
+<td>4,925</td>
+</tr>
+<tr>
+<td>Rows with critical problems (stage 3)</td>
+<td>18</td>
+<td>18</td>
+</tr>
+<tr>
+<td>Rows with warnings only (stage 3)</td>
+<td>3,316</td>
+<td>3,316</td>
+</tr>
+<tr>
+<td>Diff: new / changed / unchanged / DB-only</td>
+<td>4,925 / 0 / 0 / 0</td>
+<td>4,925 / 0 / 0 / 0</td>
+</tr>
+<tr>
+<td>Backup</td>
+<td>skipped, <code>pg_dump</code> not found</td>
+<td>skipped, <code>pg_dump</code> not found</td>
+</tr>
+<tr>
+<td>Rows processed</td>
+<td>3,867</td>
+<td>4,908</td>
+</tr>
+<tr>
+<td>Errors</td>
+<td>1,058</td>
+<td>17</td>
+</tr>
+<tr>
+<td>Unmatched staff entries</td>
+<td>834</td>
+<td>838</td>
+</tr>
+</tbody>
+</table></div>
+<p>The second run is the one that loaded: 4,908 orders, with 17 rows skipped because they had no usable phone. 838 unmatched staff names went to the review queue.</p>
+<p>The first run is more useful as a lesson. 1,041 of its errors were the same thing: rows breaking the <code>patient_status IN ('new','old')</code> check on <code>fact_orders</code>. Stage 3 never looked at <code>Patient_Status</code>, so the quality scan said nothing and the database caught the problem one row at a time. A quality stage that doesn&rsquo;t mirror the database&rsquo;s constraints is only a partial check.</p>
+<div class="admonition note">
+<p class="admonition-title">Two bugs the logs exposed</p>
+<p><strong>Backup.</strong> <code>backup_database</code> opens the output file before calling <code>pg_dump</code>. When the binary is missing, it logs &ldquo;skipped&rdquo; but leaves an empty, timestamped <code>.sql</code> file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn&rsquo;t one.</p>
+<p><strong>Rollback.</strong> The load runs in one transaction and commits at the end. On a row error it calls <code>conn.rollback()</code> with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1&rsquo;s &ldquo;3,867 processed&rdquo; doesn&rsquo;t mean 3,867 rows reached the database. I can&rsquo;t tell from the log alone how many did.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Savepoint per row,</strong> or commit in batches, so one bad row costs one row. Count inserts only after commit.</li>
+<li><strong>Make the quality stage mirror the schema.</strong> Every <code>CHECK</code> constraint in <code>001_init.sql</code> should have a matching rule in stage 3, with normalisation (case, whitespace) applied before both.</li>
+<li><strong>Make backup a hard gate.</strong> Check for <code>pg_dump</code> in preflight, write to a temp file and rename only on success, and stop the load if there is no backup. Add rotation, which the docs already list as missing.</li>
+<li><strong>Widen the diff.</strong> It compares four fields: <code>status_stage</code>, <code>order_sequence</code>, <code>paid_amount</code> and <code>total_amount</code>. If only a comment or a staff name changes and nothing else in the file does, the run reports nothing to write and skips the load.</li>
+<li><strong>A run-history table</strong> with file name, counts, errors and backup path, so &ldquo;did yesterday&rsquo;s load work&rdquo; becomes a query instead of a log search. Also tests for the small parsers (<code>split_multivalue</code>, <code>parse_overflow_upsells</code>, <code>to_date</code>, <code>to_time</code>), where a silent bug turns into a wrong number in Power BI weeks later.</li>
+</ul>
+<p>The staged structure worked. The dry-run report, the diff buckets and the unmatched-staff queue gave the client and me something concrete to look at before each load. The weak points were in the handoffs between stages, and I only saw them once real data ran through.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>A 7-stage PySpark medallion for Reddit signals</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</description>
+      <category>Spark</category><category>Data Pipelines</category><category>Python</category>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. The repository has no saved outputs, logs or benchmark files, so this article describes what the code does, not measured results.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>I wanted a practice ground for the Spark patterns I use at work: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
+<p>The question the pipeline answers is simple: across a fixed set of subreddits, which posts from the last day got the most engagement, and how does engagement split by community, hour and topic?</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The code comes in two forms. <code>notebooks/01_ingestion.py</code> to <code>07_output.py</code> are standalone scripts, one per stage, each with its own SparkSession and extra diagnostic output. <code>src/pipeline.py</code> collects the same seven stages into functions that <code>main()</code> runs one after another in a single session.</p>
+<div class="hl"><pre><span></span><code> Reddit /r/{sub}/top.json?t=day&amp;limit=100   (10 subreddits, 1 s sleep between calls)
+                     |
+ [1] Ingestion  -&gt; data/bronze/reddit_posts.parquet          (raw, explicit schema)
+                     |
+ [2] Transform  -&gt; data/silver/reddit_posts_clean.parquet    (filtered, deduped, features)
+                     |
+     +---------------+---------------+------------------+
+     |               |               |                  |
+ [3] Aggregations [4] Windows    [5] Enrichment     [6] Optimization
+  leaderboard      rank, lag,     topic UDF +        repartition by
+  hourly volume    rolling avg,   broadcast join     subreddit
+  tier pivot       is_trending    to categories
+     |               |               |                  |
+ data/aggregations data/windows  data/enrichment   data/optimization
+                     |
+ [7] Output     -&gt; data/gold/subreddit=.../day_of_week=.../  (silver, partitioned)
+</code></pre></div>
+
+<p>The diagram shows something the README&rsquo;s layout hides: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
+<p>So &ldquo;medallion&rdquo; fits for bronze and silver. Gold is a re-partitioned copy of silver, not an aggregated or joined layer.</p>
+<h3 id="stage-by-stage">Stage by stage<a class="h-anchor" href="#stage-by-stage" title="Permanent link">#</a></h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Stage</th>
+<th>What the code does</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 Ingestion</td>
+<td><code>requests.get</code> on <code>top.json</code> with <code>t=day</code>, <code>limit=100</code>; flattens 16 fields into <code>POST_SCHEMA</code></td>
+<td>bronze Parquet</td>
+</tr>
+<tr>
+<td>2 Transform</td>
+<td>quality filters, <code>dropDuplicates(["id"])</code>, time features, engagement score, tiers, four flags, text cleanup</td>
+<td>silver Parquet</td>
+</tr>
+<tr>
+<td>3 Aggregations</td>
+<td><code>groupBy</code> leaderboard (avg, sum, count, max), hourly counts, tier-by-subreddit pivot</td>
+<td>3 Parquet tables (2 more in the notebook version)</td>
+</tr>
+<tr>
+<td>4 Windows</td>
+<td><code>rank()</code> by engagement per subreddit, <code>lag</code> on score, 3-row rolling average, <code>is_trending</code></td>
+<td><code>trending_posts.parquet</code></td>
+</tr>
+<tr>
+<td>5 Enrichment</td>
+<td>keyword topic UDF on titles, broadcast join to a 10-row category lookup</td>
+<td><code>enriched_posts.parquet</code></td>
+</tr>
+<tr>
+<td>6 Optimization</td>
+<td><code>repartition(n, "subreddit")</code> where n is the distinct subreddit count; the notebook also times cache vs persist</td>
+<td>repartitioned Parquet, <code>cache_benchmark.csv</code> (notebook only)</td>
+</tr>
+<tr>
+<td>7 Output</td>
+<td>gold write partitioned by subreddit and day of week; the notebook also draws 3 charts</td>
+<td><code>data/gold/</code>, PNGs and CSV (notebook only)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="decision-1-an-explicit-schema-at-the-bronze-boundary">Decision 1: an explicit schema at the bronze boundary<a class="h-anchor" href="#decision-1-an-explicit-schema-at-the-bronze-boundary" title="Permanent link">#</a></h2>
+<p>Reddit returns a lot of fields per post. I keep 16 and define them up front:</p>
+<div class="hl"><pre><span></span><code><span class="n">POST_SCHEMA</span> <span class="o">=</span> <span class="n">StructType</span><span class="p">([</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">,</span> <span class="n">StringType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;num_comments&quot;</span><span class="p">,</span> <span class="n">IntegerType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;upvote_ratio&quot;</span><span class="p">,</span> <span class="n">DoubleType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">StructField</span><span class="p">(</span><span class="s2">&quot;created_utc&quot;</span><span class="p">,</span> <span class="n">LongType</span><span class="p">(),</span> <span class="n">nullable</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="c1"># ... 10 more</span>
+<span class="p">])</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">all_records</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="n">POST_SCHEMA</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Why:</strong> schema inference on Python dicts can guess different types from one run to the next, for example when a field is null in every row of a sample. A fixed schema makes the bronze files the same shape on every run, and silver can trust it.</p>
+<p><strong>Trade-off:</strong> bronze is not truly raw. Anything I did not list, such as awards, crossposts and media metadata, is gone at ingestion and cannot be replayed later. A stricter medallion would land the JSON response as-is and apply the schema in silver. For a learning project with a 1,000-row ceiling, I chose the simpler path. I would not choose it for a source I could not re-fetch.</p>
+<h2 id="decision-2-a-transparent-engagement-formula-in-silver">Decision 2: a transparent engagement formula in silver<a class="h-anchor" href="#decision-2-a-transparent-engagement-formula-in-silver" title="Permanent link">#</a></h2>
+<p>Silver drops rows that cannot be used: titles shorter than 5 characters, score below 1, authors that are null, <code>[deleted]</code>, <code>[removed]</code> or <code>AutoModerator</code>, and invalid timestamps. Then it adds one score:</p>
+<div class="hl"><pre><span></span><code><span class="n">df</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">df</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;num_comments_clean&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">coalesce</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;num_comments&quot;</span><span class="p">),</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">()))</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;num_comments_clean&quot;</span><span class="p">)</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">lit</span><span class="p">(</span><span class="n">COMMENT_WEIGHT</span><span class="p">))</span>  <span class="c1"># weight = 3</span>
+    <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_tier&quot;</span><span class="p">,</span>
+        <span class="n">F</span><span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">50_000</span><span class="p">,</span> <span class="s2">&quot;viral&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">10_000</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">when</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1_000</span><span class="p">,</span> <span class="s2">&quot;medium&quot;</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">otherwise</span><span class="p">(</span><span class="s2">&quot;low&quot;</span><span class="p">))</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>It also sets four boolean flags. <code>is_brigaded</code> means <code>upvote_ratio &lt; 0.5</code> and <code>score &gt; 100</code>. <code>is_controversial</code> means more comments than upvotes. <code>is_link_post</code> and <code>is_external_link</code> check <code>is_self</code> and the domain against a short list of Reddit and Imgur hosts.</p>
+<p><strong>Why:</strong> a comment takes more effort than an upvote, so weighting comments three times is a defensible, readable rule. I used built-in <code>F.when</code> expressions instead of the <code>classify_engagement_tier</code> UDF in <code>src/udfs.py</code>, so Spark can optimise them and no Python worker is needed.</p>
+<p><strong>Trade-off:</strong> the weight and the tier cut-offs are my choices, not fitted to data. The same thresholds apply to r/todayilearned and r/datascience, which have very different audience sizes, so almost every datascience post may land in one tier. A per-subreddit percentile would be fairer. Also, the &ldquo;brigaded&rdquo; flag is a heuristic name for a low upvote ratio. It does not prove brigading.</p>
+<h2 id="decision-3-trending-means-top-3-by-rank-from-a-single-snapshot">Decision 3: &ldquo;trending&rdquo; means top 3 by rank, from a single snapshot<a class="h-anchor" href="#decision-3-trending-means-top-3-by-rank-from-a-single-snapshot" title="Permanent link">#</a></h2>
+<p>The trending logic in stage 4 is short:</p>
+<div class="hl"><pre><span></span><code><span class="n">w</span> <span class="o">=</span> <span class="n">Window</span><span class="o">.</span><span class="n">partitionBy</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="n">F</span><span class="o">.</span><span class="n">desc</span><span class="p">(</span><span class="s2">&quot;engagement_score&quot;</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">rank</span><span class="p">()</span><span class="o">.</span><span class="n">over</span><span class="p">(</span><span class="n">w</span><span class="p">))</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_trending&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. Reading the code honestly:</p>
+<ul>
+<li><code>score_velocity</code> is <code>score - lag(score)</code> over posts ordered by <code>post_timestamp</code> within a subreddit. That is the score gap between a post and the post created just before it. It is not how fast one post is gaining score. One API snapshot cannot give real velocity.</li>
+<li><code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>. That is the last three posts, not the last three hours.</li>
+<li><code>rank()</code> keeps ties, so a subreddit can get more than three trending posts.</li>
+<li>The notebook&rsquo;s docstring says trending &ldquo;combines multiple signals&rdquo;. The code uses only rank.</li>
+</ul>
+<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the most honest signal that data supports.</p>
+<p><strong>Trade-off:</strong> &ldquo;trending&rdquo; here means &ldquo;most engaged in the last day&rdquo;, which Reddit&rsquo;s own <code>top?t=day</code> ordering already roughly gives you. To get real trending detection, I need repeated snapshots and a per-post time series.</p>
+<h2 id="smaller-things-worth-knowing">Smaller things worth knowing<a class="h-anchor" href="#smaller-things-worth-knowing" title="Permanent link">#</a></h2>
+<p>The topic UDF (stage 5) checks title keywords with plain substring matches, in a fixed order: ai, crypto, climate, war, sports, politics, tech, science. Substrings cause false hits. &ldquo;ai&rdquo; matches &ldquo;said&rdquo; and &ldquo;again&rdquo;. &ldquo;software&rdquo; contains &ldquo;war&rdquo;, and war is checked before tech, so a software headline gets the war tag. Word-boundary regex in <code>F.regexp_extract</code> or <code>rlike</code> would fix this and also remove the Python UDF cost.</p>
+<p>The broadcast join in stage 5 joins about 1,000 posts to a 10-row lookup. That shows the API and the <code>BroadcastHashJoin</code> plan, which the notebook prints with <code>explain()</code>. At this size it says nothing about performance.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>Here is what I can say from the repository:</p>
+<ul>
+<li>It ingests up to 1,000 live posts per run (10 subreddits × 100) with a 1-second pause between requests.</li>
+<li>It writes 7 kinds of output: bronze, silver, 3 aggregation tables, ranked and flagged posts, topic-enriched posts, a repartitioned copy, and a gold layer partitioned by <code>subreddit</code> and <code>day_of_week</code>.</li>
+<li>The stage scripts print their own checks, for example rows before and after the quality filter, null counts per column, and a read-back count after each write.</li>
+</ul>
+<p>Here is what I cannot claim. The repo has no committed run outputs, row counts, timings or charts. The leaderboard and trending tables under &ldquo;Sample Output&rdquo; in the README are placeholders (post ids like <code>abc123</code>), not results from a committed run. And this is not &ldquo;at scale&rdquo;. It is a single-machine job over about 1,000 rows.</p>
+<div class="admonition note">
+<p class="admonition-title">A bug I found while writing this</p>
+<p><code>src/pipeline.py</code> stage 1 starts with <code>from notebooks.ingestion import fetch_all_subreddits, POST_SCHEMA, BRONZE_PATH</code>. There is no <code>notebooks/ingestion.py</code> (the file is <code>01_ingestion.py</code>), and <code>notebooks/</code> has no <code>__init__.py</code>. As committed, <code>python -m src.pipeline</code> should fail before it fetches anything. The per-stage scripts in <code>notebooks/</code> do not have this problem. The import is dead code anyway, because the function redefines everything it needs, so the fix is to delete that line.</p>
+</div>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Fix the orchestrator import</strong> and add a smoke test that runs all seven stages on a small saved JSON fixture, so the main entry point is checked on every commit.</li>
+<li><strong>Land raw JSON in bronze</strong> and move the schema to silver, so I can re-process history after a schema change.</li>
+<li><strong>Snapshot on a schedule</strong> (for example hourly), append with a <code>snapshot_ts</code> column, and compute real per-post velocity with <code>lag</code> over <code>id</code> ordered by snapshot time. Use <code>rangeBetween</code> on timestamps for true time windows.</li>
+<li><strong>Build a real gold layer</strong>: join the trending, topic and category columns into one table, partitioned by <code>post_date</code> instead of day name, so queries can prune by date.</li>
+<li><strong>Replace the Python UDFs</strong> with built-in expressions, and match topics on word boundaries.</li>
+<li><strong>Commit one real run&rsquo;s outputs</strong> (row counts, filter drop rates, the leaderboard) so the results section can show numbers instead of only describing code.</li>
+</ol>
+<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
+<ul>
+<li>Code: <a href="https://github.com/Eng-Zakaria/reddit-spark-pipeline">github.com/Eng-Zakaria/reddit-spark-pipeline</a></li>
+<li>Case page: <a href="../projects/reddit-spark-pipeline.html">Reddit Spark Pipeline</a></li>
+</ul>]]></content:encoded>
+    </item>
+    <item>
       <title>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</guid>
@@ -324,6 +677,128 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
     </item>
     <item>
+      <title>One warehouse, ten clinics: star schemas, bridge tables, zero BI timeouts</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/one-warehouse-ten-clinics.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client.</description>
+      <category>Data Warehousing</category><category>SQL</category><category>Power BI</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Production.</strong> This was a client engagement I worked on as a Data Engineer at Nexlify, from January 2025 to January 2026, for a healthcare clinic network. The warehouse ran in production for that client. The code, schemas and data belong to the client, so I have no repository to link and I won&rsquo;t show patient data or real table definitions. What follows is the design and the reasoning behind it, kept to what I can stand behind.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>The client ran more than ten clinics, and each clinic kept its own data. Some of it lived in Excel sheets and CSV files. Some came from clinic management system APIs. The rest sat in a mix of database engines: MySQL, PostgreSQL, SQL Server and SQLite. Column names and structures differed from clinic to clinic, and much of the text was mixed Arabic and English, with numbers written in more than one format.</p>
+<p>That setup had three effects:</p>
+<ul>
+<li><strong>No company-wide view.</strong> Leadership could not answer simple cross-clinic questions without someone stitching spreadsheets together by hand.</li>
+<li><strong>Slow, fragile reporting.</strong> Dashboards built on the legacy SQL timed out often, which blocked executive reporting.</li>
+<li><strong>Low trust in the numbers.</strong> Inconsistent formats across sources meant the same metric could come out differently depending on where you pulled it from.</li>
+</ul>
+<p>The subject areas were the usual ones for a clinic business: customers, staff, revenue, orders, sales, schedules and appointments.</p>
+<p>For scale, the daily volumes across the network were modest: 50+ new customers, around 200 appointments and roughly 1,000 revenue and ledger records a day. The historical backlog was larger, in the millions of records, and that backlog was where most of the cleaning effort went.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The shape is a standard batch warehouse. Airflow pulls from every clinic source into a staging layer, SQL transforms and Python cleaning scripts standardise the data, and the result loads into a PostgreSQL warehouse modelled as star schemas. Power BI sits on top.</p>
+<div class="hl"><pre><span></span><code> CLINIC SOURCES            ETL                         WAREHOUSE              BI
+ ──────────────            ───                         ─────────              ──
+ Clinic APIs  ─┐
+ Excel / CSV  ─┤
+ MySQL        ─┤      ┌──────────────┐  stage   ┌───────────────┐
+ PostgreSQL   ─┼────► │ Airflow      │ ───────► │ SQL transforms│
+ SQL Server   ─┤      │ ingest       │          │ (CTEs, joins) │
+ SQLite       ─┘      └──────────────┘          └───────┬───────┘
+                                                        │
+                                                        ▼
+                                              ┌──────────────────┐
+                                              │ Python cleanse   │
+                                              │ AR/EN text,      │
+                                              │ numeric formats, │
+                                              │ quality checks   │
+                                              └────────┬─────────┘
+                                                       │ load
+                                                       ▼
+                                   ┌───────────────────────────────────┐
+                                   │ PostgreSQL warehouse              │
+                                   │  star schemas                     │
+                                   │  facts + dimensions + bridges     │      serve
+                                   │                                   │ ───────────► Power BI
+                                   └───────────────────────────────────┘            (clinic switcher)
+</code></pre></div>
+
+<p>The pieces, briefly:</p>
+<ul>
+<li><strong>Ingestion.</strong> Airflow handled scheduling and ingestion from Excel, CSV and the clinic system APIs, as well as the database sources.</li>
+<li><strong>Staging and mapping.</strong> A staging layer with unified schema definitions and mapping rules translated each clinic&rsquo;s columns into one shared vocabulary. I wrote the source-to-warehouse mapping as an explicit artefact, not as logic buried in queries.</li>
+<li><strong>Cleaning.</strong> Custom Python scripts normalised data types, handled the mixed Arabic and English text, enforced naming conventions, and ran data quality checks before anything was loaded.</li>
+<li><strong>Warehouse.</strong> Dimensional modelling with star schemas: fact tables, dimension tables, and bridge tables where a relationship was many-to-many.</li>
+<li><strong>Serving.</strong> Power BI reports built on one model, with a clinic switcher.</li>
+</ul>
+<h2 id="decision-1-one-shared-star-schema-not-one-model-per-clinic">Decision 1: one shared star schema, not one model per clinic<a class="h-anchor" href="#decision-1-one-shared-star-schema-not-one-model-per-clinic" title="Permanent link">#</a></h2>
+<p>The easy path with ten-plus clinics is to build a reporting model per clinic and then try to roll them up. I went the other way: every clinic maps into the same facts and dimensions, and &ldquo;clinic&rdquo; is just a dimension.</p>
+<p>The cost of this choice is paid up front. Every source has to be mapped onto the shared schema before it can be loaded, and with sources this varied that mapping was real work. It is also why the staging layer and the written mapping rules mattered so much. Without them, the shared model would have drifted the first time a clinic changed a spreadsheet layout.</p>
+<p>What it bought was that a cross-clinic question became a normal query. Company-wide totals and single-clinic views came from the same tables, so they could not disagree with each other.</p>
+<p>The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work spread across Medical, IoT and Fintech domains. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.</p>
+<div class="admonition note">
+<p class="admonition-title">Why a star and not just a normalised copy</p>
+<p>The sources were already normalised, in their own different ways. Copying them into one database would have centralised the mess, not removed it. A star schema forces the questions that matter for reporting: what is the grain of each fact, and which dimensions describe it.</p>
+</div>
+<h2 id="decision-2-bridge-tables-for-staff-with-more-than-one-role">Decision 2: bridge tables for staff with more than one role<a class="h-anchor" href="#decision-2-bridge-tables-for-staff-with-more-than-one-role" title="Permanent link">#</a></h2>
+<p>Staff were the hardest part of the model. One person could hold several roles, and could work across more than one clinic. A plain staff dimension with a single role column cannot represent that. You either pick one role and lose information, or you duplicate the staff row and start double counting.</p>
+<p>I modelled it with bridge (junction) tables between staff, roles and clinics. The facts link to staff, and the bridge carries the many-to-many relationship to roles and clinics.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Option</th>
+<th>What goes wrong</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>One role column on the staff dimension</td>
+<td>Staff with several roles get flattened to one; reports by role are wrong</td>
+</tr>
+<tr>
+<td>One staff row per role</td>
+<td>Headcount and any staff-level measure get double counted</td>
+</tr>
+<tr>
+<td>Bridge table between staff, roles and clinics</td>
+<td>Correct attribution, at the price of an extra join and more care in the BI layer</td>
+</tr>
+</tbody>
+</table></div>
+<p>The trade-off is real. Bridge tables add a join, and in a BI tool they need care, because a careless measure that crosses a bridge will still double count. The win is that attribution downstream is accurate: a report sliced by role or by clinic reflects what staff actually do, not an arbitrary single label.</p>
+<h2 id="decision-3-fix-the-queries-before-blaming-the-volume">Decision 3: fix the queries before blaming the volume<a class="h-anchor" href="#decision-3-fix-the-queries-before-blaming-the-volume" title="Permanent link">#</a></h2>
+<p>The timeouts were the problem everyone felt. Legacy SQL was timing out as data grew, and it was blocking executive reports.</p>
+<p>With daily volumes in the hundreds to low thousands of rows, I treated this as a query-shape problem first, not a hardware one. I refactored the legacy pipelines across PostgreSQL, SQL Server, MySQL and SQLite: breaking large queries into CTEs so each step was readable and testable, reworking the JOIN logic, and adding indexes where they were missing.</p>
+<p>The trade-off here is that this work is unglamorous and spread over four SQL dialects, each with its own quirks. It does not show up as a new component on an architecture diagram. It is also the change that the reported results credit most directly.</p>
+<div class="admonition tip">
+<p class="admonition-title">CTEs are for people first</p>
+<p>The main value of restructuring with CTEs was that I could reason about each step and check its row counts on its own. Faster plans followed from seeing where the joins were fanning out.</p>
+</div>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These are the outcomes reported for the engagement:</p>
+<ul>
+<li><strong>Reporting cycles about 40% faster</strong> across the network.</li>
+<li><strong>Query latency down about 30%</strong> after the SQL refactor.</li>
+<li><strong>Zero dashboard timeouts</strong> afterwards. They were eliminated, not just reduced.</li>
+<li><strong>10+ clinic sources</strong> feeding one warehouse.</li>
+<li><strong>Millions of historical records</strong> cleaned and standardised before loading.</li>
+<li><strong>One Power BI model</strong> serving every clinic and the company-wide view, through a clinic switcher.</li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">How to read these numbers</p>
+<p>These figures are the outcomes as I report them on my CV and portfolio. I don&rsquo;t have the before-and-after benchmark logs or query plans to publish, because they stayed with the client. Treat them as reported results, not as a reproducible benchmark.</p>
+</div>
+<p>The result I value most isn&rsquo;t a percentage. Before the warehouse, the client had no company-wide view at all. Afterwards, operators at a single clinic and leadership looking across the network were reading the same model.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>Looking back, three things would make this stronger, and I have since applied some of them in later work:</p>
+<ol>
+<li><strong>Automated tests on the model.</strong> The quality checks ran in Python before load. I&rsquo;d add declarative tests on the warehouse itself (uniqueness of keys, valid references through the bridge tables, row-count reconciliation from source to fact) so a broken mapping fails loudly in the pipeline, not quietly in a dashboard.</li>
+<li><strong>Keep the benchmark evidence.</strong> I&rsquo;d record query timings and plans before and after each refactor as part of the work, so a claim like &ldquo;30% lower latency&rdquo; comes with its own receipts.</li>
+<li><strong>Document the BI rules for the bridges.</strong> The bridge tables are only safe if every measure respects them. I&rsquo;d write down, next to the model, which measures may cross a bridge and how, so the next person building a report doesn&rsquo;t reintroduce double counting.</li>
+</ol>
+<h2 id="case-study">Case study<a class="h-anchor" href="#case-study" title="Permanent link">#</a></h2>
+<p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>]]></content:encoded>
+    </item>
+    <item>
       <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html</guid>
@@ -416,6 +891,364 @@ evaluation, so the switch is a measured decision and not a hunch.</p>
 <hr>
 <p><em>If you run nightly jobs that other teams depend on, I&rsquo;d love to hear how you handle the night
 something upstream is down. <a href="../index.html#contact">Get in touch</a>.</em></p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Modeling estates data to Uniclass, COBie and SFG20</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.</description>
+      <category>Data Modeling</category><category>Data Warehousing</category><category>SQL</category>
+      <content:encoded><![CDATA[<p>This is a portfolio project, and every row in it is synthetic. Two seeded Python scripts generate the buildings, rooms, assets, handover records, work orders and meter readings. No real estate or university data is involved. What I wanted to work through was a modeling question: if the people sending you facilities data are expected to follow industry standards, how much of that can a pipeline actually enforce, and what should it do with the rows that don&rsquo;t comply?</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>An estates team (the people who run a campus&rsquo;s buildings) gets data from several systems that were never designed to agree with each other:</p>
+<ul>
+<li>an <strong>asset register</strong>, listing every boiler, air handling unit and fire detector;</li>
+<li>a <strong>space register</strong>, listing rooms and what they are used for;</li>
+<li><strong>COBie</strong> sheets, delivered by contractors when a building is handed over;</li>
+<li><strong>CAFM</strong> work orders (Computer-Aided Facilities Management, the ticketing system for maintenance jobs);</li>
+<li><strong>BMS</strong> extracts (Building Management System, the meter and sensor feed).</li>
+</ul>
+<p>Three UK standards come up again and again in this world. Here is a short version for data engineers:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Standard</th>
+<th>What it is</th>
+<th>Data-engineering analogy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uniclass 2015</td>
+<td>A hierarchical classification of construction things. Codes look like <code>Ss_32_12_20</code>, where <code>Ss</code> is the Systems table.</td>
+<td>A controlled taxonomy key, like a product category code</td>
+</tr>
+<tr>
+<td>COBie</td>
+<td>A spreadsheet schema for handing over building data (Type, Component, serial number and so on) at the end of a project, used for ISO 19650 information handover</td>
+<td>A data contract between the contractor and the owner</td>
+</tr>
+<tr>
+<td>SFG20</td>
+<td>The industry library of planned maintenance schedules: which task, how often, for which kind of asset</td>
+<td>A reference table of SLAs per asset class</td>
+</tr>
+</tbody>
+</table></div>
+<p>I also used HESA EMR space categories. HESA is the UK higher-education statistics agency, and its Estate Management Record is the annual return universities file about their buildings.</p>
+<p>The failure mode is easy to describe. One bad classification code or an incomplete handover row gets into the warehouse, and every dashboard measure that groups by it quietly goes wrong.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The repo is plain Python, pandas and SQLite. An optional Airflow DAG wraps the same three steps.</p>
+<div class="hl"><pre><span></span><code>generators/generate_synthetic.py  ─┐   9 raw CSVs (seeded, random.seed(42) / seed(7))
+generators/generate_surveys.py    ─┘
+            │
+            ▼
+ingest/bronze_ingest.py      + ingestion_timestamp, batch_id, source_file
+            │
+            ▼
+validate/checks.py           Uniclass regex · SFG20 present · COBie mandatory
+            │                HESA whitelist · orphan keys · range checks
+      ┌─────┴──────┐
+      ▼            ▼
+data/silver/   data/quarantine/*.csv
+      │
+      ▼
+transform/build_silver_gold.py + sql/schema.sql
+      │
+      ▼
+estates.db   3 dims + 5 facts + ref_cobie + 6 views ──► Power BI spec (9 pages, 10 DAX measures)
+      │
+      ▼
+analytics/netzero.py         HDD baseline, BMS anomalies, fault → SFG20 asset
+</code></pre></div>
+
+<p>The Airflow DAG <code>estates_daily</code> runs <code>bronze_ingest &gt;&gt; validate_quarantine &gt;&gt; build_warehouse</code> on <code>@daily</code>. The net zero analytics script is a separate manual step.</p>
+<p>The warehouse has <code>dim_building</code>, <code>dim_space</code> and <code>dim_asset</code>, plus five facts: <code>fact_workorder</code>, <code>fact_energy</code>, <code>fact_space_use</code>, <code>fact_condition</code> and <code>fact_compliance</code>. <code>ref_cobie</code> holds the handover components. Six views sit on top for reporting: EMR summary, open compliance work, energy intensity, space utilisation, compliance RAG and backlog.</p>
+<h2 id="how-the-standards-are-actually-used">How the standards are actually used<a class="h-anchor" href="#how-the-standards-are-actually-used" title="Permanent link">#</a></h2>
+<p>I want to be exact here, because &ldquo;modeled to Uniclass, COBie and SFG20&rdquo; can mean much more than this project does.</p>
+<p><strong>Uniclass</strong> is a column on <code>dim_asset</code> and on the COBie components. The pipeline checks the shape of the code with a regex. Nothing more.</p>
+<div class="hl"><pre><span></span><code><span class="n">UNICLASS_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^Ss_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">_\d</span><span class="si">{2}</span><span class="s2">(-\d+)?$&quot;</span><span class="p">)</span>
+
+<span class="n">m</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">UNICLASS_RE</span><span class="p">)</span>
+<span class="n">bad_uni</span> <span class="o">=</span> <span class="n">assets</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad_uni</span><span class="p">):</span>
+    <span class="n">bad_uni</span> <span class="o">=</span> <span class="n">bad_uni</span><span class="o">.</span><span class="n">copy</span><span class="p">();</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;quarantine_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;bad_uniclass:&quot;</span> <span class="o">+</span> <span class="n">bad_uni</span><span class="p">[</span><span class="s2">&quot;uniclass&quot;</span><span class="p">]</span>
+    <span class="n">bad_uni</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">QUAR</span> <span class="o">/</span> <span class="s2">&quot;assets_bad_uniclass.csv&quot;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</code></pre></div>
+
+<p>The repo has no Uniclass lookup table. A code like <code>Ss_99_99_99</code> would pass, because it has the right shape even though it isn&rsquo;t a real entry. Only the Systems (<code>Ss</code>) table is accepted. The generator draws from five fixed sample codes, and I haven&rsquo;t checked them against the published Uniclass tables.</p>
+<p><strong>COBie</strong> is treated as a completeness contract. A component row must have <code>cobie_type</code>, <code>component_id</code> and <code>serial_number</code> filled in, and a well-formed Uniclass code. Passing rows go to <code>ref_cobie</code>, which keeps <code>asset_id</code> but isn&rsquo;t declared as a foreign key in the schema. The project ingests one flat Component-style CSV, not a full COBie workbook with its Facility, Floor, Space, Type and Component sheets.</p>
+<p><strong>SFG20</strong> is the thinnest of the three. <code>dim_asset.sfg20_schedule</code> is a text column with values like <code>AHU-01</code> or <code>LIFT-03</code>, and the only rule is that it isn&rsquo;t empty:</p>
+<div class="hl"><pre><span></span><code><span class="n">m</span> <span class="o">&amp;=</span> <span class="n">assets</span><span class="p">[</span><span class="s2">&quot;sfg20_schedule&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">len</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</code></pre></div>
+
+<p>These are invented identifiers, not real SFG20 schedule references. The repo stores no task frequencies and computes no due dates from SFG20. The column is used downstream: <code>vw_compliance_open</code> groups open work orders by it, and the anomaly script lists the SFG20 schedule of each suspect HVAC asset. In practice it works as a label, not a reference to a maintenance regime.</p>
+<p><strong>HESA</strong> space types are a whitelist in Python, <code>{"OFF", "LAB", "LEC", "LIB", "STO"}</code>. In <code>schema.sql</code> the column is just <code>TEXT NOT NULL</code>, with no CHECK constraint.</p>
+<h2 id="decision-1-quarantine-dont-crash">Decision 1: quarantine, don&rsquo;t crash<a class="h-anchor" href="#decision-1-quarantine-dont-crash" title="Permanent link">#</a></h2>
+<p><code>validate/checks.py</code> always exits 0. Each rule splits a table into a pass set, which goes to <code>data/silver/</code>, and a fail set, which goes to <code>data/quarantine/</code>. The warehouse is built only from silver.</p>
+<p>I chose this because in estates data a broken row is usually a conversation with a contractor, not a bug. Stopping the whole daily load because 8 assets have a bad code would hold back 107 good ones. The rejected rows stay as CSVs that someone can send back.</p>
+<p>The trade-off is that a pipeline that never fails can hide a bad day. Nothing in the repo alerts when the quarantine count jumps, and the Power BI spec only plans a &ldquo;quarantined rows by batch_id&rdquo; trend after two or more runs. I also found a bug while writing this. The two dedicated asset files (<code>assets_bad_uniclass.csv</code>, <code>assets_orphan_space.csv</code>) fill in <code>quarantine_reason</code>, but the generic <code>*_fails.csv</code> files written by <code>_split()</code> leave that column empty, because the code writes a placeholder:</p>
+<div class="hl"><pre><span></span><code><span class="n">fails</span><span class="p">[</span><span class="n">reason_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">fails</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">reason_col</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>  <span class="c1"># placeholder</span>
+</code></pre></div>
+
+<p>So <code>cobie_components_fails.csv</code> tells you which rows failed but not why.</p>
+<h2 id="decision-2-validate-in-dependency-order">Decision 2: validate in dependency order<a class="h-anchor" href="#decision-2-validate-in-dependency-order" title="Permanent link">#</a></h2>
+<p>Rules run in key order: spaces first, then assets against <em>surviving</em> spaces, then work orders against <em>surviving</em> assets.</p>
+<div class="hl"><pre><span></span><code><span class="n">asset_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">assets_ok</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">])</span>
+<span class="n">m</span> <span class="o">=</span> <span class="n">wo</span><span class="p">[</span><span class="s2">&quot;asset_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">asset_ids</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">wo</span><span class="p">[</span><span class="s2">&quot;cost_gbp&quot;</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre></div>
+
+<p>This means the star schema can&rsquo;t contain a work order pointing at a quarantined asset, so joins in Power BI won&rsquo;t drop rows silently. The cost is that rejections cascade. One bad asset takes all its work orders with it. In this run, 13 assets were quarantined and 13 work orders followed them. Losing the asset is the right result. Losing the maintenance history may not be, and a real team would probably want those work orders held, not dropped.</p>
+<h2 id="decision-3-sqlite-and-a-flat-star-not-a-full-bim-model">Decision 3: SQLite and a flat star, not a full BIM model<a class="h-anchor" href="#decision-3-sqlite-and-a-flat-star-not-a-full-bim-model" title="Permanent link">#</a></h2>
+<p>I loaded into SQLite with a hand-written <code>schema.sql</code>, and the comment says it is &ldquo;SQLite + Postgres compatible&rdquo;. Standards codes are plain attributes on <code>dim_asset</code>, not dimensions of their own. That keeps the model small enough to open in DB Browser or connect to Power BI over ODBC, and it means everything runs on a laptop.</p>
+<p>The trade-offs are real:</p>
+<ul>
+<li>There is no <code>dim_uniclass</code> or <code>dim_sfg20</code>, so there are no descriptions, no hierarchy roll-up (system → subgroup → object) and no maintenance frequencies to report against.</li>
+<li>There is no date dimension. Dates are text columns, and <code>vw_energy_intensity</code> takes the day with <code>substr(e.timestamp, 1, 10)</code>.</li>
+<li>SQLite doesn&rsquo;t enforce the <code>REFERENCES</code> clauses unless foreign keys are turned on, and the build script doesn&rsquo;t turn them on. Integrity rests on the Python checks.</li>
+</ul>
+<p>The views use correlated subqueries rather than joins on purpose, so asset counts don&rsquo;t fan out across spaces:</p>
+<div class="hl"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_name</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">floor_area_m2</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_space</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">rooms</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_asset</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">building_id</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">condition_grade</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;C&#39;</span><span class="p">,</span><span class="s1">&#39;D&#39;</span><span class="p">))</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">backlog_assets</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">dim_building</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>These are the counts from the committed run, read from the CSVs and <code>estates.db</code>. The generator injects bad rows on purpose, for example <code>"BAD-CODE" if i % 17 == 0</code> and orphan space <code>S9999</code> every 20th asset.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Raw rows</th>
+<th>Loaded</th>
+<th>Quarantined</th>
+<th>Main reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>assets → <code>dim_asset</code></td>
+<td>120</td>
+<td>107</td>
+<td>13</td>
+<td>8 bad Uniclass, 6 orphan space (1 overlap)</td>
+</tr>
+<tr>
+<td>COBie components → <code>ref_cobie</code></td>
+<td>60</td>
+<td>56</td>
+<td>4</td>
+<td>missing serial number</td>
+</tr>
+<tr>
+<td>work orders → <code>fact_workorder</code></td>
+<td>150</td>
+<td>137</td>
+<td>13</td>
+<td>asset not in silver</td>
+</tr>
+<tr>
+<td>space surveys → <code>fact_space_use</code></td>
+<td>600</td>
+<td>595</td>
+<td>5</td>
+<td>occupied &gt; booked hours</td>
+</tr>
+<tr>
+<td>statutory tests → <code>fact_compliance</code></td>
+<td>16</td>
+<td>15</td>
+<td>1</td>
+<td>unparseable due date</td>
+</tr>
+<tr>
+<td>spaces / buildings / condition / BMS</td>
+<td>60 / 3 / 15 / 1,008</td>
+<td>all</td>
+<td>0</td>
+<td></td>
+</tr>
+</tbody>
+</table></div>
+<p>COBie completeness comes out at 93.3% (56 of 60). The SFG20 and condition-grade rules rejected nothing, because the generator always fills those fields in. They exist, but this data never exercises them. The net zero step produces 42 building-days of HDD-baselined energy, 1 anomaly (the injected 220 kWh spike in B02) and 3 candidate HVAC assets for it.</p>
+<div class="admonition note">
+<p class="admonition-title">Testing is thin</p>
+<p><code>tests/test_checks.py</code> holds one smoke test. It regenerates data, runs ingest and validation, and asserts that at least one asset was quarantined and that COBie completeness is below 100%. It shows the pipeline runs end to end. It doesn&rsquo;t test each rule on its own.</p>
+</div>
+<p>When I queried the warehouse, I also found a gap the rules don&rsquo;t cover. The generator gives each asset a random <code>building_id</code> that doesn&rsquo;t depend on its space, and 65 of the 107 loaded assets sit in a space that belongs to a different building. No check compares <code>dim_asset.building_id</code> with <code>dim_space.building_id</code>, so building-level counts in <code>vw_emr_summary</code> aren&rsquo;t consistent with the space hierarchy.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Reference tables instead of regexes.</strong> Load the published Uniclass Ss table and a real SFG20 schedule extract as <code>dim_uniclass</code> and <code>dim_sfg20</code>, then validate by lookup. That gives descriptions, hierarchy roll-ups and task frequencies, so SFG20 compliance becomes &ldquo;PPM done within its interval&rdquo; and not &ldquo;column not empty&rdquo;.</li>
+<li><strong>Fix the quarantine reasons.</strong> Every rule should write its own reason code, so each fail file can be sent back to whoever supplied it.</li>
+<li><strong>Derive, don&rsquo;t duplicate.</strong> Take <code>building_id</code> for an asset from its space, or add a consistency rule. Turn on <code>PRAGMA foreign_keys</code> so SQLite enforces the schema too.</li>
+<li><strong>One unit test per rule</strong>, with small hand-built fixtures, plus an alert when the quarantine rate goes over a threshold.</li>
+<li><strong>Full COBie ingest.</strong> Read a multi-sheet COBie workbook and check cross-sheet references (Component → Type → Space), which is where real handover data tends to break.</li>
+</ol>
+<p>The case page with the architecture diagram is here: <a href="../projects/digital-estates.html">Digital Estates Platform case study</a>. The case page doesn&rsquo;t link a public repository yet.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>8/8 sources, zero loss: a lakehouse that proves itself</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/estates-lakehouse-zero-loss.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data.</description>
+      <category>Lakehouse</category><category>Data Quality</category><category>Python</category>
+      <content:encoded><![CDATA[<p>This is a portfolio project, and every row in it is synthetic. The inputs come from <code>campus_synth</code>, a generator I wrote that produces deliberately messy campus estates exports (merged Excel title rows, mixed date formats, duplicate rows, stuck sensors) along with a known ground truth. No real client, building or person is involved. The question I wanted the lakehouse to answer is simple: can I prove that every raw row either reached the clean layer or was put aside with a reason, so none were silently dropped?</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Estates data shows up as a pile of unrelated extracts. In this project there are eight: a space register (multi-sheet XLSX), CAFM work orders, two suppliers&rsquo; half-hourly meter files (one long, one wide), BMS trend logs (wide), statutory inspections (XLSX), a timetable, and 15-minute occupancy sensors (Parquet).</p>
+<p>Each one breaks in its own way. Dates come as <code>dd/mm/yyyy</code>, ISO strings or Excel serials. Meter data is in UK local time, so the clocks-change days have 46 or 50 half-hours instead of 48. Building names don&rsquo;t match between systems. A normal cleaning script deals with all this by filtering, and filtering is where rows vanish. If a dashboard total later looks wrong, nobody can say whether the source was short or the pipeline lost something.</p>
+<p>So I set myself one rule for P01: every row has to be accounted for, and a test has to show it.</p>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>The design is a two-layer medallion with a quarantine next to silver:</p>
+<div class="hl"><pre><span></span><code>data/raw/*  (xlsx / csv / parquet, local time)
+    |
+    |  load_bronze(): sha256 the file; skip if already loaded
+    v
+bronze/&lt;source&gt;/ingest_date=YYYY-MM-DD/*.parquet
+    all columns as strings + _ingest_id, _source_system, _source_file,
+    _loaded_at, _row_number, _row_hash
+    |
+    |  silver_&lt;source&gt;.py: parse, type, UTC, dedupe, map refs
+    +----------------------------+
+    v                            v
+silver/&lt;source&gt;/silver.parquet   quarantine/&lt;source&gt;/quarantine.parquet
+typed, UTC, deduped              original values + _reject_reason
+    |
+    v
+reconciliation.json   raw == bronze  AND  silver + quarantine == bronze
+    |
+    v
+DuckDB queries, dbt gold marts (P04)
+</code></pre></div>
+
+<p>Bronze never changes a value. It reads everything as text, adds six audit columns and writes Parquet partitioned by ingest date. Silver handles the typing. Any row that fails a rule is moved into quarantine with a reason string, never deleted. Storage is local, MinIO or S3 behind one <code>STORAGE</code> switch, and Terraform for an S3/Glue/Athena deployment is in the repo, though I never applied it.</p>
+<h2 id="decision-1-quarantine-not-filter">Decision 1: quarantine, not filter<a class="h-anchor" href="#decision-1-quarantine-not-filter" title="Permanent link">#</a></h2>
+<p>Silver code is only allowed to drop a row by moving it to quarantine. All the transforms share one helper:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">quarantine</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">reason</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split valid/quarantine. Quarantine gets _reject_reason; valid drops the mask.&quot;&quot;&quot;</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">q</span><span class="p">[</span><span class="s2">&quot;_reject_reason&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">reason</span>
+    <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">m</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">q</span>
+</code></pre></div>
+
+<p>Duplicates go through the same path (<code>duplicate:meter_id+local_time</code>, for example), and so do nulls, unparseable or future dates, negative readings, unmapped categories and buildings (with rapidfuzz suggestions at a score of 60 or more), orphan references, and work orders whose completion date is on or before the raised date.</p>
+<p>The trade-off is that you end up with two tables per source instead of one, and quarantine is stored as strings because rows rejected at different stages carry different types. What you get back is that the loss check comes down to addition. It also gave me a rule for dates: an ambiguous or nonexistent London local time becomes <code>NaT</code> and goes to quarantine. I never guess which side of the clock change a reading belonged to.</p>
+<h2 id="decision-2-reconcile-at-the-grain-the-data-actually-has">Decision 2: reconcile at the grain the data actually has<a class="h-anchor" href="#decision-2-reconcile-at-the-grain-the-data-actually-has" title="Permanent link">#</a></h2>
+<p>The check itself is short:</p>
+<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">reconcile_counts</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">bronze</span><span class="p">,</span> <span class="n">silver</span><span class="p">,</span> <span class="n">quarantine</span><span class="p">,</span> <span class="n">grain</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">):</span>
+    <span class="n">ok_raw</span> <span class="o">=</span> <span class="n">raw</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="n">ok_sq</span> <span class="o">=</span> <span class="n">silver</span> <span class="o">+</span> <span class="n">quarantine</span> <span class="o">==</span> <span class="n">bronze</span>
+    <span class="k">return</span> <span class="p">{</span><span class="o">...</span><span class="p">,</span> <span class="s2">&quot;unexplained&quot;</span><span class="p">:</span> <span class="n">bronze</span> <span class="o">-</span> <span class="n">silver</span> <span class="o">-</span> <span class="n">quarantine</span><span class="p">,</span>
+            <span class="s2">&quot;pass&quot;</span><span class="p">:</span> <span class="nb">bool</span><span class="p">(</span><span class="n">ok_raw</span> <span class="ow">and</span> <span class="n">ok_sq</span><span class="p">)}</span>
+</code></pre></div>
+
+<p>&ldquo;Raw&rdquo; means counting the source file independently of the loader. For CSV that&rsquo;s data lines minus the header. For XLSX it&rsquo;s rows per sheet minus three for the space register (two merged title rows and a header) and minus one for the others. For Parquet it&rsquo;s <code>len()</code>.</p>
+<p>That works until a source changes shape. Supplier B&rsquo;s meter file has one row per meter per day with columns <code>HH01</code>, <code>HH02</code> and so on, and silver unpivots it to one row per half-hour. Comparing rows there would always fail. So for the two wide sources (supplier B and BMS trends) the check compares cells: bronze rows times value columns against silver plus quarantine rows.</p>
+<p>That&rsquo;s a real trade-off. A cell-level check is only as good as the code that counts the cells, and I come back to that below.</p>
+<h2 id="decision-3-idempotency-by-file-hash">Decision 3: idempotency by file hash<a class="h-anchor" href="#decision-3-idempotency-by-file-hash" title="Permanent link">#</a></h2>
+<p><code>load_bronze</code> hashes each raw file with SHA-256 and checks it against a bronze manifest. If the same source and hash are already there, the file is skipped and nothing new is written. A corrected file has a new hash, so it gets a new <code>_ingest_id</code>. Without this, running the ingest twice would double bronze, and the raw-equals-bronze check would fail for a reason that has nothing to do with data quality. The cost is that bronze state is cumulative. Whatever sits in the bronze folder counts toward the totals, and that turned out to matter.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>The acceptance run on 4 October 2026 (small profile, seed 42, recorded in <code>docs/ACCEPTANCE_P01.md</code>) produced this <code>reconciliation.json</code>, with every source at <code>pass: true</code>:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Grain</th>
+<th style="text-align: right;">Raw</th>
+<th style="text-align: right;">Bronze</th>
+<th style="text-align: right;">Silver</th>
+<th style="text-align: right;">Quarantine</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>space_register</td>
+<td>row</td>
+<td style="text-align: right;">501</td>
+<td style="text-align: right;">501</td>
+<td style="text-align: right;">495</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>cafm_workorders</td>
+<td>row</td>
+<td style="text-align: right;">6,039</td>
+<td style="text-align: right;">6,039</td>
+<td style="text-align: right;">4,171</td>
+<td style="text-align: right;">1,868</td>
+</tr>
+<tr>
+<td>meter_hh_supplierA</td>
+<td>row</td>
+<td style="text-align: right;">34,419</td>
+<td style="text-align: right;">34,419</td>
+<td style="text-align: right;">33,866</td>
+<td style="text-align: right;">553</td>
+</tr>
+<tr>
+<td>meter_hh_supplierB</td>
+<td>cell</td>
+<td style="text-align: right;">732 rows</td>
+<td style="text-align: right;">35,136 cells</td>
+<td style="text-align: right;">34,349</td>
+<td style="text-align: right;">787</td>
+</tr>
+<tr>
+<td>bms_trends</td>
+<td>cell</td>
+<td style="text-align: right;">8,640 rows</td>
+<td style="text-align: right;">172,800 cells</td>
+<td style="text-align: right;">172,780</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>statutory_inspections</td>
+<td>row</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>timetable</td>
+<td>row</td>
+<td style="text-align: right;">12,566</td>
+<td style="text-align: right;">12,566</td>
+<td style="text-align: right;">12,347</td>
+<td style="text-align: right;">219</td>
+</tr>
+<tr>
+<td>sensors</td>
+<td>row</td>
+<td style="text-align: right;">779,933</td>
+<td style="text-align: right;">779,933</td>
+<td style="text-align: right;">773,974</td>
+<td style="text-align: right;">5,959</td>
+</tr>
+</tbody>
+</table></div>
+<p>That&rsquo;s eight out of eight with zero unexplained rows or cells. The ingest took 34–35 seconds. A second <code>run-all</code> reported all eight bronze files as <code>skipped</code> and the silver counts didn&rsquo;t change. On the clocks-change day, 2026-03-29, each meter produced 46 unique UTC periods. The platform tests (7 of them) cover bronze idempotency, silver rules, cumulative-register rollover, DST, reconciliation, and a check that planted invalid rows land in quarantine with a reason.</p>
+<p>Strictly, this proves that nothing went missing. It does not prove the rows are correct. Correctness is handled downstream: P03 runs 133 YAML data-quality checks against the planted ground truth, and P04 reconciles silver to the dbt marts. In the P04 acceptance doc, for example, space went 495 to 495, and meter half-hours went 68,119 to 67,822 (Δ −297, the defect meters).</p>
+<div class="admonition note">
+<p class="admonition-title">What the current working copy says</p>
+<p>When I reopened the lakehouse folder while writing this, the <code>reconciliation.json</code> on disk was from a later run on 17 October, and it shows <strong>6/8</strong>, not 8/8. Both failures trace back to the check, not to lost data.</p>
+<p><code>meter_hh_supplierA</code>: raw 34,419 vs bronze 34,420. Bronze also contains a one-row <code>_corrupt</code> file left over from the P02 Airflow schema-drift demo, and that file isn&rsquo;t in <code>data/raw</code>. Silver plus quarantine still equals bronze (33,866 + 554).</p>
+<p><code>bms_trends</code>: a second BMS file (288 rows, 294 points, exported by the P15 IoT project) now sits next to the original (8,640 rows, 20 points). The counter concatenates the two bronze frames and multiplies all 8,928 rows by the 314 point columns in the union, which gives 2,803,392 &ldquo;cells&rdquo; when most of them never existed. The real total is 8,640 × 20 + 288 × 294 = 257,472, which is exactly silver plus quarantine (257,215 + 257).</p>
+</div>
+<p>So the headline holds for the acceptance run, but the check has two weak points I hadn&rsquo;t tested. Cell counting assumes every bronze file for a source has the same columns. And the reconciliation reads whatever bronze happens to contain, including state left behind by other demos.</p>
+<p>I also found that <code>ingest.cli reconcile</code> writes the JSON and prints it, but always exits with code 0. The README says <code>make ci</code> fails on unexplained loss. In practice CI runs the reconciliation and keeps going whatever the result. The data-quality gate after it is what actually fails builds.</p>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Make reconciliation a gate.</strong> Exit non-zero when any source has <code>pass: false</code>, and add a CI step that asserts on <code>reconciliation.json</code> rather than just generating it.</li>
+<li><strong>Count cells per file.</strong> Compute value cells for each bronze file before concatenating, or count only non-null cells, so a new wide schema can&rsquo;t inflate the expected total.</li>
+<li><strong>Reconcile per file, not per folder.</strong> Key the check on the bronze manifest (file, sha256, rows) so a stray demo file shows up as its own line and doesn&rsquo;t skew the source total.</li>
+<li><strong>Add a hash-level check.</strong> Bronze already stores a <code>_row_hash</code>. The next step is to carry it into silver and quarantine, so each source row can be traced to exactly one destination row. Counts can balance even when one row is lost and another is duplicated. Hashes can&rsquo;t.</li>
+<li><strong>Replace the truth-based crosswalk.</strong> The building crosswalk reads the generator&rsquo;s truth table at ingest. A real deployment would read a master-data table instead.</li>
+</ul>
+<p>The full project, including the dbt marts, data-quality framework and the other demos, is on the <a href="../projects/estates-data-platform.html">Estates Data Portfolio case page</a>, and the code is on <a href="https://github.com/Eng-Zakaria/estates-data-portfolio">GitHub</a>.</p>]]></content:encoded>
     </item>
     <item>
       <title>Deterministic Gates Before the LLM</title>
@@ -615,6 +1448,163 @@ labeling, and human calibration labels are still pending.</p>
   from what I think customers ask.</li>
 </ul>
 <p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Config, not code: schema-drift gates and a cdp CLI</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/config-not-code-ingestion.html</guid>
+      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do.</description>
+      <category>Data Ingestion</category><category>Data Quality</category><category>Airflow</category>
+      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio.</strong> I built this alone as a portfolio project while applying for a Data Automation Engineer role. It was not built for an employer or a client, and it uses only public websites and a free public API. It is a v1 scaffold: it covers ingestion, raw landing and a quality gate. The transform job, the warehouse and the analytics API are still on the roadmap, and I don&rsquo;t claim any of them work.</p>
+<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
+<p>Electronic component data, meaning part numbers, prices, stock and datasheets, is mostly published as HTML pages owned by somebody else. A scraper written against one page layout works until the site changes its theme. When it breaks, it usually breaks without an error. A CSS class gets renamed, the selector returns <code>None</code>, the job still finishes green, and you end up with a table of empty prices that looks like a healthy one.</p>
+<p>So I wanted three things:</p>
+<ol>
+<li>A layout change should mean editing a config file, not the scraper code.</li>
+<li>A layout change I haven&rsquo;t caught yet should stop the run, not load empty fields.</li>
+<li>Someone who didn&rsquo;t write the project should be able to check, run and schedule it without reading the source.</li>
+</ol>
+<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
+<p>Each source is one YAML file in <code>configs/sources/</code>. The v1 sources are SparkFun and Texas Instruments, both scraped from HTML, and Mouser, through its official API. Everything else is generic.</p>
+<div class="hl"><pre><span></span><code>configs/sources/*.yaml
+        |
+        v
+SourceConfig.from_yaml()  ----------------------------+
+        |                                             |
+  source_type: html                            source_type: api
+        |                                             |
+ConfigDrivenScraper                            MouserClient
+  fetch (3 retries, exp. backoff)                (3 retries, keyword search)
+  parse cards with CSS selectors from YAML
+  map fields via field_map
+  _check_schema_drift()  -- fails --&gt; SchemaDriftError (nothing written)
+        |                                             |
+        +--------------------+------------------------+
+                             v
+            write_raw_records()  -&gt;  data/raw/&lt;source&gt;/&lt;date&gt;/records.jsonl
+                             |
+                             v
+            validate_jsonl()  (null rate per required field, duplicate count)
+                             |
+                             v
+            data/.run_log.json  -&gt;  cdp status
+</code></pre></div>
+
+<p>Here is the SparkFun config, trimmed a little:</p>
+<div class="hl"><pre><span></span><code><span class="nt">source_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sparkfun</span>
+<span class="nt">source_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">html</span>
+<span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">base_url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;https://www.sparkfun.com&quot;</span>
+<span class="nt">start_urls</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/development-boards/microcontrollers.html&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/sensors.html&quot;</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;/components/resistors.html&quot;</span>
+<span class="nt">pagination</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">param</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;p&quot;</span>
+<span class="w">  </span><span class="nt">start_page</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">max_pages</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span><span class="w">          </span><span class="c1"># safety cap</span>
+<span class="nt">rate_limit_seconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.5</span>
+<span class="nt">selectors</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">product_card</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;li.product-item&quot;</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
+<span class="w">  </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;a.product-item-link&quot;</span>
+<span class="w">  </span><span class="nt">price</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;span[data-price-type=&#39;finalPrice&#39;]</span><span class="nv"> </span><span class="s">.price&quot;</span>
+<span class="nt">field_map</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">product_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">name</span>
+<span class="w">  </span><span class="nt">product_url</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">url</span>
+<span class="w">  </span><span class="nt">list_price</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">price</span>
+<span class="nt">required_fields</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_name</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">product_url</span>
+</code></pre></div>
+
+<p>The scraper reads <code>selectors</code>, applies each one inside every <code>product_card</code>, renames the results through <code>field_map</code>, and stamps each record with <code>_source</code> and <code>_schema_version</code>. The landing module adds <code>_ingested_at</code>. Nothing in <code>ConfigDrivenScraper</code> mentions SparkFun.</p>
+<h2 id="decision-1-the-drift-gate-raises-before-anything-lands">Decision 1: the drift gate raises before anything lands<a class="h-anchor" href="#decision-1-the-drift-gate-raises-before-anything-lands" title="Permanent link">#</a></h2>
+<p>The core check sits at the end of <code>ConfigDrivenScraper.run()</code>, before any records are written:</p>
+<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="ow">not</span> <span class="n">records</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">source_name</span><span class="si">}</span><span class="s2">: zero records scraped — &quot;</span>
+        <span class="s2">&quot;selectors likely no longer match the page structure.&quot;</span>
+    <span class="p">)</span>
+
+<span class="k">for</span> <span class="n">required</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">required_fields</span><span class="p">:</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">records</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">required</span><span class="p">))</span>
+    <span class="n">null_rate</span> <span class="o">=</span> <span class="n">missing</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">null_rate</span> <span class="o">&gt;</span> <span class="n">null_rate_threshold</span><span class="p">:</span>   <span class="c1"># default 0.5</span>
+        <span class="k">raise</span> <span class="n">SchemaDriftError</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</code></pre></div>
+
+<p>There are two cases. Zero cards means the <code>product_card</code> selector no longer matches. If any required field is null in more than 50% of records, a field selector has drifted. In both cases the error message names the field and the YAML file to fix.</p>
+<p>After landing there is a second, stricter check. <code>validate_jsonl()</code> fails a file when a required field is null in more than 30% of records, and it also counts duplicates on <code>product_url</code> (or <code>product_name</code> if there&rsquo;s no URL field). In the CLI, a file that fails this check is recorded as <code>quality_fail</code>, which is different from <code>error</code>.</p>
+<p><strong>Trade-off.</strong> A null-rate threshold is a blunt tool. It catches a selector that broke completely. It won&rsquo;t catch one that now picks up the wrong element, like a &ldquo;was&rdquo; price instead of the current price. It also only covers fields I list as required, so <code>list_price</code> on SparkFun could go fully null and the drift check would let it through. I accepted that for v1: required fields get a hard failure, and the other fields depend on downstream checks I haven&rsquo;t built yet. The 50% and 30% thresholds are my own judgement calls. I didn&rsquo;t tune them on data.</p>
+<div class="admonition note">
+<p class="admonition-title">The gate&rsquo;s first real run</p>
+<p>The run log in the repo (<code>data/.run_log.json</code>) has one live attempt per source, all on 7 August 2026. All three failed. SparkFun: <code>field 'product_name' is null in 64% of 791 records (threshold 50%)</code>. TI: <code>zero records scraped</code>. Mouser: <code>MOUSER_API_KEY not set</code>. Nothing was written to the landing zone. The gate did its job, but it also means the SparkFun selectors don&rsquo;t match the live site any more, and the roadmap line saying they were &ldquo;verified against live markup&rdquo; is out of date.</p>
+</div>
+<h2 id="decision-2-one-cli-with-the-checks-before-the-run">Decision 2: one CLI, with the checks before the run<a class="h-anchor" href="#decision-2-one-cli-with-the-checks-before-the-run" title="Permanent link">#</a></h2>
+<p><code>cdp</code> is a Click app (<code>pyproject.toml</code> maps <code>cdp = "cli.main:cli"</code>) with seven commands:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it actually does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cdp doctor</code></td>
+<td>Checks Python ≥ 3.10, that 7 packages import, <code>.env</code> present, API key set (optional), write access to the landing folder, and that every YAML parses</td>
+</tr>
+<tr>
+<td><code>cdp sources list</code> / <code>info &lt;name&gt;</code></td>
+<td>Table of sources; <code>info</code> fetches the live <code>robots.txt</code>, checks each start URL against it, and prints a pre-run checklist</td>
+</tr>
+<tr>
+<td><code>cdp run &lt;name&gt;</code> / <code>run all</code></td>
+<td>Fetch, land, validate, log; <code>run all</code> catches each source&rsquo;s failure so one bad source doesn&rsquo;t stop the others, then prints a summary table</td>
+</tr>
+<tr>
+<td><code>cdp check</code></td>
+<td>Runs <code>doctor</code>, then re-validates every file under <code>data/raw/</code></td>
+</tr>
+<tr>
+<td><code>cdp status</code></td>
+<td>Last outcome per source from <code>data/.run_log.json</code></td>
+</tr>
+<tr>
+<td><code>cdp schedule</code></td>
+<td>Prints a cron line for <code>cdp run all</code> (hourly or daily); <code>--install</code> adds it to the crontab after a confirm prompt</td>
+</tr>
+<tr>
+<td><code>cdp test</code></td>
+<td>Runs <code>pytest tests/ -v</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>The intended order is doctor, then run, then status, then schedule. <code>doctor</code> comes first because most failed runs I hit were environment problems, like a missing key or a broken YAML, not scraper problems.</p>
+<p><strong>Trade-off.</strong> Two ways of scheduling now exist side by side. <code>cdp schedule</code> writes a cron line for one machine. The Airflow DAG (<code>dags/component_pipeline_dag.py</code>) is the intended production orchestrator, with <code>retries: 2</code>, a 10-minute retry delay, <code>email_on_failure</code> and <code>@daily</code>. They don&rsquo;t share code. The DAG calls the scraper and validator modules directly, not through <code>cdp</code>, so the two paths can drift apart. The DAG is also explicitly a skeleton. It has not been deployed, and its transform and load tasks are TODO comments.</p>
+<h2 id="decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped">Decision 3: use the API where one exists, and write down what I skipped<a class="h-anchor" href="#decision-3-use-the-api-where-one-exists-and-write-down-what-i-skipped" title="Permanent link">#</a></h2>
+<p>Mouser has a free official API, so I used it instead of scraping. It still has a YAML file, so <code>sources list</code>, <code>run</code> and <code>check</code> treat it like the other sources. <code>docs/sources_evaluated.md</code> lists the sources I considered and why I deferred them. For example, LCSC has no public API, rate-limits aggressively and has blocked scraper IPs, and Digi-Key and Newark both have official APIs, so I&rsquo;d use those instead of scraping. Every HTML config also sets a <code>rate_limit_seconds</code> and an identifying <code>user_agent</code>.</p>
+<p><strong>Trade-off.</strong> API sources are only partly config-driven. In <code>cli/commands/run.py</code>, the dispatch for <code>source_type: api</code> is hard-coded to <code>source_name == "mouser"</code>. Any other source type raises <code>NotImplementedError</code>. A second API source needs a new client class and a new branch. &ldquo;YAML only&rdquo; holds for HTML sites that render without JavaScript. TI&rsquo;s config even has a <code>render_mode: rendered</code> option, but the scraper raises <code>NotImplementedError</code> for it.</p>
+<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
+<p>What the files show:</p>
+<ul>
+<li><strong>Sources configured:</strong> 3 (2 HTML, 1 API). None has produced a passing live run yet (see the note above).</li>
+<li><strong>Tests:</strong> 3, all passing offline against a saved SparkFun HTML fixture. They check that the fixture parses to 3 records, that <code>field_map</code> normalisation works (name, URL, price <code>$45.65</code>, <code>_source</code>, <code>_schema_version</code>), and that a renamed <code>product_card</code> selector raises <code>SchemaDriftError</code>. Nothing tests the validator, the Mouser client, the CLI or the DAG.</li>
+<li><strong>Onboarding a new HTML source:</strong> adding <code>configs/sources/&lt;name&gt;.yaml</code> is enough for <code>cdp sources list</code>, <code>cdp run &lt;name&gt;</code>, <code>cdp run all</code> and <code>cdp status</code> to pick it up. That part is real. The Airflow DAG, though, has a hard-coded <code>SOURCE_CONFIGS</code> list and needs a code edit. I haven&rsquo;t added a fourth source, so I have no measured onboarding time.</li>
+<li><strong>Landing:</strong> local JSONL partitioned by source and date. The S3 swap would touch only <code>src/ingestion/landing.py</code>, but that&rsquo;s still a roadmap item.</li>
+</ul>
+<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<ol>
+<li><strong>Fix SparkFun&rsquo;s selectors and get one green live run.</strong> The gate says they&rsquo;re broken, so the project currently has zero working live sources.</li>
+<li><strong>Make the DAG read <code>configs/sources/</code> the way the CLI does</strong>, so adding a YAML file onboards a source everywhere. While I&rsquo;m there, have the DAG&rsquo;s quality gate use each source&rsquo;s own <code>required_fields</code> and only today&rsquo;s partition. Right now it globs every file and checks only <code>product_name</code>.</li>
+<li><strong>Drive API sources from a registry</strong> keyed by name, instead of an <code>if</code> on <code>"mouser"</code>.</li>
+<li><strong>Make the thresholds per-source config</strong> and add a row-count floor compared to the last good run, so a site that quietly drops half its catalogue gets caught.</li>
+<li><strong>Add tests for the validator and <code>cdp run</code></strong>, including the <code>quality_fail</code> path.</li>
+<li>Then build the parts the roadmap already lists: S3 landing, the Glue/Spark transform to silver and gold, the Redshift schema, and the API.</li>
+</ol>
+<p>The full case study is at <a href="../projects/component-data-pipeline.html">Component Data Pipeline</a>. The case page doesn&rsquo;t link a public repository, so there&rsquo;s no GitHub link here.</p>]]></content:encoded>
     </item>
     <item>
       <title>Brand radar: one file per source and a connector registry</title>
