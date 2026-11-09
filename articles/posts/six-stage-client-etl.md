@@ -64,7 +64,7 @@ The entry sheet has 29 required columns. The warehouse is a star schema with fiv
  Power BI (role-playing staff relationships, patient drillthrough)
 ```
 
-The portfolio line for this project lists five stages: preflight, quality checks, diff, backup, load. The code has six. The one that gets left out is stage 2, a schema drift check. It reads `information_schema.columns` for the `public` schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.
+The stage people tend to skip is stage 2, a schema drift check. It reads `information_schema.columns` for the `public` schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.
 
 What each stage actually does:
 
@@ -149,6 +149,9 @@ The first run is more useful as a lesson. 1,041 of its errors were the same thin
     **Backup.** `backup_database` opens the output file before calling `pg_dump`. When the binary is missing, it logs "skipped" but leaves an empty, timestamped `.sql` file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn't one.
 
     **Rollback.** The load runs in one transaction and commits at the end. On a row error it calls `conn.rollback()` with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1's "3,867 processed" doesn't mean 3,867 rows reached the database. I can't tell from the log alone how many did.
+
+!!! tip "Update, November 2026"
+    I've since fixed both bugs described above: the backup step and the rollback behaviour. This write-up describes the code as it was at handover review, because the mistakes are the useful part.
 
 ## What I'd do next
 

@@ -548,3 +548,7 @@ html[data-theme="dark"] #skills .skill-tag i.colored.devicon-influxdb-plain { co
 #skills .skill-category { display: flex; flex-direction: column; }
 #skills .skill-cat-link { margin-top: auto; padding-top: 14px; align-self: flex-start; color: var(--accent); font: 600 .8rem var(--font-mono); letter-spacing: .02em; text-decoration: none; border-bottom: 1px solid transparent; }
 #skills .skill-cat-link:hover, #skills .skill-cat-link:focus-visible { border-bottom-color: var(--accent); }
+
+/* Experience: link a role to its career write-up */
+.exp-article { display: inline-block; margin-top: 10px; color: var(--accent); font: 600 .8rem var(--font-mono); letter-spacing: .02em; text-decoration: none; border-bottom: 1px solid transparent; }
+.exp-article:hover, .exp-article:focus-visible { border-bottom-color: var(--accent); }

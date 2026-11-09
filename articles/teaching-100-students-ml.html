@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>What teaching 100+ students ML taught me about explaining data | Mohammed Zakaria</title>
+  <meta name="description" content="A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today.">
+  <meta name="author" content="Mohammed Zakaria">
+  <meta name="theme-color" content="#111214">
+  <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html">
+  <meta property="og:title" content="What teaching 100+ students ML taught me about explaining data | Mohammed Zakaria">
+  <meta property="og:description" content="A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html">
+  <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="alternate" type="application/rss+xml" title="Mohammed Zakaria — Articles" href="https://eng-zakaria.github.io/Portfolio/feed.xml">
+  <script src="../js/theme-init.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../css/portfolio-themes.css">
+  <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article.css?v=20261108f">
+  <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
+  <meta property="article:published_time" content="2026-11-09">
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "What teaching 100+ students ML taught me about explaining data", "description": "A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today.", "datePublished": "2026-11-09", "dateModified": "2026-11-09", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html", "wordCount": 1326, "keywords": "Career, Teaching, Machine Learning"}</script>
+  <script defer src="../js/main.js?v=20261108f"></script>
+  <script defer src="../js/theme-controls.js"></script>
+  <script defer src="../js/article.js?v=20261108f"></script>
+</head>
+<body class="post-page">
+  <div class="read-progress" aria-hidden="true"><i id="read-progress"></i></div>
+  <header class="hood-header">
+    <nav class="hood-nav" aria-label="Main navigation">
+      <a class="hood-brand" href="../index.html" aria-label="Mohammed Zakaria home">
+        <span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span>
+        <span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span>
+      </a>
+      <div class="hood-nav-actions">
+        <a class="hood-nav-cta" href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" target="_blank" rel="noopener">RÉSUMÉ <span>↗</span></a>
+        <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch between light and dark mode"><span aria-hidden="true">*</span> <span>Light</span></button>
+        <button class="hamburger" type="button" aria-label="Open navigation" aria-expanded="false"><span></span><span></span><span></span></button>
+      </div>
+      <ul class="nav-links" aria-label="Portfolio sections">
+        <li><a href="../index.html">Home</a></li>
+        <li><a href="../articles/index.html">All articles</a></li>
+        <li><a href="../index.html#projects">Project street</a></li>
+        <li><a href="../index.html#experience">Experience</a></li>
+        <li><a href="../index.html#credentials">Credentials</a></li>
+        <li><a href="../index.html#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main class="post-main" id="top">
+    <article class="post">
+      <header class="post-head">
+        <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
+        <div class="post-tags"><span class="post-tag">Career</span><span class="post-tag">Teaching</span><span class="post-tag">Machine Learning</span></div>
+        <h1>What teaching 100+ students ML taught me about explaining data</h1>
+        <p class="post-lede">A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today.</p>
+        <div class="post-meta">
+          <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-09">9 Nov 2026</time></span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
+          <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
+        </div>
+      </header>
+      <div class="post-layout">
+        <aside class="post-toc"><details open><summary>On this page</summary><div class="toc">
+<ul>
+<li><a href="#the-role-in-facts">The role, in facts</a></li>
+<li><a href="#three-mistakes-that-kept-coming-up">Three mistakes that kept coming up</a></li>
+<li><a href="#the-same-habit-in-my-data-work-now">The same habit in my data work now</a></li>
+<li><a href="#writing-for-people-who-wont-read-the-code">Writing for people who won&rsquo;t read the code</a></li>
+<li><a href="#what-i-would-tell-someone-starting-out">What I would tell someone starting out</a></li>
+</ul>
+</div>
+</details></aside>
+        <div class="post-body">
+<p>This is a career reflection. The facts come from my CV and the project write-ups linked below; the rest is my own view of what teaching does to the way you explain technical work. From June to November 2024, straight after finishing my degree in Computers and Artificial Intelligence at Helwan University, I worked as an AI Instructor at iSchool in Cairo. I taught AI and machine learning to more than 100 students, and they built their own AI and machine-learning projects. I have since moved into data engineering, and the habits from that job show up in how I evaluate and explain my work.</p>
+<h2 id="the-role-in-facts">The role, in facts<a class="h-anchor" href="#the-role-in-facts" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What the record says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Role</td>
+<td>AI Instructor, iSchool, Cairo</td>
+</tr>
+<tr>
+<td>Dates</td>
+<td>06/2024 to 11/2024</td>
+</tr>
+<tr>
+<td>Audience</td>
+<td>100+ students, taught AI and machine learning</td>
+</tr>
+<tr>
+<td>Student work</td>
+<td>Hands-on AI and machine-learning projects, with sessions on model evaluation</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>90% project completion, the cohort&rsquo;s highest finish rate</td>
+</tr>
+<tr>
+<td>Delivery</td>
+<td>100% of curriculum modules delivered and documented on schedule</td>
+</tr>
+</tbody>
+</table></div>
+<p>And here is where it sits in the rest of my path:</p>
+<div class="hl"><pre><span></span><code>2020-09 ── 2024-05  BSc Computers and AI, Helwan University (graduation project A+)
+2024-06 ── 2024-11  AI Instructor, iSchool            &lt;- this article
+2025-01 ── 2026-01  Data Engineer, Nexlify (10+ clinic warehouse, Power BI)
+2026-01 ── now      Freelance Data and AI Engineer
+2026-04 ── 2026-07  Big Data Engineering Intern, NTI
+2026-07 ── now      Data Engineer, Waffarha (bilingual RAG, support data)
+</code></pre></div>
+
+<p>Teaching came between finishing a degree and starting production data work. That order matters to me. I learned to explain machine learning before I had to defend my own numbers to a team that depended on them.</p>
+<h2 id="three-mistakes-that-kept-coming-up">Three mistakes that kept coming up<a class="h-anchor" href="#three-mistakes-that-kept-coming-up" title="Permanent link">#</a></h2>
+<p>Because every student built a project, I saw the same misunderstandings come up again and again, across different groups. Almost all of them were about evaluation, not training. These are the three I spent the most time on.</p>
+<p><strong>Judging a model by accuracy on imbalanced data.</strong> A project would report a high accuracy on a dataset where most rows belonged to one class. A model that always predicts the majority class gets the same score and has learned nothing. The way I explained it: before you look at your score, work out the score of the laziest possible model. If you can&rsquo;t beat &ldquo;always say no&rdquo;, the number isn&rsquo;t telling you anything yet. Then look at the confusion matrix and the recall for each class, because that is where the rare class shows up.</p>
+<p><strong>Testing on data the model has already seen.</strong> Some projects evaluated on the training data, or split the data only after a step like scaling or filling missing values had already used every row. I explained it as an exam: if you see the exact questions beforehand, a high mark shows you memorised them, not that you understand the subject. The test set stays locked away until the end, and anything you fit, preprocessing included, is fitted on the training data only.</p>
+<p><strong>Overfitting: a great training score and a poor test score.</strong> A model with near-perfect training results looked like a success until it met the test set. I described it as memorising the noise instead of learning the pattern, and asked students to always print both scores side by side. A big gap is a signal to simplify the model, get more data or regularise, not a result to celebrate.</p>
+<p>All three come down to one rule I repeated in every session: a score always has a denominator, and the test set has to look like the real world. The easiest way to check whether you understand that is to explain it to someone who has no reason to trust you yet. Students give you that test every session.</p>
+<h2 id="the-same-habit-in-my-data-work-now">The same habit in my data work now<a class="h-anchor" href="#the-same-habit-in-my-data-work-now" title="Permanent link">#</a></h2>
+<p>The clearest example is the retrieval evaluation I ran for Waffarha&rsquo;s Arabic/English customer-service assistant. In the September 2026 run, retrieval found the expected document in 151 of 172 checked cases, an 87.8% hit rate. In the same run, on the same index, the full pipeline passed 64 of 225 cases. I wrote a whole article about why those two numbers have to be reported together: <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>.</p>
+<p>That article is really a model-evaluation lesson with production data in it. The 172 and the 225 are different denominators. The 172 only counts cases that have an expected document; greetings and prompt-injection attempts have none. If I had published 87.8% on its own, I would have broken the first rule I used to teach.</p>
+<p>The pattern repeats across my other write-ups:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Claim that sounds complete</th>
+<th>What I say next to it</th>
+<th>Article</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>87.8% retrieval hit rate</td>
+<td>64/225 end-to-end in the same run; retrieval is a component test</td>
+<td><a href="../articles/bilingual-rag-retrieval-hit-rate.html">Bilingual RAG</a></td>
+</tr>
+<tr>
+<td>Zero leaks across 117,915 chats</td>
+<td>Zero matches on 8 patterns, not proof there is no personal data; training deferred until human review</td>
+<td><a href="../articles/redacting-160k-support-chats.html">Redacting 160,944 chats</a></td>
+</tr>
+<tr>
+<td>8/8 sources, zero loss</td>
+<td>The acceptance run was 8/8; a later file on disk shows 6/8, and both failures were in the check, not lost data</td>
+<td><a href="../articles/estates-lakehouse-zero-loss.html">Estates lakehouse</a></td>
+</tr>
+<tr>
+<td>A 225-case eval suite</td>
+<td>Which categories the deterministic gates handle well, and which they don&rsquo;t</td>
+<td><a href="../articles/deterministic-gates-before-llm.html">Deterministic gates</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>None of this is about being modest. A number with its limits attached is more useful, because the reader knows how far to trust it and what to measure next. In a classroom, an overclaim gets caught quickly and costs you the room&rsquo;s trust. A team reading your dashboard works the same way, only slower.</p>
+<h2 id="writing-for-people-who-wont-read-the-code">Writing for people who won&rsquo;t read the code<a class="h-anchor" href="#writing-for-people-who-wont-read-the-code" title="Permanent link">#</a></h2>
+<p>Most people who use data work never open the repository. On my portfolio I describe one of my strengths as making complex systems obvious to non-engineers, and teaching is where that started. In practice it comes down to a few habits:</p>
+<ol>
+<li><strong>Start with the question, not the tool.</strong> &ldquo;Did the assistant find the right document?&rdquo; comes before &ldquo;BGE-M3 on Qdrant with reciprocal rank fusion.&rdquo;</li>
+<li><strong>Use one concrete case before the summary.</strong> One category&rsquo;s numbers (retrieval passed 33 of 34 checked category-browsing cases; end-to-end passed 16 of 39) explains the gap better than a paragraph.</li>
+<li><strong>Put the check where the reader already looks.</strong> In my Power BI work that means a data-quality page inside the report, with a reconciliation measure and expected values for each KPI card. I describe it in <a href="../articles/one-power-bi-model.html">One BI model, many sites</a>.</li>
+<li><strong>Say what the number does not mean.</strong> One sentence of caveat is usually enough, and it saves a meeting later.</li>
+</ol>
+<p>These are the same moves I used in a lab session. The audience changed from students to support teams and managers, but what makes an explanation work did not.</p>
+<h2 id="what-i-would-tell-someone-starting-out">What I would tell someone starting out<a class="h-anchor" href="#what-i-would-tell-someone-starting-out" title="Permanent link">#</a></h2>
+<p>If you are early in a data or ML career and get the chance to teach, even part-time, take it.</p>
+<ul>
+<li><strong>Teaching is a test of your own understanding.</strong> If you can&rsquo;t explain why a metric can mislead, you don&rsquo;t fully understand the metric yet.</li>
+<li><strong>Teach evaluation early and often.</strong> Training a model gets the attention, but deciding whether it works is the skill you will use every week.</li>
+<li><strong>Write your material down.</strong> Delivering every module documented and on schedule was part of the job, and it is the same discipline as keeping an evaluation report or a README current.</li>
+<li><strong>Treat questions as data.</strong> The places where people get confused show you where your explanation is weak.</li>
+</ul>
+<p>I still write most of my work as if a sharp student is going to ask &ldquo;out of how many?&rdquo; It is the cheapest check against overclaiming that I know.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>
+        </div>
+      </div>
+      <footer class="post-foot">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html" data-title="What teaching 100+ students ML taught me about explaining data">
+          <span class="post-share-label">Share</span>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
+          <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/?text=https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> WhatsApp</a>
+          <button class="post-btn" type="button" data-copy-link><i class="fa-solid fa-link" aria-hidden="true"></i> Copy link</button>
+          
+        </div>
+        <div class="post-author">
+          <img src="../assets/Profile.png" alt="" width="64" height="64" loading="lazy">
+          <div><b>Mohammed Zakaria</b><span>Data Engineer at Waffarha, Cairo. Pipelines, warehouses, data quality, and the data layer behind production AI.</span>
+          <a href="../index.html#contact">Get in touch ↗</a></div>
+        </div>
+        <nav class="post-pager" aria-label="More articles">
+          <a class="post-pager-prev" href="uzh-blockchain-research.html"><small>← Newer</small><b>Mining Ethereum with the University of Zurich</b></a>
+          <a class="post-pager-next" href="nti-big-data-internship.html"><small>Older →</small><b>The NTI Big Data internship and HCIP certification: what I would tell the next intern</b></a>
+        </nav>
+      </footer>
+    </article>
+  </main>
+  <nav class="bottom-bar show" aria-label="Quick navigation">
+    <a href="../index.html"><i class="fa-solid fa-house" aria-hidden="true"></i><span>Home</span></a>
+    <a href="../index.html#projects"><i class="fa-solid fa-layer-group" aria-hidden="true"></i><span>Work</span></a>
+    <a href="../docs/Mohammed_Zakaria_Data_Engineer.pdf" class="bb-cta" target="_blank" rel="noopener"><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i><span>Résumé</span></a>
+    <a href="../articles/index.html" class="is-active" aria-current="page"><i class="fa-solid fa-pen-nib" aria-hidden="true"></i><span>Writing</span></a>
+    <a href="../index.html#contact"><i class="fa-solid fa-paper-plane" aria-hidden="true"></i><span>Contact</span></a>
+  </nav>
+  <footer class="hood-footer">
+    <a class="hood-brand" href="../index.html"><span class="hood-brand-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><path d="M20 2 37 11.5v17L20 38 3 28.5v-17L20 2Z"/><path d="m12 26 8-15 8 15M15 21h10"/></svg></span><span>MOHAMMED <b>ZAKARIA</b><small>DATA × AI ENGINEER</small></span></a>
+    <span class="hood-footer-copy">© <span id="yr"></span> · Written in Cairo.</span>
+    <div class="hood-footer-links"><a href="https://eng-zakaria.github.io/Portfolio/feed.xml">RSS feed</a><a href="#top">Back to top ↑</a></div>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

@@ -6,7 +6,380 @@
     <atom:link href="https://eng-zakaria.github.io/Portfolio/feed.xml" rel="self" type="application/rss+xml"/>
     <description>Practical, production-tested writing on data engineering, data quality, and the data layer behind AI.</description>
     <language>en</language>
-    <lastBuildDate>Sun, 08 Nov 2026 09:00:00 +0200</lastBuildDate>
+    <lastBuildDate>Mon, 09 Nov 2026 09:00:00 +0200</lastBuildDate>
+    <item>
+      <title>Mining Ethereum with the University of Zurich</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/uzh-blockchain-research.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/uzh-blockchain-research.html</guid>
+      <pubDate>Mon, 09 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A look back at my remote 2023 Blockchain Analysis internship with UZH and its Deep Dive into Blockchain summer school: data pipelines and validation over Ethereum and a university blockchain, Solidity smart contracts, and what raw chain data teaches a data engineer.</description>
+      <category>Career</category><category>Blockchain</category><category>Research</category>
+      <content:encoded><![CDATA[<p>From June to August 2023, between my third and fourth years at Helwan University, I worked remotely as a Blockchain Analysis Intern for the University of Zurich (UZH). This is a career reflection; the facts come from my CV, my UZH programme confirmation and the project write-ups linked below. The rest is my own view of what working with raw blockchain data does to the way a data engineer thinks.</p>
+<h2 id="what-the-internship-covered">What the internship covered<a class="h-anchor" href="#what-the-internship-covered" title="Permanent link">#</a></h2>
+<p>The work sat inside UZH&rsquo;s Web3 and Fintech research, and it had two sides: data engineering over blockchain data, and smart-contract development in Solidity.</p>
+<p>On the data side, I used Python to extract and process Ethereum datasets for research, working from raw node data at the level of blocks and transactions. We worked with public chain data, and the team also worked on a blockchain specific to the university itself, which was large. Three kinds of output came out of that work:</p>
+<ul>
+<li><strong>Pipelines</strong> that pulled chain data into a shape researchers could use.</li>
+<li><strong>Validation and sanitization scripts</strong> for the raw node data, so that what reached analysis had been checked first.</li>
+<li><strong>On-chain summaries and data-quality reports</strong> that gave stakeholders a view of the health of the data and the trends in it.</li>
+</ul>
+<p>On the development side, I wrote smart contracts in Solidity. Doing both in the same summer was useful: writing contracts showed me how the records I was validating get produced in the first place, and validating the data showed me what a contract leaves behind on chain.</p>
+<p>The internship ran alongside UZH&rsquo;s Deep Dive into Blockchain programme. The confirmation letter from UZH&rsquo;s Global Student Experience office states that I took part in the online UZH International Summer Schools, 2 to 21 July 2023, in the course &ldquo;Deep Dive into Blockchain – Linking Economics, Technology and Law&rdquo;. It also notes that the achievements and ECTS credits are recorded in a separate Transcript of Records. On my site I describe the course content as Ethereum, Polkadot, Bitcoin and more than 20 other protocols, covering consensus, smart contracts and on-chain data models.</p>
+<div class="hl"><pre><span></span><code>2023-06 ─────────── Blockchain Analysis Intern, UZH, remote (06/2023 – 08/2023)
+2023-07-02 ── 07-21  Deep Dive into Blockchain summer school (online), UZH
+2023-08 ─────────── internship ends
+        ...
+2025-04 ── 2026-02   blockchain-analyzer (independent, not UZH work)
+later                ChainGuard privacy-layer prototype (independent)
+</code></pre></div>
+
+<p>The course title matters more than it might seem. Economics, technology and law are three different ways of reading the same ledger. A transaction is a technical record, it is also an economic event, and in many places it is a legal fact too. That framing stayed with me longer than any single protocol detail.</p>
+<h2 id="what-raw-chain-data-teaches-you">What raw chain data teaches you<a class="h-anchor" href="#what-raw-chain-data-teaches-you" title="Permanent link">#</a></h2>
+<p>Blockchain data has a few properties that I think are useful lessons for anyone heading into data engineering, whether or not they ever touch crypto again.</p>
+<p><strong>The source is public, but that doesn&rsquo;t make it ready.</strong> Anyone can read an Ethereum node, and that openness makes it tempting to treat the data as already trustworthy. In practice, raw node output is a stream of records in the chain&rsquo;s own formats, and values, addresses and timestamps all have to be decoded and checked before they mean anything to an analyst. These are the kinds of problems my validation scripts caught:</p>
+<ul>
+<li><strong>Duplicate or orphaned blocks after chain reorganisations</strong>, where a block that was fetched later stopped being part of the main chain.</li>
+<li><strong>Hex-encoded values and unit conversion</strong>, where amounts arrive as hex strings in wei and have to be decoded and converted to ether before anyone can sum them.</li>
+<li><strong>Contract-creation transactions with a null <code>to</code> address</strong>, which break any logic that assumes every transaction has a recipient.</li>
+<li><strong>Failed transactions that still appear in blocks</strong>, which have to be flagged so they are not counted as transfers that happened.</li>
+<li><strong>Gaps in block ranges from interrupted fetches</strong>, which make a period look quieter than it was unless you check that the range is complete.</li>
+</ul>
+<p>None of these is exotic, and that is the point: the data is &ldquo;correct&rdquo; as far as the node is concerned, and still wrong for analysis until you handle each case. The same habit, check the data before you trust it, is the core of how I work today, and I wrote it up in <a href="../articles/data-quality-toolkit.html">my data quality toolkit</a>.</p>
+<p><strong>Research users and dashboard users want different things.</strong> A researcher wants the data as close to the source as possible, with the transformations documented, so they can defend their method. A stakeholder reading a data-quality report wants to know, quickly, whether the data can be used. Writing both kinds of output in the same summer taught me to ask early who a dataset is for. I still ask that before I design any table.</p>
+<p><strong>A summary is also a test.</strong> When you produce on-chain summaries, such as counts or totals over a period, you are also checking whether the pipeline behind them is behaving. A summary that suddenly looks wrong is often the first sign that something upstream changed. I now treat reporting and monitoring as one job, not two.</p>
+<h2 id="what-i-would-tell-someone-starting-out">What I would tell someone starting out<a class="h-anchor" href="#what-i-would-tell-someone-starting-out" title="Permanent link">#</a></h2>
+<p><strong>Take the data role even if the domain is new to you.</strong> The skills that carry this kind of work are Python, careful handling of raw records, and clear reporting. Domain knowledge can come from a course and from the data itself. Data engineering skills transfer between domains much better than people expect.</p>
+<p><strong>Learn how the data is made, not just how it is read.</strong> Writing Solidity alongside the pipelines made the raw records far easier to reason about. If you can, spend some time on the system that produces your data.</p>
+<p><strong>Do the course and the work together if you can.</strong> The Deep Dive programme ran in July, in the middle of the internship. Learning how a protocol works while you are handling its raw data gives the theory somewhere to land.</p>
+<p><strong>Write the quality report even if nobody asks for it.</strong> The data-quality reports were part of my brief, but I would recommend the habit to anyone. A short note on what you checked, what failed and what you excluded makes your work easier to trust and easier to hand over.</p>
+<p><strong>Keep the boundary between employer work and your own work clean.</strong> What I did for UZH belongs to that research context. When I later wanted to go deeper into chain analytics, I built my own projects from scratch and described them as my own.</p>
+<h2 id="where-the-interest-went-next">Where the interest went next<a class="h-anchor" href="#where-the-interest-went-next" title="Permanent link">#</a></h2>
+<p>The internship ended in August 2023, but the interest didn&rsquo;t. Two later, independent projects grew out of it. Neither is UZH work.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Project</th>
+<th>When</th>
+<th>What it explores</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ethereum forensics harness</td>
+<td>Apr 2025 – Feb 2026</td>
+<td>A Bronze/Silver/Gold pipeline, three money-laundering detectors and a harness for timing Neo4j against Spark on multi-hop money-flow queries</td>
+</tr>
+<tr>
+<td>ChainGuard privacy layer</td>
+<td>Later prototype</td>
+<td>Masking personal data in on-chain and market feeds before analytics, with an audit-log table and retention scheduling</td>
+</tr>
+</tbody>
+</table></div>
+<p>The first is written up in <a href="../articles/ethereum-neo4j-vs-spark.html">Neo4j vs Spark for multi-hop money flows</a>. It is the graph-versus-batch question that working with transaction data raises: money moves across many hops, and some engines handle that better than others. That post is honest about where the harness stands today.</p>
+<p>The second is <a href="../articles/gdpr-native-chain-analytics.html">Masking on-chain data for GDPR</a>. It goes back to the &ldquo;law&rdquo; part of the UZH course title: public ledgers and privacy rules pull in different directions, and a data engineer sits in the middle. That post is a design review of what a privacy gate can and can&rsquo;t do.</p>
+<h2 id="looking-back">Looking back<a class="h-anchor" href="#looking-back" title="Permanent link">#</a></h2>
+<p>The UZH internship was my first time doing data work for a research setting, on data I didn&rsquo;t control, for people who would build arguments on top of it. That raised the bar on validation and on documentation, and the bar has stayed there. If I had to name the one habit I took from that summer, it is this: before you analyse anything, find out what is wrong with it, and write that down.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>What teaching 100+ students ML taught me about explaining data</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/teaching-100-students-ml.html</guid>
+      <pubDate>Mon, 09 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today.</description>
+      <category>Career</category><category>Teaching</category><category>Machine Learning</category>
+      <content:encoded><![CDATA[<p>This is a career reflection. The facts come from my CV and the project write-ups linked below; the rest is my own view of what teaching does to the way you explain technical work. From June to November 2024, straight after finishing my degree in Computers and Artificial Intelligence at Helwan University, I worked as an AI Instructor at iSchool in Cairo. I taught AI and machine learning to more than 100 students, and they built their own AI and machine-learning projects. I have since moved into data engineering, and the habits from that job show up in how I evaluate and explain my work.</p>
+<h2 id="the-role-in-facts">The role, in facts<a class="h-anchor" href="#the-role-in-facts" title="Permanent link">#</a></h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>What the record says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Role</td>
+<td>AI Instructor, iSchool, Cairo</td>
+</tr>
+<tr>
+<td>Dates</td>
+<td>06/2024 to 11/2024</td>
+</tr>
+<tr>
+<td>Audience</td>
+<td>100+ students, taught AI and machine learning</td>
+</tr>
+<tr>
+<td>Student work</td>
+<td>Hands-on AI and machine-learning projects, with sessions on model evaluation</td>
+</tr>
+<tr>
+<td>Outcome</td>
+<td>90% project completion, the cohort&rsquo;s highest finish rate</td>
+</tr>
+<tr>
+<td>Delivery</td>
+<td>100% of curriculum modules delivered and documented on schedule</td>
+</tr>
+</tbody>
+</table></div>
+<p>And here is where it sits in the rest of my path:</p>
+<div class="hl"><pre><span></span><code>2020-09 ── 2024-05  BSc Computers and AI, Helwan University (graduation project A+)
+2024-06 ── 2024-11  AI Instructor, iSchool            &lt;- this article
+2025-01 ── 2026-01  Data Engineer, Nexlify (10+ clinic warehouse, Power BI)
+2026-01 ── now      Freelance Data and AI Engineer
+2026-04 ── 2026-07  Big Data Engineering Intern, NTI
+2026-07 ── now      Data Engineer, Waffarha (bilingual RAG, support data)
+</code></pre></div>
+
+<p>Teaching came between finishing a degree and starting production data work. That order matters to me. I learned to explain machine learning before I had to defend my own numbers to a team that depended on them.</p>
+<h2 id="three-mistakes-that-kept-coming-up">Three mistakes that kept coming up<a class="h-anchor" href="#three-mistakes-that-kept-coming-up" title="Permanent link">#</a></h2>
+<p>Because every student built a project, I saw the same misunderstandings come up again and again, across different groups. Almost all of them were about evaluation, not training. These are the three I spent the most time on.</p>
+<p><strong>Judging a model by accuracy on imbalanced data.</strong> A project would report a high accuracy on a dataset where most rows belonged to one class. A model that always predicts the majority class gets the same score and has learned nothing. The way I explained it: before you look at your score, work out the score of the laziest possible model. If you can&rsquo;t beat &ldquo;always say no&rdquo;, the number isn&rsquo;t telling you anything yet. Then look at the confusion matrix and the recall for each class, because that is where the rare class shows up.</p>
+<p><strong>Testing on data the model has already seen.</strong> Some projects evaluated on the training data, or split the data only after a step like scaling or filling missing values had already used every row. I explained it as an exam: if you see the exact questions beforehand, a high mark shows you memorised them, not that you understand the subject. The test set stays locked away until the end, and anything you fit, preprocessing included, is fitted on the training data only.</p>
+<p><strong>Overfitting: a great training score and a poor test score.</strong> A model with near-perfect training results looked like a success until it met the test set. I described it as memorising the noise instead of learning the pattern, and asked students to always print both scores side by side. A big gap is a signal to simplify the model, get more data or regularise, not a result to celebrate.</p>
+<p>All three come down to one rule I repeated in every session: a score always has a denominator, and the test set has to look like the real world. The easiest way to check whether you understand that is to explain it to someone who has no reason to trust you yet. Students give you that test every session.</p>
+<h2 id="the-same-habit-in-my-data-work-now">The same habit in my data work now<a class="h-anchor" href="#the-same-habit-in-my-data-work-now" title="Permanent link">#</a></h2>
+<p>The clearest example is the retrieval evaluation I ran for Waffarha&rsquo;s Arabic/English customer-service assistant. In the September 2026 run, retrieval found the expected document in 151 of 172 checked cases, an 87.8% hit rate. In the same run, on the same index, the full pipeline passed 64 of 225 cases. I wrote a whole article about why those two numbers have to be reported together: <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>.</p>
+<p>That article is really a model-evaluation lesson with production data in it. The 172 and the 225 are different denominators. The 172 only counts cases that have an expected document; greetings and prompt-injection attempts have none. If I had published 87.8% on its own, I would have broken the first rule I used to teach.</p>
+<p>The pattern repeats across my other write-ups:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Claim that sounds complete</th>
+<th>What I say next to it</th>
+<th>Article</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>87.8% retrieval hit rate</td>
+<td>64/225 end-to-end in the same run; retrieval is a component test</td>
+<td><a href="../articles/bilingual-rag-retrieval-hit-rate.html">Bilingual RAG</a></td>
+</tr>
+<tr>
+<td>Zero leaks across 117,915 chats</td>
+<td>Zero matches on 8 patterns, not proof there is no personal data; training deferred until human review</td>
+<td><a href="../articles/redacting-160k-support-chats.html">Redacting 160,944 chats</a></td>
+</tr>
+<tr>
+<td>8/8 sources, zero loss</td>
+<td>The acceptance run was 8/8; a later file on disk shows 6/8, and both failures were in the check, not lost data</td>
+<td><a href="../articles/estates-lakehouse-zero-loss.html">Estates lakehouse</a></td>
+</tr>
+<tr>
+<td>A 225-case eval suite</td>
+<td>Which categories the deterministic gates handle well, and which they don&rsquo;t</td>
+<td><a href="../articles/deterministic-gates-before-llm.html">Deterministic gates</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>None of this is about being modest. A number with its limits attached is more useful, because the reader knows how far to trust it and what to measure next. In a classroom, an overclaim gets caught quickly and costs you the room&rsquo;s trust. A team reading your dashboard works the same way, only slower.</p>
+<h2 id="writing-for-people-who-wont-read-the-code">Writing for people who won&rsquo;t read the code<a class="h-anchor" href="#writing-for-people-who-wont-read-the-code" title="Permanent link">#</a></h2>
+<p>Most people who use data work never open the repository. On my portfolio I describe one of my strengths as making complex systems obvious to non-engineers, and teaching is where that started. In practice it comes down to a few habits:</p>
+<ol>
+<li><strong>Start with the question, not the tool.</strong> &ldquo;Did the assistant find the right document?&rdquo; comes before &ldquo;BGE-M3 on Qdrant with reciprocal rank fusion.&rdquo;</li>
+<li><strong>Use one concrete case before the summary.</strong> One category&rsquo;s numbers (retrieval passed 33 of 34 checked category-browsing cases; end-to-end passed 16 of 39) explains the gap better than a paragraph.</li>
+<li><strong>Put the check where the reader already looks.</strong> In my Power BI work that means a data-quality page inside the report, with a reconciliation measure and expected values for each KPI card. I describe it in <a href="../articles/one-power-bi-model.html">One BI model, many sites</a>.</li>
+<li><strong>Say what the number does not mean.</strong> One sentence of caveat is usually enough, and it saves a meeting later.</li>
+</ol>
+<p>These are the same moves I used in a lab session. The audience changed from students to support teams and managers, but what makes an explanation work did not.</p>
+<h2 id="what-i-would-tell-someone-starting-out">What I would tell someone starting out<a class="h-anchor" href="#what-i-would-tell-someone-starting-out" title="Permanent link">#</a></h2>
+<p>If you are early in a data or ML career and get the chance to teach, even part-time, take it.</p>
+<ul>
+<li><strong>Teaching is a test of your own understanding.</strong> If you can&rsquo;t explain why a metric can mislead, you don&rsquo;t fully understand the metric yet.</li>
+<li><strong>Teach evaluation early and often.</strong> Training a model gets the attention, but deciding whether it works is the skill you will use every week.</li>
+<li><strong>Write your material down.</strong> Delivering every module documented and on schedule was part of the job, and it is the same discipline as keeping an evaluation report or a README current.</li>
+<li><strong>Treat questions as data.</strong> The places where people get confused show you where your explanation is weak.</li>
+</ul>
+<p>I still write most of my work as if a sharp student is going to ask &ldquo;out of how many?&rdquo; It is the cheapest check against overclaiming that I know.</p>
+<p><a href="../index.html#contact">Get in touch</a>.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>The NTI Big Data internship and HCIP certification: what I would tell the next intern</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/nti-big-data-internship.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/nti-big-data-internship.html</guid>
+      <pubDate>Mon, 09 Nov 2026 09:00:00 +0200</pubDate>
+      <description>A reflection on my four months as a Big Data Engineering Intern at NTI and the Huawei HCIP Big Data certification: what the breadth of the stack is good for, how my capstone, a live flight radar, pulled it together, and where you have to go deeper yourself.</description>
+      <category>Career</category><category>Big Data</category><category>Certification</category>
+      <content:encoded><![CDATA[<p>This is a career reflection, not a brochure. The facts come from my CV and the project write-ups linked below; everything else is my own opinion about how to get the most out of a programme like this. From April to July 2026 I was a Big Data Engineering Intern at the National Telecommunication Institute (NTI) in Smart Village, and in 2026 I took the Huawei HCIP Big Data certification (H13-723) through NTI. My capstone project was a live flight radar built on aircraft (ADS-B) data. If you are thinking about applying, this is what I would want someone to tell me.</p>
+<h2 id="what-the-internship-covered">What the internship covered<a class="h-anchor" href="#what-the-internship-covered" title="Permanent link">#</a></h2>
+<p>My CV describes the internship in a few lines, and they are accurate about its shape: it was wide.</p>
+<ul>
+<li>ETL workflows in Spark, Python and SQL, with Airflow orchestrating multi-step pipelines end to end.</li>
+<li>The Hadoop core: HDFS, MapReduce and YARN, with HBase for NoSQL, Hive for warehousing and InfluxDB for time series.</li>
+<li>Ingestion with Kafka, Flume and Sqoop, moving data between relational sources and the Hadoop ecosystem, plus stream processing with Flink.</li>
+<li>AWS (EC2, S3, IAM, VPC), plus dashboards and reports in Power BI, Tableau and Grafana.</li>
+</ul>
+<p>The certification sits on top of that. My site lists the HCIP Big Data topics as Hadoop, Spark, Hive, HBase, Kafka and Flink.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>When</th>
+<th>What</th>
+<th>Where it shows up now</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>04/2026</td>
+<td>Start Big Data Engineering internship, NTI, Smart Village</td>
+<td>CV, Internships &amp; Training</td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Capstone: live ADS-B flight radar</td>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Live flight radar</a></td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Huawei HCIP Big Data (H13-723), through NTI</td>
+<td>Credentials</td>
+</tr>
+<tr>
+<td>2026</td>
+<td>AWS Certified Cloud Practitioner</td>
+<td>Credentials</td>
+</tr>
+<tr>
+<td>07/2026</td>
+<td>Internship ends; I start as a Data Engineer at Waffarha</td>
+<td>Experience</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="the-capstone-a-live-flight-radar">The capstone: a live flight radar<a class="h-anchor" href="#the-capstone-a-live-flight-radar" title="Permanent link">#</a></h2>
+<p>The project that pulled the programme together was my capstone, the <a href="../articles/adsb-flight-radar-streaming.html">live flight radar</a>. It takes real aircraft positions over Cairo from the free adsb.lol ADS-B API and runs them through most of the stack from the list above:</p>
+<div class="hl"><pre><span></span><code>adsb.lol API (poll every 10 s)
+  -&gt; Python poller -&gt; Flume agent -&gt; Kafka topic
+        |-&gt; Flume agent -&gt; HDFS archive (partitioned by day and hour)
+        |-&gt; Spark Structured Streaming -&gt; InfluxDB -&gt; Grafana map
+</code></pre></div>
+
+<p>I picked aircraft data because it is live and easy to check by eye: if the dots on the map line up with Cairo International Airport, the pipeline works. That turned out to be a good rule for any capstone. Choose data where you can see at a glance whether the output is right, so you spend your time on the pipeline and not on wondering whether it is working.</p>
+<p>The capstone also taught me something the labs didn&rsquo;t. When I re-read the configs for the write-up, I found durability gaps on the way in: one Kafka broker, a replication factor of 1, <code>acks=1</code>, and a memory channel in the first Flume agent. For a radar that refreshes every 10 seconds, losing one poll is fine. For anything that needs a complete history, it is not. I wrote the fixes down as next steps (<code>acks=all</code>, a replication factor above 1, a durable channel, and counting what reaches HDFS against what was polled). Writing down what is wrong with your own work, in public, teaches more than another tutorial.</p>
+<h2 id="where-i-went-deep-spark">Where I went deep: Spark<a class="h-anchor" href="#where-i-went-deep-spark" title="Permanent link">#</a></h2>
+<p>Of everything on the list, I went deepest on Spark. It shows up in the capstone as two Structured Streaming queries reading the same Kafka topic, one writing a point per aircraft every 10 seconds and one computing sliding-window aggregates by aircraft type. After the internship I kept using it, and I collected the patterns I reuse across five portfolio pipelines, plus the mistakes I found in my own code, in <a href="../articles/spark-hadoop-in-practice.html">Spark and Hadoop in practice</a>.</p>
+<p>Spark was a good choice for depth because it connects to almost everything else in the programme. It reads from Kafka and HDFS, writes to Hive and time-series stores, and runs batch and streaming with the same API. Once you know it well, the rest of the stack makes more sense, because you understand what each other tool is feeding or serving.</p>
+<h2 id="what-a-programme-like-this-is-good-for">What a programme like this is good for<a class="h-anchor" href="#what-a-programme-like-this-is-good-for" title="Permanent link">#</a></h2>
+<p><strong>A map of the whole territory.</strong> The biggest thing I took away was knowing what each layer of a classic big data stack is for and how the layers hand data to each other: an ingestion tool lands data, a distributed file system stores it, a resource manager schedules compute on it, an engine transforms it, a warehouse or NoSQL store serves it, and a dashboard shows it. Once you have that map, a new tool is a new answer to a question you already know how to ask: which layer is this, and what does it replace?</p>
+<p><strong>Vocabulary that interviews assume.</strong> Job posts for big data roles still list HDFS, YARN, Hive, HBase, Kafka and Sqoop by name. Having worked through them in one programme means I can explain why Sqoop is the batch way to read a database and CDC the streaming way, or why HBase and Hive answer different questions over the same cluster. I wrote that comparison out in <a href="../articles/kafka-nifi-sqoop-flume.html">Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</a>.</p>
+<p><strong>A certification that makes you cover the whole syllabus.</strong> For the exam I studied, practised and researched. Studying for a vendor exam is different from building a pipeline: it makes you cover the parts of a topic you would skip in a project, like configuration, architecture components and how a product family fits together. For context, HCIP is the professional tier in Huawei&rsquo;s certification structure, above the associate level. I treat it as a structured syllabus I can show I finished, next to projects that show I can build.</p>
+<p><strong>A bridge into a first data role.</strong> The internship ended in July 2026, the same month I started as a Data Engineer at Waffarha. The production work there is different (Airflow ingestion from MySQL and ClickHouse, retrieval and recommendation pipelines), but the habits carry over: think in layers, schedule everything, and know where each piece of data lands.</p>
+<h2 id="what-i-would-tell-someone-starting-the-programme">What I would tell someone starting the programme<a class="h-anchor" href="#what-i-would-tell-someone-starting-the-programme" title="Permanent link">#</a></h2>
+<p>None of this is a complaint about NTI; it is what I think is true of any short, broad programme. Four months across this many tools means you touch everything, so plan where you will go deeper.</p>
+<div class="hl"><pre><span></span><code>Before   -&gt;  Get comfortable with Linux, SQL and Python. Everything else sits on these.
+During   -&gt;  Keep a one-page map: each tool, its layer, what it replaces, one gotcha.
+         -&gt;  Pick one &quot;depth&quot; tool (Spark was mine) and go past the labs.
+         -&gt;  Choose a capstone on live, checkable data that uses most of the stack.
+         -&gt;  Book the certification while the material is fresh.
+After    -&gt;  Put the capstone in a public repo and write it up, including what is broken.
+</code></pre></div>
+
+<ol>
+<li><strong>Treat the certificate as a floor, not a ceiling.</strong> On my CV, the HCIP line sits next to links to projects. The projects are what make the line believable.</li>
+<li><strong>Write down every tool&rsquo;s &ldquo;why&rdquo;.</strong> For each tool, one sentence on when you would <em>not</em> use it. That sentence is what interviews probe.</li>
+<li><strong>Don&rsquo;t spend equal time on everything.</strong> MapReduce is mostly useful as background: it explains why Spark looks the way it does. Spark, Kafka and Airflow you will use every year.</li>
+<li><strong>Connect it to something current.</strong> Most teams now also use lakehouse formats, managed cloud services and dbt. Writing <a href="../articles/choosing-the-right-database.html">PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins</a> helped me link the two.</li>
+<li><strong>Use the BI part.</strong> Building dashboards in Power BI, Tableau and Grafana taught me what the consumer of a pipeline actually needs, which changes how you model the tables underneath.</li>
+</ol>
+<h2 id="would-i-do-it-again">Would I do it again?<a class="h-anchor" href="#would-i-do-it-again" title="Permanent link">#</a></h2>
+<p>Yes, with a clear idea of what it is. A programme like NTI&rsquo;s gives you a guided tour of a full big data stack, a certification that shows you finished a serious syllabus, and, if you choose it well, a capstone that ties the tools together in one working system. The depth comes from what you push further yourself. For me that was Spark and the flight radar, and both are still part of how I work.</p>]]></content:encoded>
+    </item>
+    <item>
+      <title>Freelancing as a data engineer in Cairo: clients, scoping, delivery</title>
+      <link>https://eng-zakaria.github.io/Portfolio/articles/freelancing-as-a-data-engineer.html</link>
+      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/freelancing-as-a-data-engineer.html</guid>
+      <pubDate>Mon, 09 Nov 2026 09:00:00 +0200</pubDate>
+      <description>What my freelance client work since January 2026 has taught me about scoping a data job, getting access to client data, handling personal data, and handing over something a client can trust.</description>
+      <category>Career</category><category>Freelancing</category><category>Data Engineering</category>
+      <content:encoded><![CDATA[<p>I have been freelancing as a data engineer since January 2026, from Cairo and remotely, and since July 2026 I have done it alongside my role at Waffarha. This is a career reflection; the facts come from my CV and the project write-ups linked below. I won&rsquo;t talk about rates or client counts. What I can talk about is what the work itself showed me, including the problems I found and fixed.</p>
+<h2 id="the-work-so-far">The work so far<a class="h-anchor" href="#the-work-so-far" title="Permanent link">#</a></h2>
+<p>My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>When</th>
+<th>Client type</th>
+<th>What I built</th>
+<th>Write-up</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01/2025 – 01/2026</td>
+<td>Clinic network (at Nexlify, as an employee)</td>
+<td>Airflow ETL from 10+ clinic sources into one star-schema warehouse, one Power BI model with a clinic switcher</td>
+<td><a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a></td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Multi-floor medical clinic</td>
+<td>Six-stage Excel-to-PostgreSQL ETL into a star schema with bridge tables, MySQL loaders, a Power BI report design</td>
+<td><a href="../articles/six-stage-client-etl.html">A 6-stage ETL for a paying client</a></td>
+</tr>
+<tr>
+<td>2026</td>
+<td>Construction projects client</td>
+<td>Python crawlers that collect construction data (contractor and tender datasets) into CSV/JSONL, with enrichment, dedup and validation</td>
+<td>Not written up yet</td>
+</tr>
+<tr>
+<td>09/2026 – 10/2026</td>
+<td>Apparel wholesaler</td>
+<td>Lead collection from public Egyptian business directories, Arabic entity resolution, per-governorate exports</td>
+<td><a href="../articles/wholesale-radar-lead-mapping.html">Mapping Egyptian apparel wholesalers</a></td>
+</tr>
+</tbody>
+</table></div>
+<p>The Nexlify work wasn&rsquo;t freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, bridge tables for staff with several roles, and scraping with enrichment and dedup, were first built there. Freelancing didn&rsquo;t start from zero. It started from things I had already seen work in production.</p>
+<h2 id="scoping-write-down-what-actually-arrives">Scoping: write down what actually arrives<a class="h-anchor" href="#scoping-write-down-what-actually-arrives" title="Permanent link">#</a></h2>
+<p>I work from a written spec. Before I build, I hold meetings with the client, take notes, and turn them into a document we both agree on. The notes matter as much as the meetings: a decision that only exists in someone&rsquo;s memory will be remembered differently two weeks later.</p>
+<p>The most useful scoping question I have learned to ask isn&rsquo;t &ldquo;what do you want to see?&rdquo; but &ldquo;what exactly will you send me, and how often?&rdquo;</p>
+<p>On the clinic job, the answer was a whole Excel workbook every day, refreshed, not just the new rows. That one fact decided the design. A plain insert would have duplicated every order once a day, so the project needed a stable row key. I added an <code>Entry_ID</code> column to the client&rsquo;s sheet and fall back to a hash when it is missing. Staff names were free text, which meant an unknown name needed a human decision, so I built a review queue instead of auto-creating staff. Neither of those would have come out of a conversation about dashboards.</p>
+<p>Scoping also means saying what you won&rsquo;t do. The apparel client&rsquo;s first idea was to scrape Facebook and Instagram commenters. I ruled that out early: those numbers aren&rsquo;t public, and collecting them would mean logging in, breaking platform terms and harvesting personal data. The project targeted business listings instead, which businesses publish so customers can call them. Narrowing the scope made the project smaller, but it also made it something I could defend.</p>
+<p>What I&rsquo;d tell someone starting out: put the input format, the refresh pattern, the key and the &ldquo;won&rsquo;t do&rdquo; list in the spec before you write code. Those decisions are cheap at the start and expensive to change later.</p>
+<h2 id="data-access-assume-the-code-and-data-stay-with-the-client">Data access: assume the code and data stay with the client<a class="h-anchor" href="#data-access-assume-the-code-and-data-stay-with-the-client" title="Permanent link">#</a></h2>
+<p>On every client job so far, the code and data belong to the client. The clinic ETL has no public repo. The Nexlify warehouse has no repo I can link, and the before-and-after benchmark logs stayed with the client too. The ETL run log on the freelance clinic job contains personal data, so it is a source for my notes and is never published.</p>
+<p>That has two practical effects.</p>
+<p>First, I plan the portfolio side from day one. My write-ups use sanitized examples that show table and column names, aggregate counts, and code that doesn&rsquo;t reveal client data. I don&rsquo;t name the clients unless the site already does.</p>
+<p>Second, I keep my own evidence as I go. Looking back at Nexlify, I report a 30% latency drop and zero dashboard timeouts, but I can&rsquo;t publish query plans to back them. My own takeaway in that write-up was to record timings and plans before and after each change as part of the work. On a freelance job, nobody else is going to keep that record for you.</p>
+<h2 id="privacy-the-gap-between-rules-and-code">Privacy: the gap between rules and code<a class="h-anchor" href="#privacy-the-gap-between-rules-and-code" title="Permanent link">#</a></h2>
+<p>Client data in Egypt often means personal data: patient phone numbers on the clinic job, and owners&rsquo; mobiles on business listings in the lead project. Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020) is the frame I work against.</p>
+<p>The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. But when I reviewed the code against the README, I found a gap: the README mentioned suppression support, and the code had no opt-out list. A contact list has to be able to honour &ldquo;don&rsquo;t contact me&rdquo;, so I added an opt-out list to the tool. The same review listed other next steps, like a robots.txt check and a recorded purpose and retention date per contact.</p>
+<p>Two smaller lessons from the same job:</p>
+<ul>
+<li><strong>Watch your labels.</strong> Buyer-intent rows carry no phone, but they keep usernames and comment text. &ldquo;Phone-free&rdquo; is accurate; &ldquo;personal-data-free&rdquo; would not be.</li>
+<li><strong>Don&rsquo;t let a status field overstate what you checked.</strong> Every valid mobile got the label &ldquo;business-associated&rdquo; regardless of source, and WhatsApp links were built for every mobile number. Those columns said more than the pipeline knew.</li>
+</ul>
+<p>What I&rsquo;d tell someone starting out: write the privacy rules down, then check each one against the code before you hand over. Rules that live only in a document don&rsquo;t protect anyone.</p>
+<h2 id="handover-test-the-safety-net-with-real-data">Handover: test the safety net with real data<a class="h-anchor" href="#handover-test-the-safety-net-with-real-data" title="Permanent link">#</a></h2>
+<p>Handover is where a client starts trusting your work without you in the room. On the clinic ETL, the staged design gave us something concrete to look at together: a dry-run report, four diff buckets (new, changed, unchanged, in the database but missing from today&rsquo;s file), and the unmatched-staff queue exported to CSV after each run. Those artefacts did more for trust than any dashboard.</p>
+<p>The same job also showed me that a safety net you haven&rsquo;t tested isn&rsquo;t one. Two bugs came out of the first real runs:</p>
+<div class="hl"><pre><span></span><code>Backup:   output file opened before pg_dump runs
+          -&gt; pg_dump missing -&gt; &quot;skipped&quot; logged, 0-byte .sql left behind
+          -&gt; looks like a restore point, isn&#39;t one
+
+Rollback: one transaction, rollback() on a row error, no savepoint
+          -&gt; earlier rows discarded, counters keep counting them
+          -&gt; &quot;rows processed&quot; overstates what reached the database
+</code></pre></div>
+
+<p>I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.</p>
+<p>The first run also showed that a quality stage which doesn&rsquo;t mirror the database&rsquo;s own constraints is a partial check. 1,041 rows failed a <code>CHECK</code> constraint that the quality scan never looked at. Now I treat &ldquo;every constraint has a matching quality rule&rdquo; as part of done.</p>
+<h2 id="documentation-is-part-of-the-deliverable">Documentation is part of the deliverable<a class="h-anchor" href="#documentation-is-part-of-the-deliverable" title="Permanent link">#</a></h2>
+<p>The clinic project ships with a <code>DOCUMENTATION.md</code> that covers, among other things, the Power BI patient-journey drillthrough as a design. At Nexlify, the source-to-warehouse mapping was a written artefact rather than logic buried in queries, and that is what kept a shared schema from drifting when a clinic changed a spreadsheet layout.</p>
+<p>On a freelance job you will eventually leave, and the client keeps whatever you wrote down. The things I now treat as part of the handover:</p>
+<ul>
+<li>how to run it, and what &ldquo;a good run&rdquo; looks like in the log</li>
+<li>what each stage blocks and what it only warns about</li>
+<li>the known gaps, in plain words, so nobody discovers them in a report weeks later</li>
+<li>the rules for using the model safely, like which measures may cross a bridge table</li>
+</ul>
+<h2 id="what-id-tell-someone-starting-out">What I&rsquo;d tell someone starting out<a class="h-anchor" href="#what-id-tell-someone-starting-out" title="Permanent link">#</a></h2>
+<p>Freelance data work in Cairo, in my experience, is less about the stack than about the edges of the job: what arrives, who can see it, what you promised not to do, and what the client can check without you. Work from a written spec. Ask about the input before the output. Keep your own evidence. Make privacy rules executable. Break your safety nets before the client&rsquo;s data does. And write down the gaps, because an honest &ldquo;this isn&rsquo;t done yet&rdquo; is worth more to a client than a clean-looking handover that hides one.</p>]]></content:encoded>
+    </item>
     <item>
       <title>Mapping Egyptian apparel wholesalers from public directories</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</link>
@@ -137,6 +510,10 @@
 </ul>
 <h2 id="lawful-basis-and-consent">Lawful basis and consent<a class="h-anchor" href="#lawful-basis-and-consent" title="Permanent link">#</a></h2>
 <p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
+<div class="admonition tip">
+<p class="admonition-title">Update, November 2026</p>
+<p>The tool now has an opt-out list. The rest of this write-up describes the code as it was when I reviewed it.</p>
+</div>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
 <li>Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.</li>
@@ -715,7 +1092,7 @@
  Power BI (role-playing staff relationships, patient drillthrough)
 </code></pre></div>
 
-<p>The portfolio line for this project lists five stages: preflight, quality checks, diff, backup, load. The code has six. The one that gets left out is stage 2, a schema drift check. It reads <code>information_schema.columns</code> for the <code>public</code> schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.</p>
+<p>The stage people tend to skip is stage 2, a schema drift check. It reads <code>information_schema.columns</code> for the <code>public</code> schema and compares it to a hard-coded map of the tables and columns the script depends on. It is there to catch drift, for example a hand-edited table or a migration that was only partly applied, before the load runs into it.</p>
 <p>What each stage actually does:</p>
 <div class="table-wrap"><table>
 <thead>
@@ -852,6 +1229,10 @@
 <p class="admonition-title">Two bugs the logs exposed</p>
 <p><strong>Backup.</strong> <code>backup_database</code> opens the output file before calling <code>pg_dump</code>. When the binary is missing, it logs &ldquo;skipped&rdquo; but leaves an empty, timestamped <code>.sql</code> file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn&rsquo;t one.</p>
 <p><strong>Rollback.</strong> The load runs in one transaction and commits at the end. On a row error it calls <code>conn.rollback()</code> with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1&rsquo;s &ldquo;3,867 processed&rdquo; doesn&rsquo;t mean 3,867 rows reached the database. I can&rsquo;t tell from the log alone how many did.</p>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Update, November 2026</p>
+<p>I&rsquo;ve since fixed both bugs described above: the backup step and the rollback behaviour. This write-up describes the code as it was at handover review, because the mistakes are the useful part.</p>
 </div>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ul>
@@ -2447,554 +2828,6 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 </ol>
 <h2 id="case-study">Case study<a class="h-anchor" href="#case-study" title="Permanent link">#</a></h2>
 <p>The case page has the architecture diagram, the stack, and the challenge and solution breakdown: <a href="../projects/nexlify-dw.html">Healthcare Clinic Data Warehouse case study</a>. There is no public code for this one; it was client work.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>One BI model, many sites: how I design Power BI models for multi-site data</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/one-power-bi-model.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos.</description>
-      <category>Power BI</category><category>Data Modeling</category><category>BI</category>
-      <content:encoded><![CDATA[<p>Every multi-site reporting job I have had starts with the same temptation: build a report per site, then roll them up. I now do the opposite. One model, the site as a dimension, and every page filtered by it. <strong>Evidence:</strong> this comes from the clinic-network warehouse at Nexlify (production client work; I can only describe the design, the code stayed with the client), a freelance clinic warehouse (client work, the design notes are mine), and two estates portfolio projects on synthetic data, where the Power BI work is a documented handoff (model, Power Query, DAX, wireframes, tie-out SQL) and not a published report. The Grafana and Matplotlib parts come from portfolio projects linked below.</p>
-<h2 id="when-one-shared-model-is-the-right-call">When one shared model is the right call<a class="h-anchor" href="#when-one-shared-model-is-the-right-call" title="Permanent link">#</a></h2>
-<p>At Nexlify the client had more than ten clinics, each with its own spreadsheets, APIs and database engine. The warehouse mapped all of them into one star schema where clinic is just a dimension. On top of it sat one Power BI model with a clinic switcher, serving each clinic&rsquo;s own view and the company-wide view. The reported outcomes were reporting cycles about 40% faster and zero dashboard timeouts after the SQL refactor. Those are reported results; I have no benchmark logs to publish. The full write-up is in <a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>.</p>
-<p>The reason I go this way is simple. If the network total and a single clinic&rsquo;s number come from the same tables and the same measures, they cannot disagree. With a model per site, every rollup is a reconciliation problem waiting to happen.</p>
-<p>The cost is paid in the warehouse, not in Power BI. Every source has to be mapped to the shared schema before it loads. In the freelance clinic warehouse I put <code>clinic_id</code> on every fact, bridge and dimension table from day one, so that a second floor could load into the same database later &ldquo;by pointing a second ETL config at the same database — no schema changes required&rdquo; (from my design notes). See <a href="../articles/six-stage-client-etl.html">the six-stage ETL post</a> for the load side.</p>
-<div class="hl"><pre><span></span><code>            dim_clinic ──────────────► fact_orders ◄─────── dim_date
-                                         │  │   (order_date active,
-            dim_staff ── salesperson ────┘  │    conversation_date via
-               │  └──── reception (inactive)│    USERELATIONSHIP)
-               │                            ▼
-               ├──── fact_order_performer   fact_order_upsell ──┐
-               └────────────────────────────────────────────────┘
-   No dim_staff → dim_clinic relationship: clinic filtering flows only
-   through fact_orders[clinic_id]. Staff are scoped per clinic in the
-   database with UNIQUE(clinic_id, staff_name), not in the model.
-</code></pre></div>
-
-<h2 id="pattern-1-the-site-filter-gets-exactly-one-path">Pattern 1: the site filter gets exactly one path<a class="h-anchor" href="#pattern-1-the-site-filter-gets-exactly-one-path" title="Permanent link">#</a></h2>
-<p>The rule I wrote into the clinic model notes is the one I would give anyone building a multi-site model: do not create a <code>dim_staff -&gt; dim_clinic</code> relationship. <code>fact_orders[clinic_id] -&gt; dim_clinic</code> already carries all the filtering, and a second path through staff creates an ambiguous loop.</p>
-<p>It is tempting to add it, because staff really do belong to a clinic. But that fact is enforced in the database with <code>UNIQUE(clinic_id, staff_name)</code>. Power BI does not need to know it. One site filter, one path, and the switcher behaves the same on every page.</p>
-<h2 id="pattern-2-one-staff-dimension-many-roles">Pattern 2: one staff dimension, many roles<a class="h-anchor" href="#pattern-2-one-staff-dimension-many-roles" title="Permanent link">#</a></h2>
-<p>In clinic data the same person can be the salesperson on one order, the upseller on another and the performer on a third. The model needs one staff table so per-person totals add up, but several relationships into it. Only one can be active, so the others are switched on per measure. From the freelance design:</p>
-<div class="hl"><pre><span></span><code>Reception Handled Count :=
-<span class="nf">CALCULATE</span><span class="p">(</span>
-<span class="w">    </span><span class="nf">COUNTROWS</span><span class="p">(</span>fact_orders),
-<span class="w">    </span><span class="nf">USERELATIONSHIP</span><span class="p">(</span><span class="na">fact_orders[reception_id]</span><span class="p">,</span><span class="w"> </span><span class="na">dim_staff[staff_id]</span><span class="p">)</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>The same design handles two date roles (conversation date and order date) against one <code>dim_date</code>. Where <code>RELATED</code> can&rsquo;t follow an inactive relationship, the patient-journey drillthrough page in the design uses <code>LOOKUPVALUE</code> in calculated columns to build a one-line story per order. That drillthrough page is a design in the documentation, and I describe it as one.</p>
-<div class="admonition note">
-<p class="admonition-title">The mistake that led to this pattern</p>
-<p>An earlier iteration of the MySQL version gave upsells and visits their own staff views (<code>upsell_staff</code>, <code>visit_staff</code>) instead of inactive relationships. I abandoned it. Those views were disconnected from <code>staff</code>, so Power BI could not tell that the upseller and the performer were the same person, and combined per-person totals broke. If your model has a dimension copied per role, that is the first thing I would check.</p>
-</div>
-<p>Bridge tables need the same care. At Nexlify, staff with several roles across several clinics went into bridge tables. That gives correct attribution, but a careless measure that crosses a bridge still double counts. I now write down which measures may cross a bridge next to the model, not just in my head.</p>
-<h2 id="pattern-3-per-site-access-with-row-level-security">Pattern 3: per-site access with row-level security<a class="h-anchor" href="#pattern-3-per-site-access-with-row-level-security" title="Permanent link">#</a></h2>
-<p>A clinic switcher is a slicer: everyone can see every site. When each site manager should only see their own site, I move the same idea into RLS. The estates asset-maintenance project (P07, synthetic data) specifies a role filter on the building dimension, driven by a mapping table:</p>
-<div class="hl"><pre><span></span><code><span class="c1">-- Role building_manager, filter on dim_building</span>
-<span class="na">[building_id]</span><span class="w"> </span><span class="ow">IN</span>
-<span class="w">    </span><span class="nf">CALCULATETABLE</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="nf">VALUES</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="na">rlsusers[building_id]</span><span class="w"> </span><span class="p">),</span>
-<span class="w">                     </span><span class="na">rlsusers[principal]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nf">USERPRINCIPALNAME</span><span class="p">()</span><span class="w"> </span><span class="p">)</span>
-</code></pre></div>
-
-<p>The handoff lists four &ldquo;View as&rdquo; test cases: a manager sees only their building and the totals tie to the validation SQL filtered to that building; the analyst role sees all 8 buildings; an unmapped user gets a blank report; and the asset-health mart is scoped through the building path, with no filter of its own. That last test is the one-path rule from Pattern 1 again.</p>
-<div class="admonition warning">
-<p class="admonition-title">Status</p>
-<p>The P07 RLS design and test cases are written down and the gold tables they run on exist. The <code>.pbix</code> is meant to be saved outside the repo and the screenshots folder is empty, so I can&rsquo;t show a run of those tests in Power BI Desktop. A Streamlit app mirrors three of the five pages from the same gold tables.</p>
-</div>
-<p>Power Query stays thin in these handoffs. Each table is one query against a Parquet file, with the folder as a parameter:</p>
-<div class="hl"><pre><span></span><code>let
-    Source = Parquet.Document(File.Contents(GoldFolder &amp; &quot;\fct_work_order.parquet&quot;))
-in
-    Source
-</code></pre></div>
-
-<p>All shaping happens in dbt before Power BI sees it. That keeps the logic testable and leaves Power BI with relationships and measures.</p>
-<h2 id="pattern-4-put-a-data-quality-page-in-the-report">Pattern 4: put a data-quality page in the report<a class="h-anchor" href="#pattern-4-put-a-data-quality-page-in-the-report" title="Permanent link">#</a></h2>
-<p>A multi-site model mixes sources of different quality, so I give the report a page that shows it. In the freelance design that is a reconciliation measure:</p>
-<div class="hl"><pre><span></span><code>Total Amount Check (reconciliation) :=
-<span class="nb">VAR</span><span class="w"> </span>Computed = SUM(fact_orders[paid_amount]) + SUM(fact_order_upsell[amount])
-<span class="nb">VAR</span><span class="w"> </span>Stored = SUM(fact_orders[total_amount])
-<span class="nb">RETURN</span><span class="w"> </span>Computed - Stored
-</code></pre></div>
-
-<p>Any non-zero result points at a row where the typed total doesn&rsquo;t match paid plus upsells, which is usually a data-entry slip. In the digital-estates showcase, one of its 10 DAX measures, <code>COBie Completeness %</code>, divides the clean rows by clean plus quarantined rows. That puts the quarantine count in the report itself. The estates P07 handoff goes one step further. Every KPI card has an expected value in a build guide (for example PPM completion 93.0%, MTTR 3.17 days) that comes from a SQL file run against the same gold tables, so whoever builds the report can check each card against a number.</p>
-<h2 id="grafana-matplotlib-and-the-rest">Grafana, Matplotlib and the rest<a class="h-anchor" href="#grafana-matplotlib-and-the-rest" title="Permanent link">#</a></h2>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Where I used it</th>
-<th>Status</th>
-<th>When I pick it</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Power BI (DAX, Power Query, RLS)</td>
-<td>Nexlify clinic network; freelance clinic; estates handoffs</td>
-<td>Client work; estates is spec plus SQL tie-outs</td>
-<td>Business reporting over a star schema, many sites, per-user security</td>
-</tr>
-<tr>
-<td>Grafana</td>
-<td>Flight radar: provisioned dashboard, 6 panels, 10 s refresh over InfluxDB</td>
-<td>Portfolio, ran against live data</td>
-<td>Time series and live operational views</td>
-</tr>
-<tr>
-<td>Streamlit</td>
-<td>Estates projects mirror Power BI pages</td>
-<td>Portfolio</td>
-<td>When the reviewer has no Power BI licence</td>
-</tr>
-<tr>
-<td>Matplotlib</td>
-<td>Static PNG charts in estates scripts (e.g. net-zero intensity)</td>
-<td>Portfolio</td>
-<td>A chart that ships as a file in a pipeline output</td>
-</tr>
-</tbody>
-</table></div>
-<p>I have also built dashboards in Tableau, including during my NTI internship. The patterns in this article are tool-neutral, but the snippets here are all Power BI.</p>
-<p>Grafana taught me the most about the gap between a file and a dashboard. The <a href="../articles/adsb-flight-radar-streaming.html">flight radar</a> dashboard is provisioned and was tuned against live data. Elsewhere, the retail project has one dashboard JSON with 9 panels but no provisioning folder, so Grafana never loads it (<a href="../articles/retail-cdc-debezium.html">retail write-up</a>). AquaWatch runs a Grafana container with no dashboards checked in. The petroleum scaffold has dashboards that query metrics no service exports. A dashboard JSON in a repo proves nothing until the datasource and provisioning are in the repo too.</p>
-<h2 id="mistakes-id-warn-you-about">Mistakes I&rsquo;d warn you about<a class="h-anchor" href="#mistakes-id-warn-you-about" title="Permanent link">#</a></h2>
-<ul>
-<li><strong>A panel title that lies.</strong> The flight radar&rsquo;s &ldquo;Aircraft Count by Type&rdquo; panel counts position reports in the last 2 minutes, about 12 per aircraft, not distinct aircraft. Check what a count actually counts before you name the visual.</li>
-<li><strong>Copying a dimension per role.</strong> Covered above. It breaks per-person totals silently.</li>
-<li><strong>A second filter path to the site.</strong> It feels like more correct modelling, and it gives you an ambiguous model.</li>
-<li><strong>Calling a spec a report.</strong> The estates handoffs are complete as specs, and I label them that way. The clinic documentation also points to a measures file (<code>powerbi/dax_measures.md</code>) that isn&rsquo;t in the project folder. The example measures in the documentation itself are what I can stand behind.</li>
-</ul>
-<h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
-<p>If each site really is a separate business with no shared questions, separate models are simpler and I would not force a shared schema. If the users need second-level freshness, I reach for Grafana over a time-series store, not Power BI. And if the audience has no Power BI licence, a Streamlit page over the same gold tables answers the same questions. In every case the model underneath stays the same: facts, conformed dimensions, and the site as one more dimension.</p>]]></content:encoded>
-    </item>
-    <item>
-      <title>Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/kafka-nifi-sqoop-flume.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I decide between Kafka, Flume, NiFi, Sqoop, RabbitMQ and Debezium for getting data in, based on an NTI Big Data internship and five portfolio pipelines, including the durability mistakes I found in my own configs.</description>
-      <category>Data Ingestion</category><category>Kafka</category><category>Streaming</category>
-      <content:encoded><![CDATA[<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), where I practised Kafka, Flume and Sqoop ingestion, plus the portfolio projects and write-ups linked below. The busiest feed in those projects is a flight radar capped at 300 aircraft every 10 seconds, on one broker in Docker Compose. Treat this as a guide to choosing between the tools, built from wiring each of them up and then re-reading my own configs looking for the holes.</p>
-<h2 id="the-tools-and-where-ive-used-them">The tools, and where I&rsquo;ve used them<a class="h-anchor" href="#the-tools-and-where-ive-used-them" title="Permanent link">#</a></h2>
-<p>The first question I ask is not &ldquo;which tool is best&rdquo; but &ldquo;what shape is the source&rdquo;. A database table, a log or HTTP feed, a stream of business events, and a pile of files each pull towards a different tool.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>What it&rsquo;s for</th>
-<th>Where I&rsquo;ve used it</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Kafka</td>
-<td>Durable, replayable event log between producers and many consumers</td>
-<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a>, <a href="../articles/fraud-scoring-kafka.html">fraud scoring</a>, <a href="../articles/retail-cdc-debezium.html">retail streaming</a>; NTI internship</td>
-<td>Portfolio; radar ran in Docker</td>
-</tr>
-<tr>
-<td>Flume</td>
-<td>Moving log or HTTP events into Kafka or HDFS through a source, channel and sink</td>
-<td>Flight radar (two agents); NTI internship</td>
-<td>Portfolio, ran in Docker</td>
-</tr>
-<tr>
-<td>Sqoop</td>
-<td>Bulk copy between relational databases and HDFS/Hive</td>
-<td>NTI internship</td>
-<td>See the Sqoop section below</td>
-</tr>
-<tr>
-<td>NiFi</td>
-<td>Visual flows with routing, provenance and back-pressure</td>
-<td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a>, two process groups created by a REST script</td>
-<td>Scaffold, routing never built</td>
-</tr>
-<tr>
-<td>RabbitMQ</td>
-<td>Work queues with per-message routing, TTLs and length limits</td>
-<td>Petroleum platform, 3 exchanges and 8 bounded queues</td>
-<td>Scaffold, hops don&rsquo;t connect</td>
-</tr>
-<tr>
-<td>Debezium</td>
-<td>Change data capture from a database log into Kafka</td>
-<td>Retail streaming, Postgres connector config</td>
-<td>Configured, never registered</td>
-</tr>
-</tbody>
-</table></div>
-<h2 id="how-i-choose">How I choose<a class="h-anchor" href="#how-i-choose" title="Permanent link">#</a></h2>
-<div class="hl"><pre><span></span><code>What is the source?
- |
- +-- a relational table, copied in bulk on a schedule
- |      -&gt; Sqoop on a Hadoop estate; otherwise a scheduled extract (Airflow + SQL)
- |
- +-- a relational table, and consumers need every change in order
- |      -&gt; Debezium into Kafka (needs logical replication on the database)
- |
- +-- logs or an HTTP feed that must land in HDFS
- |      -&gt; Flume (file channel if the data matters)
- |
- +-- business events that several consumers read, or that you may replay
- |      -&gt; Kafka, keyed on whatever must stay in order
- |
- +-- tasks for workers, routing by key, &quot;process once then gone&quot;
- |      -&gt; RabbitMQ with publisher confirms
- |
- +-- many small sources, format conversion, and people who want to see the flow
-        -&gt; NiFi, with the flow exported to version control
-</code></pre></div>
-
-<p>The rule underneath: Kafka is a log you can re-read, RabbitMQ is a queue you drain, Flume and Sqoop are movers into Hadoop, and Debezium is how a database becomes a Kafka producer without touching its application code.</p>
-<h2 id="kafka-three-settings-i-now-check-first">Kafka: three settings I now check first<a class="h-anchor" href="#kafka-three-settings-i-now-check-first" title="Permanent link">#</a></h2>
-<h3 id="the-producer-acks-and-keys">The producer: acks and keys<a class="h-anchor" href="#the-producer-acks-and-keys" title="Permanent link">#</a></h3>
-<p>In the retail project the POS producer favours durability:</p>
-<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">producer_config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s1">&#39;acks&#39;</span><span class="p">:</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span>
-    <span class="s1">&#39;retries&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-    <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="mi">16384</span><span class="p">,</span>
-    <span class="s1">&#39;linger_ms&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="s1">&#39;compression_type&#39;</span><span class="p">:</span> <span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
-<span class="p">}</span>
-</code></pre></div>
-
-<p>It keys by <code>transaction_id</code>, and every send waits on <code>future.get(timeout=10)</code>. The fraud project&rsquo;s producer also uses <code>acks='all'</code> with retries. The flight radar is the opposite: its Flume Kafka sink uses <code>acks=1</code> on a single broker with replication factor 1, three partitions. For a radar that refreshes every 10 seconds, losing a poll is harmless. For transactions it wouldn&rsquo;t be.</p>
-<p>What I&rsquo;d change: waiting on each send means <code>linger_ms</code> has nothing to batch, because the next record isn&rsquo;t sent until the previous one is acknowledged. At 2-5 simulated transactions a second it costs nothing. At real volume I&rsquo;d use async sends with a delivery callback. And the key decides ordering: keying by transaction ID gives up per-store order, so if I needed ordered per-store aggregates, <code>store_id</code> would be the key.</p>
-<h3 id="the-consumer-what-gets-committed">The consumer: what gets committed<a class="h-anchor" href="#the-consumer-what-gets-committed" title="Permanent link">#</a></h3>
-<p>This is the fraud consumer&rsquo;s setup and loop, trimmed:</p>
-<div class="hl"><pre><span></span><code><span class="bp">self</span><span class="o">.</span><span class="n">consumer</span> <span class="o">=</span> <span class="n">KafkaConsumer</span><span class="p">(</span>
-    <span class="n">config</span><span class="o">.</span><span class="n">KAFKA_TOPIC_TRANSACTIONS</span><span class="p">,</span>
-    <span class="n">group_id</span><span class="o">=</span><span class="s1">&#39;fraud_detection_group&#39;</span><span class="p">,</span>
-    <span class="n">auto_offset_reset</span><span class="o">=</span><span class="s1">&#39;latest&#39;</span><span class="p">,</span>
-    <span class="n">enable_auto_commit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">auto_commit_interval_ms</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-    <span class="o">...</span>
-<span class="p">)</span>
-<span class="c1"># in the poll loop</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error processing message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="o">...</span>
-<span class="bp">self</span><span class="o">.</span><span class="n">consumer</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
-</code></pre></div>
-
-<p>Re-reading it, three things stand out. Auto-commit is on and the loop also commits by hand, so two mechanisms decide the offset. A message that throws is logged and then committed past, so a failure is dropped, not retried: that&rsquo;s at-most-once for the messages that matter most. And <code>latest</code> means a new consumer group skips everything already in the topic. Today I&rsquo;d turn auto-commit off, commit only after a successful write, and send failures to a dead-letter topic.</p>
-<h3 id="topics-nobody-reads">Topics nobody reads<a class="h-anchor" href="#topics-nobody-reads" title="Permanent link">#</a></h3>
-<p>The fraud project publishes alerts to <code>fraud_alerts</code>; nothing consumes it. The retail Debezium connector would write to <code>inventory</code> and friends; no job subscribes. Before I add a topic now, I write down its consumer.</p>
-<h2 id="flume-two-agents-two-channel-choices">Flume: two agents, two channel choices<a class="h-anchor" href="#flume-two-agents-two-channel-choices" title="Permanent link">#</a></h2>
-<p>The flight radar is my Flume portfolio project. The Python poller POSTs to a Flume HTTP source instead of talking to Kafka, and a second agent drains Kafka into HDFS. The agents are deliberately different:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Agent</th>
-<th>Source</th>
-<th>Channel</th>
-<th>Sink</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>producer</td>
-<td>HTTP, port 44444</td>
-<td>memory, capacity 10,000</td>
-<td>Kafka, <code>acks=1</code></td>
-</tr>
-<tr>
-<td>consumer</td>
-<td>Kafka, batch 1,000</td>
-<td>file, capacity 100,000</td>
-<td>HDFS, roll every 120 s or 10,000 events</td>
-</tr>
-</tbody>
-</table></div>
-<p>The channel is the whole durability story in Flume. A memory channel loses what it holds if the agent dies; a file channel survives a restart. So only the archive side of my radar is durable. On the way in there are three places to lose data: the poller doesn&rsquo;t retry a failed POST, the memory channel, and <code>acks=1</code> on one unreplicated broker.</p>
-<p>Would I use Flume again? On an existing Hadoop estate that needs files in HDFS, yes. For a new pipeline I&rsquo;d let the producer write to Kafka directly with retries, and keep Flume, or Kafka Connect, only for the HDFS sink.</p>
-<h2 id="nifi-and-rabbitmq-limits-that-only-work-with-confirms">NiFi and RabbitMQ: limits that only work with confirms<a class="h-anchor" href="#nifi-and-rabbitmq-limits-that-only-work-with-confirms" title="Permanent link">#</a></h2>
-<p>The petroleum platform puts RabbitMQ in front of everything so a fast replay can&rsquo;t overwhelm a consumer. The queue arguments show the idea:</p>
-<div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
-<span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;x-message-ttl&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">86400000</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;x-max-length&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;x-overflow&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;reject-publish&quot;</span>
-<span class="p">}</span>
-</code></pre></div>
-
-<p><code>reject-publish</code> refuses new messages when the queue is full instead of silently dropping the oldest. But that only helps a producer that uses publisher confirms, and mine call <code>basic_publish</code> on a plain channel, so a refused message looks like a success. The definitions file is also mounted but never loaded, so the queues exist only if a client declares them. And when I mapped every queue to its publisher and consumer, nothing moved messages from the <code>raw</code> queues to the <code>validated</code> ones.</p>
-<p>NiFi was meant to be that validation hop. A script calls the NiFi REST API to create two process groups (<code>ConsumeAMQP</code>, <code>ValidateJson</code>, <code>UpdateAttribute</code> on the sensor side) and then prints that routing should be configured in the UI. That routing was never built or exported, and the script hasn&rsquo;t been tested against a live NiFi 2.0. The lesson is about NiFi in general: a flow that lives only on the canvas disappears with <code>docker compose down -v</code>. If I use NiFi, the flow goes into version control as an exported definition from day one.</p>
-<h2 id="debezium-and-sqoop-two-ways-to-read-a-database">Debezium and Sqoop: two ways to read a database<a class="h-anchor" href="#debezium-and-sqoop-two-ways-to-read-a-database" title="Permanent link">#</a></h2>
-<p>Sqoop is the batch answer: copy a table, or the rows changed since a last value, into HDFS or Hive on a schedule. I practised it during my NTI internship, where it was the database leg of the Hadoop ingestion stack.</p>
-<p>Debezium is the streaming answer, and my retail config shows both what I understood and what I missed. It uses the built-in <code>pgoutput</code> plugin, an initial snapshot, a filtered publication, and a <code>RegexRouter</code> that shortens topic names to the table name. Then, from the published review of my own project:</p>
-<ul>
-<li>the connector JSON is mounted into the container, but nothing POSTs it to the Connect REST API, so it is never registered;</li>
-<li>Postgres doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> needs;</li>
-<li>the config uses <code>database.server.name</code> where Debezium 2.x expects <code>topic.prefix</code>;</li>
-<li>short topic names would collide if a second schema had a table with the same name.</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">Configured versus running</p>
-<p>The retail repo has a configured Debezium Postgres connector; it doesn&rsquo;t yet run CDC end to end. Those are different claims, and the second one needs a registered connector, logical replication on, and a consumer that MERGEs the changes into a table.</p>
-</div>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li>Re-run the flight radar with the producer writing straight to Kafka, <code>acks=all</code>, and a replication factor above 1, then count what reaches HDFS against what was polled.</li>
-<li>Fix the fraud consumer&rsquo;s commit logic and add a dead-letter topic.</li>
-<li>Make the retail CDC real: logical replication on, <code>topic.prefix</code>, a <code>curl</code> registration step, and a Spark job that merges <code>inventory</code> changes into a Delta table.</li>
-<li>Add publisher confirms to the petroleum producers and export one NiFi flow.</li>
-</ol>]]></content:encoded>
-    </item>
-    <item>
-      <title>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/gdpr-native-chain-analytics.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A design review of a privacy layer for Ethereum, Bitcoin and market data: regex PII masking, address truncation, an audit-log table and retention scheduling. What the code implements, where data still gets through, and what it would take to make the controls hold.</description>
-      <category>Data Privacy</category><category>Data Governance</category><category>Blockchain</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio prototype, reviewed from source code only.</strong> The project has never been run end to end, there are no saved outputs or logs, and the numbers below are counts and defaults read from the code, not measurements. This is a write-up of the design, the controls it implements, and where they stop short.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Blockchain data is public by design, but that does not make it free of personal data. A wallet address is a stable identifier. Once anyone links it to a person (an exchange KYC record, a forum post, an invoice), every past and future transaction from that address is linked too. Under GDPR, data that can be tied back to a person with reasonable effort is still personal data, even if it is pseudonymised.</p>
-<p>I wanted an analytics service that pulls Ethereum blocks, Bitcoin transactions and market prices, and puts a privacy layer in front of everything it serves: mask identifiers and free-text PII, record what was processed, and schedule deletion. The goal was a set of concrete controls, not a compliance label. Whether a real deployment meets GDPR depends on lawful basis, purpose, contracts and process, which code alone cannot settle.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The service is a FastAPI app with ingestors for Ethereum (web3.py over HTTP) and Bitcoin (raw JSON-RPC via <code>requests</code>), a market aggregator (ccxt for Binance, plus CoinGecko and Alpha Vantage over aiohttp), a networkx/pandas flow analyser, and a SQLAlchemy storage layer targeting PostgreSQL. Every ingestor passes its records through one module-level <code>CompliancePipeline</code> before returning them.</p>
-<div class="hl"><pre><span></span><code> Ethereum RPC     Bitcoin RPC     Binance / CoinGecko / Alpha Vantage
-      |               |                        |
-      v               v                        v
- EthereumIngestor  BitcoinIngestor       MarketAggregator
-      \               |                        /
-       \              v                       /
-        +--&gt; CompliancePipeline (masking.py) &lt;+
-               - truncate from/to addresses
-               - regex PII scan + mask_dict
-               - compliance_metadata report
-                        |
-          +-------------+--------------+
-          v                            v
-   FastAPI responses            FlowAnalyzer (networkx)
-                                       |
-                    AuditLogger.log_data_processing()
-                    -&gt; audit_logs table (one row per call)
-
-   storage/operations.py: store_*() + DataRetention rows   (not called by ingestors)
-</code></pre></div>
-
-<p>The last line matters. The storage functions exist and schedule a retention row for each record they write, but no ingestor or endpoint calls them. In the current code, masked data goes straight to API responses and the flow analyser.</p>
-<h2 id="decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms">Decision 1: mask on ingest, with truncation instead of keyed pseudonyms<a class="h-anchor" href="#decision-1-mask-on-ingest-with-truncation-instead-of-keyed-pseudonyms" title="Permanent link">#</a></h2>
-<p><code>DataMasker</code> has 8 regex patterns (email, phone, SSN, card number, IBAN, street address, IPv4, wallet address), a list of 11 sensitive field names, and four modes: <code>partial</code>, <code>full</code>, <code>hash</code> and <code>tokenize</code>. Sender and recipient addresses get special handling that keeps their shape:</p>
-<div class="hl"><pre><span></span><code><span class="c1"># Ethereum address</span>
-<span class="k">if</span> <span class="n">address</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;0x&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">==</span> <span class="mi">42</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">6</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="mi">32</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
-<span class="c1"># Bitcoin address</span>
-<span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">26</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">35</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">address</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">address</span><span class="p">)</span> <span class="o">-</span> <span class="mi">8</span><span class="p">)</span> <span class="o">+</span> <span class="n">address</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
-</code></pre></div>
-
-<p>The trade-off I chose was readability and schema fit over strength. A masked Ethereum address is still 42 characters, so it fits the <code>String(42)</code> column, and an analyst can still eyeball <code>0x1a2b…9f0e</code>. The cost is that this is truncation, not pseudonymisation in any strong sense. Eight hex characters from a public ledger are enough to search for candidate matches, so anyone with chain access can re-identify most masked addresses. The <code>hash</code> mode (unsalted SHA-256, cut to 16 hex characters) and <code>tokenize</code> mode (unsalted MD5) have the same weakness: the full set of addresses is public, so an attacker can hash all of them and build a lookup table.</p>
-<p>Reviewing the data flow showed two more gaps:</p>
-<ul>
-<li><strong>Nested lists are not scanned.</strong> <code>mask_dict</code> recurses into dicts, and into lists of dicts, but returns plain strings inside lists unchanged. Bitcoin output addresses sit in <code>script_pub_key.addresses</code> (a list of strings), so they pass through unmasked. Ethereum log <code>topics</code> also go through untouched, and for ERC-20 <code>Transfer</code> events those topics hold the sender and recipient addresses.</li>
-<li><strong>Two masking schemes for one address.</strong> Top-level <code>from_address</code> keeps 6+4 characters, but a log&rsquo;s <code>address</code> field matches the generic <code>address</code> field name and gets <code>partial</code> masking (2+2). The same contract shows up in two different masked forms, which breaks joins in the flow graph.</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title">What would make this hold</p>
-<p>Replace truncation with a keyed HMAC (secret key held outside the dataset, rotated, with access logged). Run every string the pipeline sees through the scanner, including list items, log topics and calldata. Then the flow graph can still join on a stable pseudonym, and someone without the key cannot reverse it.</p>
-</div>
-<h2 id="decision-2-an-audit-table-written-from-the-processing-path">Decision 2: an audit table written from the processing path<a class="h-anchor" href="#decision-2-an-audit-table-written-from-the-processing-path" title="Permanent link">#</a></h2>
-<p><code>AuditLogger</code> writes rows to an <code>audit_logs</code> table with user, action, resource, IP, user agent, request and response JSON, a success flag and simple compliance flags (keywords such as <code>ssn</code> or <code>private_key</code> in the request, <code>limit &gt; 1000</code> marked as bulk access). The flow analyser and market aggregator call <code>log_data_processing()</code>, which stores record counts and <code>processing_time_ms</code>.</p>
-<p>The trade-off is simplicity against volume and coverage. Writing synchronously from the processing path is easy to reason about, but <code>FlowAnalyzer.add_transaction()</code> writes one audit row per transaction, plus one per batch. That is a database round trip for every transaction. The bigger issue is coverage. The API never calls <code>log_access()</code>, so reads of the served data are not audited. <code>log_data_export()</code> (labelled Article 20) and <code>log_data_deletion()</code> (labelled right to erasure) exist, but nothing calls them, and no export or deletion feature exists for them to record.</p>
-<p>There is also a tension in what the log keeps. It stores IP addresses and raw request payloads for a default of 2,555 days (about seven years). An audit trail is itself personal data, so a long retention period needs a documented reason and its own minimisation.</p>
-<h2 id="decision-3-retention-as-a-ledger-of-scheduled-deletions">Decision 3: retention as a ledger of scheduled deletions<a class="h-anchor" href="#decision-3-retention-as-a-ledger-of-scheduled-deletions" title="Permanent link">#</a></h2>
-<p>Instead of a cron job that deletes by <code>created_at</code>, I put a <code>DataRetention</code> table next to the data. Each stored record would get a row with <code>table_name</code>, <code>record_id</code>, <code>retention_days</code> (default 365) and <code>deletion_scheduled_at</code>. <code>cleanup_expired_data()</code> deletes matching Ethereum, Bitcoin and market rows, then marks the ledger entry <code>is_deleted</code> with a timestamp and reason. This gives a record of what was deleted and when, which a plain <code>DELETE … WHERE created_at &lt; …</code> does not.</p>
-<p>The trade-off is one extra write per record and a second table that has to stay consistent with the first. In this codebase it never runs. The <code>store_*</code> functions that schedule retention are not called, and nothing schedules <code>cleanup_expired_data()</code> or <code>AuditLogger.cleanup_old_logs()</code>. The compose file starts Celery worker and beat containers with <code>-A src.utils.celery</code>, but that module does not exist.</p>
-<p>On erasure: deleting a row from my database does not remove anything from Ethereum or Bitcoin. The realistic scope for this kind of system is erasing its own copies and derived data (stored rows, flow-analysis results, logs), and not re-ingesting data that is linked to a subject who asked for erasure. A suppression list keyed on the HMAC pseudonym from Decision 1 would handle the second part. Neither is built yet.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no runtime results: no throughput, latency or masking-accuracy numbers. What I could verify from the code is below.</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Control</th>
-<th>State in code</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Regex PII detection</td>
-<td>8 patterns, 4 mask modes, 11 sensitive field names</td>
-</tr>
-<tr>
-<td>Address masking</td>
-<td>Implemented as truncation; misses list items, log topics and calldata</td>
-</tr>
-<tr>
-<td>Fernet encryption</td>
-<td>Methods exist but nothing calls them; key handling would fail at startup (see below)</td>
-</tr>
-<tr>
-<td>Audit log</td>
-<td>Table and writer implemented; called from processing paths only, not API reads</td>
-</tr>
-<tr>
-<td>Export / erasure trail</td>
-<td>Logging helpers only; no export or erasure feature</td>
-</tr>
-<tr>
-<td>Retention</td>
-<td>Ledger table and cleanup implemented; not wired or scheduled</td>
-</tr>
-<tr>
-<td>Access control</td>
-<td>None; the API docs say there is no authentication; CORS allows <code>*</code></td>
-</tr>
-<tr>
-<td>Rate limiting</td>
-<td>Described in API docs (100/min, 1,000/hour) but not implemented</td>
-</tr>
-<tr>
-<td>Tests</td>
-<td>31 test functions (11 for compliance); no recorded run</td>
-</tr>
-</tbody>
-</table></div>
-<p>Two startup blockers explain why there is no recorded run. <code>config/settings.py</code> imports <code>BaseSettings</code> from <code>pydantic</code>, but <code>requirements.txt</code> pins pydantic 2.5.0, where that import was removed. The encryption key setup also contradicts itself: the validator requires exactly 32 characters, the default key is 34 characters, and Fernet needs a 44-character url-safe base64 key, so a key that passes the validator would still be rejected by <code>Fernet()</code>. Since <code>compliance_pipeline</code> is created when the module is imported, either problem stops the app from starting. One compliance test also expects partial masking to keep four leading characters (<code>0x12</code>), while <code>mask_field</code> keeps two.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Make it start.</strong> Move to <code>pydantic-settings</code>, take a real Fernet key from a secret store, and fail fast with a clear message. Run the 31 tests and record the result.</li>
-<li><strong>Keyed pseudonyms.</strong> HMAC-SHA256 with a managed key for every address, applied to every string in the payload, including list items, log topics and decoded calldata. Encrypt anything that needs to be reversible, such as optional labels, with envelope encryption, and log every decrypt.</li>
-<li><strong>Wire storage and retention.</strong> Have ingestors call <code>store_*</code>, add a real Celery app, and schedule both cleanups. Record deletions in the ledger and alert when a cleanup stops running.</li>
-<li><strong>Erasure scope and suppression.</strong> An erasure endpoint that deletes a subject&rsquo;s stored rows and derived results, and adds their pseudonym to a suppression list that ingestion checks.</li>
-<li><strong>Audit the read path.</strong> Authentication, a <code>log_access</code> call on every endpoint, request bodies minimised before they are stored, and a shorter, justified audit retention period.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case study: <a href="../projects/blockchain-gdpr-aggregator.html">Blockchain GDPR Aggregator</a></li>
-<li>Source: local project, not published on GitHub.</li>
-</ul>]]></content:encoded>
-    </item>
-    <item>
-      <title>Fraud scoring on Kafka: what is built, what is measured, what is missing</title>
-      <link>https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</link>
-      <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html</guid>
-      <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.</description>
-      <category>Streaming</category><category>Machine Learning</category><category>Kafka</category>
-      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio, synthetic data.</strong> This is a personal project, not client work. Every transaction in it comes from a Python generator with a fixed 2% fraud rate. The repository has one commit and no saved metrics, logs, benchmark results or trained models. So this post describes what the code does and what I found when I read it closely. It does not report any measured latency or model accuracy, because none was recorded.</p>
-<h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>Card fraud has to be caught while the payment is still being authorised. A nightly batch job that flags a transaction the next morning is too late. I wanted to build the parts a streaming fraud system needs: an event stream, a model that scores each event, a way to push alerts, a dashboard, and a loop that retrains the model.</p>
-<p>The README for this project promises &ldquo;Sub-second fraud prediction on incoming transactions&rdquo;, and I had planned drift-aware monitoring. Before writing about the project I checked both against the code. Short version: neither one is there yet. This post explains why, because the gap between the README and the code taught me more than the code did.</p>
-<h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
-<p>The stack runs in Docker Compose: Postgres 15, Redis 7, Zookeeper and Kafka (Confluent 7.4.0), Airflow 2.7.3 and an MLflow server. The Python services (the API, the Kafka consumer, the dashboard and the monitoring loop) are started by hand with <code>python -c ...</code>. They are not in the Compose file and there is no Dockerfile.</p>
-<div class="hl"><pre><span></span><code> TransactionStreamSimulator             Airflow DAG (every 6 h)
- (synthetic, 10 tx/s default)           generate -&gt; clean -&gt; load -&gt; train -&gt; evaluate
-            |                                                |           |
-            v                                                v           v
-   Kafka topic &quot;transactions&quot; &lt;---- key: transaction_id     MLflow     Postgres
-            |                                              (runs)     model_metrics
-            v                                                            |
- TransactionKafkaConsumer ---+                                           |
- (group fraud_detection_group)|      FastAPI /predict, /predict/batch   |
-            |                 +----&gt; FraudDetector (scikit-learn) &lt;-----+ |
-            |                         score + risk tier                   |
-            v                                                             |
-   Kafka topic &quot;fraud_alerts&quot;   (no consumer in the repo)                 |
-                                                                          v
-   MonitoringSystem (polls Postgres every 300 s) ----&gt; Slack / email / webhook
-   Plotly/Dash dashboard (refreshes every 30 s, reads Postgres)
-   Redis: daily counters only (stats:YYYY-MM-DD)
-</code></pre></div>
-
-<p>The model code trains Random Forest, Gradient Boosting and Logistic Regression, picks the one with the best validation AUC-ROC, optionally runs a grid search, and logs runs to MLflow. Features are temporal (hour, weekday, cyclical encodings), amount statistics, per-user history, distance from the user&rsquo;s usual location, device reuse, and merchant statistics. Every numeric column is passed through a <code>StandardScaler</code> and any column ending in <code>_scaled</code> or <code>_encoded</code> becomes a model input.</p>
-<h2 id="decision-1-one-detector-object-behind-two-entry-points">Decision 1: one detector object behind two entry points<a class="h-anchor" href="#decision-1-one-detector-object-behind-two-entry-points" title="Permanent link">#</a></h2>
-<p>Both the Kafka consumer and the FastAPI service call the same method, <code>FraudDetector.predict_single</code>. That kept the scoring logic in one place, which I still think is right. The trade-off sits in how that method builds features:</p>
-<div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">predict_single</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transaction</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([</span><span class="n">transaction</span><span class="p">])</span>
-    <span class="n">predictions</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-</code></pre></div>
-
-<p><code>predict</code> calls <code>create_feature_matrix(df, historical_data=None, ...)</code>, and every feature function then does <code>historical_data = df.copy()</code>. For a single event that means the &ldquo;user history&rdquo; is one row: the user&rsquo;s average amount is this amount, and the seven-day transaction count is zero. The features that make fraud models useful (how this payment compares with the user&rsquo;s normal behaviour) are flat at scoring time. A real design would read user aggregates from a store (Redis was the obvious place, and it is already running) instead of rebuilding them from the request.</p>
-<p>There is a second cost. The cleaner drops rows without <code>transaction_time</code>, and its business rules read that column directly. The FastAPI <code>TransactionRequest</code> model has no <code>transaction_time</code> field. Reading the code, a <code>/predict</code> call should fail inside the cleaner and return HTTP 500. The merchant features also group by <code>is_fraud</code>, which a live request does not have.</p>
-<h2 id="decision-2-risk-tiers-from-three-config-thresholds">Decision 2: risk tiers from three config thresholds<a class="h-anchor" href="#decision-2-risk-tiers-from-three-config-thresholds" title="Permanent link">#</a></h2>
-<p>I wanted more than a yes/no answer, so the score maps to a tier and the tier decides whether an alert is sent:</p>
-<div class="hl"><pre><span></span><code><span class="k">if</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">HIGH_RISK_THRESHOLD</span><span class="p">:</span>      <span class="c1"># 0.8</span>
-    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;HIGH&quot;</span>
-<span class="k">elif</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">MEDIUM_RISK_THRESHOLD</span><span class="p">:</span>  <span class="c1"># 0.6</span>
-    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;MEDIUM&quot;</span>
-<span class="k">elif</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">FRAUD_THRESHOLD</span><span class="p">:</span>        <span class="c1"># 0.7</span>
-    <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;LOW&quot;</span>
-</code></pre></div>
-
-<p>The trade-off I chose was simplicity: three constants in <code>config.py</code>, the same block copied into the consumer and the API. The cost is that the copies drifted from the intent and nobody noticed. Because 0.6 is below 0.7, the <code>LOW</code> branch can never run. Any score of 0.6 or more becomes <code>MEDIUM</code> and sends an alert, even though the &ldquo;fraud&rdquo; threshold is 0.7. A single function with a test for each boundary would have caught this.</p>
-<p>Each alert is published to a Kafka topic, <code>fraud_alerts</code>. Nothing in the repository consumes that topic. Per-transaction alerts therefore never reach Slack or email.</p>
-<h2 id="decision-3-aggregate-monitoring-instead-of-per-event-paging">Decision 3: aggregate monitoring instead of per-event paging<a class="h-anchor" href="#decision-3-aggregate-monitoring-instead-of-per-event-paging" title="Permanent link">#</a></h2>
-<p>Slack, email and webhook delivery live in <code>AlertManager</code>, driven by a <code>MonitoringSystem</code> thread that wakes every 300 seconds and runs four checks against Postgres:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Check</th>
-<th>Rule in the code</th>
-<th>Severity</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Fraud spike</td>
-<td>last hour&rsquo;s fraud rate is more than 3x the previous hour&rsquo;s</td>
-<td>HIGH</td>
-</tr>
-<tr>
-<td>High fraud rate</td>
-<td>last hour&rsquo;s fraud rate is above 10%</td>
-<td>CRITICAL</td>
-</tr>
-<tr>
-<td>Model performance</td>
-<td>latest stored AUC-ROC is below 0.9x a value from the past 24 h, or below 0.7</td>
-<td>HIGH / CRITICAL</td>
-</tr>
-<tr>
-<td>System health / data quality</td>
-<td>Redis or Kafka unreachable; null or non-positive amounts, null user IDs</td>
-<td>HIGH / MEDIUM</td>
-</tr>
-</tbody>
-</table></div>
-<p>Polling every five minutes is cheap and avoids paging someone for every flagged card, which I think is the right call for a team. But this table is the whole &ldquo;drift-aware&rdquo; story. There is no feature-distribution check: no PSI, no KS test, no comparison of live inputs against training data. The AUC rule needs labelled outcomes, and the fraud-rate rules count <code>is_fraud = TRUE</code> rows. In this project those labels come from the generator, so the checks are measuring the simulator. Calling this &ldquo;drift detection&rdquo; was an overstatement. &ldquo;Performance-degradation and fraud-rate alerts&rdquo; is accurate.</p>
-<div class="admonition warning">
-<p class="admonition-title">The alerting module does not import</p>
-<p><code>alerting.py</code> starts with <code>from email.mime.text import MimeText</code>. The real class is <code>MIMEText</code>, and Python 3.13 raises <code>ImportError</code> on that line. Since <code>src/monitoring/__init__.py</code> imports <code>alerting</code>, both the monitoring loop and the dashboard fail at import until that name is fixed.</p>
-</div>
-<p>Retraining is a schedule rather than a trigger. The Airflow DAG runs every six hours. Nothing in the monitoring code starts it when AUC drops.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no numbers to report, and I would rather say that than make some up.</p>
-<ul>
-<li><strong>Latency.</strong> Nothing measures it. The <code>processing_time</code> field returned by the API and the consumer is <code>datetime.utcnow().isoformat()</code>, a timestamp and not a duration. No benchmark or load test exists. &ldquo;Sub-second&rdquo; comes from one line in the README.</li>
-<li><strong>Model metrics.</strong> <code>train()</code> computes AUC-ROC, PR-AUC, precision, recall and F1 and logs them to MLflow, but no MLflow runs, reports or model files are in the repo (<code>models/*.joblib</code> and <code>reports/*.json</code> are git-ignored).</li>
-<li><strong>Tests.</strong> There are unit tests for ingestion, preprocessing and modelling. I did not run them because <code>kafka-python</code> and <code>mlflow</code> are not installed on this machine, and I did not want to change the environment just to write this post.</li>
-</ul>
-<p>Reading the code turned up problems that would make any metric from this pipeline unreliable:</p>
-<ol>
-<li><strong>Label leakage.</strong> The generator writes a <code>fraud_score</code> column drawn from 0.7-1.0 for fraud and 0.0-0.3 for legitimate rows. It is numeric and not excluded from scaling, so <code>fraud_score_scaled</code> becomes a model input that encodes the label. <code>merchant_fraud_rate</code> and <code>category_fraud_rate</code> are also computed from <code>is_fraud</code> on the same rows. Expect a near-perfect AUC that means nothing.</li>
-<li><strong>The API cannot find the model.</strong> Training saves <code>models/best_model_&lt;name&gt;_&lt;timestamp&gt;.joblib</code>. The API loads the fixed path <code>models/best_model_random_forest.joblib</code>.</li>
-<li><strong>The DAG&rsquo;s training task ignores its data.</strong> It queries 30 days of transactions, then calls <code>automated_training_pipeline(data_source='dataframe')</code>. That falls through to <code>pd.read_csv('dataframe')</code>.</li>
-<li><strong><code>pd</code> is not imported in <code>fraud_api.py</code></strong>, so the background task that saves scored transactions fails (the error is caught and logged).</li>
-<li><strong>The stream simulator likely sends nothing.</strong> <code>to_dict('records')</code> keeps pandas <code>Timestamp</code> objects, which <code>json.dumps</code> cannot serialise. I did not run this, so treat it as a likely bug.</li>
-</ol>
-<p>What does hold up: the module layout is clean, the Kafka producer uses <code>acks='all'</code> with retries, the consumer commits offsets after each poll, the trainer has stratified and time-series cross-validation paths, and the dashboard has seven Dash callbacks that re-query Postgres every 30 seconds.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Remove the leaks first.</strong> Drop <code>fraud_score</code> and any label-derived merchant rates from the feature set. Compute merchant rates only from data older than the training window.</li>
-<li><strong>Serve features from history.</strong> Keep per-user aggregates (mean amount, seven-day count, usual location, known devices) in Redis, update them in the consumer, and read them in <code>predict_single</code>. Add <code>transaction_time</code> to the request schema.</li>
-<li><strong>Measure latency for real.</strong> Time <code>predict_single</code> with <code>time.perf_counter()</code>, record p50, p95 and p99 over a replay of a few thousand events, and save the results to the repo. Only then put a number on the card.</li>
-<li><strong>Add actual drift checks.</strong> Compare live feature distributions with a training snapshot using PSI per feature on a schedule, and alert on it. Keep the AUC check for when labels arrive.</li>
-<li><strong>Close the alert loop.</strong> Add a small consumer on <code>fraud_alerts</code> that writes to the <code>fraud_alerts</code> table and forwards HIGH alerts to Slack. Put one tier function behind tests for each threshold boundary.</li>
-<li><strong>Containerise the services</strong> so <code>docker compose up</code> starts the API, consumer and dashboard too.</li>
-</ol>
-<h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
-<ul>
-<li>Case study: <a href="../projects/fraud-detection.html">Fraud Detection</a></li>
-<li>Code: <a href="https://github.com/Eng-Zakaria/Fraud_Detection">github.com/Eng-Zakaria/Fraud_Detection</a></li>
-</ul>]]></content:encoded>
     </item>
   </channel>
 </rss>

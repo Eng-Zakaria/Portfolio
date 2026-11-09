@@ -20,8 +20,10 @@
   "ethereum-neo4j-vs-spark.html",
   "fail-open-nightly-recommender.html",
   "fraud-scoring-kafka.html",
+  "freelancing-as-a-data-engineer.html",
   "gdpr-native-chain-analytics.html",
   "kafka-nifi-sqoop-flume.html",
+  "nti-big-data-internship.html",
   "one-power-bi-model.html",
   "one-warehouse-ten-clinics.html",
   "parametric-interiors-boq.html",
@@ -35,8 +37,10 @@
   "revit-model-health-score.html",
   "six-stage-client-etl.html",
   "spark-hadoop-in-practice.html",
+  "teaching-100-students-ml.html",
   "telecom-lakehouse-8-domains.html",
   "two-clouds-one-job.html",
+  "uzh-blockchain-research.html",
   "watchdog-price-intel.html",
   "wholesale-radar-lead-mapping.html"
 ]

@@ -128,6 +128,9 @@ Three data-quality issues show up in those exports:
 
 The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner's personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour "don't contact me", and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.
 
+!!! tip "Update, November 2026"
+    The tool now has an opt-out list. The rest of this write-up describes the code as it was when I reviewed it.
+
 ## What I'd do next
 
 1. Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.
