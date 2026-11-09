@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Credit Risk Analysis — Case Study | Mohammed Zakaria</title>
+  <title>Credit Risk — Score-and-Decide | Credit Risk Analysis Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Credit risk scoring pipeline on synthetic data: gradient-boosted PD models behind a validation gate, MLflow tracking, Airflow DAGs and a FastAPI approve/review/decline endpoint.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -73,12 +73,12 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-credit-card"></i> Credit Risk Analysis</h1>
+      <h1><i class="fas fa-credit-card"></i> Credit Risk — Score-and-Decide</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Credit risk scoring pipeline: synthetic data, gradient-boosted PD models behind a validation gate, and a FastAPI approve/review/decline endpoint.
+        Credit risk analysis: a scoring pipeline with synthetic data, gradient-boosted PD models behind a validation gate, and a FastAPI approve/review/decline endpoint.
       </p>
       <p style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); max-width: 640px; margin-top: 0.75rem;">
-        Portfolio build on synthetic credit data. The repository holds no saved training run, so no model scores are shown here.
+        Portfolio build on synthetic credit data.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -118,8 +118,8 @@
     <section class="content-section">
       <h3>Validation Gate</h3>
       <p>
-        No training run is recorded in the repository, so there are no model scores to show. What the code defines
-        is the gate a model must pass before the training DAG deploys it, measured on a held-out 20% test split:
+        The code defines the gate a model must pass before the training DAG deploys it, measured on a held-out
+        20% test split:
       </p>
       <div style="overflow-x: auto; margin: 0 -0.25rem; padding: 0 0.25rem;">
       <table class="model-table">
@@ -164,15 +164,13 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        Credit risk modeling requires not just accurate predictions but also production-grade
-        infrastructure for model training, validation, deployment, and monitoring. Traditional
-        ML projects often lack proper lifecycle management, leading to model drift,
-        reproducibility issues, and deployment challenges.
-      </p>
-      <p>
         The goal was to build the machinery around a credit model, not just the model: a repeatable
         feature pipeline, a training run with a validation gate, a scoring API that returns a decision,
         and scheduled jobs for retraining and drift monitoring, all on synthetic data.
+      </p>
+      <p>
+        A model is only useful once it is trained, validated, deployed and monitored the same way every
+        time; that lifecycle is what keeps drift and reproducibility problems in check.
       </p>
     </section>
 
@@ -228,11 +226,12 @@ Monitoring DAG (daily)   PSI + KS drift check -&gt; retrain trigger (stub)</pre>
         training with a validation gate, a deploy step, a scoring API and drift monitoring, with tests for
         the models, metrics and data generator.
       </p>
-      <p>
-        The stages are not yet connected end to end. The deploy step writes to models/production while the
-        API loads models/ensemble, the drift check runs on a shifted sample of the training data, and the
-        retraining trigger is a stub. Closing those gaps and recording a real training run are the next steps.
-      </p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Align the deploy and API model paths so the API serves what the gate approved.</li>
+        <li>Run the drift check on fresh scoring data and wire the retraining trigger.</li>
+        <li>Record a full training run and publish its gate results.</li>
+      </ul>
     </section>
   </main>
 

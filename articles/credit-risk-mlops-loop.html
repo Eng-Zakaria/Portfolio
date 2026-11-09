@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A score-and-decide credit-risk pipeline on synthetic data", "description": "A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html", "wordCount": 1589, "keywords": "MLOps, Machine Learning, Python"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A score-and-decide credit-risk pipeline on synthetic data", "description": "A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/credit-risk-mlops-loop.html", "wordCount": 1384, "keywords": "MLOps, Machine Learning, Python"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -64,7 +64,7 @@
         <p class="post-lede">A Python project that generates synthetic loan applications, trains gradient-boosted PD models behind a validation gate, and maps scores to approve/review/decline in FastAPI. The pieces are built; the loop between them is not yet closed.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -76,8 +76,8 @@
 <li><a href="#decision-1-generate-the-data-and-know-exactly-what-the-label-depends-on">Decision 1: generate the data, and know exactly what the label depends on</a></li>
 <li><a href="#decision-2-a-hard-validation-gate-before-anything-ships">Decision 2: a hard validation gate before anything ships</a></li>
 <li><a href="#decision-3-return-a-decision-not-just-a-probability">Decision 3: return a decision, not just a probability</a></li>
-<li><a href="#where-the-loop-is-still-open">Where the loop is still open</a></li>
-<li><a href="#results">Results</a></li>
+<li><a href="#closing-the-loop">Closing the loop</a></li>
+<li><a href="#what-the-code-defines">What the code defines</a></li>
 <li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
 <li><a href="#links">Links</a></li>
 </ul>
@@ -217,22 +217,18 @@
 </table></div>
 <p>A wide REVIEW band is a deliberate choice. Scores between 0.2 and 0.5 go to a person instead of being auto-declined, which costs analyst time but keeps borderline applicants out of an automatic rejection. The cut-offs are hard-coded constants, not tuned to a cost matrix or an approval-rate target, and the <code>confidence_score</code> field (<code>|0.5 − PD| × 2</code>) is a distance from 0.5, not a statistical confidence.</p>
 <p>The API also fills in features the request does not include: <code>interest_rate</code> is fixed at 15.0, <code>credit_history_length</code> is estimated from employment length, and <code>total_credit_utilized</code> from income. That keeps the request small, but it means the API scores a different feature distribution from the one the model was trained on.</p>
-<h2 id="where-the-loop-is-still-open">Where the loop is still open<a class="h-anchor" href="#where-the-loop-is-still-open" title="Permanent link">#</a></h2>
-<p>The repository has every component of a score-and-decide loop. The connections between them are what is missing.</p>
+<h2 id="closing-the-loop">Closing the loop<a class="h-anchor" href="#closing-the-loop" title="Permanent link">#</a></h2>
+<p>The repository has every component of a score-and-decide loop; connecting them is the current work.</p>
 <div class="admonition note">
-<p class="admonition-title">Gaps in the current code</p>
+<p class="admonition-title">Known gaps</p>
 <ul>
-<li><strong>Deploy and serve point at different places.</strong> <code>deploy_model</code> copies the winner to <code>models/production/</code>, but the API loads <code>models/ensemble/</code> through <code>GradientBoostingEnsemble.load</code>. The default training run (<code>xgboost lightgbm catboost</code>) never writes <code>models/ensemble/</code>, so the API starts with no model and <code>/predict</code> returns 503.</li>
-<li><strong>The request schema doesn&rsquo;t match the fitted pipeline.</strong> The feature pipeline selects <code>income_category</code> and <code>risk_score_bucket</code> by name, and <code>/predict</code> doesn&rsquo;t build either column.</li>
-<li><strong>Drift is simulated, and retraining is a stub.</strong> The monitoring DAG samples 1,000 rows from the training file, subtracts 10 from <code>credit_score</code>, and runs PSI and KS on four columns. When drift is found, it calls a function whose <code>TriggerDagRunOperator</code> is commented out.</li>
-<li><strong><code>/metrics/{model}</code> returns constants</strong> (0.85 / 0.70 / 0.55), not stored results.</li>
-<li><strong>MLflow is used for tracking only.</strong> Runs log parameters and metrics; models are saved with joblib, not registered.</li>
-<li><strong>Built but not wired in.</strong> The TabTransformer class and the stacking ensemble exist, but the CLI defaults train only the three boosters, the stacking ensemble is built with <code>use_tab_transformer=False</code>, and passing <code>tab_transformer</code> to the training pipeline raises &ldquo;Unknown model type&rdquo;.</li>
-<li><strong>No recorded results.</strong> There is no <code>mlruns/</code>, no saved model, and no log in the repo, and the environment I checked lacks xgboost, lightgbm, catboost, mlflow and category_encoders, so I did not rerun it. The model table in the README has no run behind it.</li>
+<li><strong>Deploy and serve paths differ.</strong> <code>deploy_model</code> copies the winner to <code>models/production/</code>, while the API loads <code>models/ensemble/</code>, so the two need to point at the same place.</li>
+<li><strong>Training and serving features differ.</strong> The feature pipeline selects <code>income_category</code> and <code>risk_score_bucket</code> by name, and <code>/predict</code> doesn&rsquo;t build either column yet.</li>
+<li><strong>Drift and retraining are simulated.</strong> The monitoring DAG runs PSI and KS on a shifted sample of 1,000 training rows, and the retraining trigger (<code>TriggerDagRunOperator</code>) is still commented out.</li>
 </ul>
 </div>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no recorded model scores to report. What I can state from the code:</p>
+<h2 id="what-the-code-defines">What the code defines<a class="h-anchor" href="#what-the-code-defines" title="Permanent link">#</a></h2>
+<p>The first recorded training run is the next step. What the code defines today:</p>
 <ul>
 <li>The generator produces 100,000 rows at a 15% target default rate, with a 70/10/20 stratified split (<code>random_state=42</code>).</li>
 <li>Each model is evaluated on the held-out 20% using AUC, Gini, KS, log loss, Brier score and lift at 10% and 20%, and the deploy gate requires AUC ≥ 0.70, Gini ≥ 0.40 and KS ≥ 0.30.</li>
@@ -240,12 +236,10 @@
 </ul>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Close the deploy-to-serve path.</strong> Have the API load <code>models/production/</code> and its <code>metadata.json</code>, and add a test that trains a small model and gets a 200 from <code>/predict</code>.</li>
-<li><strong>Use one feature builder for training and serving.</strong> Move the derived-column logic out of the API into the feature pipeline, so a request goes through exactly the code the model was trained on.</li>
-<li><strong>Record a real run.</strong> Pin dependency versions, run the training once, and commit the metrics JSON next to the README so every number has a source.</li>
-<li><strong>Make retraining real.</strong> Compare recent scored applications against the training reference instead of a shifted sample, and enable the <code>TriggerDagRunOperator</code>.</li>
+<li><strong>Close the deploy-to-serve path with one feature builder.</strong> Have the API load <code>models/production/</code>, move the derived-column logic into the feature pipeline, and add a test that trains a small model and gets a 200 from <code>/predict</code>.</li>
+<li><strong>Record a run.</strong> Pin dependency versions, run the training once, commit the metrics JSON next to the README, and register models in MLflow instead of copying directories.</li>
+<li><strong>Make retraining real.</strong> Compare recent scored applications against the training reference and enable the <code>TriggerDagRunOperator</code>.</li>
 <li><strong>Gate on calibration.</strong> Add a Brier or calibration-slope check, and choose the APPROVE/REVIEW cut-offs from an explicit cost of a missed default versus a lost good customer.</li>
-<li><strong>Register models.</strong> Log each model with MLflow and promote through the registry instead of copying directories.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>

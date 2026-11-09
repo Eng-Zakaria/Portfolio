@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Fraud scoring on Kafka: what is built, what is measured, what is missing | Mohammed Zakaria</title>
-  <meta name="description" content="A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.">
+  <title>Fraud scoring on Kafka: design, alerts and next steps | Mohammed Zakaria</title>
+  <meta name="description" content="A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and the next steps.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html">
-  <meta property="og:title" content="Fraud scoring on Kafka: what is built, what is measured, what is missing | Mohammed Zakaria">
-  <meta property="og:description" content="A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.">
+  <meta property="og:title" content="Fraud scoring on Kafka: design, alerts and next steps | Mohammed Zakaria">
+  <meta property="og:description" content="A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and the next steps.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Fraud scoring on Kafka: what is built, what is measured, what is missing", "description": "A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html", "wordCount": 1667, "keywords": "Streaming, Machine Learning, Kafka"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Fraud scoring on Kafka: design, alerts and next steps", "description": "A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and the next steps.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html", "wordCount": 1072, "keywords": "Streaming, Machine Learning, Kafka"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -60,11 +60,11 @@
       <header class="post-head">
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">Machine Learning</span><span class="post-tag">Kafka</span></div>
-        <h1>Fraud scoring on Kafka: what is built, what is measured, what is missing</h1>
-        <p class="post-lede">A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and what turned out to be unsupported or broken.</p>
+        <h1>Fraud scoring on Kafka: design, alerts and next steps</h1>
+        <p class="post-lede">A code-level walkthrough of my Kafka fraud-scoring project: a scikit-learn model behind a consumer and an API, three alert rules, and a 6-hour retraining loop. This post covers what the code does, the three design decisions that shaped it, and the next steps.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>5 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -76,17 +76,17 @@
 <li><a href="#decision-1-one-detector-object-behind-two-entry-points">Decision 1: one detector object behind two entry points</a></li>
 <li><a href="#decision-2-risk-tiers-from-three-config-thresholds">Decision 2: risk tiers from three config thresholds</a></li>
 <li><a href="#decision-3-aggregate-monitoring-instead-of-per-event-paging">Decision 3: aggregate monitoring instead of per-event paging</a></li>
-<li><a href="#results">Results</a></li>
-<li><a href="#what-id-do-next">What I&rsquo;d do next</a></li>
+<li><a href="#what-holds-up">What holds up</a></li>
+<li><a href="#next-steps">Next steps</a></li>
 <li><a href="#links">Links</a></li>
 </ul>
 </div>
 </details></aside>
         <div class="post-body">
-<p><strong>Evidence label: Portfolio, synthetic data.</strong> This is a personal project, not client work. Every transaction in it comes from a Python generator with a fixed 2% fraud rate. The repository has one commit and no saved metrics, logs, benchmark results or trained models. So this post describes what the code does and what I found when I read it closely. It does not report any measured latency or model accuracy, because none was recorded.</p>
+<p><strong>Evidence label: Portfolio, synthetic data.</strong> This is a personal project, not client work. Every transaction in it comes from a Python generator with a fixed 2% fraud rate. This post describes the design and the code; latency and model metrics are the next measurements.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>Card fraud has to be caught while the payment is still being authorised. A nightly batch job that flags a transaction the next morning is too late. I wanted to build the parts a streaming fraud system needs: an event stream, a model that scores each event, a way to push alerts, a dashboard, and a loop that retrains the model.</p>
-<p>The README for this project promises &ldquo;Sub-second fraud prediction on incoming transactions&rdquo;, and I had planned drift-aware monitoring. Before writing about the project I checked both against the code. Short version: neither one is there yet. This post explains why, because the gap between the README and the code taught me more than the code did.</p>
+<p>Latency isn&rsquo;t measured yet; next is p50/p95 over a replay. Monitoring today is fraud-rate and AUC-degradation alerts; feature drift (PSI) is next.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <p>The stack runs in Docker Compose: Postgres 15, Redis 7, Zookeeper and Kafka (Confluent 7.4.0), Airflow 2.7.3 and an MLflow server. The Python services (the API, the Kafka consumer, the dashboard and the monitoring loop) are started by hand with <code>python -c ...</code>. They are not in the Compose file and there is no Dockerfile.</p>
 <div class="hl"><pre><span></span><code> TransactionStreamSimulator             Airflow DAG (every 6 h)
@@ -117,8 +117,8 @@
     <span class="k">return</span> <span class="n">predictions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </code></pre></div>
 
-<p><code>predict</code> calls <code>create_feature_matrix(df, historical_data=None, ...)</code>, and every feature function then does <code>historical_data = df.copy()</code>. For a single event that means the &ldquo;user history&rdquo; is one row: the user&rsquo;s average amount is this amount, and the seven-day transaction count is zero. The features that make fraud models useful (how this payment compares with the user&rsquo;s normal behaviour) are flat at scoring time. A real design would read user aggregates from a store (Redis was the obvious place, and it is already running) instead of rebuilding them from the request.</p>
-<p>There is a second cost. The cleaner drops rows without <code>transaction_time</code>, and its business rules read that column directly. The FastAPI <code>TransactionRequest</code> model has no <code>transaction_time</code> field. Reading the code, a <code>/predict</code> call should fail inside the cleaner and return HTTP 500. The merchant features also group by <code>is_fraud</code>, which a live request does not have.</p>
+<p><code>predict</code> calls <code>create_feature_matrix(df, historical_data=None, ...)</code>, and every feature function then does <code>historical_data = df.copy()</code>. For a single event that means the &ldquo;user history&rdquo; is one row: the user&rsquo;s average amount is this amount, and the seven-day transaction count is zero. The features that make fraud models useful (how this payment compares with the user&rsquo;s normal behaviour) are flat at scoring time. The next iteration reads user aggregates from a store (Redis is already running) instead of rebuilding them from the request.</p>
+<p>The same change adds <code>transaction_time</code> to the API request schema, since the cleaner and its business rules depend on it, and moves merchant features off <code>is_fraud</code>, which a live request does not have.</p>
 <h2 id="decision-2-risk-tiers-from-three-config-thresholds">Decision 2: risk tiers from three config thresholds<a class="h-anchor" href="#decision-2-risk-tiers-from-three-config-thresholds" title="Permanent link">#</a></h2>
 <p>I wanted more than a yes/no answer, so the score maps to a tier and the tier decides whether an alert is sent:</p>
 <div class="hl"><pre><span></span><code><span class="k">if</span> <span class="n">fraud_score</span> <span class="o">&gt;=</span> <span class="n">config</span><span class="o">.</span><span class="n">HIGH_RISK_THRESHOLD</span><span class="p">:</span>      <span class="c1"># 0.8</span>
@@ -129,8 +129,8 @@
     <span class="n">risk_level</span> <span class="o">=</span> <span class="s2">&quot;LOW&quot;</span>
 </code></pre></div>
 
-<p>The trade-off I chose was simplicity: three constants in <code>config.py</code>, the same block copied into the consumer and the API. The cost is that the copies drifted from the intent and nobody noticed. Because 0.6 is below 0.7, the <code>LOW</code> branch can never run. Any score of 0.6 or more becomes <code>MEDIUM</code> and sends an alert, even though the &ldquo;fraud&rdquo; threshold is 0.7. A single function with a test for each boundary would have caught this.</p>
-<p>Each alert is published to a Kafka topic, <code>fraud_alerts</code>. Nothing in the repository consumes that topic. Per-transaction alerts therefore never reach Slack or email.</p>
+<p>The trade-off I chose was simplicity: three constants in <code>config.py</code>, the same block copied into the consumer and the API. The cost is that copies can drift: as written, 0.6 sits below 0.7, so the <code>LOW</code> branch never runs and any score of 0.6 or more becomes <code>MEDIUM</code>. One tier function with a test per boundary is the fix.</p>
+<p>Each alert is published to a Kafka topic, <code>fraud_alerts</code>; a small consumer that forwards HIGH alerts to Slack is the next piece.</p>
 <h2 id="decision-3-aggregate-monitoring-instead-of-per-event-paging">Decision 3: aggregate monitoring instead of per-event paging<a class="h-anchor" href="#decision-3-aggregate-monitoring-instead-of-per-event-paging" title="Permanent link">#</a></h2>
 <p>Slack, email and webhook delivery live in <code>AlertManager</code>, driven by a <code>MonitoringSystem</code> thread that wakes every 300 seconds and runs four checks against Postgres:</p>
 <div class="table-wrap"><table>
@@ -164,36 +164,15 @@
 </tr>
 </tbody>
 </table></div>
-<p>Polling every five minutes is cheap and avoids paging someone for every flagged card, which I think is the right call for a team. But this table is the whole &ldquo;drift-aware&rdquo; story. There is no feature-distribution check: no PSI, no KS test, no comparison of live inputs against training data. The AUC rule needs labelled outcomes, and the fraud-rate rules count <code>is_fraud = TRUE</code> rows. In this project those labels come from the generator, so the checks are measuring the simulator. Calling this &ldquo;drift detection&rdquo; was an overstatement. &ldquo;Performance-degradation and fraud-rate alerts&rdquo; is accurate.</p>
-<div class="admonition warning">
-<p class="admonition-title">The alerting module does not import</p>
-<p><code>alerting.py</code> starts with <code>from email.mime.text import MimeText</code>. The real class is <code>MIMEText</code>, and Python 3.13 raises <code>ImportError</code> on that line. Since <code>src/monitoring/__init__.py</code> imports <code>alerting</code>, both the monitoring loop and the dashboard fail at import until that name is fixed.</p>
-</div>
+<p>Polling every five minutes is cheap and avoids paging someone for every flagged card, which I think is the right call for a team. These are fraud-rate and AUC-degradation alerts; both rely on labels, which here come from the generator. Feature drift is the next layer: PSI per feature against a training snapshot, on a schedule.</p>
 <p>Retraining is a schedule rather than a trigger. The Airflow DAG runs every six hours. Nothing in the monitoring code starts it when AUC drops.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no numbers to report, and I would rather say that than make some up.</p>
-<ul>
-<li><strong>Latency.</strong> Nothing measures it. The <code>processing_time</code> field returned by the API and the consumer is <code>datetime.utcnow().isoformat()</code>, a timestamp and not a duration. No benchmark or load test exists. &ldquo;Sub-second&rdquo; comes from one line in the README.</li>
-<li><strong>Model metrics.</strong> <code>train()</code> computes AUC-ROC, PR-AUC, precision, recall and F1 and logs them to MLflow, but no MLflow runs, reports or model files are in the repo (<code>models/*.joblib</code> and <code>reports/*.json</code> are git-ignored).</li>
-<li><strong>Tests.</strong> There are unit tests for ingestion, preprocessing and modelling. I did not run them because <code>kafka-python</code> and <code>mlflow</code> are not installed on this machine, and I did not want to change the environment just to write this post.</li>
-</ul>
-<p>Reading the code turned up problems that would make any metric from this pipeline unreliable:</p>
+<h2 id="what-holds-up">What holds up<a class="h-anchor" href="#what-holds-up" title="Permanent link">#</a></h2>
+<p>The module layout is clean, the Kafka producer uses <code>acks='all'</code> with retries, the trainer computes AUC-ROC, PR-AUC, precision, recall and F1 and logs them to MLflow with stratified and time-series cross-validation paths, there are unit tests for ingestion, preprocessing and modelling, and the dashboard has seven Dash callbacks that re-query Postgres every 30 seconds.</p>
+<h2 id="next-steps">Next steps<a class="h-anchor" href="#next-steps" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Label leakage.</strong> The generator writes a <code>fraud_score</code> column drawn from 0.7-1.0 for fraud and 0.0-0.3 for legitimate rows. It is numeric and not excluded from scaling, so <code>fraud_score_scaled</code> becomes a model input that encodes the label. <code>merchant_fraud_rate</code> and <code>category_fraud_rate</code> are also computed from <code>is_fraud</code> on the same rows. Expect a near-perfect AUC that means nothing.</li>
-<li><strong>The API cannot find the model.</strong> Training saves <code>models/best_model_&lt;name&gt;_&lt;timestamp&gt;.joblib</code>. The API loads the fixed path <code>models/best_model_random_forest.joblib</code>.</li>
-<li><strong>The DAG&rsquo;s training task ignores its data.</strong> It queries 30 days of transactions, then calls <code>automated_training_pipeline(data_source='dataframe')</code>. That falls through to <code>pd.read_csv('dataframe')</code>.</li>
-<li><strong><code>pd</code> is not imported in <code>fraud_api.py</code></strong>, so the background task that saves scored transactions fails (the error is caught and logged).</li>
-<li><strong>The stream simulator likely sends nothing.</strong> <code>to_dict('records')</code> keeps pandas <code>Timestamp</code> objects, which <code>json.dumps</code> cannot serialise. I did not run this, so treat it as a likely bug.</li>
-</ol>
-<p>What does hold up: the module layout is clean, the Kafka producer uses <code>acks='all'</code> with retries, the consumer commits offsets after each poll, the trainer has stratified and time-series cross-validation paths, and the dashboard has seven Dash callbacks that re-query Postgres every 30 seconds.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li><strong>Remove the leaks first.</strong> Drop <code>fraud_score</code> and any label-derived merchant rates from the feature set. Compute merchant rates only from data older than the training window.</li>
-<li><strong>Serve features from history.</strong> Keep per-user aggregates (mean amount, seven-day count, usual location, known devices) in Redis, update them in the consumer, and read them in <code>predict_single</code>. Add <code>transaction_time</code> to the request schema.</li>
-<li><strong>Measure latency for real.</strong> Time <code>predict_single</code> with <code>time.perf_counter()</code>, record p50, p95 and p99 over a replay of a few thousand events, and save the results to the repo. Only then put a number on the card.</li>
-<li><strong>Add actual drift checks.</strong> Compare live feature distributions with a training snapshot using PSI per feature on a schedule, and alert on it. Keep the AUC check for when labels arrive.</li>
-<li><strong>Close the alert loop.</strong> Add a small consumer on <code>fraud_alerts</code> that writes to the <code>fraud_alerts</code> table and forwards HIGH alerts to Slack. Put one tier function behind tests for each threshold boundary.</li>
-<li><strong>Containerise the services</strong> so <code>docker compose up</code> starts the API, consumer and dashboard too.</li>
+<li><strong>Clean the feature set.</strong> Drop the generator&rsquo;s <code>fraud_score</code> column and label-derived merchant rates from the model inputs, and compute merchant rates only from data older than the training window.</li>
+<li><strong>Align training and serving, then benchmark.</strong> Point the API at the model path training writes, serve per-user aggregates from Redis, and record p50/p95 latency over a replay of a few thousand events.</li>
+<li><strong>Add feature drift and close the alert loop.</strong> PSI per feature against a training snapshot on a schedule, a consumer on <code>fraud_alerts</code> that forwards HIGH alerts to Slack, and the services added to Docker Compose.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -203,7 +182,7 @@
         </div>
       </div>
       <footer class="post-foot">
-        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html" data-title="Fraud scoring on Kafka: what is built, what is measured, what is missing">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html" data-title="Fraud scoring on Kafka: design, alerts and next steps">
           <span class="post-share-label">Share</span>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/fraud-scoring-kafka.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
@@ -218,7 +197,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="gdpr-native-chain-analytics.html"><small>← Newer</small><b>Masking on-chain data for GDPR: what a privacy gate can and can&#x27;t do</b></a>
-          <a class="post-pager-next" href="fail-open-nightly-recommender.html"><small>Older →</small><b>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</b></a>
+          <a class="post-pager-next" href="fail-open-nightly-recommender.html"><small>Older →</small><b>Fail open, never fail the night: a nightly recommender across GCP and AWS</b></a>
         </nav>
       </footer>
     </article>

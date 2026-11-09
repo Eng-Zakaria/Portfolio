@@ -4,28 +4,6 @@ date: 2026-11-08
 summary: "How I pick a vector store, run local LLMs through Ollama, and serve RAG behind FastAPI and Redis, drawn from Waffarha's bilingual assistant and recommender, with notes on Whisper speech-to-text and MLflow tracking."
 tags: [RAG, LLM, Vector Databases]
 draft: false
-sources:
-  - Profile/Portfolio/articles/posts/bilingual-rag-retrieval-hit-rate.md
-  - Profile/Portfolio/articles/posts/deterministic-gates-before-llm.md
-  - Profile/Portfolio/articles/posts/agent-that-cant-go-rogue.md
-  - Profile/Portfolio/articles/posts/redacting-160k-support-chats.md
-  - Profile/Portfolio/articles/posts/arabic-rag-graduation-project.md
-  - Profile/Portfolio/articles/posts/fail-open-nightly-recommender.md
-  - Profile/Portfolio/articles/posts/credit-risk-mlops-loop.md
-  - Profile/Portfolio/articles/posts/fraud-scoring-kafka.md
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - Waffarha/local_llm_agent/eval/results/summary_report.md
-  - Waffarha/waffarha-unified-chatbot/backend/app/retrieval/vectorstores.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/memory/memory.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/core/app.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/core/config.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/voice_providers.py
-  - Waffarha/waffarha-unified-chatbot/docker-compose.yml
-  - Waffarha/waffarha-unified-chatbot/docs/ARCHITECTURE.md
-  - Waffarha/waffarha-chatbot/eval/voice_eval/lab.py
-  - Waffarha/Recommendation-Agent/RecommendationAgent/main.py
-  - Workspace/Risk_Analysis/src/training/train_pipeline.py
-  - Workspace/Risk_Analysis/docker-compose.yml
 ---
 
 This is a working guide to the retrieval-and-serving half of my skill set: vector stores, local LLMs, FastAPI, Redis, speech-to-text and experiment tracking. Evidence: drawn from my production work at Waffarha (the bilingual customer-service assistant and the nightly recommender), my graduation project, and two portfolio ML projects, all linked below. Where a number appears, it comes from an eval report or a source file, and I say what it measures.
@@ -44,7 +22,7 @@ In August 2026 I benchmarked five vector stores on the same 1,690 documents, hol
 
 The first lesson is in the recall column. Four stores returned identical recall, most likely because at a few thousand documents they all end up doing near-exact cosine search over the same vectors. At that scale the store does not decide quality; the embedding model and the chunking do. The store decides how you deploy, back up and filter. pgvector was the exception, with lower recall and the slowest queries in that run, which is exactly why I would re-measure before trusting it.
 
-What actually shipped in September 2026 was `BAAI/bge-m3` embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don't record why, and I've written that up honestly in [Retrieval hit rate isn't answer accuracy](../articles/bilingual-rag-retrieval-hit-rate.html). The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.
+What actually shipped in September 2026 was `BAAI/bge-m3` embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don't record why; the comparison is in [Retrieval hit rate isn't answer accuracy](../articles/bilingual-rag-retrieval-hit-rate.html). The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.
 
 ### Pattern: one interface, every backend behind it
 

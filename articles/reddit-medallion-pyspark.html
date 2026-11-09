@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>A 7-stage PySpark medallion for Reddit signals | Mohammed Zakaria</title>
+  <title>A 7-stage PySpark pipeline for Reddit signals | Mohammed Zakaria</title>
   <meta name="description" content="How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html">
-  <meta property="og:title" content="A 7-stage PySpark medallion for Reddit signals | Mohammed Zakaria">
+  <meta property="og:title" content="A 7-stage PySpark pipeline for Reddit signals | Mohammed Zakaria">
   <meta property="og:description" content="How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A 7-stage PySpark medallion for Reddit signals", "description": "How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html", "wordCount": 1768, "keywords": "Spark, Data Pipelines, Python"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "A 7-stage PySpark pipeline for Reddit signals", "description": "How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html", "wordCount": 1613, "keywords": "Spark, Data Pipelines, Python"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -60,11 +60,11 @@
       <header class="post-head">
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Python</span></div>
-        <h1>A 7-stage PySpark medallion for Reddit signals</h1>
+        <h1>A 7-stage PySpark pipeline for Reddit signals</h1>
         <p class="post-lede">How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -87,9 +87,9 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. The repository has no saved outputs, logs or benchmark files, so this article describes what the code does, not measured results.</p>
+<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. This article describes what the code does and the design choices behind it.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>I wanted a practice ground for the Spark patterns I use at work: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
+<p>I wanted a practice ground for the Spark patterns from my NTI training and other pipelines: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
 <p>The question the pipeline answers is simple: across a fixed set of subreddits, which posts from the last day got the most engagement, and how does engagement split by community, hour and topic?</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <p>The code comes in two forms. <code>notebooks/01_ingestion.py</code> to <code>07_output.py</code> are standalone scripts, one per stage, each with its own SparkSession and extra diagnostic output. <code>src/pipeline.py</code> collects the same seven stages into functions that <code>main()</code> runs one after another in a single session.</p>
@@ -111,7 +111,7 @@
  [7] Output     -&gt; data/gold/subreddit=.../day_of_week=.../  (silver, partitioned)
 </code></pre></div>
 
-<p>The diagram shows something the README&rsquo;s layout hides: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
+<p>The diagram shows the shape: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
 <p>So &ldquo;medallion&rdquo; fits for bronze and silver. Gold is a re-partitioned copy of silver, not an aggregated or joined layer.</p>
 <h3 id="stage-by-stage">Stage by stage<a class="h-anchor" href="#stage-by-stage" title="Permanent link">#</a></h3>
 <div class="table-wrap"><table>
@@ -200,33 +200,27 @@
 <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_trending&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 
-<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. Reading the code honestly:</p>
+<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. What each one measures:</p>
 <ul>
 <li><code>score_velocity</code> is <code>score - lag(score)</code> over posts ordered by <code>post_timestamp</code> within a subreddit. That is the score gap between a post and the post created just before it. It is not how fast one post is gaining score. One API snapshot cannot give real velocity.</li>
 <li><code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>. That is the last three posts, not the last three hours.</li>
 <li><code>rank()</code> keeps ties, so a subreddit can get more than three trending posts.</li>
-<li>The notebook&rsquo;s docstring says trending &ldquo;combines multiple signals&rdquo;. The code uses only rank.</li>
 </ul>
-<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the most honest signal that data supports.</p>
+<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the strongest signal that data supports.</p>
 <p><strong>Trade-off:</strong> &ldquo;trending&rdquo; here means &ldquo;most engaged in the last day&rdquo;, which Reddit&rsquo;s own <code>top?t=day</code> ordering already roughly gives you. To get real trending detection, I need repeated snapshots and a per-post time series.</p>
 <h2 id="smaller-things-worth-knowing">Smaller things worth knowing<a class="h-anchor" href="#smaller-things-worth-knowing" title="Permanent link">#</a></h2>
 <p>The topic UDF (stage 5) checks title keywords with plain substring matches, in a fixed order: ai, crypto, climate, war, sports, politics, tech, science. Substrings cause false hits. &ldquo;ai&rdquo; matches &ldquo;said&rdquo; and &ldquo;again&rdquo;. &ldquo;software&rdquo; contains &ldquo;war&rdquo;, and war is checked before tech, so a software headline gets the war tag. Word-boundary regex in <code>F.regexp_extract</code> or <code>rlike</code> would fix this and also remove the Python UDF cost.</p>
 <p>The broadcast join in stage 5 joins about 1,000 posts to a 10-row lookup. That shows the API and the <code>BroadcastHashJoin</code> plan, which the notebook prints with <code>explain()</code>. At this size it says nothing about performance.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>Here is what I can say from the repository:</p>
 <ul>
 <li>It ingests up to 1,000 live posts per run (10 subreddits × 100) with a 1-second pause between requests.</li>
 <li>It writes 7 kinds of output: bronze, silver, 3 aggregation tables, ranked and flagged posts, topic-enriched posts, a repartitioned copy, and a gold layer partitioned by <code>subreddit</code> and <code>day_of_week</code>.</li>
 <li>The stage scripts print their own checks, for example rows before and after the quality filter, null counts per column, and a read-back count after each write.</li>
 </ul>
-<p>Here is what I cannot claim. The repo has no committed run outputs, row counts, timings or charts. The leaderboard and trending tables under &ldquo;Sample Output&rdquo; in the README are placeholders (post ids like <code>abc123</code>), not results from a committed run. And this is not &ldquo;at scale&rdquo;. It is a single-machine job over about 1,000 rows.</p>
-<div class="admonition note">
-<p class="admonition-title">A bug I found while writing this</p>
-<p><code>src/pipeline.py</code> stage 1 starts with <code>from notebooks.ingestion import fetch_all_subreddits, POST_SCHEMA, BRONZE_PATH</code>. There is no <code>notebooks/ingestion.py</code> (the file is <code>01_ingestion.py</code>), and <code>notebooks/</code> has no <code>__init__.py</code>. As committed, <code>python -m src.pipeline</code> should fail before it fetches anything. The per-stage scripts in <code>notebooks/</code> do not have this problem. The import is dead code anyway, because the function redefines everything it needs, so the fix is to delete that line.</p>
-</div>
+<p>It is a single-machine job over about 1,000 rows, built to exercise the patterns rather than the scale.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Fix the orchestrator import</strong> and add a smoke test that runs all seven stages on a small saved JSON fixture, so the main entry point is checked on every commit.</li>
+<li><strong>Smoke-test the orchestrator.</strong> Remove a dead import in <code>src/pipeline.py</code> (the per-stage scripts already run) and add a test that runs all seven stages on a small saved JSON fixture on every commit.</li>
 <li><strong>Land raw JSON in bronze</strong> and move the schema to silver, so I can re-process history after a schema change.</li>
 <li><strong>Snapshot on a schedule</strong> (for example hourly), append with a <code>snapshot_ts</code> column, and compute real per-post velocity with <code>lag</code> over <code>id</code> ordered by snapshot time. Use <code>rangeBetween</code> on timestamps for true time windows.</li>
 <li><strong>Build a real gold layer</strong>: join the trending, topic and category columns into one table, partitioned by <code>post_date</code> instead of day name, so queries can prune by date.</li>
@@ -241,7 +235,7 @@
         </div>
       </div>
       <footer class="post-foot">
-        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html" data-title="A 7-stage PySpark medallion for Reddit signals">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html" data-title="A 7-stage PySpark pipeline for Reddit signals">
           <span class="post-share-label">Share</span>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
@@ -256,7 +250,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="retail-cdc-debezium.html"><small>← Newer</small><b>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</b></a>
-          <a class="post-pager-next" href="redacting-160k-support-chats.html"><small>Older →</small><b>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</b></a>
+          <a class="post-pager-next" href="redacting-160k-support-chats.html"><small>Older →</small><b>From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes</b></a>
         </nav>
       </footer>
     </article>

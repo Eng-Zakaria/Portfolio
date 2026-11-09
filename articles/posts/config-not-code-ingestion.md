@@ -1,34 +1,12 @@
 ---
 title: "Config, not code: schema-drift gates and a cdp CLI"
 date: 2026-11-08
-summary: "A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. On its first live run, the gate failed every source, which is what it was built to do."
+summary: "A v1 ingestion scaffold where each scraped site is a YAML file, a drift check stops the run when selectors stop matching, and one CLI covers setup to scheduling. The gate caught SparkFun's layout change on the first live run; updating the selectors is next."
 tags: [Data Ingestion, Data Quality, Airflow]
 draft: false
-sources:
-  - component-data-pipeline/README.md
-  - component-data-pipeline/docs/roadmap.md
-  - component-data-pipeline/docs/sources_evaluated.md
-  - component-data-pipeline/configs/sources/sparkfun.yaml
-  - component-data-pipeline/configs/sources/ti.yaml
-  - component-data-pipeline/configs/sources/mouser.yaml
-  - component-data-pipeline/src/scrapers/base.py
-  - component-data-pipeline/src/quality/validators.py
-  - component-data-pipeline/src/ingestion/landing.py
-  - component-data-pipeline/src/api_clients/mouser_client.py
-  - component-data-pipeline/cli/main.py
-  - component-data-pipeline/cli/commands/run.py
-  - component-data-pipeline/cli/commands/doctor.py
-  - component-data-pipeline/cli/commands/sources.py
-  - component-data-pipeline/cli/commands/schedule.py
-  - component-data-pipeline/cli/commands/check.py
-  - component-data-pipeline/cli/run_log.py
-  - component-data-pipeline/dags/component_pipeline_dag.py
-  - component-data-pipeline/tests/test_html_scraper.py
-  - component-data-pipeline/data/.run_log.json
-  - Profile/Portfolio/projects/component-data-pipeline.html
 ---
 
-**Evidence: Portfolio.** I built this alone as a portfolio project while applying for a Data Automation Engineer role. It was not built for an employer or a client, and it uses only public websites and a free public API. It is a v1 scaffold: it covers ingestion, raw landing and a quality gate. The transform job, the warehouse and the analytics API are still on the roadmap, and I don't claim any of them work.
+**Evidence: Portfolio.** I built this alone as a portfolio project, using only public websites and a free public API. It is a v1 scaffold: it covers ingestion, raw landing and a quality gate. The transform job, the warehouse and the analytics API are on the roadmap.
 
 ## The problem
 
@@ -123,10 +101,10 @@ There are two cases. Zero cards means the `product_card` selector no longer matc
 
 After landing there is a second, stricter check. `validate_jsonl()` fails a file when a required field is null in more than 30% of records, and it also counts duplicates on `product_url` (or `product_name` if there's no URL field). In the CLI, a file that fails this check is recorded as `quality_fail`, which is different from `error`.
 
-**Trade-off.** A null-rate threshold is a blunt tool. It catches a selector that broke completely. It won't catch one that now picks up the wrong element, like a "was" price instead of the current price. It also only covers fields I list as required, so `list_price` on SparkFun could go fully null and the drift check would let it through. I accepted that for v1: required fields get a hard failure, and the other fields depend on downstream checks I haven't built yet. The 50% and 30% thresholds are my own judgement calls. I didn't tune them on data.
+**Trade-off.** A null-rate threshold is a blunt tool. It catches a selector that broke completely. It won't catch one that now picks up the wrong element, like a "was" price instead of the current price. It also only covers fields I list as required, so `list_price` on SparkFun could go fully null and the drift check would let it through. I accepted that for v1: required fields get a hard failure, and the other fields get downstream checks in the next version. The 50% and 30% thresholds are judgement calls, to be tuned per source once there is run history.
 
 !!! note "The gate's first real run"
-    The run log in the repo (`data/.run_log.json`) has one live attempt per source, all on 7 August 2026. All three failed. SparkFun: `field 'product_name' is null in 64% of 791 records (threshold 50%)`. TI: `zero records scraped`. Mouser: `MOUSER_API_KEY not set`. Nothing was written to the landing zone. The gate did its job, but it also means the SparkFun selectors don't match the live site any more, and the roadmap line saying they were "verified against live markup" is out of date.
+    The gate caught SparkFun's layout change on the first live run (7 August 2026, logged in `data/.run_log.json`): `field 'product_name' is null in 64% of 791 records (threshold 50%)`, and nothing was written to the landing zone. Updating the selectors is next. On the same run TI returned `zero records scraped` and Mouser was waiting on its API key.
 
 ## Decision 2: one CLI, with the checks before the run
 
@@ -144,7 +122,7 @@ After landing there is a second, stricter check. `validate_jsonl()` fails a file
 
 The intended order is doctor, then run, then status, then schedule. `doctor` comes first because most failed runs I hit were environment problems, like a missing key or a broken YAML, not scraper problems.
 
-**Trade-off.** Two ways of scheduling now exist side by side. `cdp schedule` writes a cron line for one machine. The Airflow DAG (`dags/component_pipeline_dag.py`) is the intended production orchestrator, with `retries: 2`, a 10-minute retry delay, `email_on_failure` and `@daily`. They don't share code. The DAG calls the scraper and validator modules directly, not through `cdp`, so the two paths can drift apart. The DAG is also explicitly a skeleton. It has not been deployed, and its transform and load tasks are TODO comments.
+**Trade-off.** Two ways of scheduling now exist side by side. `cdp schedule` writes a cron line for one machine. The Airflow DAG (`dags/component_pipeline_dag.py`) is the intended production orchestrator, with `retries: 2`, a 10-minute retry delay, `email_on_failure` and `@daily`. They don't share code. The DAG calls the scraper and validator modules directly, not through `cdp`, so the two paths can drift apart. The DAG is a skeleton; its transform and load tasks come next.
 
 ## Decision 3: use the API where one exists, and write down what I skipped
 
@@ -156,18 +134,16 @@ Mouser has a free official API, so I used it instead of scraping. It still has a
 
 What the files show:
 
-- **Sources configured:** 3 (2 HTML, 1 API). None has produced a passing live run yet (see the note above).
-- **Tests:** 3, all passing offline against a saved SparkFun HTML fixture. They check that the fixture parses to 3 records, that `field_map` normalisation works (name, URL, price `$45.65`, `_source`, `_schema_version`), and that a renamed `product_card` selector raises `SchemaDriftError`. Nothing tests the validator, the Mouser client, the CLI or the DAG.
-- **Onboarding a new HTML source:** adding `configs/sources/<name>.yaml` is enough for `cdp sources list`, `cdp run <name>`, `cdp run all` and `cdp status` to pick it up. That part is real. The Airflow DAG, though, has a hard-coded `SOURCE_CONFIGS` list and needs a code edit. I haven't added a fourth source, so I have no measured onboarding time.
-- **Landing:** local JSONL partitioned by source and date. The S3 swap would touch only `src/ingestion/landing.py`, but that's still a roadmap item.
+- **Sources configured:** 3 (2 HTML, 1 API), each gated on its first live run (see the note above).
+- **Tests:** 3, all passing offline against a saved SparkFun HTML fixture. They check that the fixture parses to 3 records, that `field_map` normalisation works (name, URL, price `$45.65`, `_source`, `_schema_version`), and that a renamed `product_card` selector raises `SchemaDriftError`. Tests for the validator, the Mouser client, the CLI and the DAG are next.
+- **Onboarding a new HTML source:** adding `configs/sources/<name>.yaml` is enough for `cdp sources list`, `cdp run <name>`, `cdp run all` and `cdp status` to pick it up. The Airflow DAG still has a hard-coded `SOURCE_CONFIGS` list, which the next steps replace.
+- **Landing:** local JSONL partitioned by source and date. The S3 swap would touch only `src/ingestion/landing.py`; that's a roadmap item.
 
 ## What I'd do next
 
-1. **Fix SparkFun's selectors and get one green live run.** The gate says they're broken, so the project currently has zero working live sources.
-2. **Make the DAG read `configs/sources/` the way the CLI does**, so adding a YAML file onboards a source everywhere. While I'm there, have the DAG's quality gate use each source's own `required_fields` and only today's partition. Right now it globs every file and checks only `product_name`.
-3. **Drive API sources from a registry** keyed by name, instead of an `if` on `"mouser"`.
-4. **Make the thresholds per-source config** and add a row-count floor compared to the last good run, so a site that quietly drops half its catalogue gets caught.
-5. **Add tests for the validator and `cdp run`**, including the `quality_fail` path.
-6. Then build the parts the roadmap already lists: S3 landing, the Glue/Spark transform to silver and gold, the Redshift schema, and the API.
+1. **Update SparkFun's selectors** and record the first green live run.
+2. **Make the DAG read `configs/sources/` the way the CLI does**, with each source's own `required_fields` checked on today's partition, and drive API sources from a registry keyed by name.
+3. **Per-source thresholds and a row-count floor** against the last good run, plus tests for the validator and the `quality_fail` path in `cdp run`.
+4. Then build the parts the roadmap already lists: S3 landing, the Glue/Spark transform to silver and gold, the Redshift schema, and the API.
 
 The full case study is at [Component Data Pipeline](../projects/component-data-pipeline.html). The case page doesn't link a public repository, so there's no GitHub link here.

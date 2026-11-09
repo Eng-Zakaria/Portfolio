@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Deterministic Gates Before the LLM | Mohammed Zakaria</title>
+  <title>Deterministic gates before the LLM | Mohammed Zakaria</title>
   <meta name="description" content="How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html">
-  <meta property="og:title" content="Deterministic Gates Before the LLM | Mohammed Zakaria">
+  <meta property="og:title" content="Deterministic gates before the LLM | Mohammed Zakaria">
   <meta property="og:description" content="How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Deterministic Gates Before the LLM", "description": "How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn't.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html", "wordCount": 1592, "keywords": "RAG, Guardrails, Testing"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Deterministic gates before the LLM", "description": "How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn't.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html", "wordCount": 1578, "keywords": "RAG, Guardrails, Testing"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -60,7 +60,7 @@
       <header class="post-head">
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">RAG</span><span class="post-tag">Guardrails</span><span class="post-tag">Testing</span></div>
-        <h1>Deterministic Gates Before the LLM</h1>
+        <h1>Deterministic gates before the LLM</h1>
         <p class="post-lede">How the Waffarha bilingual support assistant answers or refuses many questions with plain rules before any model call, checks every price and date the model writes, and what a 225-case eval says about where that works and where it doesn&#x27;t.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
@@ -246,7 +246,7 @@ its evidence first, and refusals always carry none.</p>
 <p>The regression set is <code>eval/queries.json</code>: 225 cases across 20 categories, from offer lookups and
 FAQ answers to prompt injection, gibberish, follow-up memory and hallucination checks. The runner
 exits 0 only when every case passes and 1 otherwise, which is what lets it gate a build.</p>
-<p>The honest numbers come from one run (2026-09-24, <code>phase5_rerun</code>, reported in
+<p>The numbers come from one run (2026-09-24, <code>phase5_rerun</code>, reported in
 <code>eval/EVALUATION_REPORT.md</code>):</p>
 <ul>
 <li><strong>Retrieval only:</strong> 151 of 172 checked cases, 87.8%.</li>
@@ -255,8 +255,8 @@ exits 0 only when every case passes and 1 otherwise, which is what lets it gate 
 <p>That gap is the point of the report. Retrieval found the right FAQ in 21 of 24 checked
 <code>faq_direct_answer</code> cases, while the full pipeline answered only 2 of 25 correctly. Prompt
 injection passed 3 of 6 end to end, out of scope 5 of 11, greeting 1 of 8. The weak spots are
-in answering and follow-up handling, not in finding the document. A strict all-must-pass exit code
-on this suite is red today, so I read it per category and treat those categories as open work.</p>
+in answering and follow-up handling, not in finding the document. The suite gates per category;
+categories below target are tracked as open work.</p>
 <p>The newer pipeline has its own checks: 173 pytest tests and a share-weighted CS eval at 100% as of
 the latest pass in <code>docs/STATE.md</code>. That eval has 20 cases, so it tells me the common support
 flows don&rsquo;t regress. It does not tell me the long tail is solved.</p>
@@ -279,7 +279,7 @@ labeling, and human calibration labels are still pending.</p>
         </div>
       </div>
       <footer class="post-foot">
-        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html" data-title="Deterministic Gates Before the LLM">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html" data-title="Deterministic gates before the LLM">
           <span class="post-share-label">Share</span>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/deterministic-gates-before-llm.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>

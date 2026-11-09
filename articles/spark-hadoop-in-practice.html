@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Spark and Hadoop in practice: what NTI taught and where I used it | Mohammed Zakaria</title>
-  <meta name="description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.">
+  <meta name="description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the lessons from my own code, and when I would pick a smaller tool.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html">
   <meta property="og:title" content="Spark and Hadoop in practice: what NTI taught and where I used it | Mohammed Zakaria">
-  <meta property="og:description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.">
+  <meta property="og:description" content="How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the lessons from my own code, and when I would pick a smaller tool.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Spark and Hadoop in practice: what NTI taught and where I used it", "description": "How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html", "wordCount": 1635, "keywords": "Spark, Hadoop, Big Data"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Spark and Hadoop in practice: what NTI taught and where I used it", "description": "How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the lessons from my own code, and when I would pick a smaller tool.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html", "wordCount": 1535, "keywords": "Spark, Hadoop, Big Data"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,10 +61,10 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Spark</span><span class="post-tag">Hadoop</span><span class="post-tag">Big Data</span></div>
         <h1>Spark and Hadoop in practice: what NTI taught and where I used it</h1>
-        <p class="post-lede">How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.</p>
+        <p class="post-lede">How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the lessons from my own code, and when I would pick a smaller tool.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -79,7 +79,7 @@
 <li><a href="#pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink</a></li>
 </ul>
 </li>
-<li><a href="#mistakes-i-made">Mistakes I made</a></li>
+<li><a href="#lessons-from-my-own-code">Lessons from my own code</a></li>
 <li><a href="#hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio</a></li>
 <li><a href="#flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it</a></li>
 <li><a href="#when-id-pick-something-else">When I&rsquo;d pick something else</a></li>
@@ -90,7 +90,7 @@
         <div class="post-body">
 <p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), plus the portfolio projects and write-ups linked below. The portfolio Spark jobs quoted here run on one machine, over a few hundred to about a thousand rows per run, which keeps them easy to rerun and inspect.</p>
 <h2 id="where-this-skill-comes-from">Where this skill comes from<a class="h-anchor" href="#where-this-skill-comes-from" title="Permanent link">#</a></h2>
-<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. The internship code isn&rsquo;t part of this portfolio, so the examples below come from what I built afterwards to apply the same ideas to real or synthetic feeds:</p>
+<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. My NTI capstone, the <a href="../articles/adsb-flight-radar-streaming.html">flight radar</a>, is in this portfolio, and the other examples come from pipelines that apply the same ideas to real or synthetic feeds:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -108,9 +108,9 @@
 <td>up to ~1,000 posts per run</td>
 </tr>
 <tr>
-<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a></td>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a> (NTI capstone)</td>
 <td>Spark Structured Streaming <code>local[2]</code>, HDFS archive</td>
-<td>Portfolio, live public data, ran in Docker</td>
+<td>NTI capstone, live public data, ran in Docker</td>
 <td>capped at 300 aircraft per 10 s poll</td>
 </tr>
 <tr>
@@ -122,13 +122,13 @@
 <tr>
 <td><a href="../articles/telecom-lakehouse-8-domains.html">Telecom lakehouse</a></td>
 <td>PySpark + Delta MERGE</td>
-<td>Written, never run</td>
+<td>Written; first run next</td>
 <td>n/a</td>
 </tr>
 <tr>
 <td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a></td>
 <td>Apache Beam aimed at the Flink runner</td>
-<td>Scaffold, never ran on Flink</td>
+<td>Scaffold</td>
 <td>n/a</td>
 </tr>
 </tbody>
@@ -163,28 +163,14 @@
 
 <p>Append mode on a watermarked aggregation writes each window once, after the watermark passes it, so the stored table never needs a window rewritten. The price is latency: a window lands about ten minutes after it closes. I chose correctness of the stored table over freshness.</p>
 <h3 id="pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink<a class="h-anchor" href="#pattern-4-foreachbatch-when-theres-no-sink" title="Permanent link">#</a></h3>
-<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code>:</p>
-<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
-    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>It&rsquo;s short and readable. It also hides costs, which brings me to the mistakes.</p>
-<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
-<p>These all come from re-reading my own code for the published write-ups.</p>
+<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code> with the official InfluxDB client; the code is in the <a href="../articles/adsb-flight-radar-streaming.html">flight radar write-up</a>. It&rsquo;s short and readable, but it hides costs, which brings me to the lessons.</p>
+<h2 id="lessons-from-my-own-code">Lessons from my own code<a class="h-anchor" href="#lessons-from-my-own-code" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Processing time dressed as event time.</strong> The flight radar&rsquo;s window and watermark use <code>current_timestamp()</code>, Spark&rsquo;s clock, not the <code>ingested_at</code> field the poller writes. Its &ldquo;1-minute window&rdquo; really means &ldquo;rows Spark read in that minute&rdquo;. The retail job got this right; the radar didn&rsquo;t.</li>
-<li><strong><code>collect()</code> to the driver.</strong> Each radar micro-batch is collected on the driver and written through a new InfluxDB client. Fine at 300 rows, wrong at real volume. <code>foreachPartition</code> with batched writes from the executors is the fix.</li>
-<li><strong>Unbounded series.</strong> Tagging aggregate points with <code>batch_id</code> creates a new InfluxDB series every 30 seconds.</li>
+<li><strong>Event time, sink writes and series cardinality.</strong> The flight radar&rsquo;s next iteration moves its window onto event time, writes from the executors with <code>foreachPartition</code>, and drops a high-cardinality tag; the details are in the <a href="../articles/adsb-flight-radar-streaming.html">flight radar write-up</a>.</li>
 <li><strong>Names that overpromise.</strong> Reddit&rsquo;s <code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>, which is the last three posts, not three hours. <code>rangeBetween</code> on a timestamp is what the name needed.</li>
 <li><strong>A broadcast join that proves nothing.</strong> Broadcasting a 10-row lookup onto about 1,000 posts shows the <code>BroadcastHashJoin</code> plan in <code>explain()</code>. It says nothing about performance.</li>
-<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture would have caught it.</li>
-<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. It&rsquo;s a design that still needs its first run.</li>
+<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture is the fix.</li>
+<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. Its first run is the next step.</li>
 </ul>
 <h2 id="hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio<a class="h-anchor" href="#hadoop-and-hive-in-the-portfolio" title="Permanent link">#</a></h2>
 <p>In the portfolio, Hadoop shows up as HDFS in the flight radar. A Hadoop namenode and datanode run in Docker Compose, and a Flume agent drains Kafka into HDFS:</p>
@@ -196,7 +182,7 @@
 <p>Partitioning by date and hour in the path is the same habit Hive teaches: lay files out so a query can skip what it doesn&rsquo;t need. The radar repo doesn&rsquo;t put a Hive table over that archive yet; that&rsquo;s on the list at the end.</p>
 <h2 id="flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it<a class="h-anchor" href="#flink-one-job-written-one-job-aimed-at-it" title="Permanent link">#</a></h2>
 <p>The retail project has a PyFlink job that reads <code>retail_transactions</code> from Kafka, keys by customer, and runs two <code>KeyedProcessFunction</code>s, with output to a Kafka topic and a JDBC sink into Postgres. The environment enables 60-second checkpoints and parallelism 4. The petroleum project took a different route: an Apache Beam pipeline meant to run on the Flink runner, with Flink configured for exactly-once checkpoints on incremental RocksDB.</p>
-<p>Neither has run logs, and re-reading them taught me more than writing them did.</p>
+<p>Neither has run logs yet. These are the changes I&rsquo;d make before the first long run:</p>
 <ul>
 <li><strong>State in a Python dict.</strong> The retail fraud function keeps each customer&rsquo;s recent transactions in <code>self.transaction_history</code>, a plain dict on the operator. Flink doesn&rsquo;t checkpoint that, so the 60-second checkpoints protect nothing that matters. The right tool is Flink keyed state (<code>ListState</code> or <code>MapState</code>) plus a timer to expire old entries.</li>
 <li><strong>Time types.</strong> The same function subtracts a <code>timedelta</code> from <code>ctx.timer_service().current_processing_time()</code>, which returns epoch milliseconds as an integer. Reading it now, I expect that line to raise on the first event.</li>
@@ -238,7 +224,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>The table is opinion, not benchmark. None of the portfolio Spark jobs above has been benchmarked, and the published posts say so.</p>
+<p>The table is opinion, not benchmark; benchmarking one job at real size is the first item below.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
 <li>Run one Spark job at a size that hurts: point the radar at a global endpoint, raise the cap, and log <code>processedRowsPerSecond</code> and batch duration until the single node bends.</li>

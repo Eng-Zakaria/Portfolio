@@ -4,29 +4,21 @@ date: 2026-11-09
 summary: "What my freelance client work since January 2026 has taught me about scoping a data job, getting access to client data, handling personal data, and handing over something a client can trust."
 tags: [Career, Freelancing, Data Engineering]
 draft: false
-sources:
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - Profile/Portfolio/index.html
-  - CV/templates/Main_Resume_Template.tex
-  - Profile/Portfolio/articles/posts/six-stage-client-etl.md
-  - Profile/Portfolio/articles/posts/wholesale-radar-lead-mapping.md
-  - Profile/Portfolio/articles/posts/one-warehouse-ten-clinics.md
 ---
 
 I have been freelancing as a data engineer since January 2026, from Cairo and remotely, and since July 2026 I have done it alongside my role at Waffarha. This is a career reflection; the facts come from my CV and the project write-ups linked below. I won't talk about rates or client counts. What I can talk about is what the work itself showed me, including the problems I found and fixed.
 
 ## The work so far
 
-My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them.
+My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them: at Nexlify, my employer from 01/2025 to 01/2026, I built an Airflow ETL from 10+ clinic sources into one star-schema warehouse, with one Power BI model and a clinic switcher, for a healthcare clinic-network client ([One warehouse, ten clinics](../articles/one-warehouse-ten-clinics.html)).
 
 | When | Client type | What I built | Write-up |
 |---|---|---|---|
-| 01/2025 – 01/2026 | Clinic network (at Nexlify, as an employee) | Airflow ETL from 10+ clinic sources into one star-schema warehouse, one Power BI model with a clinic switcher | [One warehouse, ten clinics](../articles/one-warehouse-ten-clinics.html) |
 | 2026 | Multi-floor medical clinic | Six-stage Excel-to-PostgreSQL ETL into a star schema with bridge tables, MySQL loaders, a Power BI report design | [A 6-stage ETL for a paying client](../articles/six-stage-client-etl.html) |
 | 2026 | Construction projects client | Python crawlers that collect construction data (contractor and tender datasets) into CSV/JSONL, with enrichment, dedup and validation | Not written up yet |
 | 09/2026 – 10/2026 | Apparel wholesaler | Lead collection from public Egyptian business directories, Arabic entity resolution, per-governorate exports | [Mapping Egyptian apparel wholesalers](../articles/wholesale-radar-lead-mapping.html) |
 
-The Nexlify work wasn't freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, bridge tables for staff with several roles, and scraping with enrichment and dedup, were first built there. Freelancing didn't start from zero. It started from things I had already seen work in production.
+The Nexlify work wasn't freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, and bridge tables for staff with several roles, were first built there. Freelancing didn't start from zero. It started from things I had already seen work in production.
 
 ## Scoping: write down what actually arrives
 
@@ -54,7 +46,7 @@ Second, I keep my own evidence as I go. Looking back at Nexlify, I report a 30% 
 
 Client data in Egypt often means personal data: patient phone numbers on the clinic job, and owners' mobiles on business listings in the lead project. Egypt's Personal Data Protection Law (Law 151 of 2020) is the frame I work against.
 
-The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. But when I reviewed the code against the README, I found a gap: the README mentioned suppression support, and the code had no opt-out list. A contact list has to be able to honour "don't contact me", so I added an opt-out list to the tool. The same review listed other next steps, like a robots.txt check and a recorded purpose and retention date per contact.
+The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. A contact list has to be able to honour "don't contact me", so the tool has an opt-out list. The next steps include a robots.txt check and a recorded purpose and retention date per contact.
 
 Two smaller lessons from the same job:
 
@@ -67,21 +59,9 @@ What I'd tell someone starting out: write the privacy rules down, then check eac
 
 Handover is where a client starts trusting your work without you in the room. On the clinic ETL, the staged design gave us something concrete to look at together: a dry-run report, four diff buckets (new, changed, unchanged, in the database but missing from today's file), and the unmatched-staff queue exported to CSV after each run. Those artefacts did more for trust than any dashboard.
 
-The same job also showed me that a safety net you haven't tested isn't one. Two bugs came out of the first real runs:
+The same job also showed me that a safety net you haven't tested isn't one. The first real runs exposed a backup step that could leave an empty file and a rollback that discarded earlier rows ([details](../articles/six-stage-client-etl.html)); I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.
 
-```text
-Backup:   output file opened before pg_dump runs
-          -> pg_dump missing -> "skipped" logged, 0-byte .sql left behind
-          -> looks like a restore point, isn't one
-
-Rollback: one transaction, rollback() on a row error, no savepoint
-          -> earlier rows discarded, counters keep counting them
-          -> "rows processed" overstates what reached the database
-```
-
-I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.
-
-The first run also showed that a quality stage which doesn't mirror the database's own constraints is a partial check. 1,041 rows failed a `CHECK` constraint that the quality scan never looked at. Now I treat "every constraint has a matching quality rule" as part of done.
+The first run also showed that a quality stage which doesn't mirror the database's own constraints is a partial check, so I now treat "every constraint has a matching quality rule" as part of done.
 
 ## Documentation is part of the deliverable
 

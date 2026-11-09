@@ -4,24 +4,6 @@ date: 2026-11-08
 summary: "How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards."
 tags: [Data Modeling, Data Warehousing, SQL]
 draft: false
-sources:
-  - Workspace/digital-estates-platform/README.md
-  - Workspace/digital-estates-platform/docs/data_dictionary.md
-  - Workspace/digital-estates-platform/docs/lineage.md
-  - Workspace/digital-estates-platform/docs/netzero_method.md
-  - Workspace/digital-estates-platform/sql/schema.sql
-  - Workspace/digital-estates-platform/generators/generate_synthetic.py
-  - Workspace/digital-estates-platform/generators/generate_surveys.py
-  - Workspace/digital-estates-platform/ingest/bronze_ingest.py
-  - Workspace/digital-estates-platform/validate/checks.py
-  - Workspace/digital-estates-platform/transform/build_silver_gold.py
-  - Workspace/digital-estates-platform/analytics/netzero.py
-  - Workspace/digital-estates-platform/dags/estates_daily.py
-  - Workspace/digital-estates-platform/tests/test_checks.py
-  - Workspace/digital-estates-platform/powerbi/measures.dax
-  - Workspace/digital-estates-platform/powerbi/pages_spec.md
-  - Workspace/digital-estates-platform/data/warehouse/estates.db
-  - Profile/Portfolio/projects/digital-estates.html
 ---
 
 This is a portfolio project, and every row in it is synthetic. Two seeded Python scripts generate the buildings, rooms, assets, handover records, work orders and meter readings. No real estate or university data is involved. What I wanted to work through was a modeling question: if the people sending you facilities data are expected to follow industry standards, how much of that can a pipeline actually enforce, and what should it do with the rows that don't comply?
@@ -169,7 +151,7 @@ These are the counts from the committed run, read from the CSVs and `estates.db`
 
 COBie completeness comes out at 93.3% (56 of 60). The SFG20 and condition-grade rules rejected nothing, because the generator always fills those fields in. They exist, but this data never exercises them. The net zero step produces 42 building-days of HDD-baselined energy, 1 anomaly (the injected 220 kWh spike in B02) and 3 candidate HVAC assets for it.
 
-!!! note "Testing is thin"
+!!! note "Test coverage: one end-to-end smoke test; per-rule tests are next."
     `tests/test_checks.py` holds one smoke test. It regenerates data, runs ingest and validation, and asserts that at least one asset was quarantined and that COBie completeness is below 100%. It shows the pipeline runs end to end. It doesn't test each rule on its own.
 
 When I queried the warehouse, I also found a gap the rules don't cover. The generator gives each asset a random `building_id` that doesn't depend on its space, and 65 of the 107 loaded assets sit in a space that belongs to a different building. No check compares `dim_asset.building_id` with `dim_space.building_id`, so building-level counts in `vw_emr_summary` aren't consistent with the space hierarchy.

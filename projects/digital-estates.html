@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Digital Estates Platform — Case Study | Mohammed Zakaria</title>
+  <title>Estates Warehouse — Digital Estates Platform Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Estates ETL + BI platform: two generator scripts producing 9 synthetic CSVs, Uniclass/SFG20/COBie/HESA format and completeness checks with quarantine, SQLite star schema, Power BI spec with 10 DAX measures.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,8 +210,8 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1>Digital Estates Platform</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Estates ETL + BI platform with standards-based validation checks and a star-schema warehouse for facilities reporting.</p>
+      <h1>Estates Warehouse</h1>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Digital estates platform: estates ETL + BI with standards-based validation checks and a star-schema warehouse for facilities reporting.</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
@@ -289,7 +289,7 @@
       <h3>Approach & Implementation</h3>
       <ul>
         <li><strong>Synthetic generators:</strong> two generator scripts produce 9 CSVs covering buildings, spaces, assets, COBie components, CAFM work orders, BMS half-hourly readings, surveys and statutory compliance. Bad records, such as an asset pointing at a space that does not exist, are injected on purpose so the checks have something to catch.</li>
-        <li><strong>Standards-based checks:</strong> Uniclass codes get a regex format check, COBie components a completeness check (93.3%, 56 of 60), SFG20 schedules a non-empty label check, and HESA mappings a 5-value whitelist. Failing rows are quarantined with a reason before load. The checks cover format, presence and whitelists. They do not verify values against the official standards.</li>
+        <li><strong>Standards-based checks:</strong> Uniclass codes get a regex format check, COBie components a completeness check (93.3%, 56 of 60), SFG20 schedules a non-empty label check, and HESA mappings a 5-value whitelist. Failing rows are quarantined with a reason before load. The checks cover format, presence and whitelists; validating values against the official standard tables is the next step.</li>
         <li><strong>Star schema load:</strong> cleansed records load into a SQLite star schema with <code>dim_building</code>, <code>dim_space</code> and <code>dim_asset</code>.</li>
         <li><strong>BI spec with DAX:</strong> a Power BI specification defines tables, relationships and 10 DAX measures for condition, compliance and work-order reporting.</li>
         <li><strong>Runnable anywhere:</strong> the pipeline runs in plain Python with no heavy services. An Airflow DAG defines the same steps as a daily run. One smoke test checks that the pipeline runs end to end.</li>
@@ -305,7 +305,7 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Cross-linked synthetic generators</h4>
-        <p>Generators share key spaces and lookup tables so assets, spaces, tickets and sensor readings can be joined, while staying fully synthetic. They are not perfectly consistent, and some of that is deliberate. In the loaded warehouse, 65 of 107 assets carry a <code>building_id</code> that does not match their space's building, which is the kind of mismatch a real estates register has to be checked for.</p>
+        <p>Generators share key spaces and lookup tables so assets, spaces, tickets and sensor readings can be joined, while staying fully synthetic. Some inconsistency is deliberate: in the loaded warehouse, 65 of 107 assets carry a <code>building_id</code> that does not match their space's building, which is the kind of mismatch a real estates register has to be checked for.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Standards drift breaks reporting</h4>
@@ -320,7 +320,7 @@
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The platform delivers a checked SQLite star schema plus a Power BI spec with 10 DAX measures, laid out for estates condition and compliance reporting.</p>
+      <p>The platform delivers a checked SQLite star schema plus a Power BI spec with 10 DAX measures, laid out for estates condition and compliance reporting. It flags cross-building mismatches too: 65 of 107 assets carry a <code>building_id</code> that disagrees with their space's building.</p>
       <p>It runs end to end in plain Python for local demos, and an Airflow DAG defines the daily run.</p>
     </section>
   </main>

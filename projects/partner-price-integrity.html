@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Partner Price Integrity — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Automated pipeline detecting partner price violations for Waffarha. 7-stage Airflow pipeline with dual scraping engine.">
+  <meta name="description" content="Automated pipeline detecting partner price violations for Waffarha. Weekly audit + 6 daily stages in Airflow, with a dual scraping engine.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -107,10 +107,12 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/partner-price-integrity-check.html">Read the write-up →</a>
     </div>
 
     <section class="content-section">
       <h3>Pipeline Stages</h3>
+      <div style="overflow-x:auto">
       <table class="stage-table">
         <thead>
           <tr>
@@ -129,7 +131,7 @@
           </tr>
           <tr>
             <td><strong>1</strong></td>
-            <td>Ingestion - fetch active offers with type_price tiers + coupon volumes</td>
+            <td>Ingestion - fetch active offers with price tiers + coupon volumes</td>
             <td>Daily</td>
             <td>ingested_offers.json</td>
           </tr>
@@ -165,6 +167,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </section>
 
     <section class="content-section">
@@ -194,9 +197,6 @@ Classification tiers:
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/partner-price-integrity---scraping-pipeline.svg" alt="Partner Price Integrity Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -218,16 +218,17 @@ Classification tiers:
       <ul>
         <li><strong>Product Standardization:</strong> Partners use different naming conventions and product codes. Solved with fuzzy matching and confidence scoring.</li>
         <li><strong>Dynamic Content:</strong> Many partner sites use JavaScript for pricing. Solved with Playwright integration for headless browser rendering.</li>
-        <li><strong>Scale:</strong> Hundreds of partners with thousands of products. Solved with parallel processing and checkpoint-based resume.</li>
+        <li><strong>Scale:</strong> Scales per partner with 5-way concurrency and checkpoint-based resume.</li>
       </ul>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The pipeline automatically detects partner price violations on a daily basis,
-        enabling Waffarha to maintain price integrity across its partner network.
-        The modular design allows easy addition of new partners and scraping strategies.
+        The pipeline runs daily with ClickHouse as the offer source: it scrapes each partner's
+        site, compares prices within a 2% tolerance, and produces a daily Excel/HTML evidence pack
+        per partner, while the weekly audit keeps the reachable-partner list current. New partners
+        and scraping strategies plug in without touching the rest of the pipeline.
       </p>
     </section>
   </main>

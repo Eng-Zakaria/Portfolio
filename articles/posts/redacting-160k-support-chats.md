@@ -1,22 +1,14 @@
 ---
-title: "Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes"
+title: "From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes"
 date: 2026-11-08
 summary: "How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough."
 tags: [Data Privacy, LLM Fine-Tuning, Data Engineering]
 draft: false
-sources:
-  - waffarha-unified-chatbot/docs/STATE.md
-  - waffarha-unified-chatbot/docs/CS_INTELLIGENCE_PLAN.md
-  - waffarha-unified-chatbot/docs/MOCK_CONVERSATION_REVIEW.md
-  - waffarha-unified-chatbot/train/README.md
-  - waffarha-unified-chatbot/data/sft/sft_stats.json
-  - waffarha-unified-chatbot/scripts/build_sft_dataset.py
-  - waffarha-unified-chatbot/scripts/audit_sft.py
 ---
 
 Evidence label: this is production data at Waffarha. The input was 160,944 real customer-support chats from Egypt and Saudi Arabia, covering March to October 2026. Every chat had a transcript and an AI-generated set of labels. I wanted two things from it: analytics I could use to fix the support chatbot, and a training set for a small Arabic model. Both had to contain no personal data.
 
-This post is about the second part, the boring one: getting redaction to an audited zero, and being honest about what that number does and does not mean.
+This post is about the second part, the boring one: getting redaction to an audited zero, and what that number does and does not mean.
 
 ## The problem
 

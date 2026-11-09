@@ -1,29 +1,16 @@
 ---
 title: "AquaWatch: sensor alerts with cooldown logic"
 date: 2026-11-08
-summary: "A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, and what I found when I tested the alert rules."
+summary: "A fish-farm monitoring prototype with simulated sensors, an Airflow load into TimescaleDB, and a 15-minute alert cooldown per pond and parameter. What the cooldown does, what testing the alert rules showed, and what comes next."
 tags: [IoT, Streaming, Alerting]
 draft: false
-sources:
-  - AquaWatch/README.md
-  - AquaWatch/docs/ARCHITECTURE.md
-  - AquaWatch/docs/PRD.md
-  - AquaWatch/docs/ROADMAP.md
-  - AquaWatch/docs/RISK_REGISTER.md
-  - AquaWatch/sensors/sensor_simulator.py
-  - AquaWatch/airflow/dags/ingest_sensor_data.py
-  - AquaWatch/alerting/alert_manager.py
-  - AquaWatch/backend/main.py
-  - AquaWatch/provisioning/docker-compose.yml
-  - AquaWatch/provisioning/postgres/init.sql
-  - AquaWatch/Dockerfile.sensor
 ---
 
-**Evidence: portfolio project, simulated sensors only.** No physical probes, no farm, and no real SMS or phone calls. AquaWatch is a local prototype. A Python simulator writes fake readings for fish ponds, an Airflow DAG loads them into TimescaleDB, and a separate alert module checks thresholds and holds back repeat alerts with a cooldown. This post covers how that cooldown works, the trade-offs behind it, and what turned up when I tested the alert rules directly. Some of it is not flattering.
+**Evidence: portfolio project, simulated sensors only.** No physical probes, no farm, and no real SMS or phone calls. AquaWatch is a local prototype. A Python simulator writes fake readings for fish ponds, an Airflow DAG loads them into TimescaleDB, and a separate alert module checks thresholds and holds back repeat alerts with a cooldown. This post covers how that cooldown works, the trade-offs behind it, and what testing the alert rules directly showed.
 
 ## The problem
 
-Water quality in a fish pond can go bad between two manual checks. The PRD lists four parameters that matter: pH, dissolved oxygen, ammonia, and temperature. It targets small operators with 1 to 5 ponds. The success metrics it sets are alert latency under 5 minutes and 95%+ uptime in local testing. Those are targets. I never measured either one.
+Water quality in a fish pond can go bad between two manual checks. The PRD lists four parameters that matter: pH, dissolved oxygen, ammonia, and temperature. It targets small operators with 1 to 5 ponds. The success metrics it sets are alert latency under 5 minutes and 95%+ uptime in local testing. Those are targets; measuring them is on the next-steps list.
 
 Any threshold alert has an obvious failure mode. A pond that sits above the ammonia limit for an hour crosses the threshold on every reading. If every crossing sends an email, the operator gets a pile of identical messages and starts ignoring them. The cooldown is meant to stop that.
 
@@ -82,17 +69,17 @@ What it does:
 - **Re-arm:** the timer only resets when an alert actually fires. Inside the window, breaches are dropped without being counted.
 - **State:** a plain Python dict in memory, so restarting the process clears it.
 
-**Trade-off.** Keying on pond and parameter is the right granularity for an operator. "Pond 2 ammonia" is something you can act on, and one noisy pond can't hide an alert from another. The cost comes from keying on the *parameter* and not the *severity*. I didn't see it until I tested the code: the first alert in a window blocks the rest, including a later critical one. Keeping the state in memory makes the class easy to test, but a scheduled job that starts a new process on each run would never suppress anything, and a long-running process loses its state on every deploy.
+**Trade-off.** Keying on pond and parameter is the right granularity for an operator. "Pond 2 ammonia" is something you can act on, and one noisy pond can't hide an alert from another. The cost comes from keying on the *parameter* and not the *severity*. Testing the class showed it: the first alert in a window blocks the rest, including a later critical one. Keeping the state in memory makes the class easy to test, but a scheduled job that starts a new process on each run would never suppress anything, and a long-running process loses its state on every deploy.
 
 ## Decision 2: a file and a batch DAG, not a message stream
 
 The simulator appends JSON lines to a file. The DAG reads the whole file, flattens each reading into four rows, creates the table and hypertable, and inserts with `execute_batch(..., page_size=100)`.
 
-**Trade-off.** A file is easy to inspect and needs no broker, which suits a laptop prototype. The cost is latency and correctness. In the best case, data lands in the database on a 5-minute schedule. It also has three problems I can see from reading the code. I haven't run the stack to confirm them:
+**Trade-off.** A file is easy to inspect and needs no broker, which suits a laptop prototype. The cost is latency and correctness. In the best case, data lands in the database on a 5-minute schedule. Three items to fix before the first full stack run:
 
 - The DAG reads the full file on every run and never truncates it or stores an offset, so every run would re-insert every earlier reading.
 - `create_hypertable('sensor_readings', 'time')` runs every time without `if_not_exists`, which TimescaleDB rejects once the table is already a hypertable.
-- `'@every_5_minutes'` is not one of Airflow's schedule presets. I'd expect the DAG to fail at parse time until that line is changed to a cron string or a `timedelta(minutes=5)`.
+- `'@every_5_minutes'` is not one of Airflow's schedule presets; it becomes a cron string or a `timedelta(minutes=5)`.
 
 The cadence numbers need a caveat too. The simulator class defaults to `sampling_interval=300` seconds and a 10% anomaly rate. The container runs the file's `__main__` block, though, which uses `sampling_interval=10` and `anomalies_probability=0.3`. So the Docker setup samples every 10 seconds with a 30% anomaly rate, not every 5 minutes with 10%.
 
@@ -100,11 +87,11 @@ The cadence numbers need a caveat too. The simulator class defaults to `sampling
 
 `send_email_alert` uses `smtplib` with STARTTLS. That path is real, but the shipped config has placeholder credentials, so it fails and logs an error until someone sets up SMTP. SMS is fully mocked. `log_sms_alert` writes a Twilio-shaped JSON record (`'to': f'+1{pond_id}000'`, `'from': '+1AQUAwatch'`) to `mock_sms.log`. Nothing is sent to a phone, and there's no Telegram, voice, or SNS integration.
 
-**Trade-off.** Mocking SMS keeps the project free and offline, and it still shows the message format. But it also means the portfolio card's "farms that phone home" line has nothing real behind it. The only network notification is email, and only if you configure it.
+**Trade-off.** Mocking SMS keeps the project free and offline, and it still shows the message format. Email is the one live notification channel, once SMTP is configured.
 
 ## Results
 
-There are no tests in the repo and no saved outputs (`grafana/provisioning/`, `dashboard/`, `dags/`, and `plugins/` are empty). So I wrote a small probe that imports `AlertManager` and the simulator directly, with email turned off and every output going to a scratch folder. No services ran. Here are five calls against one fresh manager:
+To test the rules directly, I wrote a small probe that imports `AlertManager` and the simulator directly, with email turned off and every output going to a scratch folder. No services ran. Here are five calls against one fresh manager:
 
 | Input | Expected | What the code did |
 |---|---|---|
@@ -115,7 +102,7 @@ There are no tests in the repo and no saved outputs (`grafana/provisioning/`, `d
 | pH 6.0 | alert if low-pH rules existed | no alert. pH thresholds are never found |
 | temperature 29.0 °C | high (above 28.0) | high (correct) |
 
-There are three separate bugs here:
+Known gaps the probe found:
 
 1. **Severity is lost.** The loop checks levels in dict order (`high` before `critical`), and both checks share one cooldown key. Whichever level matches first takes the window, so a critical reading is always reported as high.
 2. **Dissolved oxygen is inverted.** Its thresholds are `{'low': 5.0, 'critical': 4.0}`, but every comparison is `value > threshold`. A healthy pond triggers a critical alert, and a pond running out of oxygen triggers nothing. That's the opposite of what the alert is for, on the parameter most likely to kill fish quickly.
@@ -130,19 +117,12 @@ The simulator has its own issues. Over 20,000 generated readings with a fixed se
 !!! note "What actually holds up"
     The per-pond, per-parameter cooldown does what it says: a repeat breach inside 15 minutes is dropped, and different ponds and parameters don't block each other. Temperature and ammonia high-threshold checks fire correctly. The FastAPI read endpoints are coherent SQL against `sensor_readings`. But the `alerts` table they query is never created anywhere: `init.sql` only enables the TimescaleDB extension.
 
-Other gaps: there's no `.env.example` even though the README says to copy one. The compose file has no backend service. And the compose paths are written as if run from the repo root while the file sits in `provisioning/`.
-
 ## What I'd do next
 
-In order of how much damage each bug can do:
-
-1. **Fix the comparisons.** Give each threshold a direction (`above` / `below`), and check levels from most to least severe so critical wins.
-2. **Key the cooldown on (pond, parameter, severity)**, or let a higher severity break through an active lower-severity window. An escalation should never be quiet.
-3. **Persist cooldown state** in the `alerts` table (create it first). Then "should I alert?" becomes a query for the last alert per key, and restarts stop mattering.
-4. **Wire the alerting into the pipeline.** Run it as a second DAG task after the load, over only the rows that task just inserted.
-5. **Make ingestion incremental.** Track a file offset or a max ingested timestamp, add `if_not_exists => TRUE`, and fix the schedule string.
-6. **Write the tests I just ran by hand** as pytest cases, and fix the simulator's double roll and its "normal" range.
-7. **Check in a Grafana datasource and dashboard JSON**, then actually measure alert latency against the 5-minute target.
+1. **Fix the rules and the cooldown key.** Give each threshold a direction (`above` / `below`), check levels from most to least severe, and key the cooldown on (pond, parameter, severity) so an escalation is never quiet. Turn the probe into pytest cases.
+2. **Persist cooldown state and wire alerting in.** Create the `alerts` table, store the last alert per key there, and run alerting as a second DAG task over the rows the load just inserted.
+3. **Make ingestion incremental.** Track a file offset or a max ingested timestamp, add `if_not_exists => TRUE`, and fix the schedule string; tighten the simulator's "normal" range.
+4. **Measure.** Check in a Grafana dashboard and measure alert latency against the 5-minute target.
 
 None of this needs MQTT or a real SMS provider. Both would make sense later, once the rules are correct.
 

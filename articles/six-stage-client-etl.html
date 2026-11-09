@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client", "description": "How I turned a clinic's daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html", "wordCount": 1857, "keywords": "ETL, Data Quality, MySQL"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Preflight, quality, diff, backup, load: a 6-stage ETL for a paying client", "description": "How I turned a clinic's daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/six-stage-client-etl.html", "wordCount": 1767, "keywords": "ETL, Data Quality, MySQL"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -255,19 +255,13 @@
 <p>The second run is the one that loaded: 4,908 orders, with 17 rows skipped because they had no usable phone. 838 unmatched staff names went to the review queue.</p>
 <p>The first run is more useful as a lesson. 1,041 of its errors were the same thing: rows breaking the <code>patient_status IN ('new','old')</code> check on <code>fact_orders</code>. Stage 3 never looked at <code>Patient_Status</code>, so the quality scan said nothing and the database caught the problem one row at a time. A quality stage that doesn&rsquo;t mirror the database&rsquo;s constraints is only a partial check.</p>
 <div class="admonition note">
-<p class="admonition-title">Two bugs the logs exposed</p>
+<p class="admonition-title">Two bugs the logs exposed (fixed after the handover review)</p>
 <p><strong>Backup.</strong> <code>backup_database</code> opens the output file before calling <code>pg_dump</code>. When the binary is missing, it logs &ldquo;skipped&rdquo; but leaves an empty, timestamped <code>.sql</code> file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn&rsquo;t one.</p>
 <p><strong>Rollback.</strong> The load runs in one transaction and commits at the end. On a row error it calls <code>conn.rollback()</code> with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1&rsquo;s &ldquo;3,867 processed&rdquo; doesn&rsquo;t mean 3,867 rows reached the database. I can&rsquo;t tell from the log alone how many did.</p>
 </div>
-<div class="admonition tip">
-<p class="admonition-title">Update, November 2026</p>
-<p>I&rsquo;ve since fixed both bugs described above: the backup step and the rollback behaviour. This write-up describes the code as it was at handover review, because the mistakes are the useful part.</p>
-</div>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Savepoint per row,</strong> or commit in batches, so one bad row costs one row. Count inserts only after commit.</li>
 <li><strong>Make the quality stage mirror the schema.</strong> Every <code>CHECK</code> constraint in <code>001_init.sql</code> should have a matching rule in stage 3, with normalisation (case, whitespace) applied before both.</li>
-<li><strong>Make backup a hard gate.</strong> Check for <code>pg_dump</code> in preflight, write to a temp file and rename only on success, and stop the load if there is no backup. Add rotation, which the docs already list as missing.</li>
 <li><strong>Widen the diff.</strong> It compares four fields: <code>status_stage</code>, <code>order_sequence</code>, <code>paid_amount</code> and <code>total_amount</code>. If only a comment or a staff name changes and nothing else in the file does, the run reports nothing to write and skips the load.</li>
 <li><strong>A run-history table</strong> with file name, counts, errors and backup path, so &ldquo;did yesterday&rsquo;s load work&rdquo; becomes a query instead of a log search. Also tests for the small parsers (<code>split_multivalue</code>, <code>parse_overflow_upsells</code>, <code>to_date</code>, <code>to_time</code>), where a silent bug turns into a wrong number in Power BI weeks later.</li>
 </ul>
@@ -290,7 +284,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="spark-hadoop-in-practice.html"><small>← Newer</small><b>Spark and Hadoop in practice: what NTI taught and where I used it</b></a>
-          <a class="post-pager-next" href="revit-model-health-score.html"><small>Older →</small><b>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run</b></a>
+          <a class="post-pager-next" href="revit-model-health-score.html"><small>Older →</small><b>A 0–100 health score for Revit models: design and scoring trade-offs</b></a>
         </nav>
       </footer>
     </article>

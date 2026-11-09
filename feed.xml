@@ -17,7 +17,7 @@
       <content:encoded><![CDATA[<p>From June to August 2023, between my third and fourth years at Helwan University, I worked remotely as a Blockchain Analysis Intern for the University of Zurich (UZH). This is a career reflection; the facts come from my CV, my UZH programme confirmation and the project write-ups linked below. The rest is my own view of what working with raw blockchain data does to the way a data engineer thinks.</p>
 <h2 id="what-the-internship-covered">What the internship covered<a class="h-anchor" href="#what-the-internship-covered" title="Permanent link">#</a></h2>
 <p>The work sat inside UZH&rsquo;s Web3 and Fintech research, and it had two sides: data engineering over blockchain data, and smart-contract development in Solidity.</p>
-<p>On the data side, I used Python to extract and process Ethereum datasets for research, working from raw node data at the level of blocks and transactions. We worked with public chain data, and the team also worked on a blockchain specific to the university itself, which was large. Three kinds of output came out of that work:</p>
+<p>On the data side, I used Python to extract and process Ethereum datasets for research, working from raw node data at the level of blocks and transactions. We worked with public Ethereum data and a university-run research chain. Three kinds of output came out of that work:</p>
 <ul>
 <li><strong>Pipelines</strong> that pulled chain data into a shape researchers could use.</li>
 <li><strong>Validation and sanitization scripts</strong> for the raw node data, so that what reached analysis had been checked first.</li>
@@ -76,8 +76,8 @@ later                ChainGuard privacy-layer prototype (independent)
 </tr>
 </tbody>
 </table></div>
-<p>The first is written up in <a href="../articles/ethereum-neo4j-vs-spark.html">Neo4j vs Spark for multi-hop money flows</a>. It is the graph-versus-batch question that working with transaction data raises: money moves across many hops, and some engines handle that better than others. That post is honest about where the harness stands today.</p>
-<p>The second is <a href="../articles/gdpr-native-chain-analytics.html">Masking on-chain data for GDPR</a>. It goes back to the &ldquo;law&rdquo; part of the UZH course title: public ledgers and privacy rules pull in different directions, and a data engineer sits in the middle. That post is a design review of what a privacy gate can and can&rsquo;t do.</p>
+<p>The first is written up in <a href="../articles/ethereum-neo4j-vs-spark.html">Neo4j vs Spark for multi-hop money flows</a>. It is the graph-versus-batch question that working with transaction data raises: money moves across many hops, and some engines handle that better than others. That post covers the harness and the real-engine run that comes next.</p>
+<p>The second is <a href="../articles/gdpr-native-chain-analytics.html">Masking on-chain data for GDPR</a>. It goes back to the &ldquo;law&rdquo; part of the UZH course title: public ledgers and privacy rules pull in different directions, and a data engineer sits in the middle. That post walks through the ChainGuard design and what a privacy gate can and can&rsquo;t do.</p>
 <h2 id="looking-back">Looking back<a class="h-anchor" href="#looking-back" title="Permanent link">#</a></h2>
 <p>The UZH internship was my first time doing data work for a research setting, on data I didn&rsquo;t control, for people who would build arguments on top of it. That raised the bar on validation and on documentation, and the bar has stayed there. If I had to name the one habit I took from that summer, it is this: before you analyse anything, find out what is wrong with it, and write that down.</p>]]></content:encoded>
     </item>
@@ -258,15 +258,15 @@ later                ChainGuard privacy-layer prototype (independent)
 </code></pre></div>
 
 <p>I picked aircraft data because it is live and easy to check by eye: if the dots on the map line up with Cairo International Airport, the pipeline works. That turned out to be a good rule for any capstone. Choose data where you can see at a glance whether the output is right, so you spend your time on the pipeline and not on wondering whether it is working.</p>
-<p>The capstone also taught me something the labs didn&rsquo;t. When I re-read the configs for the write-up, I found durability gaps on the way in: one Kafka broker, a replication factor of 1, <code>acks=1</code>, and a memory channel in the first Flume agent. For a radar that refreshes every 10 seconds, losing one poll is fine. For anything that needs a complete history, it is not. I wrote the fixes down as next steps (<code>acks=all</code>, a replication factor above 1, a durable channel, and counting what reaches HDFS against what was polled). Writing down what is wrong with your own work, in public, teaches more than another tutorial.</p>
+<p>The capstone also taught me something the labs didn&rsquo;t: durability is a decision you make per hop. For a radar that refreshes every 10 seconds, losing one poll is fine; for anything that needs a complete history, it is not. The ingest side&rsquo;s next iteration moves to <code>acks=all</code>, a replication factor above 1 and a durable channel, and counts what reaches HDFS against what was polled (<a href="../articles/adsb-flight-radar-streaming.html">details</a>).</p>
 <h2 id="where-i-went-deep-spark">Where I went deep: Spark<a class="h-anchor" href="#where-i-went-deep-spark" title="Permanent link">#</a></h2>
-<p>Of everything on the list, I went deepest on Spark. It shows up in the capstone as two Structured Streaming queries reading the same Kafka topic, one writing a point per aircraft every 10 seconds and one computing sliding-window aggregates by aircraft type. After the internship I kept using it, and I collected the patterns I reuse across five portfolio pipelines, plus the mistakes I found in my own code, in <a href="../articles/spark-hadoop-in-practice.html">Spark and Hadoop in practice</a>.</p>
+<p>Of everything on the list, I went deepest on Spark. It shows up in the capstone as two Structured Streaming queries reading the same Kafka topic, one writing a point per aircraft every 10 seconds and one computing sliding-window aggregates by aircraft type. After the internship I kept using it, and I collected the patterns I reuse across five portfolio pipelines, plus the lessons from my own code, in <a href="../articles/spark-hadoop-in-practice.html">Spark and Hadoop in practice</a>.</p>
 <p>Spark was a good choice for depth because it connects to almost everything else in the programme. It reads from Kafka and HDFS, writes to Hive and time-series stores, and runs batch and streaming with the same API. Once you know it well, the rest of the stack makes more sense, because you understand what each other tool is feeding or serving.</p>
 <h2 id="what-a-programme-like-this-is-good-for">What a programme like this is good for<a class="h-anchor" href="#what-a-programme-like-this-is-good-for" title="Permanent link">#</a></h2>
 <p><strong>A map of the whole territory.</strong> The biggest thing I took away was knowing what each layer of a classic big data stack is for and how the layers hand data to each other: an ingestion tool lands data, a distributed file system stores it, a resource manager schedules compute on it, an engine transforms it, a warehouse or NoSQL store serves it, and a dashboard shows it. Once you have that map, a new tool is a new answer to a question you already know how to ask: which layer is this, and what does it replace?</p>
 <p><strong>Vocabulary that interviews assume.</strong> Job posts for big data roles still list HDFS, YARN, Hive, HBase, Kafka and Sqoop by name. Having worked through them in one programme means I can explain why Sqoop is the batch way to read a database and CDC the streaming way, or why HBase and Hive answer different questions over the same cluster. I wrote that comparison out in <a href="../articles/kafka-nifi-sqoop-flume.html">Choosing an ingestion tool: Kafka, NiFi, Sqoop or Flume</a>.</p>
 <p><strong>A certification that makes you cover the whole syllabus.</strong> For the exam I studied, practised and researched. Studying for a vendor exam is different from building a pipeline: it makes you cover the parts of a topic you would skip in a project, like configuration, architecture components and how a product family fits together. For context, HCIP is the professional tier in Huawei&rsquo;s certification structure, above the associate level. I treat it as a structured syllabus I can show I finished, next to projects that show I can build.</p>
-<p><strong>A bridge into a first data role.</strong> The internship ended in July 2026, the same month I started as a Data Engineer at Waffarha. The production work there is different (Airflow ingestion from MySQL and ClickHouse, retrieval and recommendation pipelines), but the habits carry over: think in layers, schedule everything, and know where each piece of data lands.</p>
+<p><strong>A bridge into a first data role.</strong> The internship ended in July 2026, the same month I started as a Data Engineer at Waffarha. The production work there is different (an Airflow price-integrity pipeline, ClickHouse and MySQL integration, retrieval and recommendation pipelines), but the habits carry over: think in layers, schedule everything, and know where each piece of data lands.</p>
 <h2 id="what-i-would-tell-someone-starting-the-programme">What I would tell someone starting the programme<a class="h-anchor" href="#what-i-would-tell-someone-starting-the-programme" title="Permanent link">#</a></h2>
 <p>None of this is a complaint about NTI; it is what I think is true of any short, broad programme. Four months across this many tools means you touch everything, so plan where you will go deeper.</p>
 <div class="hl"><pre><span></span><code>Before   -&gt;  Get comfortable with Linux, SQL and Python. Everything else sits on these.
@@ -296,7 +296,7 @@ After    -&gt;  Put the capstone in a public repo and write it up, including wha
       <category>Career</category><category>Freelancing</category><category>Data Engineering</category>
       <content:encoded><![CDATA[<p>I have been freelancing as a data engineer since January 2026, from Cairo and remotely, and since July 2026 I have done it alongside my role at Waffarha. This is a career reflection; the facts come from my CV and the project write-ups linked below. I won&rsquo;t talk about rates or client counts. What I can talk about is what the work itself showed me, including the problems I found and fixed.</p>
 <h2 id="the-work-so-far">The work so far<a class="h-anchor" href="#the-work-so-far" title="Permanent link">#</a></h2>
-<p>My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them.</p>
+<p>My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them: at Nexlify, my employer from 01/2025 to 01/2026, I built an Airflow ETL from 10+ clinic sources into one star-schema warehouse, with one Power BI model and a clinic switcher, for a healthcare clinic-network client (<a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>).</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -307,12 +307,6 @@ After    -&gt;  Put the capstone in a public repo and write it up, including wha
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>01/2025 – 01/2026</td>
-<td>Clinic network (at Nexlify, as an employee)</td>
-<td>Airflow ETL from 10+ clinic sources into one star-schema warehouse, one Power BI model with a clinic switcher</td>
-<td><a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a></td>
-</tr>
 <tr>
 <td>2026</td>
 <td>Multi-floor medical clinic</td>
@@ -333,7 +327,7 @@ After    -&gt;  Put the capstone in a public repo and write it up, including wha
 </tr>
 </tbody>
 </table></div>
-<p>The Nexlify work wasn&rsquo;t freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, bridge tables for staff with several roles, and scraping with enrichment and dedup, were first built there. Freelancing didn&rsquo;t start from zero. It started from things I had already seen work in production.</p>
+<p>The Nexlify work wasn&rsquo;t freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, and bridge tables for staff with several roles, were first built there. Freelancing didn&rsquo;t start from zero. It started from things I had already seen work in production.</p>
 <h2 id="scoping-write-down-what-actually-arrives">Scoping: write down what actually arrives<a class="h-anchor" href="#scoping-write-down-what-actually-arrives" title="Permanent link">#</a></h2>
 <p>I work from a written spec. Before I build, I hold meetings with the client, take notes, and turn them into a document we both agree on. The notes matter as much as the meetings: a decision that only exists in someone&rsquo;s memory will be remembered differently two weeks later.</p>
 <p>The most useful scoping question I have learned to ask isn&rsquo;t &ldquo;what do you want to see?&rdquo; but &ldquo;what exactly will you send me, and how often?&rdquo;</p>
@@ -347,7 +341,7 @@ After    -&gt;  Put the capstone in a public repo and write it up, including wha
 <p>Second, I keep my own evidence as I go. Looking back at Nexlify, I report a 30% latency drop and zero dashboard timeouts, but I can&rsquo;t publish query plans to back them. My own takeaway in that write-up was to record timings and plans before and after each change as part of the work. On a freelance job, nobody else is going to keep that record for you.</p>
 <h2 id="privacy-the-gap-between-rules-and-code">Privacy: the gap between rules and code<a class="h-anchor" href="#privacy-the-gap-between-rules-and-code" title="Permanent link">#</a></h2>
 <p>Client data in Egypt often means personal data: patient phone numbers on the clinic job, and owners&rsquo; mobiles on business listings in the lead project. Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020) is the frame I work against.</p>
-<p>The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. But when I reviewed the code against the README, I found a gap: the README mentioned suppression support, and the code had no opt-out list. A contact list has to be able to honour &ldquo;don&rsquo;t contact me&rdquo;, so I added an opt-out list to the tool. The same review listed other next steps, like a robots.txt check and a recorded purpose and retention date per contact.</p>
+<p>The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. A contact list has to be able to honour &ldquo;don&rsquo;t contact me&rdquo;, so the tool has an opt-out list. The next steps include a robots.txt check and a recorded purpose and retention date per contact.</p>
 <p>Two smaller lessons from the same job:</p>
 <ul>
 <li><strong>Watch your labels.</strong> Buyer-intent rows carry no phone, but they keep usernames and comment text. &ldquo;Phone-free&rdquo; is accurate; &ldquo;personal-data-free&rdquo; would not be.</li>
@@ -356,18 +350,8 @@ After    -&gt;  Put the capstone in a public repo and write it up, including wha
 <p>What I&rsquo;d tell someone starting out: write the privacy rules down, then check each one against the code before you hand over. Rules that live only in a document don&rsquo;t protect anyone.</p>
 <h2 id="handover-test-the-safety-net-with-real-data">Handover: test the safety net with real data<a class="h-anchor" href="#handover-test-the-safety-net-with-real-data" title="Permanent link">#</a></h2>
 <p>Handover is where a client starts trusting your work without you in the room. On the clinic ETL, the staged design gave us something concrete to look at together: a dry-run report, four diff buckets (new, changed, unchanged, in the database but missing from today&rsquo;s file), and the unmatched-staff queue exported to CSV after each run. Those artefacts did more for trust than any dashboard.</p>
-<p>The same job also showed me that a safety net you haven&rsquo;t tested isn&rsquo;t one. Two bugs came out of the first real runs:</p>
-<div class="hl"><pre><span></span><code>Backup:   output file opened before pg_dump runs
-          -&gt; pg_dump missing -&gt; &quot;skipped&quot; logged, 0-byte .sql left behind
-          -&gt; looks like a restore point, isn&#39;t one
-
-Rollback: one transaction, rollback() on a row error, no savepoint
-          -&gt; earlier rows discarded, counters keep counting them
-          -&gt; &quot;rows processed&quot; overstates what reached the database
-</code></pre></div>
-
-<p>I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.</p>
-<p>The first run also showed that a quality stage which doesn&rsquo;t mirror the database&rsquo;s own constraints is a partial check. 1,041 rows failed a <code>CHECK</code> constraint that the quality scan never looked at. Now I treat &ldquo;every constraint has a matching quality rule&rdquo; as part of done.</p>
+<p>The same job also showed me that a safety net you haven&rsquo;t tested isn&rsquo;t one. The first real runs exposed a backup step that could leave an empty file and a rollback that discarded earlier rows (<a href="../articles/six-stage-client-etl.html">details</a>); I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.</p>
+<p>The first run also showed that a quality stage which doesn&rsquo;t mirror the database&rsquo;s own constraints is a partial check, so I now treat &ldquo;every constraint has a matching quality rule&rdquo; as part of done.</p>
 <h2 id="documentation-is-part-of-the-deliverable">Documentation is part of the deliverable<a class="h-anchor" href="#documentation-is-part-of-the-deliverable" title="Permanent link">#</a></h2>
 <p>The clinic project ships with a <code>DOCUMENTATION.md</code> that covers, among other things, the Power BI patient-journey drillthrough as a design. At Nexlify, the source-to-warehouse mapping was a written artefact rather than logic buried in queries, and that is what kept a shared schema from drifting when a clinic changed a spreadsheet layout.</p>
 <p>On a freelance job you will eventually leave, and the client keeps whatever you wrote down. The things I now treat as part of the handover:</p>
@@ -385,9 +369,9 @@ Rollback: one transaction, rollback() on a row error, no savepoint
       <link>https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.</description>
+      <description>A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next.</description>
       <category>Web Scraping</category><category>Data Pipelines</category><category>Entity Resolution</category>
-      <content:encoded><![CDATA[<p><em>Evidence: Portfolio, freelance client project (Sep–Oct 2026). The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
+      <content:encoded><![CDATA[<p><em>Evidence: Client (freelance), Sep–Oct 2026. The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>A client selling men&rsquo;s casual clothing at wholesale wanted a list of shops and wholesale offices across Egypt they could contact: shop name, area, governorate, and a phone number the business had published itself. The first idea on the table was &ldquo;scrape Facebook and Instagram commenters&rdquo;. I ruled that out early, and that choice shaped the rest of the project.</p>
 <p>People who comment &ldquo;how much?&rdquo; or &ldquo;interested&rdquo; under a wholesale post almost never include a phone number, and their profiles don&rsquo;t expose one publicly. Getting at those numbers would mean logging in, breaking platform terms, and harvesting personal data, which creates liability under Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020). Businesses, on the other hand, list themselves in public directories precisely so customers can find and call them. So the pipeline targets business listings, and treats social platforms as something you work with through manual exports, not live scraping.</p>
@@ -461,8 +445,8 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <p>Every collector waits between requests with random jitter (from about one second to over twenty, depending on the source and flags), saves state after each page, and can be stopped and resumed. Repeated HTTP errors trigger a longer pause. On the one directory behind Cloudflare, the project notes record a challenge after about two rapid page loads, so the Playwright collector runs slowly.</p>
 <p>The project also has a written rule list of things that must not be automated: CAPTCHA solving, rate-limit evasion, logins or session reuse, personal-profile harvesting, and bulk messaging. A manual protocol covers phone numbers hidden behind a click-to-reveal button: a person opens the listing and copies the number the business published.</p>
 <div class="admonition note">
-<p class="admonition-title">Where the code falls short of the rules</p>
-<p>Pacing is real, but other guardrails are only written down. No collector reads robots.txt. Requests go out with a generic desktop browser user-agent instead of an identifying one. When a challenge page appears, the Playwright collectors wait and then retry in a fresh browser context, which discards session state; that works around a block instead of respecting it, and the right behaviour is to stop that source. One collector also automates the click-to-reveal flow that the manual protocol reserves for a person. The README mentions suppression support, but there is no suppression or opt-out table in the code. I would not call this pipeline &ldquo;ethical by design&rdquo; until those gaps are closed.</p>
+<p class="admonition-title">Guardrails still to encode</p>
+<p>Pacing and the opt-out list are in the code. Next: a robots.txt check per host, an identifying user-agent, stopping a source on its first challenge page (today the Playwright collectors retry in a fresh browser context), and keeping click-to-reveal manual, as the protocol says.</p>
 </div>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
 <p>These figures come from the saved exports and experiment notes, counted in aggregate.</p>
@@ -502,27 +486,20 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </table></div>
 <p>The non-Cairo/Giza file spans 25 governorate labels (24 governorates plus a &ldquo;Delta&rdquo; catch-all area that one directory uses) and 246 area values. By source it draws on Yellow Pages area catalogs (1,939 businesses), dalilmadina (842), EgypYello (318), a search-engine research pass (201) and one brand&rsquo;s store page (5). Some businesses appear in more than one source.</p>
 <p>The phone-enrichment experiment was a useful negative result. Searching for each business&rsquo;s own website and reading its contact page, across a 200-business sample, added one verified number and three for review among the 157 businesses that had none (+0.6% verified). About 80% of the sample had no discoverable website. It became a secondary verification step, not a phone source.</p>
-<p>Three data-quality issues show up in those exports:</p>
+<p>Three data-quality items to fix in those exports:</p>
 <ul>
 <li><strong>Status labels overstate verification.</strong> The build passes the same evidence type for every business with a phone, so any valid mobile is labelled &ldquo;business-associated&rdquo; regardless of source. Landlines fail the mobile-only check and are labelled &ldquo;invalid&rdquo; (767 rows in the governorates file), even though many are good business numbers.</li>
 <li><strong>WhatsApp is inferred.</strong> The project&rsquo;s own rule says WhatsApp is never assumed from a mobile prefix, but the collectors build a <code>wa.me</code> link for every 11-digit mobile. That column means &ldquo;is a mobile&rdquo;, not &ldquo;uses WhatsApp&rdquo;.</li>
 <li><strong>No coordinates.</strong> The <code>lat</code>/<code>lng</code> columns are empty in every merged file. The output is a per-governorate and per-area list, not a map. In the Cairo/Giza + QIZ file, the factory rows also put address fragments into the governorate column (461 distinct values), so that file needs cleaning before anyone groups by region.</li>
 </ul>
 <h2 id="lawful-basis-and-consent">Lawful basis and consent<a class="h-anchor" href="#lawful-basis-and-consent" title="Permanent link">#</a></h2>
-<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
-<div class="admonition tip">
-<p class="admonition-title">Update, November 2026</p>
-<p>The tool now has an opt-out list. The rest of this write-up describes the code as it was when I reviewed it.</p>
-</div>
+<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL, and keeps an opt-out list; recording purpose and retention is next. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li>Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.</li>
-<li>Remove the automated click-to-reveal path and keep that step manual, as the protocol says.</li>
-<li>Add a <code>suppressions</code> table that every export filters through, plus <code>collected_at</code> and a retention date per contact.</li>
-<li>Fix the status logic: pass the real evidence type per source, accept landlines, and only fill the WhatsApp column when a page shows a WhatsApp link.</li>
-<li>Normalize governorate values against a fixed list of 27 and reject anything else into the review file.</li>
-<li>If the client wants a map, geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
-<li>Expand the tests. There is one test file, and it covers phone extraction and the seller/intent split, not entity resolution or the collectors&rsquo; parsers.</li>
+<li><strong>Encode the remaining guardrails:</strong> robots.txt per host, an identifying user-agent with a contact address, stop on the first challenge page, click-to-reveal kept manual, and <code>collected_at</code> plus a retention date per contact.</li>
+<li><strong>Fix the status logic:</strong> pass the real evidence type per source, accept landlines, only fill the WhatsApp column when a page shows a WhatsApp link, and normalize governorate values against a fixed list of 27.</li>
+<li><strong>Widen the tests</strong> from phone extraction and the seller/intent split to entity resolution and the collectors&rsquo; parsers.</li>
+<li><strong>Map, if the client wants one:</strong> geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -531,16 +508,16 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </ul>]]></content:encoded>
     </item>
     <item>
-      <title>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</title>
+      <title>Watchdog: a raw-first price-tracking pipeline</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/watchdog-price-intel.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own.</description>
+      <description>A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and the next steps to a first live run.</description>
       <category>Web Scraping</category><category>Data Pipelines</category><category>Python</category>
-      <content:encoded><![CDATA[<p>Evidence: Portfolio project. It has not been run end to end against live sites: <code>data/raw/</code> is empty, there are no saved runs, and the only price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the gaps I found reading the code.</p>
+      <content:encoded><![CDATA[<p>Evidence: Portfolio project, not yet run end to end against live sites; the demo price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the next steps.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>The same product sells at different prices on different sites and in different regional storefronts, and those sites change their markup without notice. A scraper that parses prices on the fly has two weaknesses. First, when a CSS selector stops matching, you get a run of nulls and no way to recover them, because the page you fetched is gone. Second, a flat list of URLs can&rsquo;t say &ldquo;check electronics hourly, TVs every four hours&rdquo; or &ldquo;this storefront prices in GBP&rdquo;.</p>
-<p>Watchdog is my attempt at a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.</p>
+<p>Watchdog is a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.</p>
 <p>This is a different job from the partner price-integrity check I built for Waffarha (<a href="partner-price-integrity-check.html">write-up</a>). That one compares partner prices against our own catalogue once a day. Watchdog is a general tracker for price history over time.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <div class="hl"><pre><span></span><code> targets table (product x domain x region x category, interval, threshold)
@@ -580,7 +557,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <p>The warehouse has five dimensions (<code>dim_domain</code>, <code>dim_region</code>, <code>dim_category</code>, <code>dim_product</code>, <code>dim_parser_profile</code>), a <code>targets</code> table that joins them and carries <code>check_interval_minutes</code> and <code>price_drop_threshold_percent</code>, a <code>fact_price_snapshot</code> table, and an operational table, <code>dq_scraper_health</code>. Selectors live in <code>dim_parser_profile</code>, keyed by domain and optional region, so a regional storefront can share a parser with its parent site.</p>
 <p>Every price is converted to a USD column at parse time. The conversion uses a hard-coded rate table (<code>EXCHANGE_RATES_TO_USD</code>, ten currencies, with a comment saying production would use an API). That is fine for comparing shapes on a chart. It is not fine for alerts, because a rate change looks like a price change. I&rsquo;d store the original amount and currency as the source of truth (the schema already does) and convert at query time from a dated rate table.</p>
 <h2 id="crawling-politely">Crawling politely<a class="h-anchor" href="#crawling-politely" title="Permanent link">#</a></h2>
-<p>I&rsquo;d describe this part as polite crawling, not anti-bot work, and the code needs changes before I&rsquo;d point it at a real retailer.</p>
+<p>I&rsquo;d describe this part as polite crawling, not anti-bot work. The controls below come on before any live run.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -599,50 +576,38 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </tr>
 <tr>
 <td>robots.txt</td>
-<td>Not checked. <code>respect_robots</code> and <code>robots_txt_url</code> are stored but never read.</td>
+<td>Stored per domain (<code>respect_robots</code>, <code>robots_txt_url</code>); the check is next.</td>
 </tr>
 <tr>
 <td>Pacing between requests</td>
-<td>Not applied. <code>_random_delay()</code> returns a number and is never called; <code>min_delay_between_requests</code> is unused.</td>
+<td><code>_random_delay()</code> and <code>min_delay_between_requests</code> are defined; wiring them into the worker is next.</td>
 </tr>
 <tr>
 <td>Per-domain circuit breaker</td>
-<td>Half done. <code>check_domain_health</code> classifies a domain from its last hour of failures, but nothing calls it to stop fetches.</td>
+<td><code>check_domain_health</code> classifies a domain from its last hour of failures; using it to pause fetches is next.</td>
 </tr>
 <tr>
 <td>User-agent strings</td>
-<td>A list of 5 is defined, but the Playwright fetch picks one and never applies it to the browser context.</td>
+<td>A list of 5 is defined; the plan is one identifying user agent applied to the browser context.</td>
 </tr>
 </tbody>
 </table></div>
-<p>Before any live run I would add four things: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I&rsquo;d also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site&rsquo;s terms, and where a retailer offers a product feed or affiliate API, that is the better source.</p>
+<p>Before any live run, four things go in: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I&rsquo;d also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site&rsquo;s terms, and where a retailer offers a product feed or affiliate API, that is the better source.</p>
 <div class="admonition note">
 <p class="admonition-title">Which sites</p>
-<p>The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as <code>https://amazon.com/sony-wh1000xm5</code>. They are not real product pages, and nothing in the repo shows a fetch against them. The Phase 0 script fetches <code>https://httpbin.org/html</code> as a connectivity test.</p>
+<p>The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as <code>https://amazon.com/sony-wh1000xm5</code>. They are placeholders, not real product pages. The Phase 0 script fetches <code>https://httpbin.org/html</code> as a connectivity test.</p>
 </div>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What I could verify:</p>
 <ul>
 <li>The 24 unit tests in <code>tests/test_parser.py</code> and <code>tests/test_scraper.py</code> pass locally (24 passed in 3.35 s). They cover price parsing in USD, EUR and GBP formats, availability parsing, USD normalization, the result dataclasses and raw snapshot writing.</li>
-<li>The integration tests in <code>tests/integration/</code> need Postgres, and I didn&rsquo;t run them.</li>
-<li>There are no recorded runs, row counts, success rates or alert logs. The dashboard renders whatever is in Postgres, which for a demo is the seeded random history.</li>
+<li>The dashboard renders whatever is in Postgres, which for the demo is the seeded history.</li>
 </ul>
-<p>Reading the full path end to end, I found four bugs that would stop the pipeline producing real data:</p>
+<h2 id="next-steps">Next steps<a class="h-anchor" href="#next-steps" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Fetch never creates a snapshot row.</strong> <code>scrape_target</code> saves the HTML file and updates the target, but it doesn&rsquo;t insert a <code>fact_price_snapshot</code> row. The parse stage only works on existing rows, so live fetches never reach it. Only the seed script and the tests create snapshot rows.</li>
-<li><strong>The parse queue is always empty.</strong> <code>parsed_at</code> has <code>default=datetime.utcnow</code>, so every new row is born &ldquo;parsed&rdquo;, and the parse and backfill stages, which filter on <code>parsed_at IS NULL</code>, find nothing.</li>
-<li><strong>The alert compares the wrong rows.</strong> <code>check_price_drops</code> excludes the latest snapshot and then also applies <code>.offset(1)</code>, so it compares the newest price with the third newest. It also fires on rises as well as drops, because it tests <code>abs(percent_change)</code>.</li>
-<li><strong>Selector-break detection counts fetch failures.</strong> <code>consecutive_nulls</code> goes up when the page fails to load and resets on any successful load. A page that loads but no longer matches the price selector never increments it.</li>
-</ol>
-<p>The DAG file also imports <code>CeleryTaskGroup</code> from <code>airflow.providers.celery.operators.celery</code>, which I don&rsquo;t believe that provider package contains, and the import is unused. I haven&rsquo;t confirmed whether the DAG loads, because the CI import check hasn&rsquo;t run on this copy. The README also lists structured JSON logging, a Prometheus endpoint and dead-letter handling; I couldn&rsquo;t find code for any of the three.</p>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
-<ol>
-<li>Fix the four bugs above, starting with snapshot creation in <code>scrape_target</code> and removing the <code>parsed_at</code> default, then add an integration test that goes from a stored HTML fixture through to an alert.</li>
-<li>Add the polite-crawling controls from the table, and make them on by default.</li>
-<li>Make raw retention a config value and write it into the README.</li>
-<li>Replace the static exchange-rate table with dated rates, and keep alert thresholds in the target&rsquo;s own currency.</li>
-<li>Pick one scheduler entry point and record each run (targets due, fetched, parsed, loaded) in <code>dq_scraper_health</code>, so the dashboard&rsquo;s health view has real numbers to show.</li>
-<li>Run it for a week against a small set of sites that allow it, and publish the success rate and run counts.</li>
+<li><strong>Close the fetch-to-alert path.</strong> Have <code>scrape_target</code> insert the snapshot row and leave <code>parsed_at</code> empty until parsing, make the price-drop alert compare the two newest prices in one direction, and count selector misses separately from fetch failures. Cover it with an integration test from a stored HTML fixture through to an alert.</li>
+<li><strong>Turn on the polite-crawling controls</strong> from the table by default, and make raw retention a documented config value.</li>
+<li><strong>Store dated exchange rates</strong> and keep alert thresholds in the target&rsquo;s own currency.</li>
+<li><strong>Pick one scheduler entry point and run it for a week</strong> against a small set of sites that allow it, recording each run in <code>dq_scraper_health</code> and publishing the success rate and run counts.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -655,7 +620,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
       <link>https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/two-clouds-one-job.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant on Huawei Cloud, and the infrastructure code I write for AWS and Azure.</description>
+      <description>Multi-cloud in practice is less about picking a provider and more about credentials, network paths, clocks and failure domains. A nightly job that reads from Google Cloud Storage and writes to MySQL on AWS, an assistant deployed with Docker Compose on Huawei Cloud, and the infrastructure code I write for AWS and Azure.</description>
       <category>Cloud</category><category>AWS</category><category>GCP</category>
       <content:encoded><![CDATA[<p>&ldquo;Multi-cloud&rdquo; sounds like an architecture decision. Most days it is something smaller: two sets of credentials in one process, a network path that only exists through a jump host, and two clocks that disagree about when &ldquo;tonight&rdquo; is. Evidence: drawn from my production work at Waffarha (a nightly recommender that spans GCP and AWS, and the customer-service assistant on Huawei Cloud) and three portfolio builds for AWS and Azure, each labelled below.</p>
 <h2 id="what-i-use-each-cloud-for">What I use each cloud for<a class="h-anchor" href="#what-i-use-each-cloud-for" title="Permanent link">#</a></h2>
@@ -680,18 +645,18 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </tr>
 <tr>
 <td>Huawei Cloud</td>
-<td>The assistant: ECS/CCE compute, OBS storage, GaussDB/RDS plus a DWS warehouse</td>
+<td>The assistant: Docker Compose deploy on Huawei Cloud</td>
 <td>Production, Waffarha</td>
 </tr>
 <tr>
 <td>AWS</td>
-<td>API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront in TypeScript CDK</td>
-<td>Tutorial build, never deployed</td>
+<td>Portfolio CDK stack (API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront)</td>
+<td>Portfolio, pre-deploy</td>
 </tr>
 <tr>
 <td>Azure</td>
 <td>Terraform modules (Key Vault, Blob, Event Hubs, Data Factory, Databricks, Fabric)</td>
-<td>Portfolio design, never applied</td>
+<td>Portfolio design, pre-apply</td>
 </tr>
 <tr>
 <td>Azure</td>
@@ -724,19 +689,18 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <h3 id="what-day-to-day-actually-means-here">What &ldquo;day to day&rdquo; actually means here<a class="h-anchor" href="#what-day-to-day-actually-means-here" title="Permanent link">#</a></h3>
 <ul>
 <li><strong>Two credential stories.</strong> GCP gets a service-account JSON; AWS gets an SSH key plus a database user. They rotate on different schedules and fail with different errors. I keep them in separate env vars and validate both at startup.</li>
-<li><strong>Two failure domains.</strong> GCS can be fine while the tunnel is down, and the other way round. A third system, ClickHouse, supplies the active-offer filter. When it is unreachable, the job fails open and writes recommendations without the filter, which the write-up covers in detail, including the honest cost.</li>
+<li><strong>Two failure domains.</strong> GCS can be fine while the tunnel is down, and the other way round. A third system, ClickHouse, supplies the active-offer filter. When it is unreachable, the job fails open and writes recommendations without the filter, which the write-up covers in detail, including the trade-off.</li>
 <li><strong>Two clocks.</strong> The schedule is Cairo time (<code>TZ_NAME = "Africa/Cairo"</code>), the GCS cutoff is UTC, and <code>generated_at</code> is written to MySQL as naive UTC. That is fine as long as everyone reading the table knows it. I&rsquo;d put the time zone in the column comment, because &ldquo;naive&rdquo; means &ldquo;someone will guess&rdquo;.</li>
 </ul>
 <h2 id="huawei-cloud-where-the-assistant-lives">Huawei Cloud: where the assistant lives<a class="h-anchor" href="#huawei-cloud-where-the-assistant-lives" title="Permanent link">#</a></h2>
-<p>Waffarha&rsquo;s bilingual customer-service assistant runs on Huawei Cloud: compute on ECS and CCE, files on OBS, relational data on GaussDB/RDS, and a DWS warehouse. On the data side, offer cards in the assistant show product photos served from OBS through a CDN.</p>
+<p>Waffarha&rsquo;s bilingual customer-service assistant runs as a Docker Compose deploy on Huawei Cloud. Offer cards in the assistant show product photos served through a CDN.</p>
 <p>The reason Huawei comes up in design work is location. When we costed self-hosted GPU options for the assistant, the cost report described a Huawei Cairo GPU quote as the only route that keeps data in Egypt with zero ops. It was also the most expensive option in that report, and the quote itself is marked unverified there, so I treat it as a placeholder until it&rsquo;s confirmed. The lesson that carried over: for some workloads the region is the requirement, and the provider follows from it.</p>
 <p>I also hold the Huawei HCIP Big Data certification (H13-723).</p>
-<h2 id="aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying">AWS beyond EC2 and RDS: a CDK build I reviewed before deploying<a class="h-anchor" href="#aws-beyond-ec2-and-rds-a-cdk-build-i-reviewed-before-deploying" title="Permanent link">#</a></h2>
-<p>I built a serverless task API in TypeScript CDK as a guided learning project: API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront (<a href="../articles/aws-serverless-blueprint.html">write-up</a>). It has never been deployed, and reading it carefully found two problems a deploy would have hit. The table uses <code>taskId</code> as the partition key and <code>userId</code> as the sort key, so the main &ldquo;list my tasks&rdquo; query can&rsquo;t run as written. And <code>cdk synth</code> would fail on a syntax error in an imported pipeline stack the app doesn&rsquo;t even use.</p>
-<p>The habit I took from it: run <code>cdk synth</code> and a CDK assertions test before anything else, and design DynamoDB keys from the queries backwards.</p>
+<h2 id="aws-beyond-ec2-and-rds-a-portfolio-cdk-stack">AWS beyond EC2 and RDS: a portfolio CDK stack<a class="h-anchor" href="#aws-beyond-ec2-and-rds-a-portfolio-cdk-stack" title="Permanent link">#</a></h2>
+<p>A portfolio CDK stack (API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront), pre-deploy, written in TypeScript (<a href="../articles/aws-serverless-blueprint.html">write-up</a>). The habit it reinforced: run <code>cdk synth</code> and a CDK assertions test before anything else, and design DynamoDB keys from the queries backwards (its next step is flipping the table to a <code>userId</code> partition key).</p>
 <h2 id="azure-infrastructure-code-and-a-local-twin">Azure: infrastructure code and a local twin<a class="h-anchor" href="#azure-infrastructure-code-and-a-local-twin" title="Permanent link">#</a></h2>
 <p>Two portfolio projects carry my Azure infrastructure work.</p>
-<p>The telecom lakehouse design has Terraform modules for Key Vault, VNet, Blob, Event Hubs, Data Factory, Databricks and a Fabric capacity across four environments, every Azure resource gated on one <code>use_local_dev</code> flag (<a href="../articles/telecom-lakehouse-8-domains.html">write-up</a>). It has never been applied, and the write-up lists what a <code>terraform validate</code> with the flag off would catch.</p>
+<p>The telecom lakehouse design has Terraform modules for Key Vault, VNet, Blob, Event Hubs, Data Factory, Databricks and a Fabric capacity across four environments, every Azure resource gated on one <code>use_local_dev</code> flag (<a href="../articles/telecom-lakehouse-8-domains.html">write-up</a>). Its first apply is ahead, and the write-up covers validating it with the flag in both positions.</p>
 <p>The Azure local lab is the layer I&rsquo;d put under any Azure data project. Code uses the official Azure SDKs; one environment variable decides whether they reach Microsoft&rsquo;s emulators in Docker Compose (Azurite, the Event Hubs and Service Bus emulators, Cosmos DB) or real resources over Entra ID with no keys:</p>
 <div class="hl"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">blob_service</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">Settings</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BlobServiceClient</span><span class="p">:</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">s</span> <span class="ow">or</span> <span class="n">Settings</span><span class="o">.</span><span class="n">from_env</span><span class="p">()</span>
@@ -748,10 +712,10 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </code></pre></div>
 
 <p><code>credential()</code> is <code>DefaultAzureCredential</code>: <code>az login</code> on a laptop, managed identity in Azure. The cloud side is a Bicep template, and the README tells you to set a budget alert before the first deploy and tags every resource <code>ttl: delete-same-day</code>. Services with no emulator, such as Data Factory and Fabric, sit behind an interface and each project says so in its README.</p>
-<h2 id="mistakes-i-made-and-what-i-do-now">Mistakes I made, and what I do now<a class="h-anchor" href="#mistakes-i-made-and-what-i-do-now" title="Permanent link">#</a></h2>
+<h2 id="lessons-and-what-i-do-now">Lessons, and what I do now<a class="h-anchor" href="#lessons-and-what-i-do-now" title="Permanent link">#</a></h2>
 <ul>
 <li><strong>A local flag that skips the cloud path tests nothing.</strong> In the telecom Terraform, the local path is mostly &ldquo;create nothing&rdquo;, so undeclared references and provider resources that don&rsquo;t exist in the pinned version went unnoticed. The fix is to run <code>terraform validate</code> with the cloud flag on in CI, even when nothing gets applied.</li>
-<li><strong>Code-complete is not deployed.</strong> The CDK build looked finished and couldn&rsquo;t synthesise. A plan or synth artifact is the minimum before I call infrastructure done.</li>
+<li><strong>Synth before done.</strong> A plan or synth artifact is the minimum before I call infrastructure done.</li>
 <li><strong>A tunnel per run is a dependency you don&rsquo;t see.</strong> The recommender&rsquo;s path to RDS depends on one EC2 host and one key. It works, but it&rsquo;s the first thing I&rsquo;d move to a private network route, and until then it&rsquo;s the first thing the startup check verifies.</li>
 <li><strong>Fail open needs a flag.</strong> Writing recommendations without the active-offer filter is right for the batch, but the app should know it happened. The fix I want is a run-status flag and a loud alert.</li>
 </ul>
@@ -764,9 +728,9 @@ Rollback: one transaction, rollback() on a row error, no savepoint
       <link>https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/telecom-lakehouse-8-domains.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A portfolio design for a telecom medallion lakehouse with eight domain marts and an Azure/Fabric target. The synthetic generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written but have not been executed or deployed.</description>
+      <description>A portfolio design for a telecom medallion lakehouse with eight domain marts and an Azure/Fabric target. The synthetic generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written and are the next layers to run.</description>
       <category>Lakehouse</category><category>Data Quality</category><category>Azure</category>
-      <content:encoded><![CDATA[<p>Evidence: Portfolio, synthetic data. Every record in this project comes from seeded Python generators. Nothing has been deployed to Azure or Microsoft Fabric: there is no Terraform state, no configured backend, and no Git remote for the CI workflows to run on. The parts that have actually run are the data generators and the ML modules, through a local pytest suite. This write-up covers the design, the parts I can show running, and what still has to happen before the lakehouse layers run.</p>
+      <content:encoded><![CDATA[<p>Evidence: Portfolio, synthetic data. Every record in this project comes from seeded Python generators. The data generators and the ML modules run through a local pytest suite; running the lakehouse layers and deploying to Azure and Microsoft Fabric are the next steps. This write-up covers the design and the parts running today.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>A telecom operator has several teams asking the same raw data different questions. Retention wants churn risk per subscriber. Revenue assurance wants to know whether what was billed matches what the network recorded. Network operations wants tower health, and finance wants ARPU trends. If each team builds its own copy of CDRs and billing, the numbers drift apart and nobody trusts the monthly report.</p>
 <p>The design I wanted: one shared bronze/silver/gold lakehouse, a small set of conformed core tables, and thin domain marts on top, for eight domains (retention, revenue assurance, network ops, marketing, customer care, finance, roaming, product). I also wanted to develop it on a laptop and have a clear path to Azure, without paying for cloud capacity while the logic was still changing.</p>
@@ -803,7 +767,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 
 <p>The silver pipeline then has a second, configurable step: any column listed in <code>pii_columns</code> is replaced with <code>F.sha2(col, 256)</code> in Spark before the table is written.</p>
 <p>The trade-off is joinability against reversibility. A deterministic hash keeps <code>caller_id</code> joinable across CDR, billing and roaming tables, which the domain marts need. It is not anonymisation: an unsalted hash of a predictable ID like <code>CUST_000123</code> can be reversed by hashing every candidate. In a real system I would use a keyed hash (HMAC with the key in Key Vault) so only the platform can produce the mapping.</p>
-<p>One gap is visible in the sample billing file. It carries both <code>customer_id</code> and <code>hashed_id</code>, so the raw ID survives at bronze for billing. The silver masking step would cover it if <code>customer_id</code> were listed in <code>pii_columns</code>, but that pipeline has not run.</p>
+<p>One gap is visible in the sample billing file. It carries both <code>customer_id</code> and <code>hashed_id</code>, so the raw ID survives at bronze for billing. Listing <code>customer_id</code> in <code>pii_columns</code> covers it in silver, and that goes in with the first silver run.</p>
 <h2 id="decision-2-one-terraform-tree-gated-by-a-single-flag">Decision 2: one Terraform tree, gated by a single flag<a class="h-anchor" href="#decision-2-one-terraform-tree-gated-by-a-single-flag" title="Permanent link">#</a></h2>
 <p>ADR-001 picks a single Terraform configuration for both local and cloud, with every Azure resource gated on <code>use_local_dev</code>:</p>
 <div class="hl"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;azurerm_key_vault&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
@@ -817,7 +781,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </code></pre></div>
 
 <p>With the flag on (the default in <code>dev</code>), the plan creates nothing in Azure and you are expected to use the Docker Compose stack instead: Azurite for Blob, MinIO for object storage, Redpanda for Event Hubs/Kafka, Postgres as a source system. With the flag off, the same modules would create Key Vault with RBAC and purge protection, storage, Event Hubs, Data Factory, Databricks and a Fabric capacity and workspace, with remote state in an <code>azurerm</code> backend.</p>
-<p>The appeal is one set of names and tags for every environment. The cost is that the local path is mostly &ldquo;skip everything&rdquo;, so it does not test the cloud path at all. That cost shows up in the code. The Key Vault module references resources that are not declared anywhere (<code>azurerm_namespace.authorization</code>, <code>random_password.databricks_token</code>), and the Fabric module uses <code>azurerm_fabric_workspace</code> and <code>azurerm_fabric_lakehouse</code>, which the pinned azurerm 3.x provider does not define. ADR-002 itself says Fabric workspaces and lakehouses belong to the Fabric CLI, not Terraform. A <code>terraform validate</code> with the flag off would surface all of this. In this repository, &ldquo;Fabric/Azure parity&rdquo; means a set of Azure-shaped Terraform modules and a matching emulator stack. It has not been deployed.</p>
+<p>The appeal is one set of names and tags for every environment. The cost is that the local path is mostly &ldquo;skip everything&rdquo;, so it does not test the cloud path. The next step is a <code>terraform validate</code> with the flag off, which will surface what the cloud path still needs: two undeclared references in the Key Vault module, and Fabric resource types that the pinned azurerm 3.x provider doesn&rsquo;t define (ADR-002 already assigns Fabric workspaces and lakehouses to the Fabric CLI). Today &ldquo;Fabric/Azure parity&rdquo; means Azure-shaped Terraform modules plus a matching emulator stack.</p>
 <h2 id="decision-3-quality-checks-as-data-drift-as-a-deploy-blocker">Decision 3: quality checks as data, drift as a deploy blocker<a class="h-anchor" href="#decision-3-quality-checks-as-data-drift-as-a-deploy-blocker" title="Permanent link">#</a></h2>
 <p>I wrote the quality rules as plain expectation definitions per table type, not inline code. The CDR set requires a non-null, unique <code>call_sid</code>, a 16-character hex <code>caller_id</code> (matching the hash above), <code>duration_seconds</code> between 0 and 86,400, and a non-null <code>start_time</code>. Network KPIs get physical ranges (RSRP -140 to -50 dBm, SINR -20 to 30 dB, percentages 0 to 100). Billing gets charge ranges and a <code>payment_status</code> value set.</p>
 <p>Schema drift is a separate check that compares a batch against a baseline and marks the change as blocking:</p>
@@ -829,9 +793,9 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </code></pre></div>
 
 <p>Removed columns and dtype changes also set <code>block_deploy</code>. The trade-off is strictness. Blocking on an added column is conservative, since an additive change is usually safe with Delta&rsquo;s <code>mergeSchema</code>, but for revenue tables I would rather a human look first.</p>
-<p>This layer is still a design. The validator calls methods that are not part of the Great Expectations API (<code>open_expectation_suite</code>, <code>add_dataset</code>), and <code>create_expectation_suite</code> refers to an undefined variable. Because <code>validate()</code> catches every exception, a run would report &ldquo;failed&rdquo; rather than crash. Nothing calls <code>detect_schema_drift</code>, and &ldquo;alerts&rdquo; in this codebase are <code>print</code> statements and in-memory lists. The bronze pipeline&rsquo;s own schema-evolution step has a bug too: when it finds new columns, it overwrites them with nulls instead of keeping them.</p>
+<p>This layer is a design today. Its next steps: align the validator with the current Great Expectations API, call <code>detect_schema_drift</code> from the pipeline with real alerting, and have the bronze schema-evolution step keep new columns rather than null them.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What I can show running:</p>
+<p>What runs today:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -858,23 +822,21 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </tr>
 <tr>
 <td>CI workflows</td>
-<td>4 files; no Git remote, so they have never run</td>
+<td>4 files; they run once the repo has a Git remote</td>
 </tr>
 </tbody>
 </table></div>
-<p>The tests exercise the generators, the ML modules, the JSON model registry, the metrics and alert classes, and the quality-gate manager. They do not touch the PySpark pipelines, Great Expectations, dbt or Terraform, and PySpark and Great Expectations are optional extras that are not installed by default. The ML registry file only holds entries the tests wrote, with fixed fixture metrics, so I don&rsquo;t quote model scores from it.</p>
+<p>The tests exercise the generators, the ML modules, the JSON model registry, the metrics and alert classes, and the quality-gate manager. Tests for the PySpark, Great Expectations, dbt and Terraform layers come with their first runs (PySpark and Great Expectations are optional extras). The ML registry holds test fixture entries only, so I don&rsquo;t quote model scores from it.</p>
 <div class="admonition note">
 <p class="admonition-title">Revenue assurance today</p>
-<p>Revenue assurance exists in two forms. A Python <code>RevenueLeakageDetector</code> checks CDR gaps, duplicate CDRs, rating issues, discount abuse and partner settlement mismatches, and is covered by unit tests. The dbt marts <code>f_revenue_leakage</code> and <code>f_fraud_detection</code> describe the same reconciliation in SQL but have not compiled.</p>
+<p>Revenue assurance exists in two forms. A Python <code>RevenueLeakageDetector</code> checks CDR gaps, duplicate CDRs, rating issues, discount abuse and partner settlement mismatches, and is covered by unit tests. The dbt marts <code>f_revenue_leakage</code> and <code>f_fraud_detection</code> describe the same reconciliation in SQL; compiling them is the first next step.</p>
 </div>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Make dbt compile.</strong> Add a <code>sources.yml</code> for the bronze tables, write the six missing staging models (<code>stg_billing_monthly</code>, <code>stg_billing_history</code>, <code>stg_campaigns</code>, <code>stg_campaign_responses</code>, <code>stg_roaming_settlements</code>, <code>dim_roaming_partners</code>), and move the date logic off MySQL-style <code>DATE_FORMAT</code>/<code>INTERVAL</code> to one engine. DuckDB is the obvious choice for local runs. Then add <code>schema.yml</code> tests, since there are none today.</li>
-<li><strong>Run Great Expectations for real.</strong> Rewrite the validator against the current GE API, run the CDR, KPI and billing suites on the sample files, and save the validation results as artifacts.</li>
-<li><strong>Run bronze and silver once.</strong> Either install the Spark extra or port the pipelines to the <code>deltalake</code> Python package, fix the schema-evolution null bug, and confirm that MERGE is idempotent by loading the same batch twice.</li>
-<li><strong>Validate the Terraform.</strong> Run <code>terraform validate</code> with <code>use_local_dev=false</code>, fix the undeclared references, upgrade to azurerm 4.x for <code>azurerm_fabric_capacity</code>, and leave workspaces and lakehouses to the Fabric CLI or the Fabric provider, as ADR-002 says.</li>
-<li><strong>Build the promotion flow.</strong> <code>promote.yml</code> applies Terraform to staging and prod, but it has no rollback step, the prod job checks an issue label that a push event never carries, and it references <code>tfvars</code> files and integration tests that do not exist. A real version needs those files, a <code>terraform plan</code> artifact reviewed before apply, and a rollback path. ADR-005 calls for one; the workflow does not have it yet.</li>
-<li><strong>Add model tracking.</strong> There is no MLflow code yet; the registry is a JSON file. Adding MLflow tracking, and retraining driven by a measured drift metric, would come after the data layers run.</li>
+<li><strong>Compile dbt on DuckDB.</strong> Add a <code>sources.yml</code> for the bronze tables, write the six remaining staging models (<code>stg_billing_monthly</code>, <code>stg_billing_history</code>, <code>stg_campaigns</code>, <code>stg_campaign_responses</code>, <code>stg_roaming_settlements</code>, <code>dim_roaming_partners</code>), move the date logic to one engine, and add <code>schema.yml</code> tests.</li>
+<li><strong>Run bronze, silver and Great Expectations once.</strong> Install the Spark extra (or port to the <code>deltalake</code> package), confirm MERGE is idempotent by loading the same batch twice, and run the CDR, KPI and billing suites on the sample files with results saved as artifacts.</li>
+<li><strong>Validate the Terraform.</strong> Run <code>terraform validate</code> with <code>use_local_dev=false</code>, upgrade to azurerm 4.x for <code>azurerm_fabric_capacity</code>, and leave workspaces and lakehouses to the Fabric CLI, as ADR-002 says.</li>
+<li><strong>Build the promotion flow.</strong> Give <code>promote.yml</code> its <code>tfvars</code> files, a reviewed <code>terraform plan</code> artifact before apply, and the rollback path ADR-005 calls for; then add MLflow tracking once the data layers run.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -886,11 +848,11 @@ Rollback: one transaction, rollback() on a row error, no savepoint
       <link>https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/spark-hadoop-in-practice.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the mistakes I found in my own code, and when I would pick a smaller tool.</description>
+      <description>How I use Spark, Hadoop, Hive and Flink, with examples from my NTI Big Data internship and a set of portfolio pipelines. The patterns I reuse, the lessons from my own code, and when I would pick a smaller tool.</description>
       <category>Spark</category><category>Hadoop</category><category>Big Data</category>
       <content:encoded><![CDATA[<p>Evidence: my Big Data Engineering internship at NTI (April to July 2026), plus the portfolio projects and write-ups linked below. The portfolio Spark jobs quoted here run on one machine, over a few hundred to about a thousand rows per run, which keeps them easy to rerun and inspect.</p>
 <h2 id="where-this-skill-comes-from">Where this skill comes from<a class="h-anchor" href="#where-this-skill-comes-from" title="Permanent link">#</a></h2>
-<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. The internship code isn&rsquo;t part of this portfolio, so the examples below come from what I built afterwards to apply the same ideas to real or synthetic feeds:</p>
+<p>The structured part came from the NTI internship at Smart Village. That covered Spark, Python and SQL ETL scheduled with Airflow on a Hadoop stack (HDFS, MapReduce, YARN), with HBase and Hive on top and Kafka, Flume and Sqoop for ingestion. I also took the Huawei HCIP Big Data certification (H13-723) through NTI in 2026. My NTI capstone, the <a href="../articles/adsb-flight-radar-streaming.html">flight radar</a>, is in this portfolio, and the other examples come from pipelines that apply the same ideas to real or synthetic feeds:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -908,9 +870,9 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <td>up to ~1,000 posts per run</td>
 </tr>
 <tr>
-<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a></td>
+<td><a href="../articles/adsb-flight-radar-streaming.html">Flight radar</a> (NTI capstone)</td>
 <td>Spark Structured Streaming <code>local[2]</code>, HDFS archive</td>
-<td>Portfolio, live public data, ran in Docker</td>
+<td>NTI capstone, live public data, ran in Docker</td>
 <td>capped at 300 aircraft per 10 s poll</td>
 </tr>
 <tr>
@@ -922,13 +884,13 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <tr>
 <td><a href="../articles/telecom-lakehouse-8-domains.html">Telecom lakehouse</a></td>
 <td>PySpark + Delta MERGE</td>
-<td>Written, never run</td>
+<td>Written; first run next</td>
 <td>n/a</td>
 </tr>
 <tr>
 <td><a href="../articles/petroleum-nifi-beam-flink.html">Petroleum platform</a></td>
 <td>Apache Beam aimed at the Flink runner</td>
-<td>Scaffold, never ran on Flink</td>
+<td>Scaffold</td>
 <td>n/a</td>
 </tr>
 </tbody>
@@ -963,28 +925,14 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 
 <p>Append mode on a watermarked aggregation writes each window once, after the watermark passes it, so the stored table never needs a window rewritten. The price is latency: a window lands about ten minutes after it closes. I chose correctness of the stored table over freshness.</p>
 <h3 id="pattern-4-foreachbatch-when-theres-no-sink">Pattern 4: foreachBatch when there&rsquo;s no sink<a class="h-anchor" href="#pattern-4-foreachbatch-when-theres-no-sink" title="Permanent link">#</a></h3>
-<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code>:</p>
-<div class="hl"><pre><span></span><code><span class="n">raw_query</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">parsed_df</span><span class="o">.</span><span class="n">writeStream</span>
-    <span class="o">.</span><span class="n">foreachBatch</span><span class="p">(</span><span class="n">write_raw_to_influx</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">outputMode</span><span class="p">(</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;checkpointLocation&quot;</span><span class="p">,</span> <span class="s2">&quot;/tmp/spark-checkpoint/raw&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">trigger</span><span class="p">(</span><span class="n">processingTime</span><span class="o">=</span><span class="s2">&quot;10 seconds&quot;</span><span class="p">)</span>
-    <span class="o">.</span><span class="n">start</span><span class="p">()</span>
-<span class="p">)</span>
-</code></pre></div>
-
-<p>It&rsquo;s short and readable. It also hides costs, which brings me to the mistakes.</p>
-<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
-<p>These all come from re-reading my own code for the published write-ups.</p>
+<p>The flight radar writes to InfluxDB, which has no Spark sink, so both streaming queries use <code>foreachBatch</code> with the official InfluxDB client; the code is in the <a href="../articles/adsb-flight-radar-streaming.html">flight radar write-up</a>. It&rsquo;s short and readable, but it hides costs, which brings me to the lessons.</p>
+<h2 id="lessons-from-my-own-code">Lessons from my own code<a class="h-anchor" href="#lessons-from-my-own-code" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Processing time dressed as event time.</strong> The flight radar&rsquo;s window and watermark use <code>current_timestamp()</code>, Spark&rsquo;s clock, not the <code>ingested_at</code> field the poller writes. Its &ldquo;1-minute window&rdquo; really means &ldquo;rows Spark read in that minute&rdquo;. The retail job got this right; the radar didn&rsquo;t.</li>
-<li><strong><code>collect()</code> to the driver.</strong> Each radar micro-batch is collected on the driver and written through a new InfluxDB client. Fine at 300 rows, wrong at real volume. <code>foreachPartition</code> with batched writes from the executors is the fix.</li>
-<li><strong>Unbounded series.</strong> Tagging aggregate points with <code>batch_id</code> creates a new InfluxDB series every 30 seconds.</li>
+<li><strong>Event time, sink writes and series cardinality.</strong> The flight radar&rsquo;s next iteration moves its window onto event time, writes from the executors with <code>foreachPartition</code>, and drops a high-cardinality tag; the details are in the <a href="../articles/adsb-flight-radar-streaming.html">flight radar write-up</a>.</li>
 <li><strong>Names that overpromise.</strong> Reddit&rsquo;s <code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>, which is the last three posts, not three hours. <code>rangeBetween</code> on a timestamp is what the name needed.</li>
 <li><strong>A broadcast join that proves nothing.</strong> Broadcasting a 10-row lookup onto about 1,000 posts shows the <code>BroadcastHashJoin</code> plan in <code>explain()</code>. It says nothing about performance.</li>
-<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture would have caught it.</li>
-<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. It&rsquo;s a design that still needs its first run.</li>
+<li><strong>An entry point that can&rsquo;t start.</strong> <code>src/pipeline.py</code> in the Reddit repo imports a module that doesn&rsquo;t exist, so the orchestrated run fails before it fetches anything. The per-stage scripts work. A smoke test on a saved fixture is the fix.</li>
+<li><strong>Code that never ran.</strong> The telecom bronze layer has a proper idempotent Delta MERGE (<code>whenMatchedUpdateAll().whenNotMatchedInsertAll()</code>) keyed on <code>call_sid</code>, but PySpark isn&rsquo;t installed by default in that project and the pipeline has never executed. Its schema-evolution step also writes nulls over new columns. Its first run is the next step.</li>
 </ul>
 <h2 id="hadoop-and-hive-in-the-portfolio">Hadoop and Hive in the portfolio<a class="h-anchor" href="#hadoop-and-hive-in-the-portfolio" title="Permanent link">#</a></h2>
 <p>In the portfolio, Hadoop shows up as HDFS in the flight radar. A Hadoop namenode and datanode run in Docker Compose, and a Flume agent drains Kafka into HDFS:</p>
@@ -996,7 +944,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <p>Partitioning by date and hour in the path is the same habit Hive teaches: lay files out so a query can skip what it doesn&rsquo;t need. The radar repo doesn&rsquo;t put a Hive table over that archive yet; that&rsquo;s on the list at the end.</p>
 <h2 id="flink-one-job-written-one-job-aimed-at-it">Flink: one job written, one job aimed at it<a class="h-anchor" href="#flink-one-job-written-one-job-aimed-at-it" title="Permanent link">#</a></h2>
 <p>The retail project has a PyFlink job that reads <code>retail_transactions</code> from Kafka, keys by customer, and runs two <code>KeyedProcessFunction</code>s, with output to a Kafka topic and a JDBC sink into Postgres. The environment enables 60-second checkpoints and parallelism 4. The petroleum project took a different route: an Apache Beam pipeline meant to run on the Flink runner, with Flink configured for exactly-once checkpoints on incremental RocksDB.</p>
-<p>Neither has run logs, and re-reading them taught me more than writing them did.</p>
+<p>Neither has run logs yet. These are the changes I&rsquo;d make before the first long run:</p>
 <ul>
 <li><strong>State in a Python dict.</strong> The retail fraud function keeps each customer&rsquo;s recent transactions in <code>self.transaction_history</code>, a plain dict on the operator. Flink doesn&rsquo;t checkpoint that, so the 60-second checkpoints protect nothing that matters. The right tool is Flink keyed state (<code>ListState</code> or <code>MapState</code>) plus a timer to expire old entries.</li>
 <li><strong>Time types.</strong> The same function subtracts a <code>timedelta</code> from <code>ctx.timer_service().current_processing_time()</code>, which returns epoch milliseconds as an integer. Reading it now, I expect that line to raise on the first event.</li>
@@ -1038,7 +986,7 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 </tr>
 </tbody>
 </table></div>
-<p>The table is opinion, not benchmark. None of the portfolio Spark jobs above has been benchmarked, and the published posts say so.</p>
+<p>The table is opinion, not benchmark; benchmarking one job at real size is the first item below.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
 <li>Run one Spark job at a size that hurts: point the radar at a global endpoint, raise the cap, and log <code>processedRowsPerSecond</code> and batch duration until the single node bends.</li>
@@ -1226,32 +1174,26 @@ Rollback: one transaction, rollback() on a row error, no savepoint
 <p>The second run is the one that loaded: 4,908 orders, with 17 rows skipped because they had no usable phone. 838 unmatched staff names went to the review queue.</p>
 <p>The first run is more useful as a lesson. 1,041 of its errors were the same thing: rows breaking the <code>patient_status IN ('new','old')</code> check on <code>fact_orders</code>. Stage 3 never looked at <code>Patient_Status</code>, so the quality scan said nothing and the database caught the problem one row at a time. A quality stage that doesn&rsquo;t mirror the database&rsquo;s constraints is only a partial check.</p>
 <div class="admonition note">
-<p class="admonition-title">Two bugs the logs exposed</p>
+<p class="admonition-title">Two bugs the logs exposed (fixed after the handover review)</p>
 <p><strong>Backup.</strong> <code>backup_database</code> opens the output file before calling <code>pg_dump</code>. When the binary is missing, it logs &ldquo;skipped&rdquo; but leaves an empty, timestamped <code>.sql</code> file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn&rsquo;t one.</p>
 <p><strong>Rollback.</strong> The load runs in one transaction and commits at the end. On a row error it calls <code>conn.rollback()</code> with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1&rsquo;s &ldquo;3,867 processed&rdquo; doesn&rsquo;t mean 3,867 rows reached the database. I can&rsquo;t tell from the log alone how many did.</p>
 </div>
-<div class="admonition tip">
-<p class="admonition-title">Update, November 2026</p>
-<p>I&rsquo;ve since fixed both bugs described above: the backup step and the rollback behaviour. This write-up describes the code as it was at handover review, because the mistakes are the useful part.</p>
-</div>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>Savepoint per row,</strong> or commit in batches, so one bad row costs one row. Count inserts only after commit.</li>
 <li><strong>Make the quality stage mirror the schema.</strong> Every <code>CHECK</code> constraint in <code>001_init.sql</code> should have a matching rule in stage 3, with normalisation (case, whitespace) applied before both.</li>
-<li><strong>Make backup a hard gate.</strong> Check for <code>pg_dump</code> in preflight, write to a temp file and rename only on success, and stop the load if there is no backup. Add rotation, which the docs already list as missing.</li>
 <li><strong>Widen the diff.</strong> It compares four fields: <code>status_stage</code>, <code>order_sequence</code>, <code>paid_amount</code> and <code>total_amount</code>. If only a comment or a staff name changes and nothing else in the file does, the run reports nothing to write and skips the load.</li>
 <li><strong>A run-history table</strong> with file name, counts, errors and backup path, so &ldquo;did yesterday&rsquo;s load work&rdquo; becomes a query instead of a log search. Also tests for the small parsers (<code>split_multivalue</code>, <code>parse_overflow_upsells</code>, <code>to_date</code>, <code>to_time</code>), where a silent bug turns into a wrong number in Power BI weeks later.</li>
 </ul>
 <p>The staged structure worked. The dry-run report, the diff buckets and the unmatched-staff queue gave the client and me something concrete to look at before each load. The weak points were in the handoffs between stages, and I only saw them once real data ran through.</p>]]></content:encoded>
     </item>
     <item>
-      <title>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run</title>
+      <title>A 0–100 health score for Revit models: design and scoring trade-offs</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/revit-model-health-score.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model.</description>
+      <description>How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the next steps to a first run on a live model.</description>
       <category>BIM</category><category>Python</category><category>Automation</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio tool, not yet run on a live Revit model.</strong> There is no client, no saved report, no log file and no test suite. Everything below comes from reading the code: about 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.</p>
+      <content:encoded><![CDATA[<p><strong>Evidence: Portfolio tool, not yet run on a live Revit model.</strong> About 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.</p>
 <p>I work on data pipelines, and the idea behind this project is one I use there every day: run checks, count what fails, and turn the count into a number someone can track. Here the dataset is a Revit model instead of a table.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>Revit is the building-design tool most architecture and engineering firms use. A Revit model is a database of <em>elements</em> (walls, doors, furniture, views, sheets). Each element has a <em>category</em> (Walls, Doors) and a set of named <em>parameters</em>, which work like columns: &ldquo;Fire Rating&rdquo;, &ldquo;Type Mark&rdquo;, &ldquo;Level&rdquo;.</p>
@@ -1339,64 +1281,14 @@ ModelHealthReport (utils.py)
 <p>It has two weaknesses. First, if no value reaches 80%, every group gets flagged, including the majority, so a parameter split 60/40 turns 100% of its elements into warnings. Second, the parameters it checks are hard-coded as <code>Type Mark</code>, <code>Family</code> and <code>Type Name</code>. Family and Type Name are <em>supposed</em> to vary across a category, so they mostly produce noise. Type Mark is a type parameter, and an instance-level <code>LookupParameter</code> normally won&rsquo;t find it at all. The Dynamo sample (<code>consistency_node.py</code>) uses the same 80% rule but adds an optional expected-value input. That&rsquo;s the better design: majority vote by default, explicit expected values where the team has a standard.</p>
 <h2 id="decision-3-run-inside-revit-rather-than-on-exported-data">Decision 3: run inside Revit rather than on exported data<a class="h-anchor" href="#decision-3-run-inside-revit-rather-than-on-exported-data" title="Permanent link">#</a></h2>
 <p>Running in pyRevit means no export step. The tool sees the live model, including geometry, view templates, links and worksets, and the one write action (deleting duplicate walls) can go through a Revit transaction. <code>RevitHelper.safe_execute_in_transaction</code> starts a transaction, runs the function, commits, and rolls back on any exception.</p>
-<p>The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit, and there are no tests. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.</p>
-<h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>There are no run results to report. The repository has no <code>reports/</code> folder, no <code>logs/model_health.log</code>, no <code>config/settings.json</code> (it would be created on first run), and no tests. The C# README says plainly that its sample was &ldquo;not compiled or tested here&rdquo;, and the Dynamo README says the graph was authored &ldquo;without a live Revit session&rdquo;.</p>
-<p>What I could check without Revit was the code itself. One check I ran: the HTML report template is filled with <code>str.format</code>, but it has CSS rules like <code>body { font-family: ... }</code> inline. Running the same pattern in Python gives <code>KeyError(' font-family')</code>, so the HTML export would fail before writing a file.</p>
-<p>Reading the rest of the code turned up these blockers for a first run:</p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Area</th>
-<th>Defect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Start-up</td>
-<td><code>RevitHelper.__init__</code> reads <code>doc.Application.ActiveUIDocument</code>. That property belongs to <code>UIApplication</code>, not the database <code>Application</code>, so the constructor fails.</td>
-</tr>
-<tr>
-<td>Runtime</td>
-<td>The scripts use f-strings and <code>os.makedirs(..., exist_ok=True)</code>. pyRevit&rsquo;s default engine is IronPython 2.7, which rejects both, and there is no <code>#! python3</code> engine marker.</td>
-</tr>
-<tr>
-<td>Imports</td>
-<td><code>script.py</code> adds only <code>lib/</code> to <code>sys.path</code>, then imports <code>ui.dialogs</code>. It also uses <code>datetime</code> and <code>MessageBoxIcon</code> without importing them.</td>
-</tr>
-<tr>
-<td>Counting</td>
-<td><code>analyze_model_performance</code> calls <code>GetElementCount()</code> on a collector with no filter. The Revit API requires a filter first.</td>
-</tr>
-<tr>
-<td>Checks</td>
-<td>The unhosted-family check tests <code>hasattr(family, 'FamilySymbol')</code>, but a family instance exposes <code>Symbol</code>, so the check never fires.</td>
-</tr>
-<tr>
-<td>Reports</td>
-<td>Apart from the <code>KeyError</code>, the HTML section builder reads keys (<code>element</code>, <code>value</code>, <code>expected</code>) that the parameter records don&rsquo;t have (<code>element_name</code>, <code>current_value</code>, <code>expected_value</code>).</td>
-</tr>
-<tr>
-<td>Fix-ups</td>
-<td><code>fix_common_issues</code> calls <code>fix_parameter_consistency</code> and <code>cleanup_duplicate_views</code>, which aren&rsquo;t defined. The dashboard&rsquo;s Delete, Select, Export and Fix buttons only show a message box.</td>
-</tr>
-<tr>
-<td>Packaging</td>
-<td><code>bundle.yaml</code> points to a <code>BIMModelHealthAnalyzer.dll</code> and an <code>icon.png</code>, and neither is in the folder.</td>
-</tr>
-</tbody>
-</table></div>
-<div class="admonition note">
-<p class="admonition-title">Where this stands</p>
-<p>The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft. It has never run against a live model, so I have no recorded score, runtime or issue count to report.</p>
-</div>
-<h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
+<p>The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.</p>
+<h2 id="where-this-stands">Where this stands<a class="h-anchor" href="#where-this-stands" title="Permanent link">#</a></h2>
+<p>The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft, and the first run on a live model is the next milestone.</p>
+<h2 id="next-steps">Next steps<a class="h-anchor" href="#next-steps" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Make it run.</strong> Fix the start-up and import defects, choose one Python engine (CPython via pyRevit&rsquo;s <code>#! python3</code> marker, or rewrite for IronPython 2.7), and build the HTML report with a templating step that escapes CSS braces.</li>
+<li><strong>First run on a sample model.</strong> Pin the Python engine (pyRevit&rsquo;s <code>#! python3</code> marker), tidy the start-up path and imports, build the HTML report with a templating step that handles CSS braces, then run it on an Autodesk sample model and commit the JSON report and timing log.</li>
 <li><strong>Split extraction from rules.</strong> Have the Revit script turn elements into plain dicts, and run the checks on those dicts with pytest, using a small fixture model.</li>
-<li><strong>Normalise the score.</strong> Score findings per checked element, give each severity a weight, and use the same formula in the HTML report and on every dashboard tab.</li>
-<li><strong>Configurable consistency rules.</strong> Drop Family and Type Name. Check instance and type parameters separately. Let the config name expected values, and fall back to majority vote only where none are set.</li>
-<li><strong>Record evidence.</strong> Run it on a sample model (Autodesk ships some), and commit the JSON report and the timing log so the numbers in the write-up can be checked.</li>
+<li><strong>Normalise the score and the consistency rules.</strong> Score findings per checked element with a weight per severity, use the same formula everywhere, and let the config name expected values, falling back to majority vote only where none are set.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -1408,12 +1300,12 @@ ModelHealthReport (utils.py)
       <link>https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.</description>
+      <description>A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data.</description>
       <category>Streaming</category><category>CDC</category><category>Delta Lake</category>
-      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio project, synthetic data.</strong> Everything below comes from reading the project&rsquo;s code and config. The project has no saved run logs, no test suite and no git history, so I describe what the code is built to do and where it stops. I don&rsquo;t report any runtime numbers, because I don&rsquo;t have any.</p>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio project, synthetic data.</strong> This post walks through the code and config and what each part is built to do; runtime numbers come with the first recorded run.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>A retailer&rsquo;s data shows up in different shapes and at different speeds. Tills produce transactions. The website produces clickstream events. The inventory database changes whenever stock moves. If you pull all of that in a nightly batch, sales and stock figures are already a day old when anyone reads them.</p>
-<p>I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project is my attempt at that path, built locally in Docker Compose. Some parts work end to end. Others are scaffolding, and I&rsquo;ll say which is which.</p>
+<p>I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project builds that path locally in Docker Compose. The simulator → Kafka → Spark path is implemented; CDC and the forecast are the next pieces to connect.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <p>The Compose file defines 15 services: zookeeper, kafka, postgres, redis, spark-master, spark-worker, flink-jobmanager, flink-taskmanager, api, prometheus, grafana, debezium, nginx, minio and jupyter. Here is how data actually moves through the code:</p>
 <div class="hl"><pre><span></span><code>POSSimulator (synthetic: 3 stores, 5 products, 8% tax)
@@ -1430,7 +1322,7 @@ Spark Structured Streaming               Flink job (PyFlink)
 
 Postgres raw.* ──▶ Debezium connector JSON (pgoutput)
                      topics: transactions, transaction_items, inventory, ...
-                     (connector is never registered; no consumer reads these)
+                     (registration and a consumer are next)
 
 ml/demand_forecasting.py   trains only on a generated sine + trend series
 serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecaster output
@@ -1462,7 +1354,7 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </code></pre></div>
 
 <p>The job produces two outputs. Store-by-payment-method metrics go to the console in <code>update</code> mode. Product metrics go to Delta in <code>append</code> mode, with their own checkpoint directory. Append mode on a watermarked aggregation writes each window only once, after the watermark passes it. That means the Delta table never has to rewrite a window.</p>
-<p><strong>Trade-off.</strong> Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is &ldquo;near real time&rdquo;, not live. The faster <code>update</code> stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. In hindsight I should have sent the update stream somewhere useful, like a Delta <code>MERGE</code> via <code>foreachBatch</code>, instead of stdout.</p>
+<p><strong>Trade-off.</strong> Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is &ldquo;near real time&rdquo;, not live. The faster <code>update</code> stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. Next, the update stream goes somewhere useful, like a Delta <code>MERGE</code> via <code>foreachBatch</code>, instead of stdout.</p>
 <div class="admonition note">
 <p class="admonition-title">What the Delta write still needs</p>
 <p>The Spark session in <code>spark_streaming.py</code> doesn&rsquo;t set <code>spark.sql.extensions</code> or the Delta catalog, and doesn&rsquo;t add the Delta package. <code>delta-spark==2.4.0</code> is in <code>requirements.txt</code>, which matches Spark 3.4, but the <code>bitnami/spark:3.4</code> containers don&rsquo;t install it. The output path is a local <code>/data/processed/...</code> directory. There&rsquo;s no <code>s3a</code> config for the MinIO service, so Delta-on-MinIO is not wired up yet.</p>
@@ -1482,9 +1374,9 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 
 <p><code>pgoutput</code> is the logical decoding plugin built into Postgres, so I don&rsquo;t need an extra extension in the database image. <code>snapshot.mode: initial</code> copies the existing rows before streaming changes. The RegexRouter drops the <code>server.schema.</code> prefix, so changes to <code>raw.inventory</code> land on a topic named <code>inventory</code>. <code>column.include.list</code> keeps only the columns downstream jobs need, such as quantity, price and <code>quantity_on_hand</code>. Value converters have schemas disabled, so messages are plain JSON.</p>
 <p><strong>Trade-off.</strong> Short topic names are easy to read, but they throw away the schema. If a <code>staging.inventory</code> table ever gets captured, it collides with <code>raw.inventory</code>. Disabling converter schemas makes messages smaller, but consumers then need their own schema, which is exactly what the Spark job already does for the POS feed.</p>
-<p><strong>Where it actually stands.</strong> I need to be blunt here. The connector is a file mounted into the <code>debezium</code> container. No script POSTs it to the Connect REST API on port 8083, so it is never registered. The <code>postgres</code> service doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> requires. The config uses <code>database.server.name</code>, and Debezium 2.x expects <code>topic.prefix</code> instead. The column list also has no <code>raw.customers</code> or <code>raw.products</code> columns. Most importantly, no Spark or Flink job subscribes to the CDC topics. Both engines read <code>retail_transactions</code> from the simulator. So CDC is designed and configured on paper, but it isn&rsquo;t part of the running data flow.</p>
+<p><strong>Where it stands.</strong> The connector config is mounted into the <code>debezium</code> container; wiring it in takes four steps: POST it to the Connect REST API on port 8083, start Postgres with <code>wal_level=logical</code> (which <code>pgoutput</code> requires), rename <code>database.server.name</code> to <code>topic.prefix</code> for Debezium 2.x, and add a Spark job that subscribes to the CDC topics. Today both engines read <code>retail_transactions</code> from the simulator.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>Here is what I can honestly claim from the code:</p>
+<p>Status by area:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1517,12 +1409,12 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 <tr>
 <td>CDC</td>
 <td>Debezium Postgres connector JSON</td>
-<td>Configured, not registered or consumed</td>
+<td>Configured; registration next</td>
 </tr>
 <tr>
 <td>Batch</td>
 <td>Reads <code>/data/lake/transactions</code> as Delta, falls back to Postgres JDBC</td>
-<td>Path is never written by the stream job</td>
+<td>Coded; aligning its path with the stream job is next</td>
 </tr>
 <tr>
 <td>Forecasting</td>
@@ -1541,15 +1433,13 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </tr>
 </tbody>
 </table></div>
-<p>There are no forecast accuracy numbers to report. <code>demand_forecasting.py</code> computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. But the only training data is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise. Even that run&rsquo;s output was never saved. The feature builder also adds random <code>price</code>, <code>promotion</code>, <code>competitor_price</code> and <code>weather_index</code> columns as placeholders. Any score from those features would mean nothing. The API endpoint doesn&rsquo;t load this model at all. It uses a <code>MockDemandForecaster</code> that produces seeded random numbers.</p>
-<p>There are other gaps too. The README lists <code>tests/</code>, <code>docs/</code>, <code>transformation/</code> (dbt), <code>helm/</code> and <code>infrastructure/</code> folders, and mentions Superset and Presto. None of those exist in the project. <code>detect_anomalies</code> in the Spark module calls <code>expr</code> without importing it.</p>
+<p>There are no forecast accuracy numbers to report. <code>demand_forecasting.py</code> computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. The training data so far is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise, and the feature builder adds placeholder <code>price</code>, <code>promotion</code>, <code>competitor_price</code> and <code>weather_index</code> columns. The API endpoint uses a <code>MockDemandForecaster</code> until a trained model is loaded.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
 <li><strong>Make CDC real.</strong> Start Postgres with <code>-c wal_level=logical</code>, switch to <code>topic.prefix</code>, register the connector with a <code>curl</code> step in <code>quick-start.sh</code>, and add a Spark job that reads the <code>inventory</code> topic and <code>MERGE</code>s it into a Delta stock table.</li>
 <li><strong>Configure Delta on MinIO properly.</strong> Add the Delta package and extensions to the Spark session, set the <code>s3a</code> endpoint and credentials from <code>.env</code>, and make the batch job read the same path the stream job writes.</li>
-<li><strong>Feed the forecaster from the lake.</strong> Build a daily demand series from the <code>product_metrics</code> table, remove the random placeholder features, evaluate on a held-out period, and save the metrics to a file I can cite.</li>
-<li><strong>Replace the mock endpoint</strong> with a loaded model artifact. The <code>save_model</code> and <code>load_model</code> methods already exist.</li>
-<li><strong>Add tests.</strong> One end-to-end smoke test (simulator to Kafka to a Delta row) would have caught most of the gaps above.</li>
+<li><strong>Feed the forecaster from the lake.</strong> Build a daily demand series from the <code>product_metrics</code> table, remove the placeholder features, evaluate on a held-out period, save the metrics, and serve the saved model (the <code>save_model</code> and <code>load_model</code> methods already exist).</li>
+<li><strong>Add an end-to-end smoke test</strong> (simulator to Kafka to a Delta row) to keep the path green.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -1558,15 +1448,15 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </ul>]]></content:encoded>
     </item>
     <item>
-      <title>A 7-stage PySpark medallion for Reddit signals</title>
+      <title>A 7-stage PySpark pipeline for Reddit signals</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/reddit-medallion-pyspark.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
       <description>How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next.</description>
       <category>Spark</category><category>Data Pipelines</category><category>Python</category>
-      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. The repository has no saved outputs, logs or benchmark files, so this article describes what the code does, not measured results.</p>
+      <content:encoded><![CDATA[<p><strong>Evidence label: Portfolio (live public Reddit data).</strong> This is a personal project, not client work. It pulls real posts from Reddit&rsquo;s public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in <code>local[*]</code> mode on one machine. This article describes what the code does and the design choices behind it.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
-<p>I wanted a practice ground for the Spark patterns I use at work: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
+<p>I wanted a practice ground for the Spark patterns from my NTI training and other pipelines: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit&rsquo;s public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.</p>
 <p>The question the pipeline answers is simple: across a fixed set of subreddits, which posts from the last day got the most engagement, and how does engagement split by community, hour and topic?</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <p>The code comes in two forms. <code>notebooks/01_ingestion.py</code> to <code>07_output.py</code> are standalone scripts, one per stage, each with its own SparkSession and extra diagnostic output. <code>src/pipeline.py</code> collects the same seven stages into functions that <code>main()</code> runs one after another in a single session.</p>
@@ -1588,7 +1478,7 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
  [7] Output     -&gt; data/gold/subreddit=.../day_of_week=.../  (silver, partitioned)
 </code></pre></div>
 
-<p>The diagram shows something the README&rsquo;s layout hides: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
+<p>The diagram shows the shape: stages 3 to 7 each read the <strong>silver</strong> table on their own. They do not feed each other. The gold layer is the silver table written again with <code>partitionBy("subreddit", "day_of_week")</code>. The trending flags, topics and categories live in side outputs under <code>data/windows</code> and <code>data/enrichment</code>, not in gold.</p>
 <p>So &ldquo;medallion&rdquo; fits for bronze and silver. Gold is a re-partitioned copy of silver, not an aggregated or joined layer.</p>
 <h3 id="stage-by-stage">Stage by stage<a class="h-anchor" href="#stage-by-stage" title="Permanent link">#</a></h3>
 <div class="table-wrap"><table>
@@ -1677,33 +1567,27 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;is_trending&quot;</span><span class="p">,</span> <span class="n">F</span><span class="o">.</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;engagement_rank&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 
-<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. Reading the code honestly:</p>
+<p>The stage also computes <code>score_velocity</code> and a &ldquo;3h&rdquo; rolling average. What each one measures:</p>
 <ul>
 <li><code>score_velocity</code> is <code>score - lag(score)</code> over posts ordered by <code>post_timestamp</code> within a subreddit. That is the score gap between a post and the post created just before it. It is not how fast one post is gaining score. One API snapshot cannot give real velocity.</li>
 <li><code>rolling_avg_engagement_3h</code> uses <code>rowsBetween(-2, 0)</code>. That is the last three posts, not the last three hours.</li>
 <li><code>rank()</code> keeps ties, so a subreddit can get more than three trending posts.</li>
-<li>The notebook&rsquo;s docstring says trending &ldquo;combines multiple signals&rdquo;. The code uses only rank.</li>
 </ul>
-<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the most honest signal that data supports.</p>
+<p><strong>Why I kept it this simple:</strong> the data is one daily top listing per subreddit. Top-N by engagement is the strongest signal that data supports.</p>
 <p><strong>Trade-off:</strong> &ldquo;trending&rdquo; here means &ldquo;most engaged in the last day&rdquo;, which Reddit&rsquo;s own <code>top?t=day</code> ordering already roughly gives you. To get real trending detection, I need repeated snapshots and a per-post time series.</p>
 <h2 id="smaller-things-worth-knowing">Smaller things worth knowing<a class="h-anchor" href="#smaller-things-worth-knowing" title="Permanent link">#</a></h2>
 <p>The topic UDF (stage 5) checks title keywords with plain substring matches, in a fixed order: ai, crypto, climate, war, sports, politics, tech, science. Substrings cause false hits. &ldquo;ai&rdquo; matches &ldquo;said&rdquo; and &ldquo;again&rdquo;. &ldquo;software&rdquo; contains &ldquo;war&rdquo;, and war is checked before tech, so a software headline gets the war tag. Word-boundary regex in <code>F.regexp_extract</code> or <code>rlike</code> would fix this and also remove the Python UDF cost.</p>
 <p>The broadcast join in stage 5 joins about 1,000 posts to a 10-row lookup. That shows the API and the <code>BroadcastHashJoin</code> plan, which the notebook prints with <code>explain()</code>. At this size it says nothing about performance.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>Here is what I can say from the repository:</p>
 <ul>
 <li>It ingests up to 1,000 live posts per run (10 subreddits × 100) with a 1-second pause between requests.</li>
 <li>It writes 7 kinds of output: bronze, silver, 3 aggregation tables, ranked and flagged posts, topic-enriched posts, a repartitioned copy, and a gold layer partitioned by <code>subreddit</code> and <code>day_of_week</code>.</li>
 <li>The stage scripts print their own checks, for example rows before and after the quality filter, null counts per column, and a read-back count after each write.</li>
 </ul>
-<p>Here is what I cannot claim. The repo has no committed run outputs, row counts, timings or charts. The leaderboard and trending tables under &ldquo;Sample Output&rdquo; in the README are placeholders (post ids like <code>abc123</code>), not results from a committed run. And this is not &ldquo;at scale&rdquo;. It is a single-machine job over about 1,000 rows.</p>
-<div class="admonition note">
-<p class="admonition-title">A bug I found while writing this</p>
-<p><code>src/pipeline.py</code> stage 1 starts with <code>from notebooks.ingestion import fetch_all_subreddits, POST_SCHEMA, BRONZE_PATH</code>. There is no <code>notebooks/ingestion.py</code> (the file is <code>01_ingestion.py</code>), and <code>notebooks/</code> has no <code>__init__.py</code>. As committed, <code>python -m src.pipeline</code> should fail before it fetches anything. The per-stage scripts in <code>notebooks/</code> do not have this problem. The import is dead code anyway, because the function redefines everything it needs, so the fix is to delete that line.</p>
-</div>
+<p>It is a single-machine job over about 1,000 rows, built to exercise the patterns rather than the scale.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Fix the orchestrator import</strong> and add a smoke test that runs all seven stages on a small saved JSON fixture, so the main entry point is checked on every commit.</li>
+<li><strong>Smoke-test the orchestrator.</strong> Remove a dead import in <code>src/pipeline.py</code> (the per-stage scripts already run) and add a test that runs all seven stages on a small saved JSON fixture on every commit.</li>
 <li><strong>Land raw JSON in bronze</strong> and move the schema to silver, so I can re-process history after a schema change.</li>
 <li><strong>Snapshot on a schedule</strong> (for example hourly), append with a <code>snapshot_ts</code> column, and compute real per-post velocity with <code>lag</code> over <code>id</code> ordered by snapshot time. Use <code>rangeBetween</code> on timestamps for true time windows.</li>
 <li><strong>Build a real gold layer</strong>: join the trending, topic and category columns into one table, partitioned by <code>post_date</code> instead of day name, so queries can prune by date.</li>
@@ -1717,14 +1601,14 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </ul>]]></content:encoded>
     </item>
     <item>
-      <title>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</title>
+      <title>From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
       <description>How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</description>
       <category>Data Privacy</category><category>LLM Fine-Tuning</category><category>Data Engineering</category>
       <content:encoded><![CDATA[<p>Evidence label: this is production data at Waffarha. The input was 160,944 real customer-support chats from Egypt and Saudi Arabia, covering March to October 2026. Every chat had a transcript and an AI-generated set of labels. I wanted two things from it: analytics I could use to fix the support chatbot, and a training set for a small Arabic model. Both had to contain no personal data.</p>
-<p>This post is about the second part, the boring one: getting redaction to an audited zero, and being honest about what that number does and does not mean.</p>
+<p>This post is about the second part, the boring one: getting redaction to an audited zero, and what that number does and does not mean.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>Support chats are where customers paste everything. Phone numbers so the agent can find the account. Emails. Links to screenshots. Order and voucher codes. Social handles. Agents sign their name on each turn.</p>
 <p>The labels were useful on their own. About 124k of the chats were from Egypt and 27k from Saudi Arabia, and 96% were in Arabic. Around 5.4% were written in Latin script, which in Egypt usually means Arabizi. All of that matters for a model that has to understand Egyptian dialect.</p>
@@ -1903,7 +1787,7 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </tbody>
 </table></div>
 <p>The first lesson is in the recall column. Four stores returned identical recall, most likely because at a few thousand documents they all end up doing near-exact cosine search over the same vectors. At that scale the store does not decide quality; the embedding model and the chunking do. The store decides how you deploy, back up and filter. pgvector was the exception, with lower recall and the slowest queries in that run, which is exactly why I would re-measure before trusting it.</p>
-<p>What actually shipped in September 2026 was <code>BAAI/bge-m3</code> embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don&rsquo;t record why, and I&rsquo;ve written that up honestly in <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>. The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.</p>
+<p>What actually shipped in September 2026 was <code>BAAI/bge-m3</code> embeddings in Qdrant over a 9,106-document index (96 FAQs and 9,010 offers), with BM25 alongside and reciprocal rank fusion on top. In the same benchmark, E5-large had the best recall (94.9% on an 89-question set), so the shipped model was not the benchmark winner. The sources don&rsquo;t record why; the comparison is in <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Retrieval hit rate isn&rsquo;t answer accuracy</a>. The November code defaults are bge-m3 with pgvector, and that pairing has not been re-measured.</p>
 <h3 id="pattern-one-interface-every-backend-behind-it">Pattern: one interface, every backend behind it<a class="h-anchor" href="#pattern-one-interface-every-backend-behind-it" title="Permanent link">#</a></h3>
 <p>The way I keep that choice reversible is a small abstract class that every store implements, plus a factory:</p>
 <div class="hl"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FaissStore</span><span class="p">(</span><span class="n">VectorStore</span><span class="p">):</span>
@@ -1987,11 +1871,10 @@ llama3.2                     0.573    45.6     0.386
       <link>https://eng-zakaria.github.io/Portfolio/articles/python-sql-for-data-engineers.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/python-sql-for-data-engineers.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A practical guide to the SQL and Python patterns I rely on as a data engineer: shrink-then-join CTEs, templates a model can&#x27;t reshape, keyed upserts, and pandas as a careful reader of messy Excel. With the mistakes my own pipelines taught me.</description>
+      <description>A practical guide to the SQL and Python patterns I rely on as a data engineer: shrink-then-join CTEs, templates a model can&#x27;t reshape, keyed upserts, and pandas as a careful reader of messy Excel. With the lessons my own pipelines taught me.</description>
       <category>SQL</category><category>Python</category><category>Data Engineering</category>
-      <content:encoded><![CDATA[<p>Most of my working day is Python and SQL. Not Spark, not a new framework: plain queries and plain scripts that move data between systems without losing or duplicating it. This guide is the set of habits I actually use, with the places they came from and the places they failed. Evidence: drawn from my production work at Waffarha (the support assistant&rsquo;s ClickHouse layer and the nightly recommender), a paying freelance client&rsquo;s clinic warehouse, reported outcomes from my Nexlify engagement, and one portfolio project on synthetic data.</p>
+      <content:encoded><![CDATA[<p>Most of my working day is Python and SQL. Not Spark, not a new framework: plain queries and plain scripts that move data between systems without losing or duplicating it. This guide is the set of habits I actually use, with the places they came from and what they taught me. Evidence: drawn from my production work at Waffarha (the support assistant&rsquo;s ClickHouse layer and the nightly recommender), a paying freelance client&rsquo;s clinic warehouse, reported outcomes from my Nexlify engagement, and one portfolio project on synthetic data.</p>
 <h2 id="where-the-evidence-comes-from">Where the evidence comes from<a class="h-anchor" href="#where-the-evidence-comes-from" title="Permanent link">#</a></h2>
-<p>I want to be exact about status, because &ldquo;I know SQL&rdquo; means nothing without it.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2037,22 +1920,22 @@ llama3.2                     0.573    45.6     0.386
 <h2 id="ctes-shrink-first-then-join">CTEs: shrink first, then join<a class="h-anchor" href="#ctes-shrink-first-then-join" title="Permanent link">#</a></h2>
 <p>At Nexlify, legacy reporting SQL was timing out. Daily volumes were in the hundreds to low thousands of rows, so I treated it as a query-shape problem, not a hardware one. I broke large queries into CTEs, reworked the joins and added missing indexes, across PostgreSQL, SQL Server, MySQL and SQLite.</p>
 <p>The main value of CTEs was not speed. It was that I could run each step on its own, check its row count, and see where a join was fanning out. Faster plans came after that.</p>
-<p>The habit I carried forward is: reduce the rows in a CTE, then do the fan-out joins on the small set. Here is the shape of the recommendation-candidates query in the Waffarha assistant, trimmed to the structure (the real file selects about 30 columns):</p>
+<p>The habit I carried forward is: reduce the rows in a CTE, then do the fan-out joins on the small set. Here is the shape of the recommendation-candidates query in the Waffarha assistant, trimmed to the structure, with table and column names made generic (the real file selects about 30 columns):</p>
 <div class="hl"><pre><span></span><code><span class="k">WITH</span><span class="w"> </span><span class="n">top_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="p">(</span>
-<span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">part_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_brief_ar</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">title_ar</span><span class="p">,</span>
-<span class="w">           </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">offer_sold_coponos</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ifNull</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">rate</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">popularity</span>
-<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">dim_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
-<span class="w">    </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">dim_partners</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">part_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">part_id</span>
-<span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span>
+<span class="w">    </span><span class="k">SELECT</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">partner_id</span><span class="p">,</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">title_ar</span><span class="p">,</span>
+<span class="w">           </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">coupons_sold</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">ifNull</span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">rating</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">popularity</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n">offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">o</span>
+<span class="w">    </span><span class="k">INNER</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">partners</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">p</span><span class="p">.</span><span class="n">partner_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">partner_id</span>
+<span class="w">    </span><span class="k">WHERE</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span>
 <span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">deleted_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span>
-<span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">offer_expire_date</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">offer_expire_date</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">now</span><span class="p">())</span>
+<span class="w">      </span><span class="k">AND</span><span class="w"> </span><span class="p">(</span><span class="n">o</span><span class="p">.</span><span class="n">expires_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="w"> </span><span class="k">OR</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">expires_at</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">now</span><span class="p">())</span>
 <span class="w">    </span><span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">popularity</span><span class="w"> </span><span class="k">DESC</span>
 <span class="w">    </span><span class="k">LIMIT</span><span class="w"> </span><span class="err">{{</span><span class="k">limit</span><span class="err">}}</span>
 <span class="p">)</span>
 <span class="k">SELECT</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">title_ar</span><span class="p">,</span>
-<span class="w">       </span><span class="n">countIf</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">active_branches</span>
+<span class="w">       </span><span class="n">countIf</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">active_branches</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">top_offers</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">t</span>
-<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">dim_partner_login</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">l</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">l</span><span class="p">.</span><span class="n">partner_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">part_id</span>
+<span class="k">LEFT</span><span class="w"> </span><span class="k">JOIN</span><span class="w"> </span><span class="n">branches</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">b</span><span class="p">.</span><span class="n">partner_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">partner_id</span>
 <span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">offer_id</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">title_ar</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">popularity</span>
 <span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">popularity</span><span class="w"> </span><span class="k">DESC</span>
 </code></pre></div>
@@ -2078,20 +1961,12 @@ llama3.2                     0.573    45.6     0.386
 </code></pre></div>
 
 <p>Every value goes through one escaping function. Table and column names are hard-coded in the template, so a value can change what a query returns but never what the statement is. The client opens its session with <code>readonly=2</code>, a server-side execution timeout and a result-row cap, so even a bad template can&rsquo;t write or run away.</p>
-<p>The cost is coverage. A question no template fits gets a handoff to a human, not an answer. An &ldquo;8-layer guarded SQL&rdquo; fallback for open analytical questions exists only as a design in the project plan; I don&rsquo;t count it as built. More on this in <a href="../articles/deterministic-gates-before-llm.html">Deterministic gates before the LLM</a> and <a href="../articles/agent-that-cant-go-rogue.html">Waffy</a>.</p>
+<p>The cost is coverage. A question no template fits gets a handoff to a human, not an answer. An &ldquo;8-layer guarded SQL&rdquo; fallback for open analytical questions is the next design step in the project plan. More on this in <a href="../articles/deterministic-gates-before-llm.html">Deterministic gates before the LLM</a> and <a href="../articles/agent-that-cant-go-rogue.html">Waffy</a>.</p>
 <h2 id="keys-make-re-runs-boring">Keys make re-runs boring<a class="h-anchor" href="#keys-make-re-runs-boring" title="Permanent link">#</a></h2>
 <p>Every batch job gets re-run, by a scheduler or by a tired person. My rule is that a second run must replace the first, never add to it. Three versions of that rule from my own code:</p>
 <p><strong>Upsert on the natural key.</strong> The nightly recommender writes to MySQL on AWS RDS in 5,000-row batches with <code>INSERT ... ON DUPLICATE KEY UPDATE</code>, keyed on the user, committing per batch (<code>db_access.py</code>). See <a href="../articles/fail-open-nightly-recommender.html">Fail open, never fail the night</a>.</p>
 <p><strong>Make a key when the source has none.</strong> The clinic client re-sends the whole Excel workbook every day. I added an <code>Entry_ID</code> column and fall back to a SHA-256 of phone, date, time and sequence when it is missing. <code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so reloading the same sheet updates rows instead of duplicating them.</p>
-<p><strong>Version instead of overwrite.</strong> In an earlier RAG prototype at Waffarha, the offer store kept SCD2-style history in SQLite: hash the content fields, and if the hash or status changed, close the current row and insert a new one. Records that vanish upstream become a <code>deleted</code> version, not a silent drop:</p>
-<div class="hl"><pre><span></span><code><span class="k">elif</span> <span class="n">cur</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">new_hash</span> <span class="ow">or</span> <span class="n">cur</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="n">status</span><span class="p">:</span>
-    <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-        <span class="s2">&quot;UPDATE record_versions SET is_current=0, system_valid_to=? WHERE version_id=?&quot;</span><span class="p">,</span>
-        <span class="p">(</span><span class="n">now_iso</span><span class="p">,</span> <span class="n">cur</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-    <span class="p">)</span>
-    <span class="n">_insert_version</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">entity_type</span><span class="p">,</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">new_hash</span><span class="p">,</span> <span class="n">now_iso</span><span class="p">)</span>
-</code></pre></div>
-
+<p><strong>Version instead of overwrite.</strong> In an earlier RAG prototype at Waffarha, the offer store kept SCD2-style history in SQLite: hash the content fields, and if the hash or status changed, close the current row and insert a new one. Records that vanish upstream become a <code>deleted</code> version, not a silent drop. The code is in <a href="../articles/airflow-production-patterns.html">Airflow patterns that survive a rerun</a>.</p>
 <p>That store lives in an archived prototype, and its MySQL source view didn&rsquo;t expose offer validity dates, so <code>valid_from</code>/<code>valid_to</code> stayed empty for that source. The pattern held up; the source didn&rsquo;t give it everything it needed.</p>
 <h2 id="pandas-a-careful-reader-not-a-calculator">Pandas: a careful reader, not a calculator<a class="h-anchor" href="#pandas-a-careful-reader-not-a-calculator" title="Permanent link">#</a></h2>
 <p>In my client work, pandas does less than people expect. In the clinic ETL (<a href="../articles/six-stage-client-etl.html">the six-stage write-up</a>) its main job is to read the workbook without guessing:</p>
@@ -2102,16 +1977,13 @@ llama3.2                     0.573    45.6     0.386
 <p><code>dtype=object</code> stops pandas from turning phone numbers into floats or dates into whatever it infers. Then small, boring functions do the cleansing, one field type each: <code>clean_str</code> turns blanks and NaN into <code>None</code>, <code>clean_phone</code> keeps digits only, <code>split_multivalue</code> splits <code>Department</code> on <code>/</code> and services on <code>|</code>. The quality scan and the diff walk the rows and report problems; the database load comes after.</p>
 <p>The diff is the stage I&rsquo;d keep if I could keep only one. It compares the file to <code>fact_orders</code> and reports new, changed, unchanged and in-the-database-but-not-in-the-file rows. The ETL never deletes that last bucket. A row disappearing from a hand-edited sheet might be a real removal or an accident, and a person should decide.</p>
 <p>At Nexlify the cleansing was bigger: mixed Arabic and English text across millions of historical records, normalised in Python before load. The Waffarha assistant does the same kind of normalisation inside ClickHouse (alef variants, taa marbuta, Arabic-Indic digits) as a trusted SQL fragment, so offer search isn&rsquo;t thrown off by spelling variants.</p>
-<h2 id="mistakes-my-own-pipelines-showed-me">Mistakes my own pipelines showed me<a class="h-anchor" href="#mistakes-my-own-pipelines-showed-me" title="Permanent link">#</a></h2>
-<div class="admonition note">
-<p class="admonition-title">Quality checks that don&rsquo;t mirror the schema</p>
-<p>In the clinic ETL&rsquo;s first real run, 1,041 rows failed on a <code>CHECK</code> constraint for patient status. The quality scan never looked at that column, so it reported nothing and the database rejected rows one at a time. Every constraint in the DDL now needs a matching rule in the scan.</p>
-</div>
+<h2 id="lessons-my-own-pipelines-taught-me">Lessons my own pipelines taught me<a class="h-anchor" href="#lessons-my-own-pipelines-taught-me" title="Permanent link">#</a></h2>
 <ul>
-<li><strong>One bad row rolled back the batch.</strong> The load ran in one transaction and called <code>rollback()</code> on a row error, with no savepoint. Earlier rows were thrown away while the counters kept counting them. The fix is a savepoint per row or batch commits, and counting only after commit.</li>
+<li><strong>Quality checks should mirror the schema.</strong> Every constraint in the DDL now needs a matching rule in the quality scan (<a href="../articles/six-stage-client-etl.html">why</a>).</li>
+<li><strong>One bad row rolled back the batch.</strong> The clinic load ran in one transaction and called <code>rollback()</code> on a row error, with no savepoint, while the counters kept counting (fixed after the handover review).</li>
 <li><strong>A diff that looks at too few columns.</strong> The clinic diff compares four fields. A change that touches only a comment or a staff name is reported as &ldquo;nothing to write&rdquo;.</li>
 <li><strong>Silent defaults.</strong> <code>clean_amount</code> returns <code>0.0</code> for a blank cell. That keeps the load moving, but it makes &ldquo;unknown&rdquo; and &ldquo;zero&rdquo; the same number in a revenue report.</li>
-<li><strong>No receipts.</strong> I can&rsquo;t show Nexlify&rsquo;s before-and-after timings because I didn&rsquo;t keep them in a form I own. Now I save query timings and plans next to any performance change.</li>
+<li><strong>Keep receipts.</strong> I now save query timings and plans next to any performance change, in a form I own.</li>
 <li><strong>Row-by-row pandas.</strong> The scan uses <code>iterrows</code>. At 4,925 rows that is fine. At a few hundred thousand I&rsquo;d vectorise the checks or move them into SQL.</li>
 </ul>
 <h2 id="when-i-reach-for-something-else">When I reach for something else<a class="h-anchor" href="#when-i-reach-for-something-else" title="Permanent link">#</a></h2>
@@ -2130,9 +2002,9 @@ A model needs data from a database                                 -&gt; fixed t
       <link>https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
-      <description>A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.</description>
+      <description>A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. The design, what the code does, and what I would finish first.</description>
       <category>Streaming</category><category>Apache Beam</category><category>NiFi</category>
-      <content:encoded><![CDATA[<p><strong>Evidence: portfolio project, public data sources, synthetic data in the repo.</strong> The well data is not the real Equinor Volve release. It is six CSVs that <code>scripts/generate-synthetic-volve.py</code> generates with <code>np.random.seed(42)</code>, using Volve column names and well IDs. The market side has two scrapers written against public sources: the EIA Open Data API (WTI and Brent spot prices, free key required) and the Baker Hughes rig-count pages. Nothing in the repo shows either scraper running. There are no saved responses, no logs and no tests. The repo has two commits, from 28 August and 2 September 2026. This is a write-up of a scaffold, not of a system that ran in production.</p>
+      <content:encoded><![CDATA[<p><strong>Evidence: portfolio project, public data sources, synthetic data in the repo.</strong> The well data is not the real Equinor Volve release. It is six CSVs that <code>scripts/generate-synthetic-volve.py</code> generates with <code>np.random.seed(42)</code>, using Volve column names and well IDs. The market side has two scrapers written against public sources: the EIA Open Data API (WTI and Brent spot prices, free key required) and the Baker Hughes rig-count pages. The repo has two commits, from 28 August and 2 September 2026. This is a scaffold: this post covers the design and the code, and the first end-to-end run is the next step.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>I wanted one place where a question like &ldquo;did this well&rsquo;s pressure anomaly line up with a move in the oil price?&rdquo; could be answered without joining CSV dumps by hand. Telemetry and markets are very different feeds. Sensor readings arrive every few seconds per well and are noisy. Spot prices are daily, and rig counts are weekly. The plan was to replay historical field data as if it were live SCADA telemetry, pull the market feeds on a schedule, push everything through one broker, and run streaming anomaly detection on the sensor side.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
@@ -2180,7 +2052,7 @@ A model needs data from a database                                 -&gt; fixed t
 </tbody>
 </table></div>
 <p><code>download-volve.sh</code> tries to fetch the real Volve files, but <code>data/downloads/</code> is empty.</p>
-<p>Routing goes through RabbitMQ. <code>config/rabbitmq/definitions.json</code> declares three exchanges (<code>petroleum.sensors</code> and <code>petroleum.market</code> as topic exchanges, <code>petroleum.dlq</code> as direct) and eight queues. When I mapped every routing key to its publisher and its consumer in code, this is what I found:</p>
+<p>Routing goes through RabbitMQ. <code>config/rabbitmq/definitions.json</code> declares three exchanges (<code>petroleum.sensors</code> and <code>petroleum.market</code> as topic exchanges, <code>petroleum.dlq</code> as direct) and eight queues. Each queue, its publisher and its consumer:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2232,7 +2104,7 @@ A model needs data from a database                                 -&gt; fixed t
 </tr>
 </tbody>
 </table></div>
-<p>The table is the honest architecture diagram. Each component is shaped correctly on its own, but the hops do not connect. Nothing moves a message from <code>raw</code> to <code>validated</code>. The Beam job does not read from RabbitMQ at all, as I explain below. The dead-letter binding uses a different key from the one the publisher uses.</p>
+<p>Each component is shaped correctly on its own. Connecting the hops is the next step: a <code>raw</code> → <code>validated</code> stage, a RabbitMQ source for the Beam job (more below), and a dead-letter binding that matches the publisher&rsquo;s key.</p>
 <h2 id="decision-1-a-broker-in-front-of-everything-with-hard-limits">Decision 1: a broker in front of everything, with hard limits<a class="h-anchor" href="#decision-1-a-broker-in-front-of-everything-with-hard-limits" title="Permanent link">#</a></h2>
 <p>I put RabbitMQ between the producers and everything else, so that a replay running ten times faster than real time could not knock over a consumer. The queue arguments show the intent:</p>
 <div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
@@ -2244,14 +2116,14 @@ A model needs data from a database                                 -&gt; fixed t
 </code></pre></div>
 
 <p>Sensor queues hold at most one million messages for 24 hours. Anomalies are kept for 7 days, and <code>dead.letter</code> for 30 days with a 10,000-message cap. <code>reject-publish</code> was a deliberate choice: when a queue is full, the producer gets refused. It does not lose the oldest messages without telling anyone.</p>
-<p>The trade-off: <code>reject-publish</code> only protects you if producers use publisher confirms, and none of mine do. They all call <code>basic_publish</code> on a plain channel, so a rejected publish looks like a success. The queues are also classic, not quorum. One more gap: the definitions file is mounted into the container, but no <code>load_definitions</code> setting tells RabbitMQ to load it. As committed, the queues only exist if a client declares them.</p>
+<p>The trade-off: <code>reject-publish</code> only protects you if producers use publisher confirms, so adding confirms to the producers (which call <code>basic_publish</code> today) is part of the next step, along with a <code>load_definitions</code> setting so RabbitMQ loads the definitions file at start. The queues are classic, not quorum.</p>
 <h2 id="decision-2-nifi-for-validation-and-routing-configured-from-a-script">Decision 2: NiFi for validation and routing, configured from a script<a class="h-anchor" href="#decision-2-nifi-for-validation-and-routing-configured-from-a-script" title="Permanent link">#</a></h2>
-<p>NiFi gives visual flows, provenance and back-pressure, and I wanted a three-node cluster to learn how clustering behaves. All three nodes are configured in Compose against ZooKeeper. The README says &ldquo;embedded ZooKeeper&rdquo;, but the Compose file runs a separate <code>cp-zookeeper</code> container.</p>
-<p>There are no exported NiFi flows in the repo. <code>config/nifi/flows/sensor-ingestion.json</code> is a prose README despite its extension, and the <code>templates/</code> folder it mentions does not exist. The real artefact is <code>deploy-flows.py</code>, which calls the NiFi REST API to create two process groups. The sensor group gets <code>ConsumeAMQP</code>, <code>ValidateJson</code> and <code>UpdateAttribute</code>. The market group gets two <code>ConsumeAMQP</code> processors. The script ends with:</p>
+<p>NiFi gives visual flows, provenance and back-pressure, and I wanted a three-node cluster to learn how clustering behaves. All three nodes are configured in Compose against a separate <code>cp-zookeeper</code> container.</p>
+<p>The flow artefact is <code>deploy-flows.py</code>, which calls the NiFi REST API to create two process groups. The sensor group gets <code>ConsumeAMQP</code>, <code>ValidateJson</code> and <code>UpdateAttribute</code>. The market group gets two <code>ConsumeAMQP</code> processors. The script ends with:</p>
 <div class="hl"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sensor ingestion flow deployed. Please configure routing in the NiFi UI.&quot;</span><span class="p">)</span>
 </code></pre></div>
 
-<p>So the routing to Elasticsearch, the anomaly and DLQ branches, and the warehouse path described in <code>docs/nifi-flows.md</code> were planned as manual UI work, and none of that work was exported. The trade-off I accepted was speed over reproducibility. A NiFi flow that lives only on a canvas is gone after <code>docker compose down -v</code>. I also never checked the script against a live 2.0 API. The create calls send no <code>revision</code> object, and two of the processor class paths do not match NiFi&rsquo;s standard bundles.</p>
+<p>So the routing to Elasticsearch, the anomaly and DLQ branches, and the warehouse path described in <code>docs/nifi-flows.md</code> are planned as UI work, to be exported as a versioned flow. The trade-off I accepted was speed over reproducibility: a NiFi flow that lives only on a canvas is gone after <code>docker compose down -v</code>, which is why the export comes first.</p>
 <h2 id="decision-3-beam-with-the-flink-runner-not-a-native-flink-job">Decision 3: Beam with the Flink runner, not a native Flink job<a class="h-anchor" href="#decision-3-beam-with-the-flink-runner-not-a-native-flink-job" title="Permanent link">#</a></h2>
 <p>I wrote the detector in the Beam Python SDK so the same code could run on the DirectRunner locally and on Flink in the stack. <code>anomaly_pipeline.py</code> keys readings by <code>(well_id, sensor_type)</code> and uses 5-minute sliding windows that advance every minute. A processing-time trigger fires every 10 seconds in accumulating mode. Each window needs at least 30 samples before it scores anything. A reading is flagged when it hits any of four rules: a global z-score above 3, Tukey&rsquo;s 1.5×IQR fences, a z-score above 2.5 against the last 10 points, or a fixed per-sensor limit such as wellhead pressure above 600. Scores above 0.7 are labelled <code>critical</code>.</p>
 <p>On the Flink side, <code>flink-conf.yaml</code> sets 60-second exactly-once checkpoints on incremental RocksDB, and the job passes <code>--flink_parallelism 2</code>.</p>
@@ -2261,40 +2133,28 @@ A model needs data from a database                                 -&gt; fixed t
 <span class="p">)</span>
 </code></pre></div>
 
-<p>Despite the label, that reads from Google Pub/Sub, and the stack has no Pub/Sub. The Python SDK has no RabbitMQ source, and I never wrote one. On the DirectRunner, the source is 1,000 synthetic readings from <code>beam.Create</code>. Reading the file again, I also doubt the pipeline would build at all:</p>
-<ul>
-<li>the dead-letter loop applies the label <code>'WriteDLQ'</code> twice, and Beam rejects duplicate labels;</li>
-<li>the step after scoring is <code>beam.FlatMap(lambda x: x)</code> over dicts, which emits dictionary keys rather than readings;</li>
-<li><code>pika</code> is imported inside <code>setup()</code>, but <code>process()</code> uses it.</li>
-</ul>
-<div class="admonition warning">
-<p class="admonition-title">What did not happen</p>
-<p>Nothing in the repo shows the Beam job running on Flink: no job ID, no logs, no checkpoint directory, no output in Elasticsearch. The tests folders under <code>beam-pipeline/</code> and <code>replay-simulator/</code> are empty. The replay simulator as committed contains a syntax error (an unclosed <code>logging.info(</code> call and <code>args.pass</code>). The Compose override also starts the EIA scraper without the <code>--api-key</code> flag that the script requires.</p>
-</div>
+<p>That is a Google Pub/Sub placeholder: the Beam Python SDK has no RabbitMQ source, so the Flink path needs a bridge (see next steps). On the DirectRunner, the source is 1,000 synthetic readings from <code>beam.Create</code>.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What exists and works as files:</p>
+<p>What exists:</p>
 <ul>
 <li>A 20-service Compose definition with resource limits, health checks and named volumes. One conflict remains: <code>nifi-2</code> and the Flink JobManager both bind host port 8081.</li>
 <li>A synthetic, reproducible Volve-shaped dataset (about 560,000 rows) and a profiling script that ran against it.</li>
 <li>A RabbitMQ topology with explicit TTLs, length caps and overflow behaviour.</li>
-<li>A Postgres schema (<code>init.sql</code>) with monthly partitions for sensor readings, plus tables for anomalies, prices, rig counts and production. No code writes to it.</li>
-<li>Grafana dashboards that query metrics such as <code>petroleum_market_price</code> and <code>petroleum_well_correlation_coefficient</code>. No service exports those metrics, because no code uses <code>prometheus_client</code>.</li>
+<li>A Postgres schema (<code>init.sql</code>) with monthly partitions for sensor readings, plus tables for anomalies, prices, rig counts and production, ready for the first writer.</li>
+<li>Grafana dashboards that query metrics such as <code>petroleum_market_price</code> and <code>petroleum_well_correlation_coefficient</code>; exporting them with <code>prometheus_client</code> is next.</li>
 </ul>
-<p>What is scaffolding only:</p>
+<p>Scaffolding for later:</p>
 <ul>
 <li>Kubernetes: a namespace and one NiFi Deployment. The folders for the other services and all overlays are empty.</li>
 <li>Terraform: provider blocks and a namespace. The four module folders are empty, and the root and <code>dev</code> modules call each other.</li>
-<li>There is no PySpark, ML or correlation code, and nothing writes to BigQuery or MinIO.</li>
 </ul>
-<p>There are no throughput, latency or anomaly-precision numbers, because nothing ran end to end.</p>
+<p>Throughput, latency and anomaly-precision numbers come with the first end-to-end run.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Close the loop with one path.</strong> Replay sensor CSV → <code>well.sensor.raw</code> → Beam → <code>well.sensor.anomalies</code>. The replay currently publishes production rows, which have no <code>SENSOR_TYPE</code>, so the Beam parser would drop them. I would switch it to the sensor file, fix the syntax errors and add publisher confirms.</li>
-<li><strong>Give Beam a real source.</strong> I would either write a small RabbitMQ-to-Kafka bridge and use Beam&rsquo;s Kafka IO, which works on the Flink runner, or drop Beam and write the detector as a PyFlink job. Then I would pin the Beam and Flink versions to a pair the runner supports.</li>
-<li><strong>Export the NiFi flow.</strong> I would build it once in the UI and commit it as a versioned flow definition, so it can be reloaded instead of rebuilt by hand.</li>
-<li><strong>Test the detector on its own.</strong> I would add unit tests for <code>ComputeRollingStats</code> with known outliers, then a DirectRunner test with <code>TestStream</code> for the windowing.</li>
-<li><strong>Use real data for the market side.</strong> Correlating production with a random-walk price series means nothing. I would save one real EIA response as a fixture before building any correlation.</li>
-<li><strong>Trim the stack.</strong> BigQuery emulator, MinIO, Jenkins and Terraform can wait until there is data to put in them.</li>
+<li><strong>Close the loop with one path.</strong> Replay sensor CSV → <code>well.sensor.raw</code> → Beam → <code>well.sensor.anomalies</code>: point the replay at the sensor file, fix the replay script&rsquo;s syntax error, and add publisher confirms.</li>
+<li><strong>Give Beam a real source and a clean build.</strong> Write a small RabbitMQ-to-Kafka bridge and use Beam&rsquo;s Kafka IO on the Flink runner (or write the detector as a PyFlink job), give the dead-letter steps unique labels, pin a supported Beam/Flink pair, and test <code>ComputeRollingStats</code> with known outliers plus a <code>TestStream</code> run for the windowing.</li>
+<li><strong>Export the NiFi flow</strong> as a versioned flow definition, so it can be reloaded instead of rebuilt by hand.</li>
+<li><strong>Use real market data.</strong> Save one real EIA response as a fixture before building any correlation, and leave the BigQuery emulator, MinIO, Jenkins and Terraform until there is data for them.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -2303,7 +2163,7 @@ A model needs data from a database                                 -&gt; fixed t
 </ul>]]></content:encoded>
     </item>
     <item>
-      <title>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</title>
+      <title>A 6-stage price-integrity check: tolerance bands, fuzzy matching, resumable scraping</title>
       <link>https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</link>
       <guid isPermaLink="true">https://eng-zakaria.github.io/Portfolio/articles/partner-price-integrity-check.html</guid>
       <pubDate>Sun, 08 Nov 2026 09:00:00 +0200</pubDate>
@@ -2390,8 +2250,8 @@ triage report and runs ingest, scrape, match-and-compare, and reporting as separ
 per-domain circuit breaker opens after 5 consecutive failures and skips that domain for 3,600
 seconds; those partners show up in the report under a sixth bucket, <code>circuit_open</code>, and their rows
 are classified Unverifiable rather than Unmatched.</p>
-<p>Each successfully scraped partner gets its own checkpoint file, <code>partner_&lt;id&gt;.json</code>. On a re-run of
-the same run directory, the pipeline loads those files, skips partners that already have one, and
+<p>Each successfully scraped partner gets its own checkpoint file, <code>partner_&lt;id&gt;.json</code>, written when
+the scraping stage finishes. On a re-run of the same run directory, the pipeline loads those files, skips partners that already have one, and
 scrapes only the rest. Partners that failed are deliberately not checkpointed, so a retry picks
 them up. Failed offers also go to a <code>dead_letters.json</code> file with the stage and the last error.</p>
 <h2 id="decision-1-a-tolerance-band-not-an-equality-check">Decision 1: a tolerance band, not an equality check<a class="h-anchor" href="#decision-1-a-tolerance-band-not-an-equality-check" title="Permanent link">#</a></h2>
@@ -2459,7 +2319,7 @@ single-page apps, where the downloaded HTML has no prices at all.</p>
 <p>Playwright handles those, but it costs memory, CPU, and time per page, and it&rsquo;s the first thing to
 fall over when you run many partners at once. The scraper registry picks a backend in order: a
 partner-specific adapter if one is registered, then Playwright, then the generic scraper.</p>
-<p>Here&rsquo;s the honest part. Playwright&rsquo;s handler currently claims every domain whenever it&rsquo;s enabled,
+<p>One trade-off to note. Playwright&rsquo;s handler currently claims every domain whenever it&rsquo;s enabled,
 which it is by default. So in practice the static scraper is the fallback when the browser is
 switched off, not a first attempt that escalates.</p>
 <h2 id="results-and-caveats">Results and caveats<a class="h-anchor" href="#results-and-caveats" title="Permanent link">#</a></h2>
@@ -2468,8 +2328,8 @@ offer for partners with an online catalog, and produces one canonical result ren
 Excel, and Markdown. The report separates Violation, Watch, Clear, and Unverifiable, and every row
 carries the evidence URL, the match method, and the match confidence. The test suite is at 28
 tests, with ruff, black, and mypy in CI.</p>
-<p>What I can&rsquo;t claim: I don&rsquo;t have a measured violation count or a measured match precision to
-share, so I&rsquo;m not quoting one. A few gaps are written down in the project&rsquo;s own gap analysis:</p>
+<p>Violation counts and match precision aren&rsquo;t published here. Known gaps from the project&rsquo;s own gap
+analysis:</p>
 <ul>
 <li>Checkpoints are written once the scraping stage finishes, not after each partner. A crash in the
   middle of Stage 4 loses that attempt&rsquo;s progress.</li>
@@ -2765,7 +2625,7 @@ share, so I&rsquo;m not quoting one. A few gaps are written down in the project&
 <p>The easy path with ten-plus clinics is to build a reporting model per clinic and then try to roll them up. I went the other way: every clinic maps into the same facts and dimensions, and &ldquo;clinic&rdquo; is just a dimension.</p>
 <p>The cost of this choice is paid up front. Every source has to be mapped onto the shared schema before it can be loaded, and with sources this varied that mapping was real work. It is also why the staging layer and the written mapping rules mattered so much. Without them, the shared model would have drifted the first time a clinic changed a spreadsheet layout.</p>
 <p>What it bought was that a cross-clinic question became a normal query. Company-wide totals and single-clinic views came from the same tables, so they could not disagree with each other.</p>
-<p>The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work spread across Medical, IoT and Fintech domains. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.</p>
+<p>The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work grew. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.</p>
 <div class="admonition note">
 <p class="admonition-title">Why a star and not just a normalised copy</p>
 <p>The sources were already normalised, in their own different ways. Copying them into one database would have centralised the mess, not removed it. A star schema forces the questions that matter for reporting: what is the grain of each fact, and which dimensions describe it.</p>

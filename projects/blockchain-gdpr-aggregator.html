@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Blockchain GDPR Aggregator — Case Study | Mohammed Zakaria</title>
+  <title>ChainGuard — Blockchain GDPR Aggregator Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Prototype privacy layer for crypto analytics: Ethereum and Bitcoin ingestion, market APIs, regex PII masking, address truncation, an audit-log table and a retention ledger behind FastAPI.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,9 +210,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1>Blockchain GDPR Aggregator</h1>
+      <h1>ChainGuard</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Prototype that puts a masking and audit layer in front of on-chain and market data, reviewed from source; not yet run end to end.
+        Blockchain GDPR aggregator: a masking, audit and retention layer in front of on-chain and market data.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -225,7 +225,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Prototype (code review)</span>
+          <span class="meta-value">Prototype, not yet run end to end</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -319,8 +319,13 @@
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The codebase routes Ethereum, Bitcoin, and market records through one masking pipeline before they reach the API and flow analysis, with an audit table and retention ledger alongside. It has not been run end to end: a pydantic v2 import error and an encryption-key mismatch (a 32-character validator vs. Fernet's 44-character key) stop it at startup, so there are no runtime numbers.</p>
-      <p>Next steps are keyed pseudonyms, wiring storage and scheduled cleanup, an erasure endpoint with a suppression list, and authenticated, audited reads. Local project — no public GitHub link.</p>
+      <p>The codebase routes Ethereum, Bitcoin, and market records through one masking pipeline before they reach the API and flow analysis, with an audit table and retention ledger alongside.</p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Fix the pydantic v2 import and align the encryption-key validator with Fernet's 44-character keys, then run end to end.</li>
+        <li>Switch to keyed (HMAC) pseudonyms and wire storage and scheduled cleanup.</li>
+        <li>Add an erasure endpoint with a suppression list, and authenticated, audited reads.</li>
+      </ul>
     </section>
   </main>
 

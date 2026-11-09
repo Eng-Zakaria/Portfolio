@@ -132,7 +132,7 @@
     <section class="content-section">
       <h3>Challenges &amp; Solutions</h3>
       <div class="challenge-card"><h4>Challenge: Selector rot destroys history</h4><p>Sites rename price classes; a parse-on-fetch design would silently record months of nulls with no recovery path.</p></div>
-      <div class="solution-card"><h4>Solution: Lossless snapshot store</h4><p>Raw HTML is saved per fetch with a timestamp and URL hash, so a fixed parser plus the backfill DAG can re-parse anything still inside the 30-day retention window.</p></div>
+      <div class="solution-card"><h4>Solution: Raw-first snapshot store (30-day window)</h4><p>Raw HTML is saved per fetch with a timestamp and URL hash, so a fixed parser plus the backfill DAG can re-parse anything still inside the 30-day retention window.</p></div>
       <div class="challenge-card"><h4>Challenge: Orchestration vs. execution confusion</h4><p>One scheduler doing both DAG ordering and browser fan-out becomes a bottleneck and a retry mess.</p></div>
       <div class="solution-card"><h4>Solution: Two-tier split</h4><p>Airflow owns stage ordering; Celery + Redis owns per-target Playwright jobs with independent retries. The Airflow tasks currently call Celery in-process, so the two paths still need to be unified.</p></div>
       <div class="challenge-card"><h4>Challenge: Comparing prices across regions</h4><p>Regional storefronts format prices differently ($1,234.56 vs 1.234,56 €) and in different currencies, so raw strings can't be compared directly.</p></div>
@@ -140,7 +140,8 @@
     </section>
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>Watchdog is a portfolio build, not a running service: there are no saved runs, and the dashboard demo uses seeded random price history. The 24 parser and scraper unit tests pass; Docker Compose and a GitHub Actions workflow (lint → test → build → DAG import) are defined. Reading the path end to end turned up gaps to fix before a live run: fetches don't yet create snapshot rows, the parse queue filter never matches, and the alert compares the wrong two snapshots.</p>
+      <p>The 24 parser and scraper unit tests pass; Docker Compose and a GitHub Actions workflow (lint → test → build → DAG import) are defined, and the dashboard demo runs on seeded price history.</p>
+      <p>Next steps: create a snapshot row on every fetch, fix the parse-queue filter, compare consecutive snapshots in the alert, and enforce robots.txt and request pacing before the first live run.</p>
       <p>The design choices — raw-before-parse, Celery/Airflow separation, dimensional modeling — are the parts worth keeping: when a site changes and a parser breaks, stored HTML lets the data be recovered.</p>
     </section>
   </main>

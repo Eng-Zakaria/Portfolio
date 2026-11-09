@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Estates Data Portfolio — Case Study | Mohammed Zakaria</title>
+  <title>Estates Lakehouse — Estates Data Portfolio Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Estates data portfolio: 20 projects plus a foundation generator, dbt gold marts, CI-gated contracts and a live interactive demo for every project — 100% synthetic and public open data.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,9 +210,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-city"></i> Estates Data Portfolio</h1>
+      <h1><i class="fas fa-city"></i> Estates Lakehouse</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        A complete estates data platform — 20 projects plus a foundation generator, from messy source exports to
+        Estates data portfolio: a complete estates data platform — 20 projects plus a foundation generator, from messy source exports to
         governed gold marts. Every project has a live interactive demo.
       </p>
       <p style="font-size: 0.95rem; color: var(--muted); max-width: 640px; margin-top: 0.75rem;">
@@ -322,7 +322,7 @@
         <li><strong>BIM &amp; Standards (P11–P14):</strong> IFC → analytical tables with a model QA report that finds every planted defect; a COBie validator with a handover loader; a Uniclass mapper measuring 97.81% top-1 accuracy against a 21.49% fuzzy baseline; and an ISO 19650 naming/metadata checker with 20 rules at 94% coverage.</li>
         <li><strong>Building Systems (P15–P17):</strong> MQTT → Node-RED → TimescaleDB → Grafana ingestion (84,435/84,435 valid messages, 141 dead-lettered, 20/20 planted faults detected); energy-anomaly detection over 210 injected faults ranking the planted findings #1 and #2; and air-quality/occupancy analytics on 15-minute sensor data with 38 tests.</li>
         <li><strong>Twin, Spatial &amp; Governance (P18–P20):</strong> a canonical-ID crosswalk with Brick Schema and a FastAPI context API; an OpenStreetMap-footprint spatial carbon map with heat clusters and isochrones; and a governance pack — metric registry, glossary, dashboard guides, runbooks and a training kit — held together by 126 tests.</li>
-        <li><strong>Honest Scope:</strong> all 20 projects plus the foundation are delivered and evidenced in dated acceptance docs. Recorded gaps stay visible: the P15 live Docker stack was not exercised in the build environment, and P13 classifies against a clearly named dev placeholder until the official NBS tables are fetched (it refuses final runs).</li>
+        <li><strong>Scope &amp; open items:</strong> all 20 projects plus the foundation are delivered and evidenced in dated acceptance docs. Open items: exercise the P15 live Docker stack, and fetch the official NBS tables so P13 moves off its named dev placeholder (it refuses final runs until then).</li>
       </ul>
     </section>
 
@@ -353,8 +353,8 @@
       </p>
       <p>
         The constraint made the work stronger: because real data cannot be exposed, detection and matching were
-        measured against known ground truth instead of assumed. What remains open is stated plainly in
-        <code>STATUS.md</code> — the P15 live stack and the P13 official code tables — rather than implied.
+        measured against known ground truth instead of assumed. Next steps, tracked in <code>STATUS.md</code>:
+        run the P15 live stack and load the P13 official code tables.
       </p>
     </section>
   </main>

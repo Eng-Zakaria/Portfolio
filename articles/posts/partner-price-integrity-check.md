@@ -1,28 +1,9 @@
 ---
-title: "A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping"
+title: "A 6-stage price-integrity check: tolerance bands, fuzzy matching, resumable scraping"
 date: 2026-11-08
 summary: "How a daily pipeline at Waffarha checks voucher prices against partners' own websites, and the three decisions that shape it: a tolerance band, conservative fuzzy-match thresholds, and when to use a headless browser."
 tags: [Data Quality, Web Scraping, Airflow]
 draft: false
-sources:
-  - Waffarha/waffarha-partners-scrapper/README.md
-  - Waffarha/waffarha-partners-scrapper/SPEC.md
-  - Waffarha/waffarha-partners-scrapper/config/settings.yaml
-  - Waffarha/waffarha-partners-scrapper/src/matching/tiered_matcher.py
-  - Waffarha/waffarha-partners-scrapper/src/comparison/evaluator.py
-  - Waffarha/waffarha-partners-scrapper/src/models/comparison.py
-  - Waffarha/waffarha-partners-scrapper/src/models/partner.py
-  - Waffarha/waffarha-partners-scrapper/src/pipeline.py
-  - Waffarha/waffarha-partners-scrapper/src/scrapers/registry.py
-  - Waffarha/waffarha-partners-scrapper/src/scrapers/generic.py
-  - Waffarha/waffarha-partners-scrapper/src/scrapers/circuit_breaker.py
-  - Waffarha/waffarha-partners-scrapper/dags/waffarha_price_integrity_dag.py
-  - Waffarha/waffarha-partners-scrapper/dags/waffarha_reachability_audit_dag.py
-  - Waffarha/waffarha-partners-scrapper/docs/adr/0002-tiered-matching.md
-  - Waffarha/waffarha-partners-scrapper/GAP_ANALYSIS.md
-  - Waffarha/waffarha-partners-scrapper/PHASE_6_SUMMARY.md
-  - Waffarha/PROJECT_SUMMARY_waffarha-partners-scrapper.md
-  - Profile/Portfolio/projects/partner-price-integrity.html
 ---
 
 This is a write-up of a production pipeline at Waffarha. It runs every day and checks whether a
@@ -72,8 +53,8 @@ per-domain circuit breaker opens after 5 consecutive failures and skips that dom
 seconds; those partners show up in the report under a sixth bucket, `circuit_open`, and their rows
 are classified Unverifiable rather than Unmatched.
 
-Each successfully scraped partner gets its own checkpoint file, `partner_<id>.json`. On a re-run of
-the same run directory, the pipeline loads those files, skips partners that already have one, and
+Each successfully scraped partner gets its own checkpoint file, `partner_<id>.json`, written when
+the scraping stage finishes. On a re-run of the same run directory, the pipeline loads those files, skips partners that already have one, and
 scrapes only the rest. Partners that failed are deliberately not checkpointed, so a retry picks
 them up. Failed offers also go to a `dead_letters.json` file with the stage and the last error.
 
@@ -155,7 +136,7 @@ Playwright handles those, but it costs memory, CPU, and time per page, and it's 
 fall over when you run many partners at once. The scraper registry picks a backend in order: a
 partner-specific adapter if one is registered, then Playwright, then the generic scraper.
 
-Here's the honest part. Playwright's handler currently claims every domain whenever it's enabled,
+One trade-off to note. Playwright's handler currently claims every domain whenever it's enabled,
 which it is by default. So in practice the static scraper is the fallback when the browser is
 switched off, not a first attempt that escalates.
 
@@ -167,8 +148,8 @@ Excel, and Markdown. The report separates Violation, Watch, Clear, and Unverifia
 carries the evidence URL, the match method, and the match confidence. The test suite is at 28
 tests, with ruff, black, and mypy in CI.
 
-What I can't claim: I don't have a measured violation count or a measured match precision to
-share, so I'm not quoting one. A few gaps are written down in the project's own gap analysis:
+Violation counts and match precision aren't published here. Known gaps from the project's own gap
+analysis:
 
 - Checkpoints are written once the scraping stage finishes, not after each partner. A crash in the
   middle of Stage 4 loses that attempt's progress.

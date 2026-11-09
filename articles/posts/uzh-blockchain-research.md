@@ -4,15 +4,6 @@ date: 2026-11-09
 summary: "A look back at my remote 2023 Blockchain Analysis internship with UZH and its Deep Dive into Blockchain summer school: data pipelines and validation over Ethereum and a university blockchain, Solidity smart contracts, and what raw chain data teaches a data engineer."
 tags: [Career, Blockchain, Research]
 draft: false
-sources:
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - CV/profile/mohamed_zakaria_resume_data.yml
-  - CV/templates/Main_Resume_Template.tex
-  - CV/REVIEW_NOTES.md
-  - Profile/Portfolio/index.html
-  - Profile/Portfolio/articles/posts/ethereum-neo4j-vs-spark.md
-  - Profile/Portfolio/articles/posts/gdpr-native-chain-analytics.md
-  - Profile/Portfolio/articles/posts/data-quality-toolkit.md
 ---
 
 From June to August 2023, between my third and fourth years at Helwan University, I worked remotely as a Blockchain Analysis Intern for the University of Zurich (UZH). This is a career reflection; the facts come from my CV, my UZH programme confirmation and the project write-ups linked below. The rest is my own view of what working with raw blockchain data does to the way a data engineer thinks.
@@ -21,7 +12,7 @@ From June to August 2023, between my third and fourth years at Helwan University
 
 The work sat inside UZH's Web3 and Fintech research, and it had two sides: data engineering over blockchain data, and smart-contract development in Solidity.
 
-On the data side, I used Python to extract and process Ethereum datasets for research, working from raw node data at the level of blocks and transactions. We worked with public chain data, and the team also worked on a blockchain specific to the university itself, which was large. Three kinds of output came out of that work:
+On the data side, I used Python to extract and process Ethereum datasets for research, working from raw node data at the level of blocks and transactions. We worked with public Ethereum data and a university-run research chain. Three kinds of output came out of that work:
 
 - **Pipelines** that pulled chain data into a shape researchers could use.
 - **Validation and sanitization scripts** for the raw node data, so that what reached analysis had been checked first.
@@ -81,9 +72,9 @@ The internship ended in August 2023, but the interest didn't. Two later, indepen
 | Ethereum forensics harness | Apr 2025 – Feb 2026 | A Bronze/Silver/Gold pipeline, three money-laundering detectors and a harness for timing Neo4j against Spark on multi-hop money-flow queries |
 | ChainGuard privacy layer | Later prototype | Masking personal data in on-chain and market feeds before analytics, with an audit-log table and retention scheduling |
 
-The first is written up in [Neo4j vs Spark for multi-hop money flows](../articles/ethereum-neo4j-vs-spark.html). It is the graph-versus-batch question that working with transaction data raises: money moves across many hops, and some engines handle that better than others. That post is honest about where the harness stands today.
+The first is written up in [Neo4j vs Spark for multi-hop money flows](../articles/ethereum-neo4j-vs-spark.html). It is the graph-versus-batch question that working with transaction data raises: money moves across many hops, and some engines handle that better than others. That post covers the harness and the real-engine run that comes next.
 
-The second is [Masking on-chain data for GDPR](../articles/gdpr-native-chain-analytics.html). It goes back to the "law" part of the UZH course title: public ledgers and privacy rules pull in different directions, and a data engineer sits in the middle. That post is a design review of what a privacy gate can and can't do.
+The second is [Masking on-chain data for GDPR](../articles/gdpr-native-chain-analytics.html). It goes back to the "law" part of the UZH course title: public ledgers and privacy rules pull in different directions, and a data engineer sits in the middle. That post walks through the ChainGuard design and what a privacy gate can and can't do.
 
 ## Looking back
 

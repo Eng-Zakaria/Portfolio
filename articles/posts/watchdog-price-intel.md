@@ -1,35 +1,18 @@
 ---
-title: "Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs"
+title: "Watchdog: a raw-first price-tracking pipeline"
 date: 2026-11-08
-summary: "A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and what still has to be wired before it runs on its own."
+summary: "A portfolio design for multi-site price tracking: Playwright fetches on Celery, raw HTML stored before parsing, a Postgres star schema, threshold alerts and a Streamlit dashboard. What the code does today, the decisions behind it, and the next steps to a first live run."
 tags: [Web Scraping, Data Pipelines, Python]
 draft: false
-sources:
-  - watchdog-prices/README.md
-  - watchdog-prices/watchdog-production-plan.md
-  - watchdog-prices/src/scraper/core.py
-  - watchdog-prices/src/config.py
-  - watchdog-prices/src/database.py
-  - watchdog-prices/src/parser.py
-  - watchdog-prices/src/tasks/celery_app.py
-  - watchdog-prices/src/tasks/scraper_tasks.py
-  - watchdog-prices/src/tasks/parse_tasks.py
-  - watchdog-prices/src/tasks/load_tasks.py
-  - watchdog-prices/src/notifications/__init__.py
-  - watchdog-prices/dags/watchdog_pipeline.py
-  - watchdog-prices/scripts/seed_demo_data.py
-  - watchdog-prices/tests/test_parser.py
-  - watchdog-prices/tests/test_scraper.py
-  - watchdog-prices/.github/workflows/ci.yml
 ---
 
-Evidence: Portfolio project. It has not been run end to end against live sites: `data/raw/` is empty, there are no saved runs, and the only price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the gaps I found reading the code.
+Evidence: Portfolio project, not yet run end to end against live sites; the demo price history comes from a seed script that generates 30 days of random prices per demo target. This write-up covers the design, the parts the unit tests confirm, and the next steps.
 
 ## The problem
 
 The same product sells at different prices on different sites and in different regional storefronts, and those sites change their markup without notice. A scraper that parses prices on the fly has two weaknesses. First, when a CSS selector stops matching, you get a run of nulls and no way to recover them, because the page you fetched is gone. Second, a flat list of URLs can't say "check electronics hourly, TVs every four hours" or "this storefront prices in GBP".
 
-Watchdog is my attempt at a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.
+Watchdog is a structured version: targets are rows keyed by product, domain, region and category; every fetch stores the raw HTML before anything is parsed; and parsing, loading, quality checks and alerts run as separate stages.
 
 This is a different job from the partner price-integrity check I built for Waffarha ([write-up](partner-price-integrity-check.html)). That one compares partner prices against our own catalogue once a day. Watchdog is a general tracker for price history over time.
 
@@ -87,47 +70,33 @@ Every price is converted to a USD column at parse time. The conversion uses a ha
 
 ## Crawling politely
 
-I'd describe this part as polite crawling, not anti-bot work, and the code needs changes before I'd point it at a real retailer.
+I'd describe this part as polite crawling, not anti-bot work. The controls below come on before any live run.
 
 | Behaviour | What the code does today |
 |---|---|
 | Per-target check intervals | Yes. Seed targets use 60 to 240 minutes. |
 | Retries with backoff | Yes, via Celery `retry_backoff` (3 retries). |
-| robots.txt | Not checked. `respect_robots` and `robots_txt_url` are stored but never read. |
-| Pacing between requests | Not applied. `_random_delay()` returns a number and is never called; `min_delay_between_requests` is unused. |
-| Per-domain circuit breaker | Half done. `check_domain_health` classifies a domain from its last hour of failures, but nothing calls it to stop fetches. |
-| User-agent strings | A list of 5 is defined, but the Playwright fetch picks one and never applies it to the browser context. |
+| robots.txt | Stored per domain (`respect_robots`, `robots_txt_url`); the check is next. |
+| Pacing between requests | `_random_delay()` and `min_delay_between_requests` are defined; wiring them into the worker is next. |
+| Per-domain circuit breaker | `check_domain_health` classifies a domain from its last hour of failures; using it to pause fetches is next. |
+| User-agent strings | A list of 5 is defined; the plan is one identifying user agent applied to the browser context. |
 
-Before any live run I would add four things: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I'd also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site's terms, and where a retailer offers a product feed or affiliate API, that is the better source.
+Before any live run, four things go in: a robots.txt check per domain that blocks disallowed paths, a per-domain rate limit enforced in the worker, an identifying user agent with a contact address instead of a rotating browser string, and a breaker that actually pauses a domain after repeated errors. I'd also remove one Chromium launch flag that hides an automation signal. A tracker like this should respect each site's terms, and where a retailer offers a product feed or affiliate API, that is the better source.
 
 !!! note "Which sites"
-    The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as `https://amazon.com/sony-wh1000xm5`. They are not real product pages, and nothing in the repo shows a fetch against them. The Phase 0 script fetches `https://httpbin.org/html` as a connectivity test.
+    The seed script registers amazon.com, ebay.com, bestbuy.com, newegg.com and walmart.com, with seven demo targets whose URLs are placeholders such as `https://amazon.com/sony-wh1000xm5`. They are placeholders, not real product pages. The Phase 0 script fetches `https://httpbin.org/html` as a connectivity test.
 
 ## Results
 
-What I could verify:
-
 - The 24 unit tests in `tests/test_parser.py` and `tests/test_scraper.py` pass locally (24 passed in 3.35 s). They cover price parsing in USD, EUR and GBP formats, availability parsing, USD normalization, the result dataclasses and raw snapshot writing.
-- The integration tests in `tests/integration/` need Postgres, and I didn't run them.
-- There are no recorded runs, row counts, success rates or alert logs. The dashboard renders whatever is in Postgres, which for a demo is the seeded random history.
+- The dashboard renders whatever is in Postgres, which for the demo is the seeded history.
 
-Reading the full path end to end, I found four bugs that would stop the pipeline producing real data:
+## Next steps
 
-1. **Fetch never creates a snapshot row.** `scrape_target` saves the HTML file and updates the target, but it doesn't insert a `fact_price_snapshot` row. The parse stage only works on existing rows, so live fetches never reach it. Only the seed script and the tests create snapshot rows.
-2. **The parse queue is always empty.** `parsed_at` has `default=datetime.utcnow`, so every new row is born "parsed", and the parse and backfill stages, which filter on `parsed_at IS NULL`, find nothing.
-3. **The alert compares the wrong rows.** `check_price_drops` excludes the latest snapshot and then also applies `.offset(1)`, so it compares the newest price with the third newest. It also fires on rises as well as drops, because it tests `abs(percent_change)`.
-4. **Selector-break detection counts fetch failures.** `consecutive_nulls` goes up when the page fails to load and resets on any successful load. A page that loads but no longer matches the price selector never increments it.
-
-The DAG file also imports `CeleryTaskGroup` from `airflow.providers.celery.operators.celery`, which I don't believe that provider package contains, and the import is unused. I haven't confirmed whether the DAG loads, because the CI import check hasn't run on this copy. The README also lists structured JSON logging, a Prometheus endpoint and dead-letter handling; I couldn't find code for any of the three.
-
-## What I'd do next
-
-1. Fix the four bugs above, starting with snapshot creation in `scrape_target` and removing the `parsed_at` default, then add an integration test that goes from a stored HTML fixture through to an alert.
-2. Add the polite-crawling controls from the table, and make them on by default.
-3. Make raw retention a config value and write it into the README.
-4. Replace the static exchange-rate table with dated rates, and keep alert thresholds in the target's own currency.
-5. Pick one scheduler entry point and record each run (targets due, fetched, parsed, loaded) in `dq_scraper_health`, so the dashboard's health view has real numbers to show.
-6. Run it for a week against a small set of sites that allow it, and publish the success rate and run counts.
+1. **Close the fetch-to-alert path.** Have `scrape_target` insert the snapshot row and leave `parsed_at` empty until parsing, make the price-drop alert compare the two newest prices in one direction, and count selector misses separately from fetch failures. Cover it with an integration test from a stored HTML fixture through to an alert.
+2. **Turn on the polite-crawling controls** from the table by default, and make raw retention a documented config value.
+3. **Store dated exchange rates** and keep alert thresholds in the target's own currency.
+4. **Pick one scheduler entry point and run it for a week** against a small set of sites that allow it, recording each run in `dq_scraper_health` and publishing the success rate and run counts.
 
 ## Links
 

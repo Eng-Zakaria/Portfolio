@@ -258,8 +258,8 @@
           <div class="metric-label">Alert Cooldown</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">Email</div>
-          <div class="metric-label">+ Mock SMS Log</div>
+          <div class="metric-value">2</div>
+          <div class="metric-label">Notification paths</div>
         </div>
       </div>
     </section>
@@ -286,7 +286,7 @@
         <li><strong>Simulation:</strong> Python sensor simulator writes JSONL for 3 ponds by default across pH, dissolved oxygen, ammonia, and temperature. Class defaults are 5-minute sampling and a 10% anomaly rate; the containerised demo runs at 10 seconds and 30%.</li>
         <li><strong>Ingestion:</strong> Airflow DAG ingest_sensor_data is meant to run every 5 minutes, reading the JSONL file and inserting via execute_batch with page_size=100. It re-reads the whole file each run, so incremental loading is still to do.</li>
         <li><strong>Storage:</strong> TimescaleDB hypertable sensor_readings holds the time series. The API expects an alerts table, but no script creates it yet; alerts are written to a JSONL log.</li>
-        <li><strong>Alerting:</strong> A standalone AlertManager (not yet called from the DAG or API) defines ammonia 1.0 / 2.0 ppm, pH 8.2 / 8.8, dissolved oxygen 5.0 / 4.0 mg/L and temperature 28.0 / 30.5 °C, with an in-memory 15-minute cooldown per pond and parameter. Testing showed the dissolved-oxygen check is inverted, pH thresholds are never matched, and critical breaches are reported as high; fixes are listed in the write-up. Email goes over SMTP; SMS is a mocked Twilio-like log file.</li>
+        <li><strong>Alerting:</strong> A standalone AlertManager (not yet called from the DAG or API) defines ammonia 1.0 / 2.0 ppm, pH 8.2 / 8.8, dissolved oxygen 5.0 / 4.0 mg/L and temperature 28.0 / 30.5 °C, with an in-memory 15-minute cooldown per pond and parameter. Email goes over SMTP; SMS is a mocked Twilio-like log file.</li>
         <li><strong>Serving:</strong> Docker Compose starts a Grafana 10.1.5 container (no datasource or dashboard JSON checked in yet), and a FastAPI app defines /readings, /alerts, /analytics and a mock actuator endpoint.</li>
         <li><strong>PRD targets:</strong> Alert latency under 5 minutes and 95%+ uptime in local testing. These are targets, not measured results.</li>
       </ul>
@@ -316,8 +316,13 @@
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>AquaWatch is a working sketch: simulated pond telemetry, an Airflow DAG targeting TimescaleDB, and an alert module whose per-pond cooldown works but whose threshold rules need fixing before they can be trusted. It has not been run end to end with measurements, and the Grafana dashboards are still to be built.</p>
-      <p>PRD targets (alert latency under 5 minutes, 95%+ uptime in local testing) have not been measured. Local project — no public GitHub link.</p>
+      <p>AquaWatch covers the full monitoring loop on simulated pond telemetry: an Airflow DAG loading TimescaleDB, an alert module with per-pond, per-parameter cooldowns, email plus a mocked SMS path, and a FastAPI layer for readings and alerts.</p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Correct the dissolved-oxygen, pH and severity alert rules, then wire the AlertManager into the DAG.</li>
+        <li>Load incrementally and build the Grafana datasource and dashboards.</li>
+        <li>Run end to end and measure alert latency against the 5-minute target.</li>
+      </ul>
     </section>
   </main>
 

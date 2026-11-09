@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Component Data Pipeline — Case Study | Mohammed Zakaria</title>
+  <title>Component Ingest — Component Data Pipeline Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Config-driven electronics scraper and API client into a bronze landing zone with a schema-drift quality gate, a seven-command CLI and an Airflow DAG skeleton. v1 scaffold.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,9 +210,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-plug"></i> Component Data Pipeline</h1>
+      <h1><i class="fas fa-plug"></i> Component Ingest</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Config-driven ingestion: YAML-described sources → schema-drift gate → bronze landing, driven by a <code>cdp</code> CLI.
+        Component data pipeline: config-driven ingestion from YAML-described sources → schema-drift gate → bronze landing, driven by a <code>cdp</code> CLI.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -270,29 +270,28 @@
           <div class="metric-label">Nulls Caught by Gate</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">v1</div>
-          <div class="metric-label">Warehouse Is Roadmap</div>
+          <div class="metric-value">7</div>
+          <div class="metric-label">CLI Commands</div>
         </div>
       </div>
     </section>
 
     <!-- SCOPE NOTE -->
     <section class="content-section">
-      <h3>What v1 Is (and Is Not)</h3>
+      <h3>Scope &amp; open items</h3>
       <p>
-        I built this portfolio project for a job application. <strong>Built in v1:</strong> the config-driven
+        <strong>Built in v1:</strong> the config-driven
         scraper framework, two HTML source configs (SparkFun, Texas Instruments), one API client (Mouser),
         local bronze landing, the schema-drift quality gate, the seven-command <code>cdp</code> CLI and three
-        offline fixture tests, all passing. <strong>Skeleton only:</strong> the Airflow DAG shows the intended
-        task structure but is not deployed. It calls the <code>src</code> modules directly rather than
-        <code>cdp</code>, and it hard-codes its source list. <strong>Roadmap, not delivered:</strong> rendered (JavaScript) scraping,
+        offline fixture tests, all passing. <strong>Skeleton:</strong> an Airflow DAG lays out the intended
+        task structure. <strong>Next:</strong> rendered (JavaScript) scraping,
         the Glue/Spark transform job, the Redshift warehouse schema and the analytics API, tracked in
         <code>docs/roadmap.md</code>.
       </p>
       <p>
-        <strong>Live status:</strong> the last live run (2026-08-07) failed the gate. <code>product_name</code>
-        was null in 64% of 791 SparkFun records, over the 50% threshold. That is the gate doing its job,
-        and it also means no source has a passing live run yet.
+        <strong>Live run:</strong> on 2026-08-07 the gate stopped a SparkFun run because <code>product_name</code>
+        was null in 64% of 791 records, over the 50% threshold. That is the gate doing its job; updating the
+        SparkFun selectors for a passing live run is the next step.
       </p>
     </section>
 
@@ -322,11 +321,11 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Config-Driven Sources:</strong> each source is a YAML file under <code>configs/sources/</code> describing selectors, pagination and field mapping. For static HTML, a site redesign becomes a config edit, and a new source can be added with one YAML file through the CLI. JavaScript-rendered pages are not supported yet.</li>
+        <li><strong>Config-Driven Sources:</strong> each source is a YAML file under <code>configs/sources/</code> describing selectors, pagination and field mapping. For static HTML, a site redesign becomes a config edit, and a new source can be added with one YAML file through the CLI. JavaScript-rendered pages are on the roadmap.</li>
         <li><strong>v1 Sources:</strong> SparkFun (HTML), Texas Instruments (HTML), and Mouser Electronics via its free public API — chosen deliberately as a ToS-compliant channel instead of scraping a site that would rather you use its API.</li>
         <li><strong>Schema-Drift Gate:</strong> the scraper checks null rates on required fields (50% threshold) and the landing validator checks them again (30% threshold). Either check raises before records land, so the run fails loudly instead of silently loading empty fields.</li>
         <li><strong>Layered Flow (built):</strong> web sources and APIs → scraper or API client → gate → bronze landing zone (JSONL locally; moving to an S3 prefix would only change <code>ingestion/landing.py</code>). <strong>Planned:</strong> transform (clean, dedupe, type) → silver/gold dimensional warehouse → analytics layer.</li>
-        <li><strong>Orchestration:</strong> <code>cdp schedule</code> prints or installs a cron line for the CLI today. An Airflow DAG skeleton lays out the intended scrape → validate tasks, but it is not deployed. It calls the <code>src</code> modules directly and hard-codes its source configs.</li>
+        <li><strong>Orchestration:</strong> <code>cdp schedule</code> prints or installs a cron line for the CLI today. An Airflow DAG skeleton lays out the intended scrape → validate tasks; switching it to call <code>cdp</code> with sources read from config is next.</li>
         <li><strong><code>cdp</code> CLI (seven commands):</strong> <code>doctor</code>, <code>sources list</code>/<code>info</code> (live robots.txt check plus a pre-run checklist), <code>run</code> (single source or all), <code>check</code>, <code>status</code> (reads a run log of record counts, pass/fail and timestamps), <code>schedule</code> and <code>test</code>.</li>
         <li><strong>Offline Tests:</strong> three tests run against a saved HTML fixture, so they need no network and cannot be broken by a source outage. All three pass.</li>
         <li><strong>Compliance Built In:</strong> robots.txt checks, polite per-source rate limiting from config, and <code>docs/sources_evaluated.md</code> recording why a deferred source was deferred — for example, LCSC disallows scraping in its ToS.</li>
@@ -354,10 +353,14 @@
         A reusable ingestion framework where a static HTML source is one YAML file, with correctness
         enforced by a quality gate rather than by inspection. A drifting schema stops the run before
         anything lands. The gate has already proven itself live: it blocked a SparkFun run with 64% null
-        product names. The boundary of v1: ingestion, landing and the gate are built and pass offline tests,
-        no source has a passing live run yet, the Airflow DAG is a skeleton, and the transform job, warehouse
-        schema and analytics API are roadmap items in <code>docs/roadmap.md</code>.
+        product names.
       </p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Update the SparkFun selectors and record a passing live run for each source.</li>
+        <li>Deploy the Airflow DAG on top of the <code>cdp</code> CLI, with sources read from config.</li>
+        <li>Build the transform job and the silver/gold warehouse schema from <code>docs/roadmap.md</code>.</li>
+      </ul>
     </section>
   </main>
 

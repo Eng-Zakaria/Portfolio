@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Waffarha Assistant — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Production RAG customer-service agent for Egypt's leading deals platform. ~13.7M ClickHouse rows, bge-m3 + Qdrant, 87.8% retrieval on a 225-case harness. Bilingual Arabic/English.">
+  <meta name="description" content="Production RAG customer-service agent for an Egyptian deals platform. ~13.7M ClickHouse rows queryable, bge-m3 + Qdrant, 87.8% retrieval hit rate (151/172 retrieval-checked cases of a 225-case suite). Bilingual Arabic/English.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -178,7 +178,10 @@
     }
     @media (max-width: 768px) {
       .project-meta { flex-direction: column; gap: 1rem; }
-      .metrics-grid { grid-template-columns: 1fr 1fr; }
+      .metrics-grid { grid-template-columns: 1fr 1fr; gap: 1rem; }
+      .metric-card { padding: 1rem 0.5rem; min-width: 0; }
+      .metric-value { font-size: 1.75rem; overflow-wrap: anywhere; }
+      .project-nav { flex-wrap: wrap; }
     }
   </style>
   <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108b">
@@ -249,7 +252,7 @@
     <!-- NAV -->
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
-      <a href="https://github.com/Eng-Zakaria/waffarha-chatbot" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+      <a href="../articles/bilingual-rag-retrieval-hit-rate.html">Read the write-up →</a>
     </div>
 
     <!-- METRICS -->
@@ -258,7 +261,7 @@
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-value">87.8%</div>
-          <div class="metric-label">Retrieval</div>
+          <div class="metric-label">Retrieval Hit Rate</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">225</div>
@@ -266,7 +269,7 @@
         </div>
         <div class="metric-card">
           <div class="metric-value">13.7M</div>
-          <div class="metric-label">Live Rows Served</div>
+          <div class="metric-label">Live rows queryable</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">9,106</div>
@@ -283,7 +286,7 @@
     <section class="content-section">
       <h3>The Problem</h3>
       <p>
-        Waffarha, Egypt's leading deals and coupon platform, needed a customer support solution
+        Waffarha, an Egyptian deals and coupon platform, needed a customer support solution
         that could handle the volume and complexity of bilingual (Arabic/English) queries while
         maintaining accuracy and reducing response times. Traditional FAQ systems couldn't handle
         the nuance of customer questions, and manual support was scaling poorly.
@@ -298,11 +301,8 @@
     <!-- ARCHITECTURE -->
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
-        <img src="../docs/diagrams/waffarha-assistant---rag-chatbot.svg" alt="Waffarha Assistant Architecture Diagram" style="width:100%; height:auto;">
+        <img src="../docs/diagrams/waffarha-assistant---rag-chatbot.svg" alt="Waffarha Assistant Architecture Diagram" style="width:100%; max-width:100%; height:auto;">
       </div>
     </section>
 
@@ -311,12 +311,12 @@
       <h3>Approach & Implementation</h3>
       <ul>
         <li><strong>Deterministic Routing:</strong> Built a gate cascade (greeting/injection/refusal floors, FAQ-topic override, direct FAQ/stock shortcuts) that resolves routine queries without LLM calls, plus an evidence gate so the agent never freeforms beyond retrieved sources.</li>
-        <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Production runs BAAI/bge-m3 (1024-dim) with 87.8% retrieval on the 225-case harness.</li>
+        <li><strong>Multilingual Embeddings:</strong> Evaluated 4 embedding models (multilingual-E5-large, multilingual-E5-base, BGE-M3, mpnet) across Arabic, English, and Franco-Arabic queries. Production runs BAAI/bge-m3 (1024-dim): 87.8% retrieval hit rate (151/172 retrieval-checked cases); end-to-end tracked separately on the 225-case suite.</li>
         <li><strong>Vector Store Benchmarking:</strong> Tested 5 backends (FAISS, Chroma, Qdrant, LanceDB, pgvector); production uses embedded Qdrant over 9,106 docs / 2,923 merchants while the agent answers from ~13.7M live rows across 19 ClickHouse tables.</li>
         <li><strong>Fact-Checking Layer:</strong> Built an automated system that extracts verifiable claims (prices, discounts, dates) from LLM-generated answers and cross-checks them against retrieved sources, stripping unsupported claims.</li>
         <li><strong>Personal Queries:</strong> Implemented live ClickHouse lookups for user-specific data (coupons, orders, spending history) routed away from the vector index to keep PII out of embeddings and ensure fresh results.</li>
         <li><strong>Automated Ingestion:</strong> Created Airflow DAGs for scheduled ingestion from ClickHouse, deduplication by content hash, SCD2 versioning, and vector index updates on data changes.</li>
-        <li><strong>CI Integration:</strong> Built a 225-case, 20-category evaluation harness with exit-code gating — retrieval holds 87.8%, and per-category gaps (dialect queries, follow-up memory) are tracked openly as open work.</li>
+        <li><strong>CI Integration:</strong> Built a 225-case, 20-category evaluation harness with exit-code gating — 87.8% retrieval hit rate (151/172 retrieval-checked cases); end-to-end tracked separately on the 225-case suite, with per-category targets for dialect queries and follow-up memory.</li>
         <li><strong>Docker Deployment:</strong> Containerized the full stack (FastAPI, Streamlit, Airflow, vector DB, Redis) with model-baked images for zero-runtime-network production deployment.</li>
       </ul>
     </section>
@@ -359,8 +359,8 @@
       <p>
         The Waffarha Assistant is now in production serving customer support queries.
         The deterministic gate cascade resolves routine queries without LLM calls, reducing
-        costs and latency. The fact-checking layer has significantly reduced hallucination
-        rates, and the CI-integrated evaluation harness ensures regression prevention.
+        costs and latency. Answers that fail a fact check are retried once, then fall back to a
+        minimal factual reply with a human handoff, and the 225-case harness gates each release per category.
       </p>
       <p>
         The modular architecture allows easy addition of new vector backends and embedding

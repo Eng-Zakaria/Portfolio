@@ -59,3 +59,7 @@ The build also updates:
 
 Publish here first. Then on Medium use **Import a story**, paste this post's URL, and Medium will set
 the canonical link back to your site. Add the Medium URL as `medium:` in the front matter and rebuild.
+
+## Keeping sources private
+
+List the files an article is based on in `articles/_sources/<slug>.yml`, not in the post front matter. That folder is git-ignored, so internal paths never go public.

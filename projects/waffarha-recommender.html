@@ -48,6 +48,7 @@
   <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108b">
   <script defer src="../js/main.js?v=20261108b"></script>
   <script defer src="../js/theme-controls.js"></script>
+<style>html,body{overflow-x:clip}</style>
 </head>
 <body>
   <nav>
@@ -78,7 +79,7 @@
       </p>
       <div class="project-meta">
         <div class="meta-item"><span class="meta-label">Role</span><span class="meta-value">Data Engineer</span></div>
-        <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">2026 – Present</span></div>
+        <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">Jul 2026 – Present</span></div>
         <div class="meta-item"><span class="meta-label">Company</span><span class="meta-value">Waffarha</span></div>
         <div class="meta-item"><span class="meta-label">Type</span><span class="meta-value">Production Pipeline</span></div>
         <div class="meta-item"><span class="meta-label">Delivery</span><span class="meta-value">Jenkins · Docker</span></div>
@@ -99,6 +100,7 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/fail-open-nightly-recommender.html">Read the write-up →</a>
     </div>
 
     <section class="content-section">
@@ -120,7 +122,7 @@
 
     <section class="content-section">
       <h3>Pipeline</h3>
-      <table class="stage-table">
+      <div style="overflow-x:auto"><table class="stage-table">
         <thead><tr><th>Stage</th><th>What happens</th><th>Where</th></tr></thead>
         <tbody>
           <tr><td><strong>1</strong></td><td>List and download the last day of MoEngage JSON / NDJSON event exports, cached locally</td><td>Google Cloud Storage</td></tr>
@@ -130,7 +132,7 @@
           <tr><td><strong>5</strong></td><td>Recency-weighted scoring, then filter to offers that are still active</td><td>ClickHouse</td></tr>
           <tr><td><strong>6</strong></td><td>Upsert top-N recommendations per user in 5,000-row batches through an SSH tunnel</td><td>MySQL on AWS RDS via EC2</td></tr>
         </tbody>
-      </table>
+      </table></div>
     </section>
 
     <section class="content-section">

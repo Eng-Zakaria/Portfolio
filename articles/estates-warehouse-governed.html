@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Modeling estates data to Uniclass, COBie and SFG20", "description": "How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html", "wordCount": 1874, "keywords": "Data Modeling, Data Warehousing, SQL"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Modeling estates data to Uniclass, COBie and SFG20", "description": "How I built a small estates warehouse that checks asset data against Uniclass, COBie and SFG20 rules before it loads, and where those checks stop short of the real standards.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/estates-warehouse-governed.html", "wordCount": 1884, "keywords": "Data Modeling, Data Warehousing, SQL"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -258,7 +258,7 @@ analytics/netzero.py         HDD baseline, BMS anomalies, fault → SFG20 asset
 </table></div>
 <p>COBie completeness comes out at 93.3% (56 of 60). The SFG20 and condition-grade rules rejected nothing, because the generator always fills those fields in. They exist, but this data never exercises them. The net zero step produces 42 building-days of HDD-baselined energy, 1 anomaly (the injected 220 kWh spike in B02) and 3 candidate HVAC assets for it.</p>
 <div class="admonition note">
-<p class="admonition-title">Testing is thin</p>
+<p class="admonition-title">Test coverage: one end-to-end smoke test; per-rule tests are next.</p>
 <p><code>tests/test_checks.py</code> holds one smoke test. It regenerates data, runs ingest and validation, and asserts that at least one asset was quarantined and that COBie completeness is below 100%. It shows the pipeline runs end to end. It doesn&rsquo;t test each rule on its own.</p>
 </div>
 <p>When I queried the warehouse, I also found a gap the rules don&rsquo;t cover. The generator gives each asset a random <code>building_id</code> that doesn&rsquo;t depend on its space, and 65 of the 107 loaded assets sit in a space that belongs to a different building. No check compares <code>dim_asset.building_id</code> with <code>dim_space.building_id</code>, so building-level counts in <code>vw_emr_summary</code> aren&rsquo;t consistent with the space hierarchy.</p>
@@ -289,7 +289,7 @@ analytics/netzero.py         HDD baseline, BMS anomalies, fault → SFG20 asset
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="ethereum-neo4j-vs-spark.html"><small>← Newer</small><b>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first</b></a>
-          <a class="post-pager-next" href="estates-lakehouse-zero-loss.html"><small>Older →</small><b>8/8 sources, zero loss: a lakehouse that proves itself</b></a>
+          <a class="post-pager-next" href="estates-lakehouse-zero-loss.html"><small>Older →</small><b>Proving zero loss: count reconciliation for a bronze/silver lakehouse</b></a>
         </nav>
       </footer>
     </article>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Market Intelligence — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Multilingual sentiment analysis and market monitoring pipeline for Waffarha. AraBERT, RoBERTa, connector registry architecture.">
+  <title>Brand Radar — Market Intelligence Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Brand Radar (pilot): market-intelligence pipeline for Waffarha. Connector registry over 5 sources, 6-category topic tagger, AraBERT/RoBERTa sentiment routing.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -65,9 +65,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-chart-line"></i> Market Intelligence</h1>
+      <h1><i class="fas fa-chart-line"></i> Brand Radar</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Multilingual sentiment analysis and brand monitoring pipeline for Waffarha.
+        Market intelligence: multilingual sentiment and brand monitoring pipeline for Waffarha (pilot).
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -84,7 +84,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Type</span>
-          <span class="meta-value">Analytics Pipeline</span>
+          <span class="meta-value">Pilot</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -99,6 +99,7 @@
   <main class="container">
     <div class="project-nav">
       <a href="../index.html#projects">← Back to Projects</a>
+      <a href="../articles/brand-radar-connector-registry.html">Read the write-up →</a>
     </div>
 
     <section class="content-section">
@@ -114,9 +115,6 @@
 
     <section class="content-section">
       <h3>Architecture</h3>
-      <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
-        <i class="fas fa-info-circle" style="color: var(--accent);"></i> Hover or tap any component to see details
-      </p>
       <div class="arch-full">
         <img src="../docs/diagrams/market-intelligence---sentiment-pipeline.svg" alt="Market Intelligence Architecture Diagram" style="width:100%; height:auto;">
       </div>
@@ -126,7 +124,7 @@
       <h3>Implementation</h3>
       <ul>
         <li><strong>Connector Registry:</strong> Designed a modular architecture where each data source requires only one connector file. No changes needed to ingestion, analysis, storage, or dashboard layers when adding new sources.</li>
-        <li><strong>Multilingual Processing:</strong> Design routes Arabic mentions to AraBERT (aubmindlab/bert-base-arabertv02) and English mentions to RoBERTa for sentiment analysis, handling Arabizi (Arabic in Latin script) with rule-based detection — documented architecture, serving not yet implemented.</li>
+        <li><strong>Multilingual Processing:</strong> Design routes Arabic mentions to AraBERT (aubmindlab/bert-base-arabertv02) and English mentions to RoBERTa for sentiment analysis, handling Arabizi (Arabic in Latin script) with rule-based detection. The routing is in code; the pilot scores sentiment with a keyword fallback until the models are served.</li>
         <li><strong>Topic Tagging:</strong> Implemented a rule-based tagger across 6 business categories: app bugs, customer service, pricing, wallet security, offer accuracy, and delivery.</li>
         <li><strong>Negative Triage:</strong> Built a feed that surfaces negative mentions for immediate attention, prioritized by sentiment score and recency.</li>
         <li><strong>Visualization:</strong> Created Streamlit dashboards with sentiment trends over time, topic breakdowns, and interactive filters.</li>
@@ -148,11 +146,14 @@
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
-        The pipeline provides Waffarha with continuous visibility into brand perception
-        across markets. The modular architecture allows easy expansion to new sources,
-        and the multilingual support ensures comprehensive coverage of Arabic and English
-        conversations. The negative mention triage feed enables rapid response to emerging
-        issues.
+        Brand Radar is running as a pilot. Connectors collect mentions from 5 sources (App Store,
+        Google Play, Reddit, Google News, web search) into one schema; sentiment runs on a keyword
+        fallback, with AraBERT/RoBERTa routing already in code; and a rule-based tagger sorts every
+        mention into 6 business categories.
+      </p>
+      <p>
+        Next: serve the AraBERT and RoBERTa models behind the existing routing and validate them
+        against the keyword baseline on labelled Arabic and English mentions.
       </p>
     </section>
   </main>

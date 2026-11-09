@@ -4,29 +4,6 @@ date: 2026-11-08
 summary: "A portfolio scaffold for a digital bank: a FastAPI core-banking API, a Spring Boot transaction service, four smaller Python services, a Postgres schema and three Airflow DAGs in one Docker Compose file. What each part does today, how money movements are kept consistent, and what still has to be wired before it runs end to end."
 tags: [Microservices, Docker, Data Engineering]
 draft: false
-sources:
-  - E-Finance/README.md
-  - E-Finance/docker-compose.yml
-  - E-Finance/databases/postgres/init/01_create_databases.sql
-  - E-Finance/databases/postgres/init/02_core_schema.sql
-  - E-Finance/services/core-banking-api/app/main.py
-  - E-Finance/services/core-banking-api/app/config.py
-  - E-Finance/services/core-banking-api/app/database.py
-  - E-Finance/services/core-banking-api/app/services/account_service.py
-  - E-Finance/services/core-banking-api/app/services/auth_service.py
-  - E-Finance/services/core-banking-api/app/api/v1/deps.py
-  - E-Finance/services/transaction-service/src/main/java/com/efinance/transaction/service/TransactionService.java
-  - E-Finance/services/transaction-service/src/main/java/com/efinance/transaction/service/FraudCheckService.java
-  - E-Finance/services/fraud-detection/app/ml/fraud_detector.py
-  - E-Finance/services/fraud-detection/app/ml/model_manager.py
-  - E-Finance/services/bnpl-service/app/services/credit_scoring.py
-  - E-Finance/services/bnpl-service/app/services/order_service.py
-  - E-Finance/services/web3-service/app/blockchain/wallet_manager.py
-  - E-Finance/services/analytics-service/app/spark/analytics.py
-  - E-Finance/airflow/dags/transaction_etl_dag.py
-  - E-Finance/airflow/dags/interest_calculation_dag.py
-  - E-Finance/airflow/dags/fraud_detection_dag.py
-  - E-Finance/infrastructure/prometheus/prometheus.yml
 ---
 
 This is a portfolio project with no production deployment and no real customer data. E-Finance is a scaffold for a digital bank: six backend services, a React web app, a Postgres schema and three Airflow DAGs, all declared in one Docker Compose file. The core-banking API holds most of the real logic. The other services are thinner, and several still run on in-memory dictionaries or generated sample data. Below I cover what the code does, the decisions behind it, and what is left before the stack runs end to end.
@@ -119,24 +96,21 @@ The weak points are configuration and the other services. `config.py` ships defa
 
 ## Results
 
-Here is what I can verify from the repository, without running it:
+What the repository contains:
 
 - 6 backend services; about 5,400 lines in the core API and about 14,200 lines across services, DAGs, schema and frontend.
 - 93 FastAPI routes across the Python services (44 in core banking) and 10 Spring routes.
 - A 320-line Postgres schema with 10 tables, indexes and `updated_at` triggers.
 - 3 Airflow DAGs with idempotent upserts in the ETL load and velocity steps.
 - Prometheus scrape config for all six services.
-- The Java service has compiled classes under `target/`. There are no automated tests in the repo.
+- The Java service has compiled classes under `target/`.
 
-The stack does not come up as committed. Only three of the six services have a Dockerfile (core banking, fraud and transaction), so `docker compose up` fails to build the other three. The core API imports `app.middleware` and `app.events`, and neither exists. MongoDB and Redis connect at startup, but no code path uses them yet. The fraud models are fitted on `np.random.rand` placeholder data until real models are saved, so their scores carry no signal.
+## Next steps
 
-## What I'd do next
-
-1. Make the stack boot: add the three missing Dockerfiles, restore or remove the missing middleware imports, and add one smoke test per service.
-2. Lock balances during transfers with `SELECT ... FOR UPDATE` or a version column, and accept an `Idempotency-Key` header that is stored with a unique constraint.
-3. Keep one transaction store. Either the core API calls the Java service, or the Java service owns all writes and the core API reads from it. Then publish through an outbox table and add a real Kafka consumer.
-4. Fix the ETL transform so it aggregates the extracted rows, create the warehouse database, normalise status casing, and make interest accrual atomic and guarded by `last_interest_calculated`.
-5. Move secrets into environment files kept out of git, and put the gateway in front of the services that have no auth today.
+1. **Boot the full stack.** Add Dockerfiles for the three services that don't have one yet (core banking, fraud and transaction do), tidy the core API's middleware imports, add one smoke test per service, and train the fraud models on saved data instead of placeholder arrays.
+2. **Make money movement safe.** Lock balances during transfers with `SELECT ... FOR UPDATE` or a version column, accept a stored `Idempotency-Key`, and keep one transaction store that publishes through an outbox table to a Kafka consumer.
+3. **Harden the DAGs.** Aggregate the extracted rows in the ETL transform, create the warehouse database, normalise status casing, and make interest accrual atomic and guarded by `last_interest_calculated`.
+4. **Secrets and service auth.** Move secrets into environment files kept out of git, and put the gateway in front of the services that have no auth today.
 
 ## Links
 

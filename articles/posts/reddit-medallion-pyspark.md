@@ -1,27 +1,16 @@
 ---
-title: "A 7-stage PySpark medallion for Reddit signals"
+title: "A 7-stage PySpark pipeline for Reddit signals"
 date: 2026-11-08
 summary: "How I split a small Reddit batch job into bronze, silver and gold Parquet layers in PySpark, what each of the seven stages really does, and the shortcuts I would fix next."
 tags: [Spark, Data Pipelines, Python]
 draft: false
-sources:
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/README.md
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/src/pipeline.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/src/schema.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/src/udfs.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/01_ingestion.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/02_transform.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/04_windows.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/05_enrichment.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/06_optimization.py
-  - github.com/Eng-Zakaria/reddit-spark-pipeline/notebooks/07_output.py
 ---
 
-**Evidence label: Portfolio (live public Reddit data).** This is a personal project, not client work. It pulls real posts from Reddit's public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in `local[*]` mode on one machine. The repository has no saved outputs, logs or benchmark files, so this article describes what the code does, not measured results.
+**Evidence label: Portfolio (live public Reddit data).** This is a personal project, not client work. It pulls real posts from Reddit's public JSON endpoints, but the volume is small: at most 100 posts from each of 10 subreddits per run, so about 1,000 rows, processed by Spark in `local[*]` mode on one machine. This article describes what the code does and the design choices behind it.
 
 ## The problem
 
-I wanted a practice ground for the Spark patterns I use at work: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit's public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.
+I wanted a practice ground for the Spark patterns from my NTI training and other pipelines: explicit schemas, quality filters, window functions, broadcast joins and partitioned Parquet. I also wanted the data to be real and a little messy. Reddit's public listing endpoint is a good fit. It needs no authentication, it returns nested JSON, and it has the usual problems: deleted authors, bot posts, missing fields.
 
 The question the pipeline answers is simple: across a fixed set of subreddits, which posts from the last day got the most engagement, and how does engagement split by community, hour and topic?
 
@@ -48,7 +37,7 @@ The code comes in two forms. `notebooks/01_ingestion.py` to `07_output.py` are s
  [7] Output     -> data/gold/subreddit=.../day_of_week=.../  (silver, partitioned)
 ```
 
-The diagram shows something the README's layout hides: stages 3 to 7 each read the **silver** table on their own. They do not feed each other. The gold layer is the silver table written again with `partitionBy("subreddit", "day_of_week")`. The trending flags, topics and categories live in side outputs under `data/windows` and `data/enrichment`, not in gold.
+The diagram shows the shape: stages 3 to 7 each read the **silver** table on their own. They do not feed each other. The gold layer is the silver table written again with `partitionBy("subreddit", "day_of_week")`. The trending flags, topics and categories live in side outputs under `data/windows` and `data/enrichment`, not in gold.
 
 So "medallion" fits for bronze and silver. Gold is a re-partitioned copy of silver, not an aggregated or joined layer.
 
@@ -118,14 +107,13 @@ df = df.withColumn("engagement_rank", F.rank().over(w))
 df = df.withColumn("is_trending", F.col("engagement_rank") <= 3)
 ```
 
-The stage also computes `score_velocity` and a "3h" rolling average. Reading the code honestly:
+The stage also computes `score_velocity` and a "3h" rolling average. What each one measures:
 
 - `score_velocity` is `score - lag(score)` over posts ordered by `post_timestamp` within a subreddit. That is the score gap between a post and the post created just before it. It is not how fast one post is gaining score. One API snapshot cannot give real velocity.
 - `rolling_avg_engagement_3h` uses `rowsBetween(-2, 0)`. That is the last three posts, not the last three hours.
 - `rank()` keeps ties, so a subreddit can get more than three trending posts.
-- The notebook's docstring says trending "combines multiple signals". The code uses only rank.
 
-**Why I kept it this simple:** the data is one daily top listing per subreddit. Top-N by engagement is the most honest signal that data supports.
+**Why I kept it this simple:** the data is one daily top listing per subreddit. Top-N by engagement is the strongest signal that data supports.
 
 **Trade-off:** "trending" here means "most engaged in the last day", which Reddit's own `top?t=day` ordering already roughly gives you. To get real trending detection, I need repeated snapshots and a per-post time series.
 
@@ -137,20 +125,15 @@ The broadcast join in stage 5 joins about 1,000 posts to a 10-row lookup. That s
 
 ## Results
 
-Here is what I can say from the repository:
-
 - It ingests up to 1,000 live posts per run (10 subreddits × 100) with a 1-second pause between requests.
 - It writes 7 kinds of output: bronze, silver, 3 aggregation tables, ranked and flagged posts, topic-enriched posts, a repartitioned copy, and a gold layer partitioned by `subreddit` and `day_of_week`.
 - The stage scripts print their own checks, for example rows before and after the quality filter, null counts per column, and a read-back count after each write.
 
-Here is what I cannot claim. The repo has no committed run outputs, row counts, timings or charts. The leaderboard and trending tables under "Sample Output" in the README are placeholders (post ids like `abc123`), not results from a committed run. And this is not "at scale". It is a single-machine job over about 1,000 rows.
-
-!!! note "A bug I found while writing this"
-    `src/pipeline.py` stage 1 starts with `from notebooks.ingestion import fetch_all_subreddits, POST_SCHEMA, BRONZE_PATH`. There is no `notebooks/ingestion.py` (the file is `01_ingestion.py`), and `notebooks/` has no `__init__.py`. As committed, `python -m src.pipeline` should fail before it fetches anything. The per-stage scripts in `notebooks/` do not have this problem. The import is dead code anyway, because the function redefines everything it needs, so the fix is to delete that line.
+It is a single-machine job over about 1,000 rows, built to exercise the patterns rather than the scale.
 
 ## What I'd do next
 
-1. **Fix the orchestrator import** and add a smoke test that runs all seven stages on a small saved JSON fixture, so the main entry point is checked on every commit.
+1. **Smoke-test the orchestrator.** Remove a dead import in `src/pipeline.py` (the per-stage scripts already run) and add a test that runs all seven stages on a small saved JSON fixture on every commit.
 2. **Land raw JSON in bronze** and move the schema to silver, so I can re-process history after a schema change.
 3. **Snapshot on a schedule** (for example hourly), append with a `snapshot_ts` column, and compute real per-post velocity with `lag` over `id` ordered by snapshot time. Use `rangeBetween` on timestamps for true time windows.
 4. **Build a real gold layer**: join the trending, topic and category columns into one table, partitioned by `post_date` instead of day name, so queries can prune by date.

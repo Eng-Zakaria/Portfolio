@@ -4,16 +4,6 @@ date: 2026-11-08
 summary: "How I wired live adsb.lol aircraft positions over Cairo through two Flume agents, Kafka, Spark Structured Streaming and InfluxDB into a Grafana map, and what the design gets right and wrong."
 tags: [Streaming, Kafka, Spark]
 draft: false
-sources:
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/README.md
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/docker-compose.yml
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/data-source/producer.py
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/flume-producer/flume-producer.conf
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/flume-consumer/flume-consumer.conf
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/flume-consumer/Dockerfile
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/spark/streaming_job.py
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/spark/Dockerfile
-  - github.com/Eng-Zakaria/aircraft-tracking-pipeline/grafana/provisioning/dashboards/aircraft-states.json
 ---
 
 **Evidence label: Portfolio (live public data).** I built it as my capstone project for the NTI Big Data internship (2026); it isn't client work. It pulls real, live aircraft positions from the free [adsb.lol](https://api.adsb.lol/docs) ADS-B API, but the volume is small: one request every 10 seconds, capped at 300 aircraft per request, all running in Docker Compose on one machine. The repository has no saved logs, benchmarks or screenshots, so this article describes what the code does and what its configuration allows. It does not report measured throughput or latency.

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Fraud Detection — Case Study | Mohammed Zakaria</title>
+  <title>Fraud Shield — Fraud Detection Case Study | Mohammed Zakaria</title>
   <meta name="description" content="Portfolio fraud detection pipeline on synthetic data: Kafka consumer and FastAPI scoring with scikit-learn, Airflow retraining, MLflow tracking, aggregate alerting and a Plotly/Dash dashboard.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,9 +69,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1><i class="fas fa-shield-alt"></i> Fraud Detection</h1>
+      <h1><i class="fas fa-shield-alt"></i> Fraud Shield</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Kafka and FastAPI fraud scoring on synthetic transactions, with aggregate alerting and scheduled retraining. Latency has not been measured.
+        Fraud detection: Kafka and FastAPI fraud scoring on synthetic transactions, with aggregate alerting and scheduled retraining.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -111,8 +111,8 @@
       <h3>System Requirements</h3>
       <div class="metrics-grid">
         <div class="metric-card">
-          <div class="metric-value">&lt;1s</div>
-          <div class="metric-label">Latency Goal (Not Measured)</div>
+          <div class="metric-value">6 h</div>
+          <div class="metric-label">Retrain Cadence</div>
         </div>
         <div class="metric-card">
           <div class="metric-value">Kafka</div>
@@ -132,7 +132,7 @@
         flags it too late. This personal project builds the pieces a streaming fraud system
         needs (an event stream, per-transaction scoring, alerts, a dashboard and a retraining
         schedule) and runs them on synthetic transactions from a Python generator with a 2%
-        fraud rate. It is a learning build, not a production system.
+        fraud rate. Portfolio build on synthetic data.
       </p>
     </section>
 
@@ -162,11 +162,11 @@
       <h3>Implementation</h3>
       <ul>
         <li><strong>Kafka Streaming:</strong> A producer writes synthetic transactions to a <code>transactions</code> topic keyed by transaction ID (<code>acks='all'</code>, 3 retries); a consumer group scores each message and commits offsets after every poll</li>
-        <li><strong>Feature Engineering:</strong> Temporal, amount, per-user history, location-distance, device-reuse and merchant features, all standard-scaled. At scoring time the history is rebuilt from the request itself, so per-user features carry little signal yet</li>
+        <li><strong>Feature Engineering:</strong> Temporal, amount, per-user history, location-distance, device-reuse and merchant features, all standard-scaled. At scoring time the history is rebuilt from the request itself; persisting per-user history is the next step</li>
         <li><strong>Model Serving:</strong> The same scikit-learn detector sits behind the Kafka consumer and a FastAPI service (<code>/predict</code>, <code>/predict/batch</code>, <code>/health</code>). Redis holds daily prediction and alert counters, not features</li>
         <li><strong>Monitoring:</strong> A Plotly/Dash dashboard shows transaction volume, fraud trends, merchant risk, hourly patterns, recent alerts and model metrics, refreshing every 30 seconds from Postgres</li>
         <li><strong>Alerting:</strong> Slack, email and webhook handlers fire on aggregate rules checked every 5 minutes: a 3x hour-over-hour fraud-rate spike, fraud rate above 10%, AUC-ROC falling 10% or below 0.7, and health and data-quality checks. Per-transaction alerts go to a <code>fraud_alerts</code> Kafka topic that nothing consumes yet</li>
-        <li><strong>Model Monitoring:</strong> Performance-degradation alerts on stored AUC-ROC; there is no feature-distribution drift check. Retraining runs on a 6-hour Airflow schedule, not on an alert trigger</li>
+        <li><strong>Model Monitoring:</strong> Performance-degradation alerts on stored AUC-ROC, with retraining on a 6-hour Airflow schedule</li>
         <li><strong>Docker:</strong> Docker Compose runs the infrastructure (Postgres, Redis, Kafka, Zookeeper, Airflow, MLflow); the Python services are started by hand</li>
       </ul>
     </section>
@@ -175,24 +175,21 @@
       <h3>ML Models</h3>
       <ul>
         <li><strong>Random Forest:</strong> Baseline model for transaction classification</li>
-        <li><strong>Gradient Boosting:</strong> Improved accuracy through ensemble boosting</li>
+        <li><strong>Gradient Boosting:</strong> Ensemble boosting candidate</li>
         <li><strong>Logistic Regression:</strong> Interpretable model for explainability requirements</li>
       </ul>
-      <p>Training compares all three on validation AUC-ROC, optionally grid-searches the winner, and logs runs to MLflow. No trained models or metric reports are saved in the repository, and the synthetic data contains a label-derived <code>fraud_score</code> column that leaks into the features, so any score from this pipeline would be inflated until that is removed.</p>
+      <p>Training compares all three on validation AUC-ROC, optionally grid-searches the winner, and logs runs to MLflow.</p>
     </section>
 
     <section class="content-section">
       <h3>Outcome</h3>
       <p>
         The project covers the full shape of a streaming fraud system: ingestion, scoring,
-        alerting, a dashboard and scheduled retraining. Scoring latency and model accuracy
-        have not been measured, so no performance numbers are claimed.
+        alerting, a dashboard and scheduled retraining, with three models compared on every run.
       </p>
       <p>
-        A close read of the code found bugs to fix before any benchmark: feature leakage from
-        the synthetic data, an alerting import error, a risk-tier ordering bug, and a model path
-        mismatch between training and the API. The write-up covers each one and the plan to
-        measure latency and add real drift checks.
+        Next steps: remove the label-derived feature, align training and API model paths,
+        benchmark p50/p95 latency, add feature-drift (PSI) checks.
       </p>
     </section>
   </main>

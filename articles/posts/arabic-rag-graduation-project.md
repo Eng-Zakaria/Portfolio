@@ -4,29 +4,15 @@ date: 2026-11-08
 summary: "A look at the Django web app my team built around a hosted hadith question-answering model at Helwan University, what it did and didn't do, and which of its gaps I closed later in production RAG at Waffarha."
 tags: [RAG, Arabic NLP, LLM]
 draft: false
-sources:
-  - Hadith_Chat_App/Chat_App/home/views.py
-  - Hadith_Chat_App/Chat_App/home/models.py
-  - Hadith_Chat_App/Chat_App/home/urls.py
-  - Hadith_Chat_App/Chat_App/home/tests.py
-  - Hadith_Chat_App/Chat_App/src/settings.py
-  - Hadith_Chat_App/Chat_App/templates/home/home.html
-  - Hadith_Chat_App/Chat_App/templates/home/chat.html
-  - Hadith_Chat_App/Chat_App/static/js/Estidlale.js
-  - Hadith_Chat_App/requirements.txt
-  - Hadith_Chat_App/pyvenv.cfg
-  - github.com/Eng-Zakaria/Hadith_Chat_App
-  - ../Profile/Portfolio/articles/posts/bilingual-rag-retrieval-hit-rate.md
-  - ../Profile/Portfolio/articles/posts/deterministic-gates-before-llm.md
 ---
 
-Academic work: this was my graduation project at Helwan University (BSc Computers and Artificial Intelligence, 2024), built by a six-person team under the supervision of Dr. Ensaf Hussein. The project's reported grade was A+. The repository I'm writing about is the web application, a Django site called Estidlal that lets a signed-in user ask questions about hadith and keeps their history. The question-answering model itself ran in a separate Hugging Face Space, and its code is not in this repository, so I'll describe it only from the outside.
+Academic work: this was my graduation project at Helwan University (BSc Computers and Artificial Intelligence, 2024), built by a six-person team under the supervision of Dr. Ensaf Hussein. Graded A+. The repository I'm writing about is the web application, a Django site called Estidlal that lets a signed-in user ask questions about hadith and keeps their history. The question-answering model itself ran in a separate Hugging Face Space, and its code is not in this repository, so I'll describe it only from the outside.
 
 ## The problem
 
 Searching hadith collections usually means knowing which book to open and which words to search for. The site's own copy put the goal plainly: help students and researchers search religious sources using "a question, phrase, or word". The landing page describes the intended scope as the Quran and hadith from the six major collections.
 
-My part of the problem was narrower than that sentence. Given a question-answering model my teammates had hosted, build a site where people can sign up, ask a question, see the answer, and find old answers again.
+My part of the problem was narrower than that sentence. Given a question-answering model hosted by teammate Mohamed Maher, build a site where people can sign up, ask a question, see the answer, and find old answers again.
 
 ## Architecture
 
@@ -104,7 +90,7 @@ What I can verify from the repository:
 | Failure handling | Error message to the user plus a stored placeholder answer |
 | Tests | `home/tests.py` is the Django default with no tests |
 | Evaluation | None in this repository |
-| Grade | A+, as reported for the graduation project |
+| Grade | Graded A+ |
 
 I don't have a recorded accuracy figure for the question-answering model. If the team evaluated it, that work lived with the Space, not here. The virtualenv in the repo was created in April 2024, which fits the spring-2024 delivery; the code was pushed to GitHub in March 2026.
 
@@ -114,7 +100,7 @@ Two years later I built a bilingual Arabic and English support assistant at Waff
 
 **Measure retrieval and answers separately.** Here, the web app couldn't see retrieval at all. At Waffarha, the same run scored retrieval at 151 of 172 checked cases (87.8%) and the full pipeline at 64 of 225 (28.4%). Without both numbers I would have fixed the wrong half. I wrote that up in [Retrieval hit rate isn't answer accuracy](../articles/bilingual-rag-retrieval-hit-rate.html).
 
-**Have an eval suite before claiming quality.** This repo has no tests and no evaluation set. The production assistant has a 225-case suite across 20 categories, including prompt injection, out-of-scope questions and checks for merchants that don't exist, and its runner exits non-zero unless every case passes.
+**Have an eval suite before claiming quality.** This repo has no tests and no evaluation set. The production assistant has a 225-case suite across 20 categories, including prompt injection, out-of-scope questions and checks for merchants that don't exist, and it gates per category.
 
 **Don't send everything to the model.** Here, every non-empty question went straight to the Space. In production, greetings, gibberish, injection attempts, unknown merchants and out-of-scope questions are answered or refused by plain rules before any model call, with refusal floors on retrieval similarity. That's in [Deterministic gates before the LLM](../articles/deterministic-gates-before-llm.html).
 
@@ -132,7 +118,7 @@ If I picked this project up again, in order:
 4. Normalize Arabic for history search: strip diacritics and unify alef and ta marbuta forms on both the query and the stored text.
 5. Replace the custom login with `django.contrib.auth` and add a few view tests.
 
-The useful thing about this project, looking back, isn't that it worked. It's that it showed me where I needed to see inside the system and couldn't.
+What it taught me most was where I needed visibility inside the system.
 
 ## Links
 

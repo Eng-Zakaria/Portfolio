@@ -4,11 +4,6 @@ date: 2026-11-08
 summary: "How I designed a central warehouse for a network of 10+ clinics at Nexlify: one star schema, bridge tables for staff who hold several roles, and one Power BI model with a clinic switcher. A design write-up, since the code stays with the client."
 tags: [Data Warehousing, SQL, Power BI]
 draft: false
-sources:
-  - Profile/Portfolio/projects/nexlify-dw.html
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - Profile/Portfolio/index.html
-  - Profile/Portfolio/scripts/generate-diagrams-v2.js
 ---
 
 **Evidence: Production.** This was a client engagement I worked on as a Data Engineer at Nexlify, from January 2025 to January 2026, for a healthcare clinic network. The warehouse ran in production for that client. The code, schemas and data belong to the client, so I have no repository to link and I won't show patient data or real table definitions. What follows is the design and the reasoning behind it, kept to what I can stand behind.
@@ -74,7 +69,7 @@ The cost of this choice is paid up front. Every source has to be mapped onto the
 
 What it bought was that a cross-clinic question became a normal query. Company-wide totals and single-clinic views came from the same tables, so they could not disagree with each other.
 
-The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work spread across Medical, IoT and Fintech domains. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.
+The schema also had to move. Requirements changed during the year, and the star/snowflake design was adapted as the work grew. I also evaluated MySQL against PostgreSQL as the warehouse engine. The warehouse ended up on PostgreSQL.
 
 !!! note "Why a star and not just a normalised copy"
     The sources were already normalised, in their own different ways. Copying them into one database would have centralised the mess, not removed it. A star schema forces the questions that matter for reporting: what is the grain of each fact, and which dimensions describe it.

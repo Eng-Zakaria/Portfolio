@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink | Mohammed Zakaria</title>
-  <meta name="description" content="A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.">
+  <meta name="description" content="A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. The design, what the code does, and what I would finish first.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html">
   <meta property="og:title" content="Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink | Mohammed Zakaria">
-  <meta property="og:description" content="A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.">
+  <meta property="og:description" content="A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. The design, what the code does, and what I would finish first.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink", "description": "A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html", "wordCount": 1746, "keywords": "Streaming, Apache Beam, NiFi"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink", "description": "A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. The design, what the code does, and what I would finish first.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/petroleum-nifi-beam-flink.html", "wordCount": 1393, "keywords": "Streaming, Apache Beam, NiFi"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,10 +61,10 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">Apache Beam</span><span class="post-tag">NiFi</span></div>
         <h1>Wells meet markets: NiFi, RabbitMQ and Beam-on-Flink</h1>
-        <p class="post-lede">A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. What the code does, where the wiring stops, and what I would finish first.</p>
+        <p class="post-lede">A portfolio scaffold that joins synthetic Volve-style well telemetry with EIA and Baker Hughes market feeds through RabbitMQ, NiFi and an Apache Beam job aimed at Flink. The design, what the code does, and what I would finish first.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -83,7 +83,7 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p><strong>Evidence: portfolio project, public data sources, synthetic data in the repo.</strong> The well data is not the real Equinor Volve release. It is six CSVs that <code>scripts/generate-synthetic-volve.py</code> generates with <code>np.random.seed(42)</code>, using Volve column names and well IDs. The market side has two scrapers written against public sources: the EIA Open Data API (WTI and Brent spot prices, free key required) and the Baker Hughes rig-count pages. Nothing in the repo shows either scraper running. There are no saved responses, no logs and no tests. The repo has two commits, from 28 August and 2 September 2026. This is a write-up of a scaffold, not of a system that ran in production.</p>
+<p><strong>Evidence: portfolio project, public data sources, synthetic data in the repo.</strong> The well data is not the real Equinor Volve release. It is six CSVs that <code>scripts/generate-synthetic-volve.py</code> generates with <code>np.random.seed(42)</code>, using Volve column names and well IDs. The market side has two scrapers written against public sources: the EIA Open Data API (WTI and Brent spot prices, free key required) and the Baker Hughes rig-count pages. The repo has two commits, from 28 August and 2 September 2026. This is a scaffold: this post covers the design and the code, and the first end-to-end run is the next step.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>I wanted one place where a question like &ldquo;did this well&rsquo;s pressure anomaly line up with a move in the oil price?&rdquo; could be answered without joining CSV dumps by hand. Telemetry and markets are very different feeds. Sensor readings arrive every few seconds per well and are noisy. Spot prices are daily, and rig counts are weekly. The plan was to replay historical field data as if it were live SCADA telemetry, pull the market feeds on a schedule, push everything through one broker, and run streaming anomaly detection on the sensor side.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
@@ -131,7 +131,7 @@
 </tbody>
 </table></div>
 <p><code>download-volve.sh</code> tries to fetch the real Volve files, but <code>data/downloads/</code> is empty.</p>
-<p>Routing goes through RabbitMQ. <code>config/rabbitmq/definitions.json</code> declares three exchanges (<code>petroleum.sensors</code> and <code>petroleum.market</code> as topic exchanges, <code>petroleum.dlq</code> as direct) and eight queues. When I mapped every routing key to its publisher and its consumer in code, this is what I found:</p>
+<p>Routing goes through RabbitMQ. <code>config/rabbitmq/definitions.json</code> declares three exchanges (<code>petroleum.sensors</code> and <code>petroleum.market</code> as topic exchanges, <code>petroleum.dlq</code> as direct) and eight queues. Each queue, its publisher and its consumer:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -183,7 +183,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>The table is the honest architecture diagram. Each component is shaped correctly on its own, but the hops do not connect. Nothing moves a message from <code>raw</code> to <code>validated</code>. The Beam job does not read from RabbitMQ at all, as I explain below. The dead-letter binding uses a different key from the one the publisher uses.</p>
+<p>Each component is shaped correctly on its own. Connecting the hops is the next step: a <code>raw</code> → <code>validated</code> stage, a RabbitMQ source for the Beam job (more below), and a dead-letter binding that matches the publisher&rsquo;s key.</p>
 <h2 id="decision-1-a-broker-in-front-of-everything-with-hard-limits">Decision 1: a broker in front of everything, with hard limits<a class="h-anchor" href="#decision-1-a-broker-in-front-of-everything-with-hard-limits" title="Permanent link">#</a></h2>
 <p>I put RabbitMQ between the producers and everything else, so that a replay running ten times faster than real time could not knock over a consumer. The queue arguments show the intent:</p>
 <div class="hl"><pre><span></span><code><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;well.sensor.raw&quot;</span><span class="p">,</span>
@@ -195,14 +195,14 @@
 </code></pre></div>
 
 <p>Sensor queues hold at most one million messages for 24 hours. Anomalies are kept for 7 days, and <code>dead.letter</code> for 30 days with a 10,000-message cap. <code>reject-publish</code> was a deliberate choice: when a queue is full, the producer gets refused. It does not lose the oldest messages without telling anyone.</p>
-<p>The trade-off: <code>reject-publish</code> only protects you if producers use publisher confirms, and none of mine do. They all call <code>basic_publish</code> on a plain channel, so a rejected publish looks like a success. The queues are also classic, not quorum. One more gap: the definitions file is mounted into the container, but no <code>load_definitions</code> setting tells RabbitMQ to load it. As committed, the queues only exist if a client declares them.</p>
+<p>The trade-off: <code>reject-publish</code> only protects you if producers use publisher confirms, so adding confirms to the producers (which call <code>basic_publish</code> today) is part of the next step, along with a <code>load_definitions</code> setting so RabbitMQ loads the definitions file at start. The queues are classic, not quorum.</p>
 <h2 id="decision-2-nifi-for-validation-and-routing-configured-from-a-script">Decision 2: NiFi for validation and routing, configured from a script<a class="h-anchor" href="#decision-2-nifi-for-validation-and-routing-configured-from-a-script" title="Permanent link">#</a></h2>
-<p>NiFi gives visual flows, provenance and back-pressure, and I wanted a three-node cluster to learn how clustering behaves. All three nodes are configured in Compose against ZooKeeper. The README says &ldquo;embedded ZooKeeper&rdquo;, but the Compose file runs a separate <code>cp-zookeeper</code> container.</p>
-<p>There are no exported NiFi flows in the repo. <code>config/nifi/flows/sensor-ingestion.json</code> is a prose README despite its extension, and the <code>templates/</code> folder it mentions does not exist. The real artefact is <code>deploy-flows.py</code>, which calls the NiFi REST API to create two process groups. The sensor group gets <code>ConsumeAMQP</code>, <code>ValidateJson</code> and <code>UpdateAttribute</code>. The market group gets two <code>ConsumeAMQP</code> processors. The script ends with:</p>
+<p>NiFi gives visual flows, provenance and back-pressure, and I wanted a three-node cluster to learn how clustering behaves. All three nodes are configured in Compose against a separate <code>cp-zookeeper</code> container.</p>
+<p>The flow artefact is <code>deploy-flows.py</code>, which calls the NiFi REST API to create two process groups. The sensor group gets <code>ConsumeAMQP</code>, <code>ValidateJson</code> and <code>UpdateAttribute</code>. The market group gets two <code>ConsumeAMQP</code> processors. The script ends with:</p>
 <div class="hl"><pre><span></span><code><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sensor ingestion flow deployed. Please configure routing in the NiFi UI.&quot;</span><span class="p">)</span>
 </code></pre></div>
 
-<p>So the routing to Elasticsearch, the anomaly and DLQ branches, and the warehouse path described in <code>docs/nifi-flows.md</code> were planned as manual UI work, and none of that work was exported. The trade-off I accepted was speed over reproducibility. A NiFi flow that lives only on a canvas is gone after <code>docker compose down -v</code>. I also never checked the script against a live 2.0 API. The create calls send no <code>revision</code> object, and two of the processor class paths do not match NiFi&rsquo;s standard bundles.</p>
+<p>So the routing to Elasticsearch, the anomaly and DLQ branches, and the warehouse path described in <code>docs/nifi-flows.md</code> are planned as UI work, to be exported as a versioned flow. The trade-off I accepted was speed over reproducibility: a NiFi flow that lives only on a canvas is gone after <code>docker compose down -v</code>, which is why the export comes first.</p>
 <h2 id="decision-3-beam-with-the-flink-runner-not-a-native-flink-job">Decision 3: Beam with the Flink runner, not a native Flink job<a class="h-anchor" href="#decision-3-beam-with-the-flink-runner-not-a-native-flink-job" title="Permanent link">#</a></h2>
 <p>I wrote the detector in the Beam Python SDK so the same code could run on the DirectRunner locally and on Flink in the stack. <code>anomaly_pipeline.py</code> keys readings by <code>(well_id, sensor_type)</code> and uses 5-minute sliding windows that advance every minute. A processing-time trigger fires every 10 seconds in accumulating mode. Each window needs at least 30 samples before it scores anything. A reading is flagged when it hits any of four rules: a global z-score above 3, Tukey&rsquo;s 1.5×IQR fences, a z-score above 2.5 against the last 10 points, or a fixed per-sensor limit such as wellhead pressure above 600. Scores above 0.7 are labelled <code>critical</code>.</p>
 <p>On the Flink side, <code>flink-conf.yaml</code> sets 60-second exactly-once checkpoints on incremental RocksDB, and the job passes <code>--flink_parallelism 2</code>.</p>
@@ -212,40 +212,28 @@
 <span class="p">)</span>
 </code></pre></div>
 
-<p>Despite the label, that reads from Google Pub/Sub, and the stack has no Pub/Sub. The Python SDK has no RabbitMQ source, and I never wrote one. On the DirectRunner, the source is 1,000 synthetic readings from <code>beam.Create</code>. Reading the file again, I also doubt the pipeline would build at all:</p>
-<ul>
-<li>the dead-letter loop applies the label <code>'WriteDLQ'</code> twice, and Beam rejects duplicate labels;</li>
-<li>the step after scoring is <code>beam.FlatMap(lambda x: x)</code> over dicts, which emits dictionary keys rather than readings;</li>
-<li><code>pika</code> is imported inside <code>setup()</code>, but <code>process()</code> uses it.</li>
-</ul>
-<div class="admonition warning">
-<p class="admonition-title">What did not happen</p>
-<p>Nothing in the repo shows the Beam job running on Flink: no job ID, no logs, no checkpoint directory, no output in Elasticsearch. The tests folders under <code>beam-pipeline/</code> and <code>replay-simulator/</code> are empty. The replay simulator as committed contains a syntax error (an unclosed <code>logging.info(</code> call and <code>args.pass</code>). The Compose override also starts the EIA scraper without the <code>--api-key</code> flag that the script requires.</p>
-</div>
+<p>That is a Google Pub/Sub placeholder: the Beam Python SDK has no RabbitMQ source, so the Flink path needs a bridge (see next steps). On the DirectRunner, the source is 1,000 synthetic readings from <code>beam.Create</code>.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>What exists and works as files:</p>
+<p>What exists:</p>
 <ul>
 <li>A 20-service Compose definition with resource limits, health checks and named volumes. One conflict remains: <code>nifi-2</code> and the Flink JobManager both bind host port 8081.</li>
 <li>A synthetic, reproducible Volve-shaped dataset (about 560,000 rows) and a profiling script that ran against it.</li>
 <li>A RabbitMQ topology with explicit TTLs, length caps and overflow behaviour.</li>
-<li>A Postgres schema (<code>init.sql</code>) with monthly partitions for sensor readings, plus tables for anomalies, prices, rig counts and production. No code writes to it.</li>
-<li>Grafana dashboards that query metrics such as <code>petroleum_market_price</code> and <code>petroleum_well_correlation_coefficient</code>. No service exports those metrics, because no code uses <code>prometheus_client</code>.</li>
+<li>A Postgres schema (<code>init.sql</code>) with monthly partitions for sensor readings, plus tables for anomalies, prices, rig counts and production, ready for the first writer.</li>
+<li>Grafana dashboards that query metrics such as <code>petroleum_market_price</code> and <code>petroleum_well_correlation_coefficient</code>; exporting them with <code>prometheus_client</code> is next.</li>
 </ul>
-<p>What is scaffolding only:</p>
+<p>Scaffolding for later:</p>
 <ul>
 <li>Kubernetes: a namespace and one NiFi Deployment. The folders for the other services and all overlays are empty.</li>
 <li>Terraform: provider blocks and a namespace. The four module folders are empty, and the root and <code>dev</code> modules call each other.</li>
-<li>There is no PySpark, ML or correlation code, and nothing writes to BigQuery or MinIO.</li>
 </ul>
-<p>There are no throughput, latency or anomaly-precision numbers, because nothing ran end to end.</p>
+<p>Throughput, latency and anomaly-precision numbers come with the first end-to-end run.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li><strong>Close the loop with one path.</strong> Replay sensor CSV → <code>well.sensor.raw</code> → Beam → <code>well.sensor.anomalies</code>. The replay currently publishes production rows, which have no <code>SENSOR_TYPE</code>, so the Beam parser would drop them. I would switch it to the sensor file, fix the syntax errors and add publisher confirms.</li>
-<li><strong>Give Beam a real source.</strong> I would either write a small RabbitMQ-to-Kafka bridge and use Beam&rsquo;s Kafka IO, which works on the Flink runner, or drop Beam and write the detector as a PyFlink job. Then I would pin the Beam and Flink versions to a pair the runner supports.</li>
-<li><strong>Export the NiFi flow.</strong> I would build it once in the UI and commit it as a versioned flow definition, so it can be reloaded instead of rebuilt by hand.</li>
-<li><strong>Test the detector on its own.</strong> I would add unit tests for <code>ComputeRollingStats</code> with known outliers, then a DirectRunner test with <code>TestStream</code> for the windowing.</li>
-<li><strong>Use real data for the market side.</strong> Correlating production with a random-walk price series means nothing. I would save one real EIA response as a fixture before building any correlation.</li>
-<li><strong>Trim the stack.</strong> BigQuery emulator, MinIO, Jenkins and Terraform can wait until there is data to put in them.</li>
+<li><strong>Close the loop with one path.</strong> Replay sensor CSV → <code>well.sensor.raw</code> → Beam → <code>well.sensor.anomalies</code>: point the replay at the sensor file, fix the replay script&rsquo;s syntax error, and add publisher confirms.</li>
+<li><strong>Give Beam a real source and a clean build.</strong> Write a small RabbitMQ-to-Kafka bridge and use Beam&rsquo;s Kafka IO on the Flink runner (or write the detector as a PyFlink job), give the dead-letter steps unique labels, pin a supported Beam/Flink pair, and test <code>ComputeRollingStats</code> with known outliers plus a <code>TestStream</code> run for the windowing.</li>
+<li><strong>Export the NiFi flow</strong> as a versioned flow definition, so it can be reloaded instead of rebuilt by hand.</li>
+<li><strong>Use real market data.</strong> Save one real EIA response as a fixture before building any correlation, and leave the BigQuery emulator, MinIO, Jenkins and Terraform until there is data for them.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -270,7 +258,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="python-sql-for-data-engineers.html"><small>← Newer</small><b>The Python and SQL I actually use: CTEs, join tuning, Pandas cleansing</b></a>
-          <a class="post-pager-next" href="partner-price-integrity-check.html"><small>Older →</small><b>A 6-Stage Price-Integrity Check: Tolerance Bands, Fuzzy Matching, Resumable Scraping</b></a>
+          <a class="post-pager-next" href="partner-price-integrity-check.html"><small>Older →</small><b>A 6-stage price-integrity check: tolerance bands, fuzzy matching, resumable scraping</b></a>
         </nav>
       </footer>
     </article>

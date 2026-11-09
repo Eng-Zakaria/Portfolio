@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins", "description": "How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html", "wordCount": 1698, "keywords": "Databases, SQL, Data Architecture"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "PostgreSQL, MySQL, ClickHouse, Neo4j, InfluxDB: when each wins", "description": "How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/choosing-the-right-database.html", "wordCount": 1656, "keywords": "Databases, SQL, Data Architecture"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -110,7 +110,7 @@
 </tr>
 <tr>
 <td>ClickHouse</td>
-<td>Waffarha offers, coupons and orders (<code>main_eg</code>)</td>
+<td>Waffarha offers, coupons and orders (the production database)</td>
 <td>Production, read-only consumer</td>
 <td>Fast reads over wide fact tables</td>
 </tr>
@@ -134,8 +134,8 @@
 </tr>
 <tr>
 <td>InfluxDB</td>
-<td>Live ADS-B flight radar; NTI internship</td>
-<td>Portfolio (live public data); internship</td>
+<td>Flight radar (NTI capstone)</td>
+<td>NTI capstone, live public data</td>
 <td>Tagged time-series points for Grafana</td>
 </tr>
 <tr>
@@ -173,7 +173,7 @@
 <h2 id="postgresql-my-default-warehouse">PostgreSQL: my default warehouse<a class="h-anchor" href="#postgresql-my-default-warehouse" title="Permanent link">#</a></h2>
 <p>When I need a warehouse that one team owns and writes to, I start with PostgreSQL. At Nexlify I evaluated MySQL against PostgreSQL for a warehouse that pulled from 10+ clinics, and the warehouse ended up on PostgreSQL, modelled as star schemas with bridge tables for staff who hold several roles (<a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>).</p>
 <p>For the freelance clinic client I used the parts of PostgreSQL that let the database defend itself. <code>fact_orders.source_row_id</code> is <code>UNIQUE</code>, so a daily full re-send updates rows instead of duplicating them. <code>dim_staff</code> has a <code>CHECK</code> constraint on six staff groups. Dimensions are scoped by <code>clinic_id</code> with <code>UNIQUE(clinic_id, name)</code>, so one floor&rsquo;s data can never be counted as another&rsquo;s. The ETL also reads <code>information_schema.columns</code> before loading, to catch schema drift (<a href="../articles/six-stage-client-etl.html">the six-stage ETL</a>).</p>
-<p>The lesson from that project: constraints only help if the pipeline knows about them. A <code>CHECK</code> on patient status rejected 1,041 rows in the first real run because the quality scan didn&rsquo;t test that column. I now write a matching quality rule for every constraint in the DDL.</p>
+<p>The lesson from that project: constraints only help if the pipeline knows about them. I now write a matching quality rule for every constraint in the DDL (<a href="../articles/six-stage-client-etl.html">why</a>).</p>
 <h2 id="mysql-when-it-is-the-applications-database">MySQL: when it is the application&rsquo;s database<a class="h-anchor" href="#mysql-when-it-is-the-applications-database" title="Permanent link">#</a></h2>
 <p>At Waffarha, MySQL on AWS RDS is what the app reads, so that is where the nightly recommender writes. The job reaches it through an SSH tunnel on EC2 and upserts in 5,000-row batches with <code>INSERT ... ON DUPLICATE KEY UPDATE</code>, keyed on the user, committing after each batch (<a href="../articles/fail-open-nightly-recommender.html">Fail open, never fail the night</a>).</p>
 <p>I don&rsquo;t choose MySQL for that job. The backend team did, and the right move for a pipeline is to write where the consumer already reads. The first version of the clinic loader was also MySQL: keyed upserts plus delete-and-reinsert of child rows inside one transaction. The PostgreSQL warehouse came later, with the six-stage checks around the load.</p>
@@ -193,8 +193,8 @@
 <p>SQLite is what I reach for when there is one writer and no server to run. The graduation-project web app keeps logins and Q&amp;A history in it (<a href="../articles/arabic-rag-graduation-project.html">Arabic RAG graduation project</a>), and the brand-radar pilot runs locally on it (<a href="../articles/brand-radar-connector-registry.html">Brand radar</a>). The mistake I made there: SQLite doesn&rsquo;t enforce <code>REFERENCES</code> unless <code>PRAGMA foreign_keys</code> is on, and in one estates warehouse build it wasn&rsquo;t (<a href="../articles/estates-warehouse-governed.html">Modeling estates data</a>).</p>
 <p>DuckDB is SQLite&rsquo;s analytical cousin. In the estates portfolio (synthetic data) it runs the lakehouse queries, dbt models and validation SQL over Parquet with no server (<a href="../articles/estates-lakehouse-zero-loss.html">8/8 sources, zero loss</a>). If the work is analytics on one machine, DuckDB is faster to set up than any warehouse.</p>
 <h2 id="time-series-influxdb-and-timescaledb">Time series: InfluxDB and TimescaleDB<a class="h-anchor" href="#time-series-influxdb-and-timescaledb" title="Permanent link">#</a></h2>
-<p>For the ADS-B flight radar (<a href="../articles/adsb-flight-radar-streaming.html">Live flight radar</a>), a portfolio project on live public data, Spark Structured Streaming writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, aircraft type and on-ground, and Grafana reads it with Flux. InfluxDB fits when the questions are &ldquo;latest value per tag&rdquo; and &ldquo;aggregate per window&rdquo;.</p>
-<p>It also showed me how to misuse it. I tagged aggregate points with <code>batch_id</code>, which creates a new series every 30 seconds and grows series cardinality without limit. Timestamps were write time, not event time. Tags should be things you group by, and the timestamp should come from the event.</p>
+<p>For the ADS-B flight radar (<a href="../articles/adsb-flight-radar-streaming.html">Live flight radar</a>), my NTI capstone on live public data, Spark Structured Streaming writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by <code>hex</code>, aircraft type and on-ground, and Grafana reads it with Flux. InfluxDB fits when the questions are &ldquo;latest value per tag&rdquo; and &ldquo;aggregate per window&rdquo;.</p>
+<p>The rule it taught me: tags should be things you group by, and the timestamp should come from the event (the radar&rsquo;s next iteration applies both; see its write-up).</p>
 <p>For AquaWatch, a fish-farm prototype on simulated sensors (<a href="../articles/aquawatch-iot-alerts.html">AquaWatch</a>), I used TimescaleDB instead, because the alerting and reporting wanted plain SQL joins next to the readings. My bug there: <code>create_hypertable</code> ran on every start without <code>if_not_exists</code>, which fails once the table is already a hypertable.</p>
 <h2 id="neo4j-and-elasticsearch">Neo4j and Elasticsearch<a class="h-anchor" href="#neo4j-and-elasticsearch" title="Permanent link">#</a></h2>
 <p>Neo4j is the textbook answer for multi-hop questions like &ldquo;where did this money go in three hops?&rdquo; In the Ethereum forensics prototype (<a href="../articles/ethereum-neo4j-vs-spark.html">Neo4j vs Spark</a>) the real client ingests in <code>UNWIND</code> batches of 100 and models each transaction as a node:</p>

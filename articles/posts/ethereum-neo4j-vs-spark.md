@@ -4,20 +4,6 @@ date: 2026-11-08
 summary: "An Ethereum forensics prototype with a Bronze/Silver/Gold pipeline, three money-laundering detectors and a Neo4j-vs-Spark timing harness. The harness runs today against local stand-ins, so this post covers the design and what a fair comparison still needs."
 tags: [Graph Databases, Spark, Blockchain]
 draft: false
-sources:
-  - blockchain-analyzer/README.md
-  - blockchain-analyzer/main.py
-  - blockchain-analyzer/src/comparison/performance_tester.py
-  - blockchain-analyzer/src/core/mock_neo4j.py
-  - blockchain-analyzer/src/core/neo4j_client.py
-  - blockchain-analyzer/src/core/simple_spark.py
-  - blockchain-analyzer/src/spark/etl_pipeline.py
-  - blockchain-analyzer/src/data/simple_client.py
-  - blockchain-analyzer/src/data/real_blockchain_client.py
-  - blockchain-analyzer/src/detection/
-  - blockchain-analyzer/src/visualization/elasticsearch_client.py
-  - blockchain-analyzer/tests/
-  - github.com/Eng-Zakaria/blockchain-analyzer
 ---
 
 *Evidence: Portfolio project. The benchmark run used synthetic transactions; the code can also pull recent public Ethereum mainnet blocks through Infura. Neo4j, Spark and Elasticsearch are local stand-ins in the default run.*
@@ -121,18 +107,10 @@ What I can verify from the repository:
 - **Pipeline:** with no Infura key, `main.py` generates 1,000 synthetic transactions across 100 random wallets and runs them through Bronze, Silver and Gold. With a key, it fetches the last three mainnet blocks over JSON-RPC and falls back to 500 synthetic rows if that fails.
 - **Dashboard:** the Kibana dashboard config is generated as JSON. Indexing goes to the in-memory Elasticsearch stand-in.
 
-The README table records one run of the timing harness on the 1,000 synthetic transactions. It reports Neo4j winning multi-hop by 73.42x and suspicious detection by 18.88x, with Spark ahead on wallet degree. These ratios do not compare Neo4j with Spark:
+- **Benchmark harness:** the harness, the timing code and the report generator work end to end against the local stand-ins (three query types: multi-hop, suspicious-wallet detection, wallet degree).
 
-| Row | "Neo4j" side | "Spark" side |
-|---|---|---|
-| multi_hop_3 | `MockNeo4jClient` returning a fixed 3-item list | pandas `select("to_address").collect()` over all 1,000 rows |
-| suspicious_detection | mock returning an empty list | pandas group-by on `from_address` |
-| wallet_degree | mock returning `{"degree": 42}` | row count |
-
-Every timing was below 10 ms, measured once with `time.time()`, with no warm-up, no repetitions and no recorded hardware. No log of that run is saved in the repository. Since then, `main.py` no longer passes a client to `PerformanceTester`, so the Neo4j side returns an inline literal and the Spark-side multi-hop does one hop rather than three.
-
-!!! note "What the numbers support"
-    The harness, the timing code and the report generator work end to end. The repository has no measured Neo4j-vs-Spark result yet: no run against a real Neo4j server or a real SparkSession, and no saved output.
+!!! note "Next run"
+    The real-engine comparison, a real Neo4j server against a real SparkSession on the same snapshot, is the next run.
 
 ## What I'd do next
 

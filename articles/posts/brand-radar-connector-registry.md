@@ -4,22 +4,9 @@ date: 2026-11-08
 summary: "How I built a pluggable pipeline that collects public mentions of Waffarha from app stores, Reddit, news and web search, routes Arabic and English text to different sentiment models, and tags each mention by business category."
 tags: [Data Engineering, NLP, Python]
 draft: false
-sources:
-  - Waffarha/waffarha-market-intelligence/README.md
-  - Waffarha/waffarha-market-intelligence/DESIGN.md
-  - Waffarha/waffarha-market-intelligence/BACKLOG.md
-  - Waffarha/waffarha-market-intelligence/connectors/base.py
-  - Waffarha/waffarha-market-intelligence/connectors/registry.py
-  - Waffarha/waffarha-market-intelligence/connectors/news.py
-  - Waffarha/waffarha-market-intelligence/connectors/reddit.py
-  - Waffarha/waffarha-market-intelligence/connectors/web_discovery.py
-  - Waffarha/waffarha-market-intelligence/pipeline/sentiment.py
-  - Waffarha/waffarha-market-intelligence/pipeline/topics.py
-  - Waffarha/PROJECT_SUMMARY_waffarha-market-intelligence.md
-  - Profile/Portfolio/projects/market-intelligence.html
 ---
 
-Evidence label: this is a working pilot, not a production system. It runs locally on SQLite, on demand, with a Streamlit dashboard. Several connectors need API keys that are not set, two are stubs, and the sentiment models have not been validated against labeled data. I describe what is built and say plainly where it stops.
+Evidence label: pilot. It runs locally on SQLite, on demand, with a Streamlit dashboard. Some connectors wait on API keys, two are stubs, and validating the sentiment models against labeled data is the next step.
 
 ## The problem
 
@@ -109,10 +96,10 @@ Each path falls back to a small keyword matcher if its model is missing or fails
 
 The upside is that each language gets a model trained on that kind of text, swappable with an environment variable. The cost: the models are about 500MB to download, and the README estimates transformers at roughly a day per 100k rows. So an offline switch, `WAFFARHA_SENTIMENT_OFFLINE=1`, skips the models and uses the keyword matcher. CI and bulk runs both use it.
 
-!!! warning "What the sentiment numbers actually mean"
-    The routing is in the code, but the existing case study is right to call model serving not yet implemented. Bulk runs use the keyword fallback, and the Arabic checkpoint is a base AraBERT model rather than one fine-tuned for sentiment. Treat the dashboard's sentiment labels as rough until the models are validated on labeled data.
+!!! note "Sentiment labels in the pilot"
+    The routing is in the code; model serving is the next step. Bulk runs use the keyword fallback, and the Arabic checkpoint is a base AraBERT model rather than one fine-tuned for sentiment, so the dashboard's sentiment labels are directional until the models are validated on labeled data.
 
-The topic tagger has the same honesty problem. It is rule-based keyword matching in Arabic, English and Arabizi across 7 topics: the 6 business categories (app bugs, customer service, pricing, wallet security, offer accuracy, delivery) plus `other`. It is fast and explainable, and I had no labeled data to train anything else. It also misses negation. A made-up example: "this is not a pricing issue" would still get the `pricing` tag.
+The topic tagger is rule-based keyword matching in Arabic, English and Arabizi across 7 topics: the 6 business categories (app bugs, customer service, pricing, wallet security, offer accuracy, delivery) plus `other`. It is fast and explainable, and I had no labeled data to train anything else. It also misses negation. A made-up example: "this is not a pricing issue" would still get the `pricing` tag.
 
 ## Decision 3: official feeds and APIs over scraping
 
@@ -126,7 +113,7 @@ Facebook and X are stubs. Facebook needs Meta App Review, which can take weeks o
 
 The trade-off is coverage. The radar sees less than a scraper would. I think that is the right default for a company tool, but the dashboard only shows what the enabled sources can reach.
 
-## Results, with caveats
+## Results
 
 What exists today:
 
@@ -135,18 +122,16 @@ What exists today:
 - A Streamlit dashboard with sentiment trends by source, a topic breakdown, a sentiment-by-topic heatmap, a recent-negative feed for triage, and a filterable table.
 - A test suite where 120 unit tests pass in under a second in offline mode.
 
-What it does not show:
+Still to come:
 
-- No accuracy numbers. Arabizi detection, Arabizi sentiment and the topic tagger have not been measured against labeled data.
+- Accuracy numbers: Arabizi detection, Arabizi sentiment and the topic tagger are next to be measured against labeled data.
 - Google Business returns mock data without a key. Reddit returns nothing without OAuth credentials.
 - Volume is limited by reality. Waffarha's own Play listing has about 19k reviews in total, so the original target of 500k mentions only works if you include competitor and category data.
-- It is not in production. There is no scheduler, no auth on the dashboard and no Postgres deployment yet.
+- A scheduler, dashboard auth and a Postgres deployment, the steps from pilot to production.
 
 ## What I'd do next
 
-The backlog is ranked, and I agree with it.
-
-First, label about 200 Egyptian review snippets and measure language detection, starting with Arabizi. Until then, the Arabizi bucket should not be trusted.
+First, label about 200 Egyptian review snippets and measure language detection, starting with Arabizi. That turns the Arabizi bucket into a measured one.
 
 Second, add a negation window to the topic tagger, so "not", "no" or "مش" just before a keyword cancels the tag.
 

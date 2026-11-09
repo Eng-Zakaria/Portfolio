@@ -1,13 +1,13 @@
 ---
-title: "Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS"
+title: "Fail open, never fail the night: a nightly recommender across GCP and AWS"
 date: 2026-11-08
 summary: "How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty."
 tags: [Data Engineering, Recommender Systems, Multi-Cloud]
 draft: false
 ---
 
-Every night at 00:00 Cairo time, a small service at Waffarha wakes up, reads what customers did
-yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
+Evidence: production, Waffarha. Every night at 00:00 Cairo time, a small service at Waffarha
+wakes up, reads what customers did yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
 opens the app in the morning, their recommendations are already there.
 
 This post walks through how that job works, and the one rule I'd keep if I had to throw everything

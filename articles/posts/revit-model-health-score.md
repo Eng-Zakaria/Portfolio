@@ -1,22 +1,12 @@
 ---
-title: "A 0–100 health score for Revit models: the design, the formula, and what blocks a first run"
+title: "A 0–100 health score for Revit models: design and scoring trade-offs"
 date: 2026-11-08
-summary: "How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the defects a code review found before the tool has ever run on a live model."
+summary: "How my pyRevit model-health auditor turns Revit API checks into a single 0–100 score, the trade-offs behind the formula, and the next steps to a first run on a live model."
 tags: [BIM, Python, Automation]
 draft: false
-sources:
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.extension/tab/Model Health.panel/Model Audit.pushbutton/script.py
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.extension/tab/Model Health.panel/Model Audit.pushbutton/bundle.yaml
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.extension/lib/utils.py
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.extension/lib/revit_helpers.py
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.extension/ui/dialogs.py
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.CSharp/README.md
-  - BIM_Pyrevit/BIMModelHealthAnalyzer.CSharp/FireRatingAuditCommand.cs
-  - BIM_Pyrevit/DynamoSamples/README.md
-  - BIM_Pyrevit/DynamoSamples/consistency_node.py
 ---
 
-**Evidence: Portfolio tool, not yet run on a live Revit model.** There is no client, no saved report, no log file and no test suite. Everything below comes from reading the code: about 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.
+**Evidence: Portfolio tool, not yet run on a live Revit model.** About 1,940 lines of Python in a pyRevit extension, plus a small C# add-in sample and a Dynamo sample.
 
 I work on data pipelines, and the idea behind this project is one I use there every day: run checks, count what fails, and turn the count into a number someone can track. Here the dataset is a Revit model instead of a table.
 
@@ -101,37 +91,17 @@ It has two weaknesses. First, if no value reaches 80%, every group gets flagged,
 
 Running in pyRevit means no export step. The tool sees the live model, including geometry, view templates, links and worksets, and the one write action (deleting duplicate walls) can go through a Revit transaction. `RevitHelper.safe_execute_in_transaction` starts a transaction, runs the function, commits, and rolls back on any exception.
 
-The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit, and there are no tests. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.
+The cost is testability. Every check calls the Revit API directly, so none of it runs without Revit. In a separate pyRevit toolkit I split the logic differently: a thin Revit script turns elements into plain dicts, and the audit rules run on those dicts, so they can be unit-tested with ordinary Python. This tool would benefit from the same split.
 
-## Results
+## Where this stands
 
-There are no run results to report. The repository has no `reports/` folder, no `logs/model_health.log`, no `config/settings.json` (it would be created on first run), and no tests. The C# README says plainly that its sample was "not compiled or tested here", and the Dynamo README says the graph was authored "without a live Revit session".
+The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft, and the first run on a live model is the next milestone.
 
-What I could check without Revit was the code itself. One check I ran: the HTML report template is filled with `str.format`, but it has CSS rules like `body { font-family: ... }` inline. Running the same pattern in Python gives `KeyError(' font-family')`, so the HTML export would fail before writing a file.
+## Next steps
 
-Reading the rest of the code turned up these blockers for a first run:
-
-| Area | Defect |
-|---|---|
-| Start-up | `RevitHelper.__init__` reads `doc.Application.ActiveUIDocument`. That property belongs to `UIApplication`, not the database `Application`, so the constructor fails. |
-| Runtime | The scripts use f-strings and `os.makedirs(..., exist_ok=True)`. pyRevit's default engine is IronPython 2.7, which rejects both, and there is no `#! python3` engine marker. |
-| Imports | `script.py` adds only `lib/` to `sys.path`, then imports `ui.dialogs`. It also uses `datetime` and `MessageBoxIcon` without importing them. |
-| Counting | `analyze_model_performance` calls `GetElementCount()` on a collector with no filter. The Revit API requires a filter first. |
-| Checks | The unhosted-family check tests `hasattr(family, 'FamilySymbol')`, but a family instance exposes `Symbol`, so the check never fires. |
-| Reports | Apart from the `KeyError`, the HTML section builder reads keys (`element`, `value`, `expected`) that the parameter records don't have (`element_name`, `current_value`, `expected_value`). |
-| Fix-ups | `fix_common_issues` calls `fix_parameter_consistency` and `cleanup_duplicate_views`, which aren't defined. The dashboard's Delete, Select, Export and Fix buttons only show a message box. |
-| Packaging | `bundle.yaml` points to a `BIMModelHealthAnalyzer.dll` and an `icon.png`, and neither is in the folder. |
-
-!!! note "Where this stands"
-    The audit → score → report design is complete and the scoring rule is clear. The implementation is a first draft. It has never run against a live model, so I have no recorded score, runtime or issue count to report.
-
-## What I'd do next
-
-1. **Make it run.** Fix the start-up and import defects, choose one Python engine (CPython via pyRevit's `#! python3` marker, or rewrite for IronPython 2.7), and build the HTML report with a templating step that escapes CSS braces.
+1. **First run on a sample model.** Pin the Python engine (pyRevit's `#! python3` marker), tidy the start-up path and imports, build the HTML report with a templating step that handles CSS braces, then run it on an Autodesk sample model and commit the JSON report and timing log.
 2. **Split extraction from rules.** Have the Revit script turn elements into plain dicts, and run the checks on those dicts with pytest, using a small fixture model.
-3. **Normalise the score.** Score findings per checked element, give each severity a weight, and use the same formula in the HTML report and on every dashboard tab.
-4. **Configurable consistency rules.** Drop Family and Type Name. Check instance and type parameters separately. Let the config name expected values, and fall back to majority vote only where none are set.
-5. **Record evidence.** Run it on a sample model (Autodesk ships some), and commit the JSON report and the timing log so the numbers in the write-up can be checked.
+3. **Normalise the score and the consistency rules.** Score findings per checked element with a weight per severity, use the same formula everywhere, and let the config name expected values, falling back to majority vote only where none are set.
 
 ## Links
 

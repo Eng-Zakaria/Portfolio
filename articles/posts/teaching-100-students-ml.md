@@ -4,16 +4,6 @@ date: 2026-11-09
 summary: "A reflection on my months as an AI Instructor at iSchool, where I taught AI and machine learning to 100+ students, and how the habits from that room show up in how I evaluate and explain data work today."
 tags: [Career, Teaching, Machine Learning]
 draft: false
-sources:
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - CV/profile/mohamed_zakaria_resume_data.yml
-  - CV/templates/Main_Resume_Template.tex
-  - Profile/Portfolio/index.html
-  - Profile/Portfolio/articles/posts/bilingual-rag-retrieval-hit-rate.md
-  - Profile/Portfolio/articles/posts/redacting-160k-support-chats.md
-  - Profile/Portfolio/articles/posts/estates-lakehouse-zero-loss.md
-  - Profile/Portfolio/articles/posts/one-power-bi-model.md
-  - Profile/Portfolio/articles/posts/deterministic-gates-before-llm.md
 ---
 
 This is a career reflection. The facts come from my CV and the project write-ups linked below; the rest is my own view of what teaching does to the way you explain technical work. From June to November 2024, straight after finishing my degree in Computers and Artificial Intelligence at Helwan University, I worked as an AI Instructor at iSchool in Cairo. I taught AI and machine learning to more than 100 students, and they built their own AI and machine-learning projects. I have since moved into data engineering, and the habits from that job show up in how I evaluate and explain my work.

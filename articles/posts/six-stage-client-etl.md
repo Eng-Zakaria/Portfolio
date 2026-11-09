@@ -4,18 +4,6 @@ date: 2026-11-08
 summary: "How I turned a clinic's daily Excel workbook into a PostgreSQL star schema with a six-stage ETL, and what the first real runs showed me about the gaps between the stages."
 tags: [ETL, Data Quality, MySQL]
 draft: false
-sources:
-  - free-lancing/pds/pg/etl_floor11.py
-  - free-lancing/pds/pg/001_init.sql
-  - free-lancing/pds/pg/002_seed.sql
-  - free-lancing/pds/pg/DOCUMENTATION.md
-  - free-lancing/pds/pg/config.ini
-  - free-lancing/pds/pg/etl.log (run log; contains personal data, not published)
-  - free-lancing/pds/mysql-floor17/README.md
-  - free-lancing/pds/mysql-floor17/DOCUMENTATION.md
-  - free-lancing/pds/mysql-floor17/backup_db.py
-  - free-lancing/pds/mysql-dw/etl_flat_to_dw.py
-  - free-lancing/pds/mysql-dw/scripts/validate_etl.py
 ---
 
 **Evidence: Client.** This is freelance work for a paying client, a multi-floor medical clinic. The code and data are private, so there is no repo link. The examples below are sanitized and show only table and column names.
@@ -145,19 +133,14 @@ The second run is the one that loaded: 4,908 orders, with 17 rows skipped becaus
 
 The first run is more useful as a lesson. 1,041 of its errors were the same thing: rows breaking the `patient_status IN ('new','old')` check on `fact_orders`. Stage 3 never looked at `Patient_Status`, so the quality scan said nothing and the database caught the problem one row at a time. A quality stage that doesn't mirror the database's constraints is only a partial check.
 
-!!! note "Two bugs the logs exposed"
+!!! note "Two bugs the logs exposed (fixed after the handover review)"
     **Backup.** `backup_database` opens the output file before calling `pg_dump`. When the binary is missing, it logs "skipped" but leaves an empty, timestamped `.sql` file behind. Both backup files from these runs are 0 bytes. That looks like a restore point and isn't one.
 
     **Rollback.** The load runs in one transaction and commits at the end. On a row error it calls `conn.rollback()` with no savepoint. That throws away every earlier row in the transaction too, while the counters keep counting them. So run 1's "3,867 processed" doesn't mean 3,867 rows reached the database. I can't tell from the log alone how many did.
 
-!!! tip "Update, November 2026"
-    I've since fixed both bugs described above: the backup step and the rollback behaviour. This write-up describes the code as it was at handover review, because the mistakes are the useful part.
-
 ## What I'd do next
 
-- **Savepoint per row,** or commit in batches, so one bad row costs one row. Count inserts only after commit.
 - **Make the quality stage mirror the schema.** Every `CHECK` constraint in `001_init.sql` should have a matching rule in stage 3, with normalisation (case, whitespace) applied before both.
-- **Make backup a hard gate.** Check for `pg_dump` in preflight, write to a temp file and rename only on success, and stop the load if there is no backup. Add rotation, which the docs already list as missing.
 - **Widen the diff.** It compares four fields: `status_stage`, `order_sequence`, `paid_amount` and `total_amount`. If only a comment or a staff name changes and nothing else in the file does, the run reports nothing to write and skips the load.
 - **A run-history table** with file name, counts, errors and backup path, so "did yesterday's load work" becomes a query instead of a log search. Also tests for the small parsers (`split_multivalue`, `parse_overflow_upsells`, `to_date`, `to_time`), where a silent bug turns into a wrong number in Power BI weeks later.
 

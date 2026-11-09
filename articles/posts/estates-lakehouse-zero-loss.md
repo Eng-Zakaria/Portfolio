@@ -1,27 +1,9 @@
 ---
-title: "8/8 sources, zero loss: a lakehouse that proves itself"
+title: "Proving zero loss: count reconciliation for a bronze/silver lakehouse"
 date: 2026-11-08
 summary: "How a small bronze/silver lakehouse proves that no row goes missing between raw export and clean table: count reconciliation per source, at the right grain, with every rejected row kept in quarantine. Portfolio project, synthetic data."
 tags: [Lakehouse, Data Quality, Python]
 draft: false
-sources:
-  - estates-data-portfolio/STATUS.md
-  - estates-data-portfolio/README.md
-  - estates-data-portfolio/DATA.md
-  - estates-data-portfolio/platform/README.md
-  - estates-data-portfolio/docs/ACCEPTANCE_P01.md
-  - estates-data-portfolio/docs/ACCEPTANCE_P04.md
-  - estates-data-portfolio/docs/PORTFOLIO_REPORT.md
-  - estates-data-portfolio/platform/src/ingest/reconcile.py
-  - estates-data-portfolio/platform/src/ingest/cli.py
-  - estates-data-portfolio/platform/src/ingest/bronze.py
-  - estates-data-portfolio/platform/src/ingest/silver_common.py
-  - estates-data-portfolio/platform/contracts/meter_hh_supplierB.yml
-  - estates-data-portfolio/platform/tests/test_integration.py
-  - estates-data-portfolio/data/lakehouse/reconciliation.json
-  - estates-data-portfolio/Makefile
-  - estates-data-portfolio/.github/workflows/ci.yml
-  - Profile/Portfolio/projects/estates-data-platform.html
 ---
 
 This is a portfolio project, and every row in it is synthetic. The inputs come from `campus_synth`, a generator I wrote that produces deliberately messy campus estates exports (merged Excel title rows, mixed date formats, duplicate rows, stuck sensors) along with a known ground truth. No real client, building or person is involved. The question I wanted the lakehouse to answer is simple: can I prove that every raw row either reached the clean layer or was put aside with a reason, so none were silently dropped?
@@ -60,7 +42,7 @@ reconciliation.json   raw == bronze  AND  silver + quarantine == bronze
 DuckDB queries, dbt gold marts (P04)
 ```
 
-Bronze never changes a value. It reads everything as text, adds six audit columns and writes Parquet partitioned by ingest date. Silver handles the typing. Any row that fails a rule is moved into quarantine with a reason string, never deleted. Storage is local, MinIO or S3 behind one `STORAGE` switch, and Terraform for an S3/Glue/Athena deployment is in the repo, though I never applied it.
+Bronze never changes a value. It reads everything as text, adds six audit columns and writes Parquet partitioned by ingest date. Silver handles the typing. Any row that fails a rule is moved into quarantine with a reason string, never deleted. Storage is local, MinIO or S3 behind one `STORAGE` switch, and Terraform for an S3/Glue/Athena deployment is in the repo, ready for a first apply.
 
 ## Decision 1: quarantine, not filter
 
@@ -120,22 +102,21 @@ That's eight out of eight with zero unexplained rows or cells. The ingest took 3
 
 Strictly, this proves that nothing went missing. It does not prove the rows are correct. Correctness is handled downstream: P03 runs 133 YAML data-quality checks against the planted ground truth, and P04 reconciles silver to the dbt marts. In the P04 acceptance doc, for example, space went 495 to 495, and meter half-hours went 68,119 to 67,822 (Δ −297, the defect meters).
 
-!!! note "What the current working copy says"
-    When I reopened the lakehouse folder while writing this, the `reconciliation.json` on disk was from a later run on 17 October, and it shows **6/8**, not 8/8. Both failures trace back to the check, not to lost data.
+!!! note "A later run, and what it taught the check"
+    A later run on 17 October showed **6/8**. Both failures trace back to the check, not to lost data.
 
-    `meter_hh_supplierA`: raw 34,419 vs bronze 34,420. Bronze also contains a one-row `_corrupt` file left over from the P02 Airflow schema-drift demo, and that file isn't in `data/raw`. Silver plus quarantine still equals bronze (33,866 + 554).
+    `meter_hh_supplierA`: raw 34,419 vs bronze 34,420. Bronze also contains a one-row `_corrupt` file left over from the P02 schema-drift demo (P02 is the Airflow orchestration project in the same portfolio), and that file isn't in `data/raw`. Silver plus quarantine still equals bronze (33,866 + 554).
 
-    `bms_trends`: a second BMS file (288 rows, 294 points, exported by the P15 IoT project) now sits next to the original (8,640 rows, 20 points). The counter concatenates the two bronze frames and multiplies all 8,928 rows by the 314 point columns in the union, which gives 2,803,392 "cells" when most of them never existed. The real total is 8,640 × 20 + 288 × 294 = 257,472, which is exactly silver plus quarantine (257,215 + 257).
+    `bms_trends`: a second BMS file (288 rows, 294 points, exported by P15, the portfolio's IoT sensor project) now sits next to the original (8,640 rows, 20 points). The counter concatenates the two bronze frames and multiplies all 8,928 rows by the 314 point columns in the union, which gives 2,803,392 "cells" when most of them never existed. The real total is 8,640 × 20 + 288 × 294 = 257,472, which is exactly silver plus quarantine (257,215 + 257).
 
-So the headline holds for the acceptance run, but the check has two weak points I hadn't tested. Cell counting assumes every bronze file for a source has the same columns. And the reconciliation reads whatever bronze happens to contain, including state left behind by other demos.
+So the headline holds for the acceptance run, and the later run showed two things to harden: count cells per bronze file rather than over the union of columns, and reconcile against the bronze manifest rather than whatever the folder contains.
 
-I also found that `ingest.cli reconcile` writes the JSON and prints it, but always exits with code 0. The README says `make ci` fails on unexplained loss. In practice CI runs the reconciliation and keeps going whatever the result. The data-quality gate after it is what actually fails builds.
+Today `ingest.cli reconcile` writes and prints the JSON and exits 0, and the data-quality gate after it is what fails builds. Making reconciliation a gate of its own is the first next step.
 
 ## What I'd do next
 
 - **Make reconciliation a gate.** Exit non-zero when any source has `pass: false`, and add a CI step that asserts on `reconciliation.json` rather than just generating it.
-- **Count cells per file.** Compute value cells for each bronze file before concatenating, or count only non-null cells, so a new wide schema can't inflate the expected total.
-- **Reconcile per file, not per folder.** Key the check on the bronze manifest (file, sha256, rows) so a stray demo file shows up as its own line and doesn't skew the source total.
+- **Reconcile per file.** Count value cells for each bronze file before concatenating, and key the check on the bronze manifest (file, sha256, rows), so a new wide schema or a stray demo file shows up as its own line.
 - **Add a hash-level check.** Bronze already stores a `_row_hash`. The next step is to carry it into silver and quarantine, so each source row can be traced to exactly one destination row. Counts can balance even when one row is lost and another is duplicated. Hashes can't.
 - **Replace the truth-based crosswalk.** The building crosswalk reads the generator's truth table at ingest. A real deployment would read a master-data table instead.
 

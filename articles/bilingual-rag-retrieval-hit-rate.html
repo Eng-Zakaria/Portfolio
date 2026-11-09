@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG | Mohammed Zakaria</title>
-  <meta name="description" content="How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.">
+  <meta name="description" content="How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, why a retrieval hit rate and an end-to-end score must be reported together, and what the per-category gap told us to fix.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html">
   <meta property="og:title" content="Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG | Mohammed Zakaria">
-  <meta property="og:description" content="How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.">
+  <meta property="og:description" content="How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, why a retrieval hit rate and an end-to-end score must be reported together, and what the per-category gap told us to fix.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Retrieval hit rate isn't answer accuracy: measuring a bilingual (Arabic/English) RAG", "description": "How I benchmarked and evaluated retrieval for Waffarha's Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html", "wordCount": 1522, "keywords": "RAG, Evaluation, Arabic NLP"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Retrieval hit rate isn't answer accuracy: measuring a bilingual (Arabic/English) RAG", "description": "How I benchmarked and evaluated retrieval for Waffarha's Arabic/English customer-service assistant, why a retrieval hit rate and an end-to-end score must be reported together, and what the per-category gap told us to fix.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/bilingual-rag-retrieval-hit-rate.html", "wordCount": 1519, "keywords": "RAG, Evaluation, Arabic NLP"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,7 +61,7 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">RAG</span><span class="post-tag">Evaluation</span><span class="post-tag">Arabic NLP</span></div>
         <h1>Retrieval hit rate isn&#x27;t answer accuracy: measuring a bilingual (Arabic/English) RAG</h1>
-        <p class="post-lede">How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run.</p>
+        <p class="post-lede">How I benchmarked and evaluated retrieval for Waffarha&#x27;s Arabic/English customer-service assistant, why a retrieval hit rate and an end-to-end score must be reported together, and what the per-category gap told us to fix.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
           <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
@@ -93,7 +93,7 @@
 <p>This is production work at Waffarha, where I am a data engineer. It covers how I measured the retrieval side of our customer-service assistant, which answers questions about offers and FAQs in Egyptian Arabic and English. The headline number from that work is 87.8%. This article is mostly about what that number does not mean.</p>
 <h2 id="the-problem-one-number-two-very-different-questions">The problem: one number, two very different questions<a class="h-anchor" href="#the-problem-one-number-two-very-different-questions" title="Permanent link">#</a></h2>
 <p>A RAG assistant can fail in two places. It can fail to find the right document, or it can find the right document and still give a wrong or unhelpful answer. These need separate measurements, and it is easy to report the first one as if it were the second.</p>
-<p>In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have described a system much better than the one we had.</p>
+<p>In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have pointed us at the wrong half of the system.</p>
 <p>The gap is not a mystery once you look at it per category. <code>offer_direct_answer</code> retrieved correctly in 49 of 52 checked cases but answered correctly in 11 of 56. <code>faq_direct_answer</code> retrieved correctly in 21 of 24 but answered correctly in 2 of 25. The report&rsquo;s own conclusion was that the gap is in generation and answering, not in finding.</p>
 <h2 id="setup">Setup<a class="h-anchor" href="#setup" title="Permanent link">#</a></h2>
 <h3 id="the-evaluation-suite">The evaluation suite<a class="h-anchor" href="#the-evaluation-suite" title="Permanent link">#</a></h3>
@@ -207,7 +207,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>Some honest caveats:</p>
+<p>Caveats:</p>
 <ul>
 <li>The August and September runs used different suites (145 and 225 cases), different indexes (1,458 and 9,106 documents) and different models. The jump from 80.0% to 87.8% is not a controlled comparison.</li>
 <li>Weak end-to-end categories included follow-ups that need memory (2 of 12), greetings (1 of 8) and disambiguating offers from the same merchant (0 of 4). Several of these are not retrieval problems at all.</li>
@@ -240,7 +240,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="bim-automation-for-data-people.html"><small>← Newer</small><b>BIM automation for data people: pyRevit, Revit API, Dynamo</b></a>
-          <a class="post-pager-next" href="aws-serverless-blueprint.html"><small>Older →</small><b>A serverless task API in AWS CDK, reviewed before its first deploy</b></a>
+          <a class="post-pager-next" href="aws-serverless-blueprint.html"><small>Older →</small><b>A serverless task API in AWS CDK: design before the first deploy</b></a>
         </nav>
       </footer>
     </article>

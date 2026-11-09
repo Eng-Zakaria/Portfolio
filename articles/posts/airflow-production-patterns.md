@@ -1,48 +1,22 @@
 ---
 title: "Airflow patterns that survive a rerun: idempotency, watermarks, SCD2"
 date: 2026-11-08
-summary: "How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again."
+summary: "How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the lessons I carry between projects."
 tags: [Airflow, Data Pipelines, Data Quality]
 draft: false
-sources:
-  - Profile/Portfolio/articles/posts/partner-price-integrity-check.md
-  - Profile/Portfolio/articles/posts/estates-lakehouse-zero-loss.md
-  - Profile/Portfolio/articles/posts/config-not-code-ingestion.md
-  - Profile/Portfolio/articles/posts/one-warehouse-ten-clinics.md
-  - Profile/Portfolio/articles/posts/fail-open-nightly-recommender.md
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - Waffarha/waffarha-partners-scrapper/dags/waffarha_price_integrity_dag.py
-  - Waffarha/waffarha-partners-scrapper/dags/waffarha_reachability_audit_dag.py
-  - Waffarha/waffarha-partners-scrapper/k8s/cronjob-pipeline.yaml
-  - Waffarha/waffarha-partners-scrapper/GAP_ANALYSIS.md
-  - Waffarha/old-projs/local-llm-agent-v2/versioned_store.py
-  - Waffarha/old-projs/local-llm-agent-v2/rag_core.py
-  - Waffarha/old-projs/local-llm-agent-v2/docker-compose.airflow.yml
-  - Waffarha/old-projs/rag-local-llm/archive/airflow_dags/waffarha_mysql_sync_dag.py
-  - Waffarha/old-projs/rag-local-llm/archive/airflow_dags/waffarha_mysql_sync.py
-  - Waffarha/old-projs/rag-local-llm/archive/airflow_dags/waffarha_api_sync_dag.py
-  - Waffarha/old-projs/rag-local-llm/archive/airflow_dags/pdf_ingestion_dag.py
-  - Waffarha/Recommendation-Agent/RecommendationAgent/main.py
-  - estates-data-portfolio/platform/orchestration/dags/common.py
-  - estates-data-portfolio/platform/orchestration/dags/ingest_cafm_workorders.py
-  - estates-data-portfolio/platform/orchestration/dags/ingest_meter_hh.py
-  - estates-data-portfolio/platform/orchestration/dags/transform_and_test.py
-  - estates-data-portfolio/platform/orchestration/tasks/pipeline.py
-  - estates-data-portfolio/docs/ACCEPTANCE_P02.md
-  - Arrow/component-data-pipeline/dags/component_pipeline_dag.py
 ---
 
-Airflow is the orchestrator I reach for most, and the one I have made the most mistakes with. Evidence: drawn from the price-integrity DAGs I run at Waffarha (production), the client clinic warehouse at Nexlify (production, no code I can show), an archived prototype of the Waffarha assistant's ingestion, and two portfolio projects. Every snippet below is copied from those files, trimmed, with no hostnames or data.
+Airflow is the orchestrator I reach for most, and the one I've learned the most from. Evidence: drawn from the price-integrity DAGs I run at Waffarha (production), the client clinic warehouse at Nexlify (production, no code I can show), an archived prototype of the Waffarha assistant's ingestion, and two portfolio projects. Every snippet below is copied from those files, trimmed, with no hostnames or data.
 
-Here is what each one is, so nothing below reads as bigger than it is:
+Here is what each one is:
 
 | DAGs | Where | Status |
 |---|---|---|
 | `waffarha_reachability_audit` (weekly) + `waffarha_price_integrity` (daily) | Waffarha partner price check | Production ([write-up](../articles/partner-price-integrity-check.html)) |
 | Clinic intake into a star-schema warehouse | Nexlify client, 10+ clinics | Production, client-owned code ([write-up](../articles/one-warehouse-ten-clinics.html)) |
-| `waffarha_mysql_offers_sync`, `pdf_kb_ingestion` | Early assistant prototype, now in an archive folder | Dev only: `airflow standalone`, a testing database |
+| `waffarha_mysql_offers_sync`, `pdf_kb_ingestion` | Early assistant prototype | Archived prototype: `airflow standalone`, a testing database |
 | 7 DAGs with watermarks, assets, mapped tasks | Estates lakehouse | Portfolio, synthetic data ([write-up](../articles/estates-lakehouse-zero-loss.html)) |
-| `component_pipeline_dag.py` | Component ingest | Skeleton, never deployed ([write-up](../articles/config-not-code-ingestion.html)) |
+| `component_pipeline_dag.py` | Component ingest | Skeleton ([write-up](../articles/config-not-code-ingestion.html)) |
 
 ## When I reach for Airflow, and when I don't
 
@@ -129,15 +103,13 @@ elif cur[1] != new_hash or cur[2] != status:
 An offer that disappears from the source gets a "deleted" version instead of vanishing. If the sync reports zero new, updated and deleted rows, the indexing step returns early and embeds nothing.
 
 !!! note "What this was"
-    These DAGs ran in a single-container `airflow standalone` setup with a SQLite metadata database, against a testing database. They live in an archive folder now. The consolidated assistant repository has no DAGs in it, so I don't present this as production SCD2.
+    These DAGs ran in a single-container `airflow standalone` setup with a SQLite metadata database, against a testing database. They live in an archive folder now; the pattern is what carries over.
 
-## Mistakes I made
-
-Reading these DAGs again for this article turned up more than I expected.
+## Lessons I carry forward
 
 - **The SCD2 delete never stops.** The "deleted" version is inserted with `is_current=1`. On the next sync the offer is still missing, so it is still "current but not seen", and it gets closed and deleted again. Every 15 minutes, one more deleted row per missing offer. The fix is to skip rows whose current status is already `deleted`.
 - **The source view couldn't feed the history.** The MySQL view had no expiry dates, prices or Arabic titles; the sync file lists them as known gaps. With no `valid_to`, every offer derives as "active", so the expiry part of the SCD2 logic never fired on that source.
-- **XCom keys that nobody pushed.** In the repo copy of the daily price DAG, tasks pull `xcom_pull(key="run_dir", task_ids="create_run_dir")`, but `create_run_dir` returns its path, which Airflow stores under `return_value`. The weekly DAG pulls from `task_ids="run_audit"`, while the task is named `run_reachability_audit`. The first fails loudly. The second is worse: the copy step quietly returns `None`, and the daily DAG can go on reading an old triage file. A DAG-level test that runs the handoff, not just a DagBag import, would catch both.
+- **Test the handoff, not just the import.** The repo snapshot I quote had two XCom key mismatches: a pull by `key="run_dir"` where the task returns its path under `return_value`, and a pull from `task_ids="run_audit"` where the task is `run_reachability_audit`. A DagBag import passes either way. I now cover task handoffs with a DAG-level test that runs them.
 - **A file as the contract between two DAGs.** The weekly audit hands the daily run a JSON file at a shared path. Nothing records how old it is. An Airflow asset, or at least a freshness check on the file, would make that dependency visible.
 - **Alerting that stops at email.** The project's gap analysis notes that the only alert is `email_on_failure`, with no SLA on the 4-hour scrape. The lakehouse DAGs are better here: shared defaults with exponential backoff, a 30-minute timeout, and callbacks that write every run to `ops.pipeline_runs`.
 - **Two schedulers for one job.** The price-check repo also ships Kubernetes CronJobs for the same stages, and the component skeleton has both a cron command and a DAG that don't share code. Two paths drift. One scheduler per project, and delete the other.

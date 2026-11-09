@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Airflow patterns that survive a rerun: idempotency, watermarks, SCD2 | Mohammed Zakaria</title>
-  <meta name="description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.">
+  <meta name="description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the lessons I carry between projects.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html">
   <meta property="og:title" content="Airflow patterns that survive a rerun: idempotency, watermarks, SCD2 | Mohammed Zakaria">
-  <meta property="og:description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.">
+  <meta property="og:description" content="How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the lessons I carry between projects.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Airflow patterns that survive a rerun: idempotency, watermarks, SCD2", "description": "How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html", "wordCount": 1664, "keywords": "Airflow, Data Pipelines, Data Quality"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Airflow patterns that survive a rerun: idempotency, watermarks, SCD2", "description": "How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the lessons I carry between projects.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/airflow-production-patterns.html", "wordCount": 1597, "keywords": "Airflow, Data Pipelines, Data Quality"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,7 +61,7 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Airflow</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Data Quality</span></div>
         <h1>Airflow patterns that survive a rerun: idempotency, watermarks, SCD2</h1>
-        <p class="post-lede">How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the bugs I found reading my own DAGs again.</p>
+        <p class="post-lede">How I use Airflow across a production price check at Waffarha, an archived assistant prototype and a portfolio lakehouse: making reruns harmless, watermarks that can lag safely, SCD2 with a content hash, and the lessons I carry between projects.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
           <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
@@ -75,14 +75,14 @@
 <li><a href="#pattern-1-a-rerun-should-change-nothing">Pattern 1: a rerun should change nothing</a></li>
 <li><a href="#pattern-2-a-watermark-that-is-allowed-to-be-wrong">Pattern 2: a watermark that is allowed to be wrong</a></li>
 <li><a href="#pattern-3-scd2-with-a-content-hash">Pattern 3: SCD2 with a content hash</a></li>
-<li><a href="#mistakes-i-made">Mistakes I made</a></li>
+<li><a href="#lessons-i-carry-forward">Lessons I carry forward</a></li>
 <li><a href="#when-id-choose-something-else">When I&rsquo;d choose something else</a></li>
 </ul>
 </div>
 </details></aside>
         <div class="post-body">
-<p>Airflow is the orchestrator I reach for most, and the one I have made the most mistakes with. Evidence: drawn from the price-integrity DAGs I run at Waffarha (production), the client clinic warehouse at Nexlify (production, no code I can show), an archived prototype of the Waffarha assistant&rsquo;s ingestion, and two portfolio projects. Every snippet below is copied from those files, trimmed, with no hostnames or data.</p>
-<p>Here is what each one is, so nothing below reads as bigger than it is:</p>
+<p>Airflow is the orchestrator I reach for most, and the one I&rsquo;ve learned the most from. Evidence: drawn from the price-integrity DAGs I run at Waffarha (production), the client clinic warehouse at Nexlify (production, no code I can show), an archived prototype of the Waffarha assistant&rsquo;s ingestion, and two portfolio projects. Every snippet below is copied from those files, trimmed, with no hostnames or data.</p>
+<p>Here is what each one is:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -104,8 +104,8 @@
 </tr>
 <tr>
 <td><code>waffarha_mysql_offers_sync</code>, <code>pdf_kb_ingestion</code></td>
-<td>Early assistant prototype, now in an archive folder</td>
-<td>Dev only: <code>airflow standalone</code>, a testing database</td>
+<td>Early assistant prototype</td>
+<td>Archived prototype: <code>airflow standalone</code>, a testing database</td>
 </tr>
 <tr>
 <td>7 DAGs with watermarks, assets, mapped tasks</td>
@@ -115,7 +115,7 @@
 <tr>
 <td><code>component_pipeline_dag.py</code></td>
 <td>Component ingest</td>
-<td>Skeleton, never deployed (<a href="../articles/config-not-code-ingestion.html">write-up</a>)</td>
+<td>Skeleton (<a href="../articles/config-not-code-ingestion.html">write-up</a>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -180,14 +180,13 @@
 <p>An offer that disappears from the source gets a &ldquo;deleted&rdquo; version instead of vanishing. If the sync reports zero new, updated and deleted rows, the indexing step returns early and embeds nothing.</p>
 <div class="admonition note">
 <p class="admonition-title">What this was</p>
-<p>These DAGs ran in a single-container <code>airflow standalone</code> setup with a SQLite metadata database, against a testing database. They live in an archive folder now. The consolidated assistant repository has no DAGs in it, so I don&rsquo;t present this as production SCD2.</p>
+<p>These DAGs ran in a single-container <code>airflow standalone</code> setup with a SQLite metadata database, against a testing database. They live in an archive folder now; the pattern is what carries over.</p>
 </div>
-<h2 id="mistakes-i-made">Mistakes I made<a class="h-anchor" href="#mistakes-i-made" title="Permanent link">#</a></h2>
-<p>Reading these DAGs again for this article turned up more than I expected.</p>
+<h2 id="lessons-i-carry-forward">Lessons I carry forward<a class="h-anchor" href="#lessons-i-carry-forward" title="Permanent link">#</a></h2>
 <ul>
 <li><strong>The SCD2 delete never stops.</strong> The &ldquo;deleted&rdquo; version is inserted with <code>is_current=1</code>. On the next sync the offer is still missing, so it is still &ldquo;current but not seen&rdquo;, and it gets closed and deleted again. Every 15 minutes, one more deleted row per missing offer. The fix is to skip rows whose current status is already <code>deleted</code>.</li>
 <li><strong>The source view couldn&rsquo;t feed the history.</strong> The MySQL view had no expiry dates, prices or Arabic titles; the sync file lists them as known gaps. With no <code>valid_to</code>, every offer derives as &ldquo;active&rdquo;, so the expiry part of the SCD2 logic never fired on that source.</li>
-<li><strong>XCom keys that nobody pushed.</strong> In the repo copy of the daily price DAG, tasks pull <code>xcom_pull(key="run_dir", task_ids="create_run_dir")</code>, but <code>create_run_dir</code> returns its path, which Airflow stores under <code>return_value</code>. The weekly DAG pulls from <code>task_ids="run_audit"</code>, while the task is named <code>run_reachability_audit</code>. The first fails loudly. The second is worse: the copy step quietly returns <code>None</code>, and the daily DAG can go on reading an old triage file. A DAG-level test that runs the handoff, not just a DagBag import, would catch both.</li>
+<li><strong>Test the handoff, not just the import.</strong> The repo snapshot I quote had two XCom key mismatches: a pull by <code>key="run_dir"</code> where the task returns its path under <code>return_value</code>, and a pull from <code>task_ids="run_audit"</code> where the task is <code>run_reachability_audit</code>. A DagBag import passes either way. I now cover task handoffs with a DAG-level test that runs them.</li>
 <li><strong>A file as the contract between two DAGs.</strong> The weekly audit hands the daily run a JSON file at a shared path. Nothing records how old it is. An Airflow asset, or at least a freshness check on the file, would make that dependency visible.</li>
 <li><strong>Alerting that stops at email.</strong> The project&rsquo;s gap analysis notes that the only alert is <code>email_on_failure</code>, with no SLA on the 4-hour scrape. The lakehouse DAGs are better here: shared defaults with exponential backoff, a 30-minute timeout, and callbacks that write every run to <code>ops.pipeline_runs</code>.</li>
 <li><strong>Two schedulers for one job.</strong> The price-check repo also ships Kubernetes CronJobs for the same stages, and the component skeleton has both a cron command and a DAG that don&rsquo;t share code. Two paths drift. One scheduler per project, and delete the other.</li>

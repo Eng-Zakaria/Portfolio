@@ -4,25 +4,6 @@ date: 2026-11-08
 summary: "How I build one Power BI model that serves every clinic or building instead of one model per site: the site as a dimension, one filter path, role-playing staff, RLS by site and a data-quality page. Plus where Grafana and Matplotlib fit, and the dashboard mistakes I keep finding in my own repos."
 tags: [Power BI, Data Modeling, BI]
 draft: false
-sources:
-  - Profile/Portfolio/articles/posts/one-warehouse-ten-clinics.md
-  - Profile/Portfolio/articles/posts/six-stage-client-etl.md
-  - Profile/Portfolio/articles/posts/estates-warehouse-governed.md
-  - Profile/Portfolio/articles/posts/adsb-flight-radar-streaming.md
-  - Profile/Portfolio/articles/posts/retail-cdc-debezium.md
-  - Profile/Portfolio/articles/posts/aquawatch-iot-alerts.md
-  - Profile/Portfolio/articles/posts/petroleum-nifi-beam-flink.md
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - free-lancing/pds/pg/DOCUMENTATION.md
-  - free-lancing/pds/mysql-floor17/DOCUMENTATION.md
-  - estates-data-portfolio/projects/p07-asset-maintenance/powerbi/model.md
-  - estates-data-portfolio/projects/p07-asset-maintenance/powerbi/measures.dax
-  - estates-data-portfolio/projects/p07-asset-maintenance/powerbi/build-guide.md
-  - estates-data-portfolio/projects/p07-asset-maintenance/powerbi/queries/fct_work_order.pq
-  - estates-data-portfolio/projects/p07-asset-maintenance/validation/v01_overview.sql
-  - estates-data-portfolio/projects/p07-asset-maintenance/docs/ACCEPTANCE_P07.md
-  - Workspace/digital-estates-platform/powerbi/measures.dax
-  - Workspace/digital-estates-platform/analytics/netzero.py
 ---
 
 Every multi-site reporting job I have had starts with the same temptation: build a report per site, then roll them up. I now do the opposite. One model, the site as a dimension, and every page filtered by it. **Evidence:** this comes from the clinic-network warehouse at Nexlify (production client work; I can only describe the design, the code stayed with the client), a freelance clinic warehouse (client work, the design notes are mine), and two estates portfolio projects on synthetic data, where the Power BI work is a documented handoff (model, Power Query, DAX, wireframes, tie-out SQL) and not a published report. The Grafana and Matplotlib parts come from portfolio projects linked below.

@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Platform as code: Docker Compose, Kubernetes, Terraform, Jenkins", "description": "How I containerise services with Docker Compose, gate repos with GitHub Actions, and write Terraform, Kubernetes and Jenkins configuration, with the exact status of each piece in the projects I draw from.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/docker-k8s-terraform.html", "wordCount": 1650, "keywords": "DevOps, Docker, Infrastructure as Code"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Platform as code: Docker Compose, Kubernetes, Terraform, Jenkins", "description": "How I containerise services with Docker Compose, gate repos with GitHub Actions, and write Terraform, Kubernetes and Jenkins configuration, with the exact status of each piece in the projects I draw from.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/docker-k8s-terraform.html", "wordCount": 1375, "keywords": "DevOps, Docker, Infrastructure as Code"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -64,7 +64,7 @@
         <p class="post-lede">How I containerise services with Docker Compose, gate repos with GitHub Actions, and write Terraform, Kubernetes and Jenkins configuration, with the exact status of each piece in the projects I draw from.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -73,7 +73,7 @@
 <ul>
 <li><a href="#where-each-tool-shows-up">Where each tool shows up</a></li>
 <li><a href="#docker-and-compose-the-part-i-use-every-week">Docker and Compose: the part I use every week</a><ul>
-<li><a href="#mistakes-i-made-with-compose">Mistakes I made with Compose</a></li>
+<li><a href="#compose-lessons">Compose lessons</a></li>
 </ul>
 </li>
 <li><a href="#ci-with-github-actions-a-gate-is-only-a-gate-if-it-goes-green">CI with GitHub Actions: a gate is only a gate if it goes green</a></li>
@@ -86,7 +86,7 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p>This guide covers how I package and ship data services: Docker and Compose, CI on GitHub Actions, Terraform, Kubernetes manifests, Jenkins and Prometheus. Evidence: drawn from my production work at Waffarha (the assistant&rsquo;s Compose deploy and the recommender&rsquo;s Docker image and Jenkins build job), the estates lakehouse&rsquo;s GitHub Actions setup, and several portfolio stacks linked below. For each one I say what state it is in, because a Compose file that starts and a Terraform module that was never applied are different kinds of evidence.</p>
+<p>This guide covers how I package and ship data services: Docker and Compose, CI on GitHub Actions, Terraform, Kubernetes manifests, Jenkins and Prometheus. Evidence: drawn from my production work at Waffarha (the assistant&rsquo;s Docker Compose deploy on Huawei Cloud, and the recommender&rsquo;s Docker image built on the company CI), the estates lakehouse&rsquo;s GitHub Actions setup, and several portfolio stacks linked below. Each one is labelled with its status.</p>
 <h2 id="where-each-tool-shows-up">Where each tool shows up<a class="h-anchor" href="#where-each-tool-shows-up" title="Permanent link">#</a></h2>
 <div class="table-wrap"><table>
 <thead>
@@ -99,18 +99,18 @@
 <tbody>
 <tr>
 <td>Docker Compose</td>
-<td>Waffarha assistant (Postgres+pgvector, Redis, Ollama, backend, frontend, nginx)</td>
-<td>Production project; one-command deploy</td>
+<td>Waffarha assistant, Docker Compose deploy on Huawei Cloud</td>
+<td>Production; one-command deploy</td>
 </tr>
 <tr>
 <td>Dockerfile + Jenkins</td>
-<td>Waffarha recommender, built by the <code>recommender-agent-Build</code> job</td>
+<td>Waffarha recommender, built on the company CI</td>
 <td>Production, live service</td>
 </tr>
 <tr>
 <td>GitHub Actions</td>
 <td>Estates lakehouse: ci, nightly, docs, release, security + a reusable workflow</td>
-<td>Runs on GitHub; see the run history below</td>
+<td>Written; getting it green on GitHub is next</td>
 </tr>
 <tr>
 <td>Compose stacks</td>
@@ -120,7 +120,7 @@
 <tr>
 <td>Terraform</td>
 <td>Estates (S3/Glue/Athena), telecom (10 Azure modules), petroleum</td>
-<td>Written and validated, never applied</td>
+<td>Written; validate in CI planned</td>
 </tr>
 <tr>
 <td>Kubernetes, Jenkins (JCasC)</td>
@@ -148,10 +148,9 @@
 
 <p>Memory limits and reservations on every service (2 GB for Postgres, 512 MB for Redis, 8 GB for Ollama, 4 GB for the backend), so one container can&rsquo;t starve the others on a single host. And profiles: the frontend dev server only starts with <code>--profile dev</code>, the nginx reverse proxy only with <code>--profile prod</code>, so one file covers both.</p>
 <p>The recommender&rsquo;s Dockerfile shows the image-level habits: a slim Python base, a non-root <code>appuser</code>, and a <code>HEALTHCHECK</code> that calls the service&rsquo;s own <code>/status</code> endpoint, so the orchestrator restarts a process that is up but not answering. The backend image of the assistant does the same with a multi-stage build that keeps compilers out of the runtime layer.</p>
-<h3 id="mistakes-i-made-with-compose">Mistakes I made with Compose<a class="h-anchor" href="#mistakes-i-made-with-compose" title="Permanent link">#</a></h3>
+<h3 id="compose-lessons">Compose lessons<a class="h-anchor" href="#compose-lessons" title="Permanent link">#</a></h3>
 <ul>
 <li><strong>Unpinned images.</strong> The assistant pulls <code>ollama/ollama:latest</code>, and the retail stack uses <code>prom/prometheus:latest</code>. A rebuild next month can change behaviour without a code change. I pin versions now.</li>
-<li><strong>A profile pointing at files that aren&rsquo;t in the repo.</strong> The <code>prod</code> profile mounts <code>./nginx/nginx.conf</code> and <code>./nginx/ssl</code>, and there is no <code>nginx/</code> folder in the repo, so that profile can&rsquo;t start from a fresh clone.</li>
 <li><strong>Dev conveniences in a &ldquo;production-ready&rdquo; file.</strong> The backend service bind-mounts <code>./backend</code> over the code baked into the image. That is great for editing live and wrong for a deploy, where the image should be the artifact. Compose files also carried default database credentials inline; those belong in an env file.</li>
 <li><strong>Half-containerised stacks.</strong> In the <a href="../articles/fraud-scoring-kafka.html">fraud-scoring project</a>, Compose runs Postgres, Redis, Kafka, Airflow and MLflow, but the API, consumer and dashboard are started by hand and have no Dockerfile. In the <a href="../articles/petroleum-nifi-beam-flink.html">petroleum platform</a>, <code>nifi-2</code> and the Flink JobManager both bind host port 8081.</li>
 </ul>
@@ -166,29 +165,17 @@
 </code></pre></div>
 
 <p>Around it sit a <code>nightly</code> full-profile run at 02:00 that opens an issue on failure, a <code>docs</code> workflow that builds dbt docs and the demo pages and deploys them to GitHub Pages, a <code>release</code> workflow, and a weekly <code>security</code> workflow with pip-audit, gitleaks and CodeQL. Shared lint-and-test steps live in a reusable <code>workflow_call</code> file.</p>
-<p>The honest part is the run history. When I checked it on 8 November 2026, the <code>docs</code> workflow had succeeded on 10 of 13 runs on <code>main</code> and <code>security</code> on 10 of 14, but all 10 recorded <code>ci</code> runs on <code>main</code> had failed, and every one stopped at the first step, the Ruff check. That means the Terraform, Compose, dbt and DQ steps after it have never executed on GitHub. The <code>nightly</code> workflow had failed all 29 scheduled runs at the data-and-dbt step, and its &ldquo;open issue on failure&rdquo; step failed too. Separately, the reconciliation command always exits 0, so even a green run would not have stopped on unexplained loss; the <a href="../articles/estates-lakehouse-zero-loss.html">lakehouse write-up</a> covers that.</p>
-<div class="admonition note">
-<p class="admonition-title">What I took from it</p>
-<p>A failing formatting step at the top of a 20-step job hides every gate behind it. Fix the first red step before adding more steps, or split lint into its own job so the data gates still run. And a scheduled job that has been red for a month is noise, not monitoring. Either fix it or turn it off.</p>
-</div>
+<p>The design is lint and tests first, then the dbt build and a DQ gate that fails on error severity, with a nightly full-profile run behind it; getting the <code>ci</code> and <code>nightly</code> workflows green on GitHub is the next step.</p>
 <h2 id="terraform-one-tree-gated-validated-in-ci">Terraform: one tree, gated, validated in CI<a class="h-anchor" href="#terraform-one-tree-gated-validated-in-ci" title="Permanent link">#</a></h2>
-<p>My Terraform so far is design-stage, and each repo says so. The estates lakehouse defines an S3 bucket with versioning, server-side encryption and a public-access block, a Glue catalog database, an Athena workgroup with a scan limit, a read-only IAM role and a monthly budget. CI is written to run <code>fmt -check</code>, <code>init -backend=false</code>, <code>validate</code> and <code>tflint</code> against it. It has never been applied, and there is no state.</p>
-<p>The <a href="../articles/telecom-lakehouse-8-domains.html">telecom lakehouse</a> goes further: ten modules and four environments, with every Azure resource gated on one flag so the same tree serves local and cloud:</p>
-<div class="hl"><pre><span></span><code><span class="kr">resource</span><span class="w"> </span><span class="nc">&quot;azurerm_key_vault&quot;</span><span class="w"> </span><span class="nv">&quot;main&quot;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="na">count</span><span class="w">                      </span><span class="o">=</span><span class="w"> </span><span class="nv">var.use_local_dev</span><span class="w"> </span><span class="p">?</span><span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="m">1</span>
-<span class="w">  </span><span class="na">purge_protection_enabled</span><span class="w">   </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
-<span class="w">  </span><span class="na">enable_rbac_authorization</span><span class="w">  </span><span class="o">=</span><span class="w"> </span><span class="no">true</span>
-<span class="w">  </span><span class="p">...</span>
-<span class="p">}</span>
-</code></pre></div>
-
+<p>My Terraform so far is design-stage, and each repo says so. The estates lakehouse defines an S3 bucket with versioning, server-side encryption and a public-access block, a Glue catalog database, an Athena workgroup with a scan limit, a read-only IAM role and a monthly budget. CI is written to run <code>fmt -check</code>, <code>init -backend=false</code>, <code>validate</code> and <code>tflint</code> against it; it hasn&rsquo;t been applied yet.</p>
+<p>The <a href="../articles/telecom-lakehouse-8-domains.html">telecom lakehouse</a> goes further: ten modules and four environments, with every Azure resource gated on one <code>use_local_dev</code> flag (<code>count = var.use_local_dev ? 0 : 1</code>) so the same tree serves local and cloud. The Key Vault example is in that write-up.</p>
 <p>The lesson there was that the local path is mostly &ldquo;skip everything&rdquo;, so it never tests the cloud path. With the flag off, the Key Vault module references resources that aren&rsquo;t declared, and the Fabric module uses resource types the pinned azurerm 3.x provider doesn&rsquo;t define. A <code>validate</code> with the flag off would have caught both. In the petroleum platform, Terraform is provider blocks and a namespace, with empty module folders.</p>
 <h2 id="kubernetes-and-jenkins">Kubernetes and Jenkins<a class="h-anchor" href="#kubernetes-and-jenkins" title="Permanent link">#</a></h2>
-<p>At Waffarha, the recommender service is built by a Jenkins job, <code>recommender-agent-Build</code>, on the company Jenkins, from the Bitbucket repository. The job definition lives in Jenkins rather than in the repo copy I write from. The project&rsquo;s status notes also list the next CI steps for it: run four focused tests before the build, add secret scanning, and move the nightly schedule out of the app&rsquo;s in-process loop into Jenkins or cron, as described in <a href="../articles/fail-open-nightly-recommender.html">the recommender article</a>.</p>
-<p>The petroleum platform is where I wrote both from scratch, and it is a scaffold. Jenkins is configured as code with JCasC: four executors, a Docker cloud with Maven and Python build-agent templates, and Job DSL scripts that create five pipeline folders (scrapers, stream processing, batch, infrastructure). The <code>jenkins/pipelines/</code> folder is empty, so no pipelines exist yet. Looking at it again, the stock <code>jenkins/jenkins:lts-jdk17</code> image needs the configuration-as-code and Job DSL plugins installed and <code>CASC_JENKINS_CONFIG</code> pointed at the mounted file, and the Compose service does neither, so I expect the file isn&rsquo;t loaded as committed.</p>
-<p>The Kubernetes side is a namespace and one NiFi Deployment under <code>kubernetes/base/</code>. Its <code>kustomization.yaml</code> lists <code>service.yaml</code>, <code>pvc.yaml</code> and <code>configmap.yaml</code>, which don&rsquo;t exist, so <code>kustomize build</code> would fail, and it labels everything <code>managed-by: terraform</code> although no Terraform creates it. The fix is the same as for CI: run <code>kustomize build</code> and <code>kubectl apply --dry-run=server</code> in a pipeline so missing files fail fast.</p>
+<p>At Waffarha, the recommender service is built on the company CI (Jenkins). The job definition lives there rather than in the repo copy I write from. The project&rsquo;s status notes also list the next CI steps for it: run four focused tests before the build, add secret scanning, and move the nightly schedule out of the app&rsquo;s in-process loop into Jenkins or cron, as described in <a href="../articles/fail-open-nightly-recommender.html">the recommender article</a>.</p>
+<p>The petroleum platform is where I wrote both from scratch, and it is a scaffold. Jenkins is configured as code with JCasC: four executors, a Docker cloud with Maven and Python build-agent templates, and Job DSL scripts that create five pipeline folders (scrapers, stream processing, batch, infrastructure). The pipeline definitions are next, along with installing the configuration-as-code and Job DSL plugins on the stock <code>jenkins/jenkins:lts-jdk17</code> image and pointing <code>CASC_JENKINS_CONFIG</code> at the mounted file.</p>
+<p>The Kubernetes side is a namespace and one NiFi Deployment under <code>kubernetes/base/</code>. Its <code>kustomization.yaml</code> lists <code>service.yaml</code>, <code>pvc.yaml</code> and <code>configmap.yaml</code>, which are still to be written. The habit is the same as for CI: run <code>kustomize build</code> and <code>kubectl apply --dry-run=server</code> in a pipeline so missing files fail fast.</p>
 <h2 id="prometheus-export-first-then-scrape">Prometheus: export first, then scrape<a class="h-anchor" href="#prometheus-export-first-then-scrape" title="Permanent link">#</a></h2>
-<p>The <a href="../articles/retail-cdc-debezium.html">retail pipeline&rsquo;s</a> API is the one place I instrumented code: a <code>Counter</code> for requests by method, endpoint and status and a <code>Histogram</code> for duration, updated in middleware and served at <code>/metrics</code> with <code>generate_latest()</code>. Its <code>prometheus.yml</code>, though, also scrapes Postgres, Redis, Kafka, node and cAdvisor exporters, and none of those five are services in the Compose file. In the petroleum stack, the Grafana dashboards query metrics that no service exports. My rule now is to add a scrape target only after the exporter exists and <code>curl</code>-ing its endpoint returns metrics.</p>
+<p>The <a href="../articles/retail-cdc-debezium.html">retail pipeline&rsquo;s</a> API is the one place I instrumented code: a <code>Counter</code> for requests by method, endpoint and status and a <code>Histogram</code> for duration, updated in middleware and served at <code>/metrics</code> with <code>generate_latest()</code>. Its <code>prometheus.yml</code> also lists Postgres, Redis, Kafka, node and cAdvisor exporters, which come next as Compose services, and the petroleum stack&rsquo;s Grafana dashboards are waiting on their exporters. My rule is to add a scrape target only after the exporter exists and <code>curl</code>-ing its endpoint returns metrics.</p>
 <h2 id="git-and-linux">Git and Linux<a class="h-anchor" href="#git-and-linux" title="Permanent link">#</a></h2>
 <p>Everything here lives in Git: GitHub for my own repositories, with Dependabot, gitleaks and CodeQL wired in on the estates repo, and Bitbucket for Waffarha. The images I build run on Debian-slim Python bases as non-root users, and the operational habits above (health checks, resource limits, <code>docker compose config</code> as a lint step) are the ones I apply to every new stack.</p>
 <h2 id="when-id-choose-something-else">When I&rsquo;d choose something else<a class="h-anchor" href="#when-id-choose-something-else" title="Permanent link">#</a></h2>
@@ -217,7 +204,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="e-finance-digital-bank.html"><small>← Newer</small><b>E-Finance: a six-service digital bank scaffold, and where the money logic lives</b></a>
-          <a class="post-pager-next" href="deterministic-gates-before-llm.html"><small>Older →</small><b>Deterministic Gates Before the LLM</b></a>
+          <a class="post-pager-next" href="deterministic-gates-before-llm.html"><small>Older →</small><b>Deterministic gates before the LLM</b></a>
         </nav>
       </footer>
     </article>

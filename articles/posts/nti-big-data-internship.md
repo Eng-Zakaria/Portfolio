@@ -4,16 +4,6 @@ date: 2026-11-09
 summary: "A reflection on my four months as a Big Data Engineering Intern at NTI and the Huawei HCIP Big Data certification: what the breadth of the stack is good for, how my capstone, a live flight radar, pulled it together, and where you have to go deeper yourself."
 tags: [Career, Big Data, Certification]
 draft: false
-sources:
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - CV/profile/mohamed_zakaria_resume_data.yml
-  - CV/templates/Main_Resume_Template.tex
-  - Profile/Portfolio/index.html
-  - Profile/Portfolio/articles/posts/spark-hadoop-in-practice.md
-  - Profile/Portfolio/articles/posts/kafka-nifi-sqoop-flume.md
-  - Profile/Portfolio/articles/posts/adsb-flight-radar-streaming.md
-  - Profile/Portfolio/articles/posts/choosing-the-right-database.md
-  - Profile/Portfolio/articles/posts/one-power-bi-model.md
 ---
 
 This is a career reflection, not a brochure. The facts come from my CV and the project write-ups linked below; everything else is my own opinion about how to get the most out of a programme like this. From April to July 2026 I was a Big Data Engineering Intern at the National Telecommunication Institute (NTI) in Smart Village, and in 2026 I took the Huawei HCIP Big Data certification (H13-723) through NTI. My capstone project was a live flight radar built on aircraft (ADS-B) data. If you are thinking about applying, this is what I would want someone to tell me.
@@ -50,11 +40,11 @@ adsb.lol API (poll every 10 s)
 
 I picked aircraft data because it is live and easy to check by eye: if the dots on the map line up with Cairo International Airport, the pipeline works. That turned out to be a good rule for any capstone. Choose data where you can see at a glance whether the output is right, so you spend your time on the pipeline and not on wondering whether it is working.
 
-The capstone also taught me something the labs didn't. When I re-read the configs for the write-up, I found durability gaps on the way in: one Kafka broker, a replication factor of 1, `acks=1`, and a memory channel in the first Flume agent. For a radar that refreshes every 10 seconds, losing one poll is fine. For anything that needs a complete history, it is not. I wrote the fixes down as next steps (`acks=all`, a replication factor above 1, a durable channel, and counting what reaches HDFS against what was polled). Writing down what is wrong with your own work, in public, teaches more than another tutorial.
+The capstone also taught me something the labs didn't: durability is a decision you make per hop. For a radar that refreshes every 10 seconds, losing one poll is fine; for anything that needs a complete history, it is not. The ingest side's next iteration moves to `acks=all`, a replication factor above 1 and a durable channel, and counts what reaches HDFS against what was polled ([details](../articles/adsb-flight-radar-streaming.html)).
 
 ## Where I went deep: Spark
 
-Of everything on the list, I went deepest on Spark. It shows up in the capstone as two Structured Streaming queries reading the same Kafka topic, one writing a point per aircraft every 10 seconds and one computing sliding-window aggregates by aircraft type. After the internship I kept using it, and I collected the patterns I reuse across five portfolio pipelines, plus the mistakes I found in my own code, in [Spark and Hadoop in practice](../articles/spark-hadoop-in-practice.html).
+Of everything on the list, I went deepest on Spark. It shows up in the capstone as two Structured Streaming queries reading the same Kafka topic, one writing a point per aircraft every 10 seconds and one computing sliding-window aggregates by aircraft type. After the internship I kept using it, and I collected the patterns I reuse across five portfolio pipelines, plus the lessons from my own code, in [Spark and Hadoop in practice](../articles/spark-hadoop-in-practice.html).
 
 Spark was a good choice for depth because it connects to almost everything else in the programme. It reads from Kafka and HDFS, writes to Hive and time-series stores, and runs batch and streaming with the same API. Once you know it well, the rest of the stack makes more sense, because you understand what each other tool is feeding or serving.
 
@@ -66,7 +56,7 @@ Spark was a good choice for depth because it connects to almost everything else 
 
 **A certification that makes you cover the whole syllabus.** For the exam I studied, practised and researched. Studying for a vendor exam is different from building a pipeline: it makes you cover the parts of a topic you would skip in a project, like configuration, architecture components and how a product family fits together. For context, HCIP is the professional tier in Huawei's certification structure, above the associate level. I treat it as a structured syllabus I can show I finished, next to projects that show I can build.
 
-**A bridge into a first data role.** The internship ended in July 2026, the same month I started as a Data Engineer at Waffarha. The production work there is different (Airflow ingestion from MySQL and ClickHouse, retrieval and recommendation pipelines), but the habits carry over: think in layers, schedule everything, and know where each piece of data lands.
+**A bridge into a first data role.** The internship ended in July 2026, the same month I started as a Data Engineer at Waffarha. The production work there is different (an Airflow price-integrity pipeline, ClickHouse and MySQL integration, retrieval and recommendation pipelines), but the habits carry over: think in layers, schedule everything, and know where each piece of data lands.
 
 ## What I would tell someone starting the programme
 

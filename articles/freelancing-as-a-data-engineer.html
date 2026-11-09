@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-09">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Freelancing as a data engineer in Cairo: clients, scoping, delivery", "description": "What my freelance client work since January 2026 has taught me about scoping a data job, getting access to client data, handling personal data, and handing over something a client can trust.", "datePublished": "2026-11-09", "dateModified": "2026-11-09", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/freelancing-as-a-data-engineer.html", "wordCount": 1626, "keywords": "Career, Freelancing, Data Engineering"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Freelancing as a data engineer in Cairo: clients, scoping, delivery", "description": "What my freelance client work since January 2026 has taught me about scoping a data job, getting access to client data, handling personal data, and handing over something a client can trust.", "datePublished": "2026-11-09", "dateModified": "2026-11-09", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/freelancing-as-a-data-engineer.html", "wordCount": 1540, "keywords": "Career, Freelancing, Data Engineering"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -64,7 +64,7 @@
         <p class="post-lede">What my freelance client work since January 2026 has taught me about scoping a data job, getting access to client data, handling personal data, and handing over something a client can trust.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-09">9 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -84,7 +84,7 @@
         <div class="post-body">
 <p>I have been freelancing as a data engineer since January 2026, from Cairo and remotely, and since July 2026 I have done it alongside my role at Waffarha. This is a career reflection; the facts come from my CV and the project write-ups linked below. I won&rsquo;t talk about rates or client counts. What I can talk about is what the work itself showed me, including the problems I found and fixed.</p>
 <h2 id="the-work-so-far">The work so far<a class="h-anchor" href="#the-work-so-far" title="Permanent link">#</a></h2>
-<p>My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them.</p>
+<p>My first client came through my network, which I think is how most freelance data work starts: someone who already knows how you work has a data problem. Three client jobs make up the core of my freelance record, and one earlier engagement shaped how I approached them: at Nexlify, my employer from 01/2025 to 01/2026, I built an Airflow ETL from 10+ clinic sources into one star-schema warehouse, with one Power BI model and a clinic switcher, for a healthcare clinic-network client (<a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a>).</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -95,12 +95,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>01/2025 – 01/2026</td>
-<td>Clinic network (at Nexlify, as an employee)</td>
-<td>Airflow ETL from 10+ clinic sources into one star-schema warehouse, one Power BI model with a clinic switcher</td>
-<td><a href="../articles/one-warehouse-ten-clinics.html">One warehouse, ten clinics</a></td>
-</tr>
 <tr>
 <td>2026</td>
 <td>Multi-floor medical clinic</td>
@@ -121,7 +115,7 @@
 </tr>
 </tbody>
 </table></div>
-<p>The Nexlify work wasn&rsquo;t freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, bridge tables for staff with several roles, and scraping with enrichment and dedup, were first built there. Freelancing didn&rsquo;t start from zero. It started from things I had already seen work in production.</p>
+<p>The Nexlify work wasn&rsquo;t freelance, but it matters here. The patterns I reuse with clients today, like staged loads with a diff and a backup, and bridge tables for staff with several roles, were first built there. Freelancing didn&rsquo;t start from zero. It started from things I had already seen work in production.</p>
 <h2 id="scoping-write-down-what-actually-arrives">Scoping: write down what actually arrives<a class="h-anchor" href="#scoping-write-down-what-actually-arrives" title="Permanent link">#</a></h2>
 <p>I work from a written spec. Before I build, I hold meetings with the client, take notes, and turn them into a document we both agree on. The notes matter as much as the meetings: a decision that only exists in someone&rsquo;s memory will be remembered differently two weeks later.</p>
 <p>The most useful scoping question I have learned to ask isn&rsquo;t &ldquo;what do you want to see?&rdquo; but &ldquo;what exactly will you send me, and how often?&rdquo;</p>
@@ -135,7 +129,7 @@
 <p>Second, I keep my own evidence as I go. Looking back at Nexlify, I report a 30% latency drop and zero dashboard timeouts, but I can&rsquo;t publish query plans to back them. My own takeaway in that write-up was to record timings and plans before and after each change as part of the work. On a freelance job, nobody else is going to keep that record for you.</p>
 <h2 id="privacy-the-gap-between-rules-and-code">Privacy: the gap between rules and code<a class="h-anchor" href="#privacy-the-gap-between-rules-and-code" title="Permanent link">#</a></h2>
 <p>Client data in Egypt often means personal data: patient phone numbers on the clinic job, and owners&rsquo; mobiles on business listings in the lead project. Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020) is the frame I work against.</p>
-<p>The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. But when I reviewed the code against the README, I found a gap: the README mentioned suppression support, and the code had no opt-out list. A contact list has to be able to honour &ldquo;don&rsquo;t contact me&rdquo;, so I added an opt-out list to the tool. The same review listed other next steps, like a robots.txt check and a recorded purpose and retention date per contact.</p>
+<p>The lead project is where I learned most here. It has a written list of things that must not be automated, and the phone extractor for free text only keeps a number when the text around it marks it as contact information. A contact list has to be able to honour &ldquo;don&rsquo;t contact me&rdquo;, so the tool has an opt-out list. The next steps include a robots.txt check and a recorded purpose and retention date per contact.</p>
 <p>Two smaller lessons from the same job:</p>
 <ul>
 <li><strong>Watch your labels.</strong> Buyer-intent rows carry no phone, but they keep usernames and comment text. &ldquo;Phone-free&rdquo; is accurate; &ldquo;personal-data-free&rdquo; would not be.</li>
@@ -144,18 +138,8 @@
 <p>What I&rsquo;d tell someone starting out: write the privacy rules down, then check each one against the code before you hand over. Rules that live only in a document don&rsquo;t protect anyone.</p>
 <h2 id="handover-test-the-safety-net-with-real-data">Handover: test the safety net with real data<a class="h-anchor" href="#handover-test-the-safety-net-with-real-data" title="Permanent link">#</a></h2>
 <p>Handover is where a client starts trusting your work without you in the room. On the clinic ETL, the staged design gave us something concrete to look at together: a dry-run report, four diff buckets (new, changed, unchanged, in the database but missing from today&rsquo;s file), and the unmatched-staff queue exported to CSV after each run. Those artefacts did more for trust than any dashboard.</p>
-<p>The same job also showed me that a safety net you haven&rsquo;t tested isn&rsquo;t one. Two bugs came out of the first real runs:</p>
-<div class="hl"><pre><span></span><code>Backup:   output file opened before pg_dump runs
-          -&gt; pg_dump missing -&gt; &quot;skipped&quot; logged, 0-byte .sql left behind
-          -&gt; looks like a restore point, isn&#39;t one
-
-Rollback: one transaction, rollback() on a row error, no savepoint
-          -&gt; earlier rows discarded, counters keep counting them
-          -&gt; &quot;rows processed&quot; overstates what reached the database
-</code></pre></div>
-
-<p>I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.</p>
-<p>The first run also showed that a quality stage which doesn&rsquo;t mirror the database&rsquo;s own constraints is a partial check. 1,041 rows failed a <code>CHECK</code> constraint that the quality scan never looked at. Now I treat &ldquo;every constraint has a matching quality rule&rdquo; as part of done.</p>
+<p>The same job also showed me that a safety net you haven&rsquo;t tested isn&rsquo;t one. The first real runs exposed a backup step that could leave an empty file and a rollback that discarded earlier rows (<a href="../articles/six-stage-client-etl.html">details</a>); I fixed both after the handover review. The lesson for delivery is broader than the two bugs: before handover, I now break each safety mechanism on purpose, for example by removing the backup tool or feeding in a bad row, and confirm it fails the way I think it does.</p>
+<p>The first run also showed that a quality stage which doesn&rsquo;t mirror the database&rsquo;s own constraints is a partial check, so I now treat &ldquo;every constraint has a matching quality rule&rdquo; as part of done.</p>
 <h2 id="documentation-is-part-of-the-deliverable">Documentation is part of the deliverable<a class="h-anchor" href="#documentation-is-part-of-the-deliverable" title="Permanent link">#</a></h2>
 <p>The clinic project ships with a <code>DOCUMENTATION.md</code> that covers, among other things, the Power BI patient-journey drillthrough as a design. At Nexlify, the source-to-warehouse mapping was a written artefact rather than logic buried in queries, and that is what kept a shared schema from drifting when a clinic changed a spreadsheet layout.</p>
 <p>On a freelance job you will eventually leave, and the client keeps whatever you wrote down. The things I now treat as part of the handover:</p>

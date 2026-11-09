@@ -1,22 +1,12 @@
 ---
-title: "A serverless task API in AWS CDK, reviewed before its first deploy"
+title: "A serverless task API in AWS CDK: design before the first deploy"
 date: 2026-11-08
-summary: "A TypeScript CDK stack for API Gateway, six Lambda functions, DynamoDB, S3 and CloudFront, built as a tutorial-style learning project. What the stack defines, the design choices behind it, and the bugs a careful read finds before anything reaches AWS."
+summary: "Portfolio CDK stack (API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront), pre-deploy. What the stack defines, the design choices behind it, and the steps before the first deploy."
 tags: [AWS, Serverless, Infrastructure as Code]
 draft: false
-sources:
-  - aws/README.md
-  - aws/infrastructure/bin/app.ts
-  - aws/infrastructure/lib/task-manager-stack.ts
-  - aws/infrastructure/lib/pipeline-stack.ts
-  - aws/backend/functions/listTasks/listTasks.js
-  - aws/backend/functions/updateTask/updateTask.js
-  - aws/backend/functions/uploadFile/uploadFile.js
-  - aws/frontend/src/App.js
-  - aws/backend/package.json
 ---
 
-Evidence: portfolio, tutorial-based learning project. I built it from a guided, learning-objectives outline (the README lists ten AWS topics it is meant to teach). The repo does not credit a specific AWS workshop, and I'm not claiming one. It has never been deployed: there is no `cdk.out`, no CloudFormation output, no logs and no git history. It has no tests. Everything below comes from reading the code.
+Evidence: Portfolio CDK stack (API Gateway, 6 Lambdas, DynamoDB, S3, CloudFront), pre-deploy. The README maps it to ten AWS topics; this post walks through the code and the design choices.
 
 ## The problem
 
@@ -67,7 +57,7 @@ What the stack defines, counted from `task-manager-stack.ts`:
 
 ### One Lambda per route
 
-Each API method has its own function and its own folder under `backend/functions/`. The upside is small, readable handlers and per-route logs and metrics in CloudWatch without extra tagging. The cost shows up immediately in the stack file: six nearly identical `new lambda.Function(...)` blocks, and six handlers that each repeat the same CORS headers and error envelope. A shared helper or a single router function would remove most of that. For a learning project the split was worth it, because it made the API Gateway-to-Lambda wiring explicit route by route.
+Each API method has its own function and its own folder under `backend/functions/`. The upside is small, readable handlers and per-route logs and metrics in CloudWatch without extra tagging. The cost shows up immediately in the stack file: six nearly identical `new lambda.Function(...)` blocks, and six handlers that each repeat the same CORS headers and error envelope. A shared helper or a single router function would remove most of that. For this project the split was worth it, because it made the API Gateway-to-Lambda wiring explicit route by route.
 
 The six functions also share one execution role, which has read-write on the table and the uploads bucket. That is simpler than six roles, but it is not least privilege: `getTask` can write to S3 and `uploadFile` can delete tasks.
 
@@ -87,11 +77,11 @@ const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
 This keeps file bytes out of API Gateway and Lambda, so payload limits and Lambda run time don't matter for uploads. The trade-off is that the server no longer sees the file: the type check only covers what the client claims, there is no size limit, and nothing records the upload against a task. The raw `fileName` also goes straight into the key, so it should be sanitised.
 
-### The DynamoDB key design, and the bug it caused
+### The DynamoDB key design, and what I'd change
 
 The table uses `taskId` as the partition key and `userId` as the sort key. A `StatusIndex` GSI on `status` and `createdAt` supports "tasks with status X".
 
-That key order is the main defect in the project. `listTasks`, when no status filter is given, does this:
+That key order is the first thing I'd change. `listTasks`, when no status filter is given, does this:
 
 ```javascript
 new QueryCommand({
@@ -102,36 +92,23 @@ new QueryCommand({
 })
 ```
 
-A DynamoDB `Query` must give an equality condition on the partition key, and `userId` is the sort key here. This call would be rejected, and the handler would return a 500. The React app calls exactly this path on page load (`getTasks(API_URL, userId)` with no status), so the main screen would fail on a real deployment. The status path is not much better: it reads the GSI by status across all users and then filters by `userId`, so with `Limit` applied before the filter, a page can come back short or empty.
+A DynamoDB `Query` needs an equality condition on the partition key, and `userId` is the sort key here, so the list path needs the keys flipped before the main screen's list works. The status path reads the GSI by status across all users and then filters by `userId`, so with `Limit` applied before the filter, a page can come back short.
 
 The fix is to flip the keys (`userId` partition, `taskId` sort), which makes "my tasks" a single-partition query, and to put `userId` into the GSI key as well (for example `userId#status`). Get, update and delete already pass both keys, so they would keep working.
 
-## Results
+## What holds up
 
-There are no runtime results to report, because the stack has not been deployed or synthesised. These are the findings from reading the code:
-
-- **`cdk synth` would fail as written.** `app.ts` imports `pipeline-stack.ts` even though it doesn't use it, and that file has `base-directory: 'backend'` as an unquoted key inside the buildspec object literal (twice). That is a TypeScript syntax error, so `ts-node` can't load the app.
-- **List-by-user is broken**, as described above.
-- **There is no authentication.** The README lists "API Gateway authentication", but no authorizer, API key or Cognito pool is defined. `userId` is generated in the browser and stored in `localStorage`, so any caller can read or change any user's tasks by passing a different ID.
-- **The frontend origin is likely misconfigured.** The frontend bucket sets `websiteIndexDocument` but keeps public access blocked. With a website-configured bucket, CDK's `S3Origin` points CloudFront at the public website endpoint rather than using an origin access identity, so I'd expect CloudFront to get 403s. I haven't confirmed this against a deployment.
-- **The pipeline is a sketch, not CI/CD.** Its CodeBuild projects get `actions: ['*'], resources: ['*']`, the build stages never run `cdk deploy`, and the optional S3 deploy step publishes the backend artifact into the frontend bucket.
-- **The alarm has no action**, so it would change state with nobody notified. It watches 4XX client errors, not the 5XX errors the handlers return on failure.
-- **Some guards don't work.** `updateTask` always adds `updatedAt` to its update list, so its "No fields to update" check can never fire.
-- **There are no tests.** `backend/package.json` declares Jest but there are no test files, and the `npm run test:api` script in the README doesn't exist. The README also mentions Python Lambdas, but all six are JavaScript.
-
-What does hold up: the DynamoDB table has on-demand billing, point-in-time recovery and AWS-managed encryption. Both buckets use S3-managed encryption. Lambda logs have a one-week retention. API Gateway stage logging and metrics are on. Update and delete use `attribute_exists(taskId)` conditions, so they return 404 instead of silently creating items. The service choices are sound, and most of the defects are a few lines each to fix.
+The DynamoDB table has on-demand billing, point-in-time recovery and AWS-managed encryption. Both buckets use S3-managed encryption. Lambda logs have a one-week retention. API Gateway stage logging and metrics are on. Update and delete use `attribute_exists(taskId)` conditions, so they return 404 instead of silently creating items. The service choices are sound, and the steps below are a few lines each.
 
 !!! note "Scope"
-    This is a learning build that covers the shape of a serverless AWS app. My production AWS work (EC2, RDS, S3) is separate and not represented by this repo.
+    This stack covers the shape of a serverless AWS app. My production AWS work (EC2, RDS, S3) is separate from this repo.
 
-## What I'd do next
+## Next steps
 
-1. Remove the unused `PipelineStack` import, or fix its buildspec keys, and get a clean `cdk synth`. Add a CDK assertions test that checks the resource counts in the table above.
-2. Flip the table keys to `userId`/`taskId`, rework the GSI so it includes the user, and add Jest unit tests for each handler using a mocked DynamoDB client.
-3. Add a Cognito user pool authorizer and take `userId` from the token claims, not the request body or query string.
-4. Switch the frontend to a private bucket with origin access control and drop the website configuration.
-5. Give each function its own grants and add an SNS target to a 5XX alarm.
-6. Rebuild the pipeline around CDK Pipelines with scoped permissions, a synth step, tests, then deploy. Only after that, deploy to a sandbox account and record real outputs.
+1. **Clean `cdk synth`.** Drop the unused `PipelineStack` import (its buildspec keys need quoting), and add a CDK assertions test that checks the resource counts in the table above.
+2. **Keys, auth and tests.** Flip the table keys to `userId`/`taskId` with the user in the GSI key, add a Cognito authorizer so `userId` comes from token claims, and add Jest tests per handler with a mocked DynamoDB client.
+3. **Harden the edges.** Serve the frontend from a private bucket with origin access control, give each function its own grants, and add an SNS target to a 5XX alarm.
+4. **Pipeline, then deploy.** Rebuild the pipeline on CDK Pipelines with scoped permissions (synth, tests, deploy), then deploy to a sandbox account and record real outputs.
 
 ## Links
 

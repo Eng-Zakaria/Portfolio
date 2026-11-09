@@ -4,19 +4,6 @@ date: 2026-11-08
 summary: "How I built a prototype customer-service agent for Waffarha where the model never writes SQL, never chooses whose data it sees, and cannot move money: a hand-written loop over read-only ClickHouse, with dry-run actions and a safety eval gate."
 tags: [AI Agents, Guardrails, Python]
 draft: false
-sources:
-  - Waffarha/Waffy/README.md
-  - Waffarha/Waffy/docs/PROGRESS.md
-  - Waffarha/Waffy/app/agent/loop.py
-  - Waffarha/Waffy/app/agent/guard.py
-  - Waffarha/Waffy/app/tools/base.py
-  - Waffarha/Waffy/app/tools/registry.py
-  - Waffarha/Waffy/app/tools/actions.py
-  - Waffarha/Waffy/app/actions/__init__.py
-  - Waffarha/Waffy/app/actions/dry_run.py
-  - Waffarha/Waffy/app/data/clickhouse.py
-  - Waffarha/Waffy/app/data/sql.py
-  - Waffarha/Waffy/app/main.py
 ---
 
 Evidence label: this is a working prototype I built at Waffarha, not the production assistant. It runs against a read-only ClickHouse database and a local 3B model. Refunds and purchases are dry-run only, and nothing it does touches a customer's money. The test and eval numbers below come from my own progress log, and the headline eval number is a routing-only dry run, not a live run.

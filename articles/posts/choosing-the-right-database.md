@@ -4,31 +4,6 @@ date: 2026-11-08
 summary: "How I choose between relational, columnar, graph, time-series, search and embedded databases, based on where I have used each one, what state that work is in, and the mistakes each one taught me."
 tags: [Databases, SQL, Data Architecture]
 draft: false
-sources:
-  - Profile/Portfolio/articles/posts/one-warehouse-ten-clinics.md
-  - Profile/Portfolio/articles/posts/six-stage-client-etl.md
-  - Profile/Portfolio/articles/posts/fail-open-nightly-recommender.md
-  - Profile/Portfolio/articles/posts/agent-that-cant-go-rogue.md
-  - Profile/Portfolio/articles/posts/deterministic-gates-before-llm.md
-  - Profile/Portfolio/articles/posts/bilingual-rag-retrieval-hit-rate.md
-  - Profile/Portfolio/articles/posts/ethereum-neo4j-vs-spark.md
-  - Profile/Portfolio/articles/posts/adsb-flight-radar-streaming.md
-  - Profile/Portfolio/articles/posts/aquawatch-iot-alerts.md
-  - Profile/Portfolio/articles/posts/petroleum-nifi-beam-flink.md
-  - Profile/Portfolio/articles/posts/e-finance-digital-bank.md
-  - Profile/Portfolio/articles/posts/estates-lakehouse-zero-loss.md
-  - Profile/Portfolio/articles/posts/estates-warehouse-governed.md
-  - Profile/Portfolio/articles/posts/brand-radar-connector-registry.md
-  - Profile/Portfolio/articles/posts/arabic-rag-graduation-project.md
-  - Profile/Portfolio/articles/posts/fraud-scoring-kafka.md
-  - Profile/Portfolio/articles/posts/watchdog-price-intel.md
-  - CV/profile/MOHAMMED_ZAKARIA_PROFILE.md
-  - Waffarha/waffarha-unified-chatbot/backend/app/data/sql.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/data/clickhouse.py
-  - Waffarha/waffarha-unified-chatbot/backend/app/core/config.py
-  - Waffarha/waffarha-unified-chatbot/docs/STATE.md
-  - Waffarha/Recommendation-Agent/RecommendationAgent/db/db_access.py
-  - free-lancing/pds/pg/etl_floor11.py
 ---
 
 "Which database should we use?" usually gets answered by whatever the team used last. I try to answer it by asking what the data looks like, who writes it, and who reads it. This guide goes through the databases I have worked with, where each one was really used, and what state that work is in. Evidence: drawn from my production work at Waffarha, a freelance client warehouse, the Nexlify engagement (reported outcomes only), and portfolio projects linked below, several of them on synthetic data.
@@ -39,11 +14,11 @@ sources:
 |---|---|---|---|
 | PostgreSQL | Nexlify clinic warehouse; freelance clinic warehouse | Client, production | Star schemas, constraints, upserts |
 | MySQL | Waffarha recommender output on AWS RDS; first clinic loader | Production; client | Being the app's database |
-| ClickHouse | Waffarha offers, coupons and orders (`main_eg`) | Production, read-only consumer | Fast reads over wide fact tables |
+| ClickHouse | Waffarha offers, coupons and orders (the production database) | Production, read-only consumer | Fast reads over wide fact tables |
 | SQL Server, SQLite, MySQL | Nexlify source systems | Client; reported outcomes | Sources to map and refactor |
 | DuckDB | Estates lakehouse, credit-risk marts | Portfolio, synthetic data | Local analytics over Parquet |
 | SQLite | Graduation-project web app, brand-radar pilot, small warehouses | Graduation project; pilot; portfolio | Zero-ops single-user storage |
-| InfluxDB | Live ADS-B flight radar; NTI internship | Portfolio (live public data); internship | Tagged time-series points for Grafana |
+| InfluxDB | Flight radar (NTI capstone) | NTI capstone, live public data | Tagged time-series points for Grafana |
 | TimescaleDB | AquaWatch | Prototype, simulated sensors | Time series with plain SQL |
 | Neo4j | Ethereum forensics prototype | Prototype; no measured comparison | Multi-hop traversal (in design) |
 | Elasticsearch | Petroleum platform, blockchain prototype | Compose service; in-memory stand-in | Search and Kibana dashboards (planned) |
@@ -56,7 +31,7 @@ When I need a warehouse that one team owns and writes to, I start with PostgreSQ
 
 For the freelance clinic client I used the parts of PostgreSQL that let the database defend itself. `fact_orders.source_row_id` is `UNIQUE`, so a daily full re-send updates rows instead of duplicating them. `dim_staff` has a `CHECK` constraint on six staff groups. Dimensions are scoped by `clinic_id` with `UNIQUE(clinic_id, name)`, so one floor's data can never be counted as another's. The ETL also reads `information_schema.columns` before loading, to catch schema drift ([the six-stage ETL](../articles/six-stage-client-etl.html)).
 
-The lesson from that project: constraints only help if the pipeline knows about them. A `CHECK` on patient status rejected 1,041 rows in the first real run because the quality scan didn't test that column. I now write a matching quality rule for every constraint in the DDL.
+The lesson from that project: constraints only help if the pipeline knows about them. I now write a matching quality rule for every constraint in the DDL ([why](../articles/six-stage-client-etl.html)).
 
 ## MySQL: when it is the application's database
 
@@ -92,9 +67,9 @@ DuckDB is SQLite's analytical cousin. In the estates portfolio (synthetic data) 
 
 ## Time series: InfluxDB and TimescaleDB
 
-For the ADS-B flight radar ([Live flight radar](../articles/adsb-flight-radar-streaming.html)), a portfolio project on live public data, Spark Structured Streaming writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by `hex`, aircraft type and on-ground, and Grafana reads it with Flux. InfluxDB fits when the questions are "latest value per tag" and "aggregate per window".
+For the ADS-B flight radar ([Live flight radar](../articles/adsb-flight-radar-streaming.html)), my NTI capstone on live public data, Spark Structured Streaming writes one InfluxDB point per aircraft per 10-second micro-batch, tagged by `hex`, aircraft type and on-ground, and Grafana reads it with Flux. InfluxDB fits when the questions are "latest value per tag" and "aggregate per window".
 
-It also showed me how to misuse it. I tagged aggregate points with `batch_id`, which creates a new series every 30 seconds and grows series cardinality without limit. Timestamps were write time, not event time. Tags should be things you group by, and the timestamp should come from the event.
+The rule it taught me: tags should be things you group by, and the timestamp should come from the event (the radar's next iteration applies both; see its write-up).
 
 For AquaWatch, a fish-farm prototype on simulated sensors ([AquaWatch](../articles/aquawatch-iot-alerts.html)), I used TimescaleDB instead, because the alerting and reporting wanted plain SQL joins next to the readings. My bug there: `create_hypertable` ran on every start without `if_not_exists`, which fails once the table is already a hypertable.
 

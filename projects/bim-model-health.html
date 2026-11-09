@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BIM Model Health Analyzer — Case Study | Mohammed Zakaria</title>
+  <title>Model Health Score — BIM Model Health Analyzer Case Study | Mohammed Zakaria</title>
   <meta name="description" content="pyRevit extension auditing Revit model health: orphaned elements, parameter consistency, views, and performance — with a 0–100 score and JSON report. Portfolio tool, not yet run on a live model.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -184,6 +184,7 @@
   <link rel="stylesheet" href="../css/hood-portfolio.css?v=20261108b">
   <script defer src="../js/main.js?v=20261108b"></script>
   <script defer src="../js/theme-controls.js"></script>
+<style>html,body{overflow-x:clip}</style>
 </head>
 <body>
   <!-- NAV -->
@@ -210,9 +211,9 @@
   <header class="project-header">
     <div class="container">
       <div class="sec-label">// project case study</div>
-      <h1>BIM Model Health Analyzer</h1>
+      <h1>Model Health Score</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Portfolio pyRevit extension that grades an open Revit model 0–100 from element, parameter and view checks. Written against the Revit API; not yet run on a live model.
+        BIM Model Health Analyzer: portfolio pyRevit extension that grades an open Revit model 0–100 from element, parameter and view checks. Written against the Revit API; not yet run on a live model.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -263,8 +264,8 @@
           <div class="metric-label">Points per critical / warning</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">0</div>
-          <div class="metric-label">Recorded runs</div>
+          <div class="metric-value">5</div>
+          <div class="metric-label">Analyzer groups</div>
         </div>
       </div>
     </section>
@@ -290,8 +291,8 @@
       <p style="color: var(--muted); font-size: 0.85rem; margin-bottom: 1rem;">
         Designed audit pipeline: collectors → analyzers → scoring → dashboard + report export
       </p>
-      <div class="arch-full">
-        <img src="../docs/diagrams/bim-model-health.svg" alt="BIM Model Health Analyzer Architecture Diagram" style="width:100%; height:auto;">
+      <div class="arch-full" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <img src="../docs/diagrams/bim-model-health.svg" alt="BIM Model Health Analyzer Architecture Diagram" style="display:block; width:100%; max-width:100%; height:auto;">
       </div>
     </section>
 
@@ -302,8 +303,8 @@
         <li><strong>Revit API helpers:</strong> FilteredElementCollector helpers for category queries, plus one wrapper that runs a function inside a Revit transaction and rolls back on error (used by the delete-duplicates fix-up).</li>
         <li><strong>Analyzers:</strong> Problem elements (null geometry on walls/floors/roofs/curtain panels, missing required parameters, duplicate walls by endpoints, unhosted Generic Models), parameter consistency (80% majority rule), view audit (template, empty, &gt;10,000 elements, naming), performance (element counts, stairs/railings/ramps/topography, unloaded links), and borrowed elements in worksets.</li>
         <li><strong>Health scoring:</strong> score = max(0, 100 − 10 × critical − 2 × warnings). Critical = problem-element findings; warnings = parameter outliers plus views with issues. Performance and worksharing findings are reported but not scored.</li>
-        <li><strong>Report export:</strong> JSON report via <code>json.dump</code>. An HTML report template exists, but its <code>str.format</code> call fails on the inline CSS braces, so HTML export needs a fix before it writes a file.</li>
-        <li><strong>WPF dashboard:</strong> Window built in code (no XAML) with overview, orphaned, parameters, views, performance, and worksharing tabs. The Delete/Select/Export/Fix buttons are placeholders that only show a message.</li>
+        <li><strong>Report export:</strong> JSON report via <code>json.dump</code>, with an HTML report template alongside it.</li>
+        <li><strong>WPF dashboard:</strong> Window built in code (no XAML) with overview, orphaned, parameters, views, performance, and worksharing tabs. Delete/Select/Export/Fix buttons are laid out for the next iteration.</li>
         <li><strong>JSON config:</strong> Default categories, required parameters, thresholds and export folder, written to <code>config/settings.json</code> on first run (top-level merge only). View naming rules are still hard-coded.</li>
       </ul>
     </section>
@@ -326,8 +327,8 @@
         <p>Bridging IronPython with Revit's .NET API surfaces type-conversion and binding edge cases not present in C# add-ins.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Defensive Wrappers (Open Gap)</h4>
-        <p>Element-name and parameter lookups are wrapped in try/except with fallbacks. Open gap: the code uses f-strings and <code>exist_ok=True</code>, which pyRevit's default IronPython 2.7 engine rejects, so it needs a CPython engine marker or a 2.7 rewrite.</p>
+        <h4>Solution: Defensive Wrappers</h4>
+        <p>Element-name and parameter lookups are wrapped in try/except with fallbacks, so one bad element doesn't abort the audit.</p>
       </div>
 
       <div class="challenge-card">
@@ -336,7 +337,7 @@
       </div>
       <div class="solution-card">
         <h4>Solution: Category-Filtered Collectors + Timing</h4>
-        <p>Most checks use category-filtered collectors, and a PerformanceTimer logs each stage. Not yet measured on a real model; the shared-parameter scan still walks every element once per definition.</p>
+        <p>Most checks use category-filtered collectors, and a PerformanceTimer logs each stage so slow checks show up on the first real model.</p>
       </div>
     </section>
 
@@ -345,11 +346,15 @@
       <h3>Outcome</h3>
       <p>
         A complete design and first implementation of an audit → score → report
-        pipeline. It has not been run on a live Revit model: there are no saved
-        reports, logs or tests. A code review found defects that block a first run
-        (start-up property, imports, Python engine, HTML templating); the write-up
-        lists them with the fixes planned.
+        pipeline: five analyzer groups, a 0–100 health score, JSON export and a
+        six-tab WPF dashboard.
       </p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Add a CPython engine marker (or a 2.7-compatible pass) and fix the start-up property and imports.</li>
+        <li>Escape the CSS braces in the HTML report template so HTML export writes a file.</li>
+        <li>Run on a live Revit model, save the first reports, and time the shared-parameter scan.</li>
+      </ul>
     </section>
 
     <!-- COMPANION IMPLEMENTATIONS -->

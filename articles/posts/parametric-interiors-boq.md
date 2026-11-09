@@ -4,24 +4,6 @@ date: 2026-11-08
 summary: "How I drive Revit 2026 from JSON specs: one file per interior builds the model through pyRevit, writes an IFC4 copy, and prices a bill of quantities that comes to $156,733 across nine projects."
 tags: [BIM, Python, Automation]
 draft: false
-sources:
-  - Py-Revit/portfolio/README.md
-  - Py-Revit/portfolio/projects.json
-  - Py-Revit/InteriorsToolkit.extension/projects/
-  - Py-Revit/InteriorsToolkit.extension/lib/interiors_toolkit/project_builder_core.py
-  - Py-Revit/InteriorsToolkit.extension/lib/interiors_toolkit/boq_core.py
-  - Py-Revit/InteriorsToolkit.extension/lib/interiors_toolkit/audit_core.py
-  - Py-Revit/InteriorsToolkit.extension/Interiors.tab/Docs.panel/ProjectBuilder.pushbutton/script.py
-  - Py-Revit/tools/build_projects.py
-  - Py-Revit/tools/BuildPortfolioRVT.py
-  - Py-Revit/tools/build_production_ifc.py
-  - Py-Revit/src/Interiors.Batch/
-  - Py-Revit/out/projects_report.html
-  - Py-Revit/out/P0*-build-log.json
-  - Py-Revit/out/portfolio_build_P*.log.json
-  - Py-Revit/out/portfolio_verify.log.json
-  - Py-Revit/tests/
-  - Profile/Portfolio/assets/bim/boq/
 ---
 
 Evidence: **Portfolio project, demo content.** The geometry is original and the specs are hand-written. The Revit models were built on my own machine, and the prices are illustrative figures I typed into the specs, not supplier quotes. Every number below comes from the build logs, the generated report, or the BOQ CSVs in the repo.

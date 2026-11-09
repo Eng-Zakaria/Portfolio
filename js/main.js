@@ -61,7 +61,7 @@ function inferCategory(card) {
   if (/rag|llm|chatbot|hadith|waffarha assistant|qdrant|faiss|embedding/.test(t)) cats.push('rag');
   if (/kafka|streaming|flink|real-time|real‐time|ads-b|aircraft|fraud/.test(t)) cats.push('streaming');
   if (/spark|etl|warehouse|star schema|medallion|parquet|reddit|hadoop|hive/.test(t)) cats.push('batch');
-  if (/platform|telecom|petroleum|airsense|azure|kubernetes|terraform/.test(t)) cats.push('platform');
+  if (/platform|telecom|petroleum|azure|kubernetes|terraform/.test(t)) cats.push('platform');
   if (/price|watchdog|scrap|sentiment|market/.test(t)) cats.push('price');
   return cats.join(' ');
 }
@@ -79,6 +79,13 @@ function updateProjectCount() {
 }
 if (filterBtns.length) {
   projectCards.forEach((card, i) => card.style.setProperty('--i', Math.min(i, 12)));
+  // Keep each filter label's count in sync with the cards' categories
+  filterBtns.forEach(btn => {
+    const f = btn.dataset.filter;
+    const n = f === 'all' ? projectCards.length
+      : [...projectCards].filter(c => inferCategory(c).split(/\s+/).includes(f)).length;
+    btn.textContent = btn.textContent.replace(/\s*\(\d+\)\s*$/, '') + ' (' + n + ')';
+  });
   updateProjectCount();
   filterBtns.forEach(btn => btn.addEventListener('click', () => {
     filterBtns.forEach(b => b.classList.remove('active'));
@@ -86,7 +93,7 @@ if (filterBtns.length) {
     const f = btn.dataset.filter;
     projectCards.forEach(card => {
       const cats = inferCategory(card);
-      const show = f === 'all' || cats.includes(f);
+      const show = f === 'all' || cats.split(/\s+/).includes(f);
       card.classList.toggle('hidden', !show);
     });
     updateProjectCount();
@@ -166,16 +173,17 @@ statNums.forEach(el => statObs.observe(el));
   }
 })();
 
-// ---- Terminal typing (hero live-pipeline card) ----
+// ---- Terminal typing (hero pipeline illustration, scripted demo) ----
 (() => {
   const el = document.getElementById('terminal-typed');
   if (!el) return;
   const lines = [
-    '$ airflow dags list --active | grep waffarha',
-    '✓ ingest_clickhouse main_eg … ~13.7M rows [OK]',
-    '✓ dedup(content_hash) + SCD2 versioning [OK]',
-    '✓ qdrant index: 9106 docs · bge-m3 · retrieval 87.8%',
-    '$ agent answer --query "where is my order?" → served ✓',
+    '# scripted walkthrough of the pipeline stages',
+    '→ ingest from ClickHouse · ~13.7M rows',
+    '→ dedup + SCD2 versioning',
+    '→ index 9,106 docs · bge-m3 embeddings + Qdrant',
+    '→ retrieval hit rate 87.8% (151/172 checked cases)',
+    '→ answer grounded in retrieved sources',
   ];
   let li = 0, ci = 0, out = [];
   function tick() {

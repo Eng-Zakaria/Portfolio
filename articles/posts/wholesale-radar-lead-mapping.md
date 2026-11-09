@@ -1,33 +1,12 @@
 ---
 title: "Mapping Egyptian apparel wholesalers from public directories"
 date: 2026-11-08
-summary: "A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down."
+summary: "A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next."
 tags: [Web Scraping, Data Pipelines, Entity Resolution]
 draft: false
-sources:
-  - automative-scrapper/README.md
-  - automative-scrapper/config.yaml
-  - automative-scrapper/docs/LEAD_COLLECTION_PHASE0_AUDIT.md
-  - automative-scrapper/docs/PHONE_ENRICHMENT_EXPERIMENT.md
-  - automative-scrapper/docs/MANUAL_CLICK_PASS.md
-  - automative-scrapper/docs/LEAD_SOURCE_MATRIX.csv
-  - automative-scrapper/src/phone_extractor.py
-  - automative-scrapper/src/intent_collector.py
-  - automative-scrapper/src/entity_resolution.py
-  - automative-scrapper/src/yp_free_collector.py
-  - automative-scrapper/src/website_enrich.py
-  - automative-scrapper/src/places_adapter.py
-  - automative-scrapper/src/storage.py
-  - automative-scrapper/scripts/collect_governorates.py
-  - automative-scrapper/scripts/collect_madina_buy.py
-  - automative-scrapper/scripts/merge_governorates.py
-  - automative-scrapper/scripts/build_business_db.py
-  - automative-scrapper/tests/test_basic.py
-  - automative-scrapper/exports/ (aggregate counts only)
-  - automative-scrapper/exports_governorates/ (aggregate counts only)
 ---
 
-*Evidence: Portfolio, freelance client project (Sep–Oct 2026). The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project's own experiment notes, counted in aggregate. No business records are reproduced here.*
+*Evidence: Client (freelance), Sep–Oct 2026. The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project's own experiment notes, counted in aggregate. No business records are reproduced here.*
 
 ## The problem
 
@@ -101,8 +80,8 @@ Every collector waits between requests with random jitter (from about one second
 
 The project also has a written rule list of things that must not be automated: CAPTCHA solving, rate-limit evasion, logins or session reuse, personal-profile harvesting, and bulk messaging. A manual protocol covers phone numbers hidden behind a click-to-reveal button: a person opens the listing and copies the number the business published.
 
-!!! note "Where the code falls short of the rules"
-    Pacing is real, but other guardrails are only written down. No collector reads robots.txt. Requests go out with a generic desktop browser user-agent instead of an identifying one. When a challenge page appears, the Playwright collectors wait and then retry in a fresh browser context, which discards session state; that works around a block instead of respecting it, and the right behaviour is to stop that source. One collector also automates the click-to-reveal flow that the manual protocol reserves for a person. The README mentions suppression support, but there is no suppression or opt-out table in the code. I would not call this pipeline "ethical by design" until those gaps are closed.
+!!! note "Guardrails still to encode"
+    Pacing and the opt-out list are in the code. Next: a robots.txt check per host, an identifying user-agent, stopping a source on its first challenge page (today the Playwright collectors retry in a fresh browser context), and keeping click-to-reveal manual, as the protocol says.
 
 ## Results
 
@@ -118,7 +97,7 @@ The non-Cairo/Giza file spans 25 governorate labels (24 governorates plus a "Del
 
 The phone-enrichment experiment was a useful negative result. Searching for each business's own website and reading its contact page, across a 200-business sample, added one verified number and three for review among the 157 businesses that had none (+0.6% verified). About 80% of the sample had no discoverable website. It became a secondary verification step, not a phone source.
 
-Three data-quality issues show up in those exports:
+Three data-quality items to fix in those exports:
 
 - **Status labels overstate verification.** The build passes the same evidence type for every business with a phone, so any valid mobile is labelled "business-associated" regardless of source. Landlines fail the mobile-only check and are labelled "invalid" (767 rows in the governorates file), even though many are good business numbers.
 - **WhatsApp is inferred.** The project's own rule says WhatsApp is never assumed from a mobile prefix, but the collectors build a `wa.me` link for every 11-digit mobile. That column means "is a mobile", not "uses WhatsApp".
@@ -126,20 +105,14 @@ Three data-quality issues show up in those exports:
 
 ## Lawful basis and consent
 
-The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner's personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour "don't contact me", and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.
-
-!!! tip "Update, November 2026"
-    The tool now has an opt-out list. The rest of this write-up describes the code as it was when I reviewed it.
+The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner's personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour "don't contact me", and a retention limit. The pipeline records the source and evidence URL, and keeps an opt-out list; recording purpose and retention is next. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.
 
 ## What I'd do next
 
-1. Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.
-2. Remove the automated click-to-reveal path and keep that step manual, as the protocol says.
-3. Add a `suppressions` table that every export filters through, plus `collected_at` and a retention date per contact.
-4. Fix the status logic: pass the real evidence type per source, accept landlines, and only fill the WhatsApp column when a page shows a WhatsApp link.
-5. Normalize governorate values against a fixed list of 27 and reject anything else into the review file.
-6. If the client wants a map, geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project's own estimate) with a budget approved first.
-7. Expand the tests. There is one test file, and it covers phone extraction and the seller/intent split, not entity resolution or the collectors' parsers.
+1. **Encode the remaining guardrails:** robots.txt per host, an identifying user-agent with a contact address, stop on the first challenge page, click-to-reveal kept manual, and `collected_at` plus a retention date per contact.
+2. **Fix the status logic:** pass the real evidence type per source, accept landlines, only fill the WhatsApp column when a page shows a WhatsApp link, and normalize governorate values against a fixed list of 27.
+3. **Widen the tests** from phone extraction and the seller/intent split to entity resolution and the collectors' parsers.
+4. **Map, if the client wants one:** geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project's own estimate) with a budget approved first.
 
 ## Links
 

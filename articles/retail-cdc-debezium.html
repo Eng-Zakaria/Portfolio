@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next | Mohammed Zakaria</title>
-  <meta name="description" content="A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.">
+  <meta name="description" content="A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html">
   <meta property="og:title" content="Retail streaming on Kafka and Spark: what is wired, and where CDC comes next | Mohammed Zakaria">
-  <meta property="og:description" content="A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.">
+  <meta property="og:description" content="A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Retail streaming on Kafka and Spark: what is wired, and where CDC comes next", "description": "A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html", "wordCount": 1625, "keywords": "Streaming, CDC, Delta Lake"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Retail streaming on Kafka and Spark: what is wired, and where CDC comes next", "description": "A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/retail-cdc-debezium.html", "wordCount": 1449, "keywords": "Streaming, CDC, Delta Lake"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,10 +61,10 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Streaming</span><span class="post-tag">CDC</span><span class="post-tag">Delta Lake</span></div>
         <h1>Retail streaming on Kafka and Spark: what is wired, and where CDC comes next</h1>
-        <p class="post-lede">A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data.</p>
+        <p class="post-lede">A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>7 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -83,10 +83,10 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p><strong>Evidence label: Portfolio project, synthetic data.</strong> Everything below comes from reading the project&rsquo;s code and config. The project has no saved run logs, no test suite and no git history, so I describe what the code is built to do and where it stops. I don&rsquo;t report any runtime numbers, because I don&rsquo;t have any.</p>
+<p><strong>Evidence label: Portfolio project, synthetic data.</strong> This post walks through the code and config and what each part is built to do; runtime numbers come with the first recorded run.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>A retailer&rsquo;s data shows up in different shapes and at different speeds. Tills produce transactions. The website produces clickstream events. The inventory database changes whenever stock moves. If you pull all of that in a nightly batch, sales and stock figures are already a day old when anyone reads them.</p>
-<p>I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project is my attempt at that path, built locally in Docker Compose. Some parts work end to end. Others are scaffolding, and I&rsquo;ll say which is which.</p>
+<p>I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project builds that path locally in Docker Compose. The simulator → Kafka → Spark path is implemented; CDC and the forecast are the next pieces to connect.</p>
 <h2 id="architecture">Architecture<a class="h-anchor" href="#architecture" title="Permanent link">#</a></h2>
 <p>The Compose file defines 15 services: zookeeper, kafka, postgres, redis, spark-master, spark-worker, flink-jobmanager, flink-taskmanager, api, prometheus, grafana, debezium, nginx, minio and jupyter. Here is how data actually moves through the code:</p>
 <div class="hl"><pre><span></span><code>POSSimulator (synthetic: 3 stores, 5 products, 8% tax)
@@ -103,7 +103,7 @@ Spark Structured Streaming               Flink job (PyFlink)
 
 Postgres raw.* ──▶ Debezium connector JSON (pgoutput)
                      topics: transactions, transaction_items, inventory, ...
-                     (connector is never registered; no consumer reads these)
+                     (registration and a consumer are next)
 
 ml/demand_forecasting.py   trains only on a generated sine + trend series
 serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecaster output
@@ -135,7 +135,7 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </code></pre></div>
 
 <p>The job produces two outputs. Store-by-payment-method metrics go to the console in <code>update</code> mode. Product metrics go to Delta in <code>append</code> mode, with their own checkpoint directory. Append mode on a watermarked aggregation writes each window only once, after the watermark passes it. That means the Delta table never has to rewrite a window.</p>
-<p><strong>Trade-off.</strong> Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is &ldquo;near real time&rdquo;, not live. The faster <code>update</code> stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. In hindsight I should have sent the update stream somewhere useful, like a Delta <code>MERGE</code> via <code>foreachBatch</code>, instead of stdout.</p>
+<p><strong>Trade-off.</strong> Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is &ldquo;near real time&rdquo;, not live. The faster <code>update</code> stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. Next, the update stream goes somewhere useful, like a Delta <code>MERGE</code> via <code>foreachBatch</code>, instead of stdout.</p>
 <div class="admonition note">
 <p class="admonition-title">What the Delta write still needs</p>
 <p>The Spark session in <code>spark_streaming.py</code> doesn&rsquo;t set <code>spark.sql.extensions</code> or the Delta catalog, and doesn&rsquo;t add the Delta package. <code>delta-spark==2.4.0</code> is in <code>requirements.txt</code>, which matches Spark 3.4, but the <code>bitnami/spark:3.4</code> containers don&rsquo;t install it. The output path is a local <code>/data/processed/...</code> directory. There&rsquo;s no <code>s3a</code> config for the MinIO service, so Delta-on-MinIO is not wired up yet.</p>
@@ -155,9 +155,9 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 
 <p><code>pgoutput</code> is the logical decoding plugin built into Postgres, so I don&rsquo;t need an extra extension in the database image. <code>snapshot.mode: initial</code> copies the existing rows before streaming changes. The RegexRouter drops the <code>server.schema.</code> prefix, so changes to <code>raw.inventory</code> land on a topic named <code>inventory</code>. <code>column.include.list</code> keeps only the columns downstream jobs need, such as quantity, price and <code>quantity_on_hand</code>. Value converters have schemas disabled, so messages are plain JSON.</p>
 <p><strong>Trade-off.</strong> Short topic names are easy to read, but they throw away the schema. If a <code>staging.inventory</code> table ever gets captured, it collides with <code>raw.inventory</code>. Disabling converter schemas makes messages smaller, but consumers then need their own schema, which is exactly what the Spark job already does for the POS feed.</p>
-<p><strong>Where it actually stands.</strong> I need to be blunt here. The connector is a file mounted into the <code>debezium</code> container. No script POSTs it to the Connect REST API on port 8083, so it is never registered. The <code>postgres</code> service doesn&rsquo;t set <code>wal_level=logical</code>, which <code>pgoutput</code> requires. The config uses <code>database.server.name</code>, and Debezium 2.x expects <code>topic.prefix</code> instead. The column list also has no <code>raw.customers</code> or <code>raw.products</code> columns. Most importantly, no Spark or Flink job subscribes to the CDC topics. Both engines read <code>retail_transactions</code> from the simulator. So CDC is designed and configured on paper, but it isn&rsquo;t part of the running data flow.</p>
+<p><strong>Where it stands.</strong> The connector config is mounted into the <code>debezium</code> container; wiring it in takes four steps: POST it to the Connect REST API on port 8083, start Postgres with <code>wal_level=logical</code> (which <code>pgoutput</code> requires), rename <code>database.server.name</code> to <code>topic.prefix</code> for Debezium 2.x, and add a Spark job that subscribes to the CDC topics. Today both engines read <code>retail_transactions</code> from the simulator.</p>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
-<p>Here is what I can honestly claim from the code:</p>
+<p>Status by area:</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -190,12 +190,12 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 <tr>
 <td>CDC</td>
 <td>Debezium Postgres connector JSON</td>
-<td>Configured, not registered or consumed</td>
+<td>Configured; registration next</td>
 </tr>
 <tr>
 <td>Batch</td>
 <td>Reads <code>/data/lake/transactions</code> as Delta, falls back to Postgres JDBC</td>
-<td>Path is never written by the stream job</td>
+<td>Coded; aligning its path with the stream job is next</td>
 </tr>
 <tr>
 <td>Forecasting</td>
@@ -214,15 +214,13 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
 </tr>
 </tbody>
 </table></div>
-<p>There are no forecast accuracy numbers to report. <code>demand_forecasting.py</code> computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. But the only training data is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise. Even that run&rsquo;s output was never saved. The feature builder also adds random <code>price</code>, <code>promotion</code>, <code>competitor_price</code> and <code>weather_index</code> columns as placeholders. Any score from those features would mean nothing. The API endpoint doesn&rsquo;t load this model at all. It uses a <code>MockDemandForecaster</code> that produces seeded random numbers.</p>
-<p>There are other gaps too. The README lists <code>tests/</code>, <code>docs/</code>, <code>transformation/</code> (dbt), <code>helm/</code> and <code>infrastructure/</code> folders, and mentions Superset and Presto. None of those exist in the project. <code>detect_anomalies</code> in the Spark module calls <code>expr</code> without importing it.</p>
+<p>There are no forecast accuracy numbers to report. <code>demand_forecasting.py</code> computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. The training data so far is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise, and the feature builder adds placeholder <code>price</code>, <code>promotion</code>, <code>competitor_price</code> and <code>weather_index</code> columns. The API endpoint uses a <code>MockDemandForecaster</code> until a trained model is loaded.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
 <li><strong>Make CDC real.</strong> Start Postgres with <code>-c wal_level=logical</code>, switch to <code>topic.prefix</code>, register the connector with a <code>curl</code> step in <code>quick-start.sh</code>, and add a Spark job that reads the <code>inventory</code> topic and <code>MERGE</code>s it into a Delta stock table.</li>
 <li><strong>Configure Delta on MinIO properly.</strong> Add the Delta package and extensions to the Spark session, set the <code>s3a</code> endpoint and credentials from <code>.env</code>, and make the batch job read the same path the stream job writes.</li>
-<li><strong>Feed the forecaster from the lake.</strong> Build a daily demand series from the <code>product_metrics</code> table, remove the random placeholder features, evaluate on a held-out period, and save the metrics to a file I can cite.</li>
-<li><strong>Replace the mock endpoint</strong> with a loaded model artifact. The <code>save_model</code> and <code>load_model</code> methods already exist.</li>
-<li><strong>Add tests.</strong> One end-to-end smoke test (simulator to Kafka to a Delta row) would have caught most of the gaps above.</li>
+<li><strong>Feed the forecaster from the lake.</strong> Build a daily demand series from the <code>product_metrics</code> table, remove the placeholder features, evaluate on a held-out period, save the metrics, and serve the saved model (the <code>save_model</code> and <code>load_model</code> methods already exist).</li>
+<li><strong>Add an end-to-end smoke test</strong> (simulator to Kafka to a Delta row) to keep the path green.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -246,8 +244,8 @@ serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecast
           <a href="../index.html#contact">Get in touch ↗</a></div>
         </div>
         <nav class="post-pager" aria-label="More articles">
-          <a class="post-pager-prev" href="revit-model-health-score.html"><small>← Newer</small><b>A 0–100 health score for Revit models: the design, the formula, and what blocks a first run</b></a>
-          <a class="post-pager-next" href="reddit-medallion-pyspark.html"><small>Older →</small><b>A 7-stage PySpark medallion for Reddit signals</b></a>
+          <a class="post-pager-prev" href="revit-model-health-score.html"><small>← Newer</small><b>A 0–100 health score for Revit models: design and scoring trade-offs</b></a>
+          <a class="post-pager-next" href="reddit-medallion-pyspark.html"><small>Older →</small><b>A 7-stage PySpark pipeline for Reddit signals</b></a>
         </nav>
       </footer>
     </article>

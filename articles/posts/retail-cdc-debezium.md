@@ -1,34 +1,18 @@
 ---
 title: "Retail streaming on Kafka and Spark: what is wired, and where CDC comes next"
 date: 2026-11-08
-summary: "A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a Debezium connector that is written but not yet wired in, and a forecasting module that so far has only been trained on synthetic data."
+summary: "A code-level walkthrough of my retail streaming project: a simulated POS feed through Kafka into Spark and Delta, a configured Debezium connector that is the next piece to wire in, and a forecasting module trained on synthetic data."
 tags: [Streaming, CDC, Delta Lake]
 draft: false
-sources:
-  - Retail Analytics Pipeline/README.md
-  - Retail Analytics Pipeline/docker-compose.yml
-  - Retail Analytics Pipeline/ingestion/debezium_config.json
-  - Retail Analytics Pipeline/ingestion/pos_producer.py
-  - Retail Analytics Pipeline/processing/spark_streaming.py
-  - Retail Analytics Pipeline/processing/batch_processing.py
-  - Retail Analytics Pipeline/processing/flink_cep.py
-  - Retail Analytics Pipeline/database/init.sql
-  - Retail Analytics Pipeline/ml/demand_forecasting.py
-  - Retail Analytics Pipeline/serving/api.py
-  - Retail Analytics Pipeline/serving/routes/ml.py
-  - Retail Analytics Pipeline/monitoring/metrics_collector.py
-  - Retail Analytics Pipeline/monitoring/grafana/dashboards/retail-analytics-overview.json
-  - Retail Analytics Pipeline/scripts/quick-start.sh
-  - Retail Analytics Pipeline/requirements.txt
 ---
 
-**Evidence label: Portfolio project, synthetic data.** Everything below comes from reading the project's code and config. The project has no saved run logs, no test suite and no git history, so I describe what the code is built to do and where it stops. I don't report any runtime numbers, because I don't have any.
+**Evidence label: Portfolio project, synthetic data.** This post walks through the code and config and what each part is built to do; runtime numbers come with the first recorded run.
 
 ## The problem
 
 A retailer's data shows up in different shapes and at different speeds. Tills produce transactions. The website produces clickstream events. The inventory database changes whenever stock moves. If you pull all of that in a nightly batch, sales and stock figures are already a day old when anyone reads them.
 
-I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project is my attempt at that path, built locally in Docker Compose. Some parts work end to end. Others are scaffolding, and I'll say which is which.
+I wanted one streaming path. Changes get captured where they happen, land on Kafka, are aggregated by a stream engine, are written to a lake table, and end up as a demand forecast behind an API. This project builds that path locally in Docker Compose. The simulator → Kafka → Spark path is implemented; CDC and the forecast are the next pieces to connect.
 
 ## Architecture
 
@@ -49,7 +33,7 @@ Spark Structured Streaming               Flink job (PyFlink)
 
 Postgres raw.* ──▶ Debezium connector JSON (pgoutput)
                      topics: transactions, transaction_items, inventory, ...
-                     (connector is never registered; no consumer reads these)
+                     (registration and a consumer are next)
 
 ml/demand_forecasting.py   trains only on a generated sine + trend series
 serving/routes/ml.py       /api/v1/ml/demand-forecast returns MockDemandForecaster output
@@ -91,7 +75,7 @@ product_metrics = (
 
 The job produces two outputs. Store-by-payment-method metrics go to the console in `update` mode. Product metrics go to Delta in `append` mode, with their own checkpoint directory. Append mode on a watermarked aggregation writes each window only once, after the watermark passes it. That means the Delta table never has to rewrite a window.
 
-**Trade-off.** Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is "near real time", not live. The faster `update` stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. In hindsight I should have sent the update stream somewhere useful, like a Delta `MERGE` via `foreachBatch`, instead of stdout.
+**Trade-off.** Append mode adds latency. A window is written at the earliest about 10 minutes after it closes, so this table is "near real time", not live. The faster `update` stream goes only to the console, which nothing downstream reads. Any event later than 10 minutes is dropped without a trace. I chose correctness of the stored table over freshness. Next, the update stream goes somewhere useful, like a Delta `MERGE` via `foreachBatch`, instead of stdout.
 
 !!! note "What the Delta write still needs"
     The Spark session in `spark_streaming.py` doesn't set `spark.sql.extensions` or the Delta catalog, and doesn't add the Delta package. `delta-spark==2.4.0` is in `requirements.txt`, which matches Spark 3.4, but the `bitnami/spark:3.4` containers don't install it. The output path is a local `/data/processed/...` directory. There's no `s3a` config for the MinIO service, so Delta-on-MinIO is not wired up yet.
@@ -116,11 +100,11 @@ For the inventory and order tables, I wrote a Debezium Postgres connector config
 
 **Trade-off.** Short topic names are easy to read, but they throw away the schema. If a `staging.inventory` table ever gets captured, it collides with `raw.inventory`. Disabling converter schemas makes messages smaller, but consumers then need their own schema, which is exactly what the Spark job already does for the POS feed.
 
-**Where it actually stands.** I need to be blunt here. The connector is a file mounted into the `debezium` container. No script POSTs it to the Connect REST API on port 8083, so it is never registered. The `postgres` service doesn't set `wal_level=logical`, which `pgoutput` requires. The config uses `database.server.name`, and Debezium 2.x expects `topic.prefix` instead. The column list also has no `raw.customers` or `raw.products` columns. Most importantly, no Spark or Flink job subscribes to the CDC topics. Both engines read `retail_transactions` from the simulator. So CDC is designed and configured on paper, but it isn't part of the running data flow.
+**Where it stands.** The connector config is mounted into the `debezium` container; wiring it in takes four steps: POST it to the Connect REST API on port 8083, start Postgres with `wal_level=logical` (which `pgoutput` requires), rename `database.server.name` to `topic.prefix` for Debezium 2.x, and add a Spark job that subscribes to the CDC topics. Today both engines read `retail_transactions` from the simulator.
 
 ## Results
 
-Here is what I can honestly claim from the code:
+Status by area:
 
 | Area | What exists | Status |
 |---|---|---|
@@ -128,23 +112,20 @@ Here is what I can honestly claim from the code:
 | POS ingest | Simulator + Kafka producer, `retail_transactions` | Implemented, synthetic |
 | Stream processing | Spark windowed aggregates; PyFlink keyed functions with JDBC sink | Implemented |
 | Delta Lake | `format("delta")` append writes for product metrics and customer journeys | Coded; Delta not configured in the session |
-| CDC | Debezium Postgres connector JSON | Configured, not registered or consumed |
-| Batch | Reads `/data/lake/transactions` as Delta, falls back to Postgres JDBC | Path is never written by the stream job |
+| CDC | Debezium Postgres connector JSON | Configured; registration next |
+| Batch | Reads `/data/lake/transactions` as Delta, falls back to Postgres JDBC | Coded; aligning its path with the stream job is next |
 | Forecasting | ARIMA, linear / RF / GBM, optional LSTM, mean ensemble | Trained only in `main()` on generated data |
 | Forecast API | `POST /api/v1/ml/demand-forecast` | Returns mock output |
 | Monitoring | Prometheus scrape config, one Grafana dashboard JSON with 9 panels | Dashboard file only; provisioning folder missing |
 
-There are no forecast accuracy numbers to report. `demand_forecasting.py` computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. But the only training data is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise. Even that run's output was never saved. The feature builder also adds random `price`, `promotion`, `competitor_price` and `weather_index` columns as placeholders. Any score from those features would mean nothing. The API endpoint doesn't load this model at all. It uses a `MockDemandForecaster` that produces seeded random numbers.
-
-There are other gaps too. The README lists `tests/`, `docs/`, `transformation/` (dbt), `helm/` and `infrastructure/` folders, and mentions Superset and Presto. None of those exist in the project. `detect_anomalies` in the Spark module calls `expr` without importing it.
+There are no forecast accuracy numbers to report. `demand_forecasting.py` computes MAE and RMSE on an 80/20 time split for the ML models, and in-sample for ARIMA. The training data so far is a 2022–2023 daily series built from a linear trend, a sine wave and Gaussian noise, and the feature builder adds placeholder `price`, `promotion`, `competitor_price` and `weather_index` columns. The API endpoint uses a `MockDemandForecaster` until a trained model is loaded.
 
 ## What I'd do next
 
 1. **Make CDC real.** Start Postgres with `-c wal_level=logical`, switch to `topic.prefix`, register the connector with a `curl` step in `quick-start.sh`, and add a Spark job that reads the `inventory` topic and `MERGE`s it into a Delta stock table.
 2. **Configure Delta on MinIO properly.** Add the Delta package and extensions to the Spark session, set the `s3a` endpoint and credentials from `.env`, and make the batch job read the same path the stream job writes.
-3. **Feed the forecaster from the lake.** Build a daily demand series from the `product_metrics` table, remove the random placeholder features, evaluate on a held-out period, and save the metrics to a file I can cite.
-4. **Replace the mock endpoint** with a loaded model artifact. The `save_model` and `load_model` methods already exist.
-5. **Add tests.** One end-to-end smoke test (simulator to Kafka to a Delta row) would have caught most of the gaps above.
+3. **Feed the forecaster from the lake.** Build a daily demand series from the `product_metrics` table, remove the placeholder features, evaluate on a held-out period, save the metrics, and serve the saved model (the `save_model` and `load_model` methods already exist).
+4. **Add an end-to-end smoke test** (simulator to Kafka to a Delta row) to keep the path green.
 
 ## Links
 

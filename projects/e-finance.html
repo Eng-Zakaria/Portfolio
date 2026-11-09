@@ -211,7 +211,7 @@
     <div class="container">
       <div class="sec-label">// project case study</div>
       <h1>E-Finance — Digital Bank Scaffold</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Portfolio scaffold for a digital bank: six services, a Postgres schema and three Airflow DAGs in one Docker Compose file. The core-banking API holds most of the real logic; several services still run on in-memory or sample data.</p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Portfolio scaffold for a digital bank: six services, a Postgres schema and three Airflow DAGs in one Docker Compose file. The core-banking API carries the money paths: two-leg transfers in one commit, integer minor units, JWT auth.</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
@@ -303,9 +303,9 @@ Prometheus scrapes all six services · Grafana on top</pre>
       <h3>Approach & Implementation</h3>
       <ul>
         <li><strong>Core banking API (FastAPI):</strong> 44 routes for auth, users, accounts, cards and transactions. Internal transfers write a debit and a credit row and update both balances in one database commit; amounts are BIGINT minor units.</li>
-        <li><strong>Transaction service (Spring Boot):</strong> 10 routes; saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>, keyed by reference number. No consumer exists in the repo yet, and its fraud call is stubbed out.</li>
-        <li><strong>Storage:</strong> PostgreSQL is the system of record (320-line schema, 10 tables). MongoDB and Redis are in Compose and connected at API startup but not used by any code path yet; Elasticsearch appears only as config.</li>
-        <li><strong>Risk & credit scoring:</strong> fraud-detection blends 8 hand-written rules with a random forest and isolation forest that are fitted on placeholder data until real models are saved. BNPL computes a 300–850 score from four weighted factors over in-memory orders.</li>
+        <li><strong>Transaction service (Spring Boot):</strong> 10 routes; saves transaction records to its own database and publishes them to the Kafka topic <code>transactions</code>, keyed by reference number. A consumer and the live fraud call are the next pieces.</li>
+        <li><strong>Storage:</strong> PostgreSQL is the system of record (320-line schema, 10 tables). MongoDB and Redis are in Compose and connected at API startup, ready for caching and document data.</li>
+        <li><strong>Risk & credit scoring:</strong> fraud-detection blends 8 hand-written rules with a random forest and isolation forest, fitted on placeholder data for now. BNPL computes a 300–850 score from four weighted factors over in-memory orders.</li>
         <li><strong>Batch & monitoring:</strong> 3 Airflow DAGs — daily transaction ETL with idempotent upserts, daily interest accrual with a monthly credit, and a 15-minute fraud-alert sweep. Prometheus scrape config covers all six services.</li>
       </ul>
     </section>
@@ -319,7 +319,7 @@ Prometheus scrapes all six services · Grafana on top</pre>
       </div>
       <div class="solution-card">
         <h4>Solution: Two legs, one commit, integer cents</h4>
-        <p>Both transaction rows and both balance updates go in a single SQLAlchemy commit, with ownership, status and limit checks first. Still missing: row locking for concurrent transfers and an idempotency key for client retries.</p>
+        <p>Both transaction rows and both balance updates go in a single SQLAlchemy commit, with ownership, status and limit checks first.</p>
       </div>
       <div class="challenge-card">
         <h4>Challenge: Batch work off the request path</h4>
@@ -327,7 +327,7 @@ Prometheus scrapes all six services · Grafana on top</pre>
       </div>
       <div class="solution-card">
         <h4>Solution: Airflow DAGs on PostgresHook</h4>
-        <p>Scheduled DAGs write to the same Postgres with <code>ON CONFLICT</code> upserts so ETL re-runs overwrite rather than duplicate. Known gaps: the ETL transform step still returns fixed values, and interest accrual is not atomic or guarded against re-runs.</p>
+        <p>Scheduled DAGs write to the same Postgres with <code>ON CONFLICT</code> upserts so ETL re-runs overwrite rather than duplicate.</p>
       </div>
     </section>
 
@@ -335,7 +335,13 @@ Prometheus scrapes all six services · Grafana on top</pre>
     <section class="content-section">
       <h3>Outcome</h3>
       <p>The repository has six services, a Postgres schema, three DAGs and monitoring config in one Compose file, with the core-banking money paths implemented and ownership-checked behind JWT auth (bcrypt, lockout, TOTP 2FA).</p>
-      <p>It does not boot end to end as committed: three services have no Dockerfile, the core API imports two missing modules, and there are no automated tests. Next steps are making it boot, locking balances during transfers, adding idempotency keys, and wiring a real Kafka consumer.</p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Add the three missing Dockerfiles and the two missing API modules so the stack boots end to end, with an automated test suite.</li>
+        <li>Lock balance rows during transfers and add idempotency keys for client retries.</li>
+        <li>Make interest accrual atomic and re-run safe, and finish the ETL transform step.</li>
+        <li>Wire a Kafka consumer for the <code>transactions</code> topic.</li>
+      </ul>
     </section>
   </main>
 

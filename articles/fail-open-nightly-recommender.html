@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS | Mohammed Zakaria</title>
+  <title>Fail open, never fail the night: a nightly recommender across GCP and AWS | Mohammed Zakaria</title>
   <meta name="description" content="How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html">
-  <meta property="og:title" content="Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS | Mohammed Zakaria">
+  <meta property="og:title" content="Fail open, never fail the night: a nightly recommender across GCP and AWS | Mohammed Zakaria">
   <meta property="og:description" content="How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS", "description": "How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html", "wordCount": 658, "keywords": "Data Engineering, Recommender Systems, Multi-Cloud"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Fail open, never fail the night: a nightly recommender across GCP and AWS", "description": "How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html", "wordCount": 661, "keywords": "Data Engineering, Recommender Systems, Multi-Cloud"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -60,11 +60,11 @@
       <header class="post-head">
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Data Engineering</span><span class="post-tag">Recommender Systems</span><span class="post-tag">Multi-Cloud</span></div>
-        <h1>Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS</h1>
+        <h1>Fail open, never fail the night: a nightly recommender across GCP and AWS</h1>
         <p class="post-lede">How a nightly job turns a day of customer events on Google Cloud Storage into fresh, active-offer recommendations in MySQL on AWS, and the one design rule that keeps it from ever waking the app up empty.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>3 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>4 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -83,8 +83,8 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p>Every night at 00:00 Cairo time, a small service at Waffarha wakes up, reads what customers did
-yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
+<p>Evidence: production, Waffarha. Every night at 00:00 Cairo time, a small service at Waffarha
+wakes up, reads what customers did yesterday, and writes a fresh shortlist of offers for each of them. By the time the first customer
 opens the app in the morning, their recommendations are already there.</p>
 <p>This post walks through how that job works, and the one rule I&rsquo;d keep if I had to throw everything
 else away: <strong>fail open, never fail the night.</strong></p>
@@ -172,7 +172,7 @@ something upstream is down. <a href="../index.html#contact">Get in touch</a>.</e
         </div>
       </div>
       <footer class="post-foot">
-        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html" data-title="Fail Open, Never Fail the Night: A Nightly Recommender Across GCP and AWS">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html" data-title="Fail open, never fail the night: a nightly recommender across GCP and AWS">
           <span class="post-share-label">Share</span>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/fail-open-nightly-recommender.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
@@ -186,7 +186,7 @@ something upstream is down. <a href="../index.html#contact">Get in touch</a>.</e
           <a href="../index.html#contact">Get in touch ↗</a></div>
         </div>
         <nav class="post-pager" aria-label="More articles">
-          <a class="post-pager-prev" href="fraud-scoring-kafka.html"><small>← Newer</small><b>Fraud scoring on Kafka: what is built, what is measured, what is missing</b></a>
+          <a class="post-pager-prev" href="fraud-scoring-kafka.html"><small>← Newer</small><b>Fraud scoring on Kafka: design, alerts and next steps</b></a>
           <a class="post-pager-next" href="ethereum-neo4j-vs-spark.html"><small>Older →</small><b>Neo4j vs Spark for multi-hop money flows: building the benchmark harness first</b></a>
         </nav>
       </footer>

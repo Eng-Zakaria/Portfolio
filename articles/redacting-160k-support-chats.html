@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <title>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes | Mohammed Zakaria</title>
+  <title>From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes | Mohammed Zakaria</title>
   <meta name="description" content="How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html">
-  <meta property="og:title" content="Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes | Mohammed Zakaria">
+  <meta property="og:title" content="From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes | Mohammed Zakaria">
   <meta property="og:description" content="How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes", "description": "How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html", "wordCount": 1594, "keywords": "Data Privacy, LLM Fine-Tuning, Data Engineering"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes", "description": "How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html", "wordCount": 1591, "keywords": "Data Privacy, LLM Fine-Tuning, Data Engineering"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -60,7 +60,7 @@
       <header class="post-head">
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Data Privacy</span><span class="post-tag">LLM Fine-Tuning</span><span class="post-tag">Data Engineering</span></div>
-        <h1>Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes</h1>
+        <h1>From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes</h1>
         <p class="post-lede">How I turned real Waffarha support conversations into PII-free analytics and a redacted multi-turn SFT dataset of 117,915 resolved chats, and why the first redaction pass was not good enough.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
@@ -87,7 +87,7 @@
 </details></aside>
         <div class="post-body">
 <p>Evidence label: this is production data at Waffarha. The input was 160,944 real customer-support chats from Egypt and Saudi Arabia, covering March to October 2026. Every chat had a transcript and an AI-generated set of labels. I wanted two things from it: analytics I could use to fix the support chatbot, and a training set for a small Arabic model. Both had to contain no personal data.</p>
-<p>This post is about the second part, the boring one: getting redaction to an audited zero, and being honest about what that number does and does not mean.</p>
+<p>This post is about the second part, the boring one: getting redaction to an audited zero, and what that number does and does not mean.</p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>Support chats are where customers paste everything. Phone numbers so the agent can find the account. Emails. Links to screenshots. Order and voucher codes. Social handles. Agents sign their name on each turn.</p>
 <p>The labels were useful on their own. About 124k of the chats were from Egypt and 27k from Saudi Arabia, and 96% were in Arabic. Around 5.4% were written in Latin script, which in Egypt usually means Arabizi. All of that matters for a model that has to understand Egyptian dialect.</p>
@@ -209,7 +209,7 @@
         </div>
       </div>
       <footer class="post-foot">
-        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html" data-title="Redacting 160,944 support chats before fine-tuning: what zero leaks actually takes">
+        <div class="post-share" data-url="https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html" data-title="From 160,944 support chats to a redacted 117,915-chat training set: what zero leaks takes">
           <span class="post-share-label">Share</span>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/sharing/share-offsite/?url=https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html"><i class="fa-brands fa-linkedin" aria-hidden="true"></i> LinkedIn</a>
           <a class="post-btn" target="_blank" rel="noopener noreferrer" href="https://x.com/intent/post?url=https://eng-zakaria.github.io/Portfolio/articles/redacting-160k-support-chats.html"><i class="fa-brands fa-x-twitter" aria-hidden="true"></i> X</a>
@@ -223,7 +223,7 @@
           <a href="../index.html#contact">Get in touch ↗</a></div>
         </div>
         <nav class="post-pager" aria-label="More articles">
-          <a class="post-pager-prev" href="reddit-medallion-pyspark.html"><small>← Newer</small><b>A 7-stage PySpark medallion for Reddit signals</b></a>
+          <a class="post-pager-prev" href="reddit-medallion-pyspark.html"><small>← Newer</small><b>A 7-stage PySpark pipeline for Reddit signals</b></a>
           <a class="post-pager-next" href="rag-and-serving-stack.html"><small>Older →</small><b>RAG and serving: FAISS vs Qdrant vs pgvector, FastAPI, MLflow</b></a>
         </nav>
       </footer>

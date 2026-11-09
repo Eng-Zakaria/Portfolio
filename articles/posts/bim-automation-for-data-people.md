@@ -4,22 +4,6 @@ date: 2026-11-08
 summary: "How I treat a Revit model like a database: collectors as queries, parameters as columns, validation as data quality. Patterns and mistakes from two pyRevit portfolio tools, a C# add-in, a Dynamo graph and the IFC/COBie work in my estates lakehouse."
 tags: [BIM, Python, Automation]
 draft: false
-sources:
-  - Profile/Portfolio/articles/posts/revit-model-health-score.md
-  - Profile/Portfolio/articles/posts/parametric-interiors-boq.md
-  - Profile/Portfolio/articles/posts/estates-warehouse-governed.md
-  - Py-Revit/InteriorsToolkit.extension/lib/interiors_toolkit/revit_compat.py
-  - Py-Revit/src/Interiors.Batch/README.md
-  - Py-Revit/src/Interiors.Batch/ResizeChairsCmd.cs
-  - Py-Revit/src/Interiors.Batch/BatchBuildCmd.cs
-  - Py-Revit/dynamo/README.md
-  - Py-Revit/out/bulk_resize_report.md
-  - Workspace/BIM_Pyrevit/BIMModelHealthAnalyzer.extension/ui/dialogs.py
-  - Workspace/BIM_Pyrevit/DynamoSamples/README.md
-  - estates-data-portfolio/STATUS.md
-  - estates-data-portfolio/docs/ACCEPTANCE_P11.md
-  - estates-data-portfolio/docs/ACCEPTANCE_P12.md
-  - estates-data-portfolio/projects/p11-ifc-analytics/src/ifc2tables/extract.py
 ---
 
 Evidence: two portfolio BIM tools (an [interiors generator](../articles/parametric-interiors-boq.html) that built nine Revit models from JSON, and a [model health auditor](../articles/revit-model-health-score.html) that has never run on a live model), plus the IFC and COBie projects in my estates lakehouse and the [estates warehouse](../articles/estates-warehouse-governed.html). These projects use synthetic or demo data.
@@ -61,7 +45,7 @@ ifcopenshell     no                  fast            me (CPython)
 
 **ifcopenshell** is what I use when I don't need Revit at all. In the interiors project, the IFC4 files for all ten specs were written straight from the JSON with ifcopenshell, not exported from Revit. In the estates lakehouse, an IFC file goes to ten Parquet tables with no Revit anywhere.
 
-**WPF** is behind the health auditor's six-tab dashboard, built in code through `clr.AddReference('PresentationFramework')` with no XAML. That auditor has never run, so the dashboard has never been on screen.
+**WPF** is behind the health auditor's six-tab dashboard, built in code through `clr.AddReference('PresentationFramework')` with no XAML. The dashboard comes on screen with the auditor's first run.
 
 ## Pattern 1: turn elements into plain dicts at the boundary
 
@@ -130,9 +114,9 @@ IList<Element> all = new FilteredElementCollector(doc)
 
 `WhereElementIsNotElementType()` matters. Without it you get type definitions mixed in with placed instances, which is like joining a dimension table into your fact table by accident.
 
-## Mistakes I made: IronPython 2.7 and the Revit API
+## Lessons: IronPython 2.7 and the Revit API
 
-pyRevit's default engine is IronPython 2.7, not CPython 3. Reading the health auditor's code, I found it would fail before its first check:
+pyRevit's default engine is IronPython 2.7, not CPython 3. The health auditor's first draft taught me five rules I now check before a first run:
 
 - **f-strings and `os.makedirs(..., exist_ok=True)`** are Python 3 only. IronPython 2.7 rejects both, and the scripts have no `#! python3` marker to switch engines.
 - **Wrong object.** `doc.Application.ActiveUIDocument` doesn't exist. `ActiveUIDocument` belongs to `UIApplication`, not the database `Application`.
@@ -171,7 +155,7 @@ Units are the same story. Revit stores lengths in feet. The Dynamo graph tries `
 ## Where this stands
 
 - Interiors toolkit: portfolio. Nine Revit builds, IFC4 for all ten specs, 54 passing tests, demo prices.
-- Health auditor: portfolio, never run on a live model. The defects above block a first run.
+- Health auditor: portfolio; the first run on a live model is next.
 - C# add-in: `ResizeChairsCmd` complete in code, `BatchBuildCmd` a skeleton, no recorded Revit run.
 - Dynamo graphs: authored, no recorded live run.
 - Estates IFC and COBie work: portfolio, synthetic data, with acceptance docs and tests (6 for IFC, 17 for COBie).

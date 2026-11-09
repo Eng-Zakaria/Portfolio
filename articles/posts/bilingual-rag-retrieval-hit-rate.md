@@ -1,17 +1,9 @@
 ---
 title: "Retrieval hit rate isn't answer accuracy: measuring a bilingual (Arabic/English) RAG"
 date: 2026-11-08
-summary: "How I benchmarked and evaluated retrieval for Waffarha's Arabic/English customer-service assistant, and why an 87.8% retrieval hit rate sat next to a 28.4% end-to-end score in the same run."
+summary: "How I benchmarked and evaluated retrieval for Waffarha's Arabic/English customer-service assistant, why a retrieval hit rate and an end-to-end score must be reported together, and what the per-category gap told us to fix."
 tags: [RAG, Evaluation, Arabic NLP]
 draft: false
-sources:
-  - C:\Users\devza\Work\Waffarha\waffarha-unified-chatbot\eval\EVALUATION_REPORT.md
-  - C:\Users\devza\Work\Waffarha\local_llm_agent\eval\results\summary_report.md
-  - C:\Users\devza\Work\Waffarha\local_llm_agent\eval\dataset.json
-  - C:\Users\devza\Work\Waffarha\waffarha-chatbot\data\index\BAAI__bge-m3\qdrant\index_manifest.json
-  - C:\Users\devza\Work\Waffarha\waffarha-unified-chatbot\eval\queries.json
-  - C:\Users\devza\Work\Waffarha\waffarha-unified-chatbot\backend\app\core\config.py
-  - C:\Users\devza\Work\Waffarha\waffarha-unified-chatbot\docs\STATE.md
 ---
 
 This is production work at Waffarha, where I am a data engineer. It covers how I measured the retrieval side of our customer-service assistant, which answers questions about offers and FAQs in Egyptian Arabic and English. The headline number from that work is 87.8%. This article is mostly about what that number does not mean.
@@ -20,7 +12,7 @@ This is production work at Waffarha, where I am a data engineer. It covers how I
 
 A RAG assistant can fail in two places. It can fail to find the right document, or it can find the right document and still give a wrong or unhelpful answer. These need separate measurements, and it is easy to report the first one as if it were the second.
 
-In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have described a system much better than the one we had.
+In the September 2026 evaluation run, retrieval passed 151 of 172 checked cases (87.8%). In the same run, the full pipeline, retrieval plus generation, passed 64 of 225 cases (28.4%). Same index, same queries, same day. If I had only published the first number, it would have pointed us at the wrong half of the system.
 
 The gap is not a mystery once you look at it per category. `offer_direct_answer` retrieved correctly in 49 of 52 checked cases but answered correctly in 11 of 56. `faq_direct_answer` retrieved correctly in 21 of 24 but answered correctly in 2 of 25. The report's own conclusion was that the gap is in generation and answering, not in finding.
 
@@ -100,7 +92,7 @@ I kept both suites in one run, against one index, so the two numbers could be co
 | Full pipeline | 64/225 (28.4%) | All cases, qwen2.5:3b-instruct |
 | Earlier retrieval run (Aug 2026) | 84/105 (80.0%) | e5-base + FAISS, 145-case suite |
 
-Some honest caveats:
+Caveats:
 
 - The August and September runs used different suites (145 and 225 cases), different indexes (1,458 and 9,106 documents) and different models. The jump from 80.0% to 87.8% is not a controlled comparison.
 - Weak end-to-end categories included follow-ups that need memory (2 of 12), greetings (1 of 8) and disambiguating offers from the same merchant (0 of 4). Several of these are not retrieval problems at all.

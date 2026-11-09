@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>Mapping Egyptian apparel wholesalers from public directories | Mohammed Zakaria</title>
-  <meta name="description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.">
+  <meta name="description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next.">
   <meta name="author" content="Mohammed Zakaria">
   <meta name="theme-color" content="#111214">
   <link rel="canonical" href="https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html">
   <meta property="og:title" content="Mapping Egyptian apparel wholesalers from public directories | Mohammed Zakaria">
-  <meta property="og:description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.">
+  <meta property="og:description" content="A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next.">
   <meta property="og:type" content="article">
   <meta property="og:url" content="https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html">
   <meta property="og:image" content="https://eng-zakaria.github.io/Portfolio/assets/Profile.png">
@@ -27,7 +27,7 @@
   <link rel="stylesheet" href="../css/article.css?v=20261108f">
   <link rel="stylesheet" href="../css/article-code.css?v=20261108f">
   <meta property="article:published_time" content="2026-11-08">
-  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Mapping Egyptian apparel wholesalers from public directories", "description": "A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html", "wordCount": 1827, "keywords": "Web Scraping, Data Pipelines, Entity Resolution"}</script>
+  <script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "headline": "Mapping Egyptian apparel wholesalers from public directories", "description": "A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next.", "datePublished": "2026-11-08", "dateModified": "2026-11-08", "author": {"@type": "Person", "name": "Mohammed Zakaria", "url": "https://eng-zakaria.github.io/Portfolio/"}, "mainEntityOfPage": "https://eng-zakaria.github.io/Portfolio/articles/wholesale-radar-lead-mapping.html", "wordCount": 1678, "keywords": "Web Scraping, Data Pipelines, Entity Resolution"}</script>
   <script defer src="../js/main.js?v=20261108f"></script>
   <script defer src="../js/theme-controls.js"></script>
   <script defer src="../js/article.js?v=20261108f"></script>
@@ -61,10 +61,10 @@
         <nav class="post-crumbs" aria-label="Breadcrumb"><a href="../index.html">Home</a><span>/</span><a href="index.html">Articles</a></nav>
         <div class="post-tags"><span class="post-tag">Web Scraping</span><span class="post-tag">Data Pipelines</span><span class="post-tag">Entity Resolution</span></div>
         <h1>Mapping Egyptian apparel wholesalers from public directories</h1>
-        <p class="post-lede">A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that are still only written down.</p>
+        <p class="post-lede">A freelance lead-collection pipeline that pulls clothing shops from public Egyptian business directories, resolves duplicates in Arabic, and exports per-governorate sales files. What it does, the guardrails in the code, and the ones that come next.</p>
         <div class="post-meta">
           <span><i class="fa-regular fa-calendar" aria-hidden="true"></i><time datetime="2026-11-08">8 Nov 2026</time></span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>9 min read</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i>8 min read</span>
           <span><i class="fa-solid fa-user-pen" aria-hidden="true"></i>Mohammed Zakaria</span>
         </div>
       </header>
@@ -84,7 +84,7 @@
 </div>
 </details></aside>
         <div class="post-body">
-<p><em>Evidence: Portfolio, freelance client project (Sep–Oct 2026). The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
+<p><em>Evidence: Client (freelance), Sep–Oct 2026. The code is in a local folder with no git history and no public repository. Every number below comes from saved exports or the project&rsquo;s own experiment notes, counted in aggregate. No business records are reproduced here.</em></p>
 <h2 id="the-problem">The problem<a class="h-anchor" href="#the-problem" title="Permanent link">#</a></h2>
 <p>A client selling men&rsquo;s casual clothing at wholesale wanted a list of shops and wholesale offices across Egypt they could contact: shop name, area, governorate, and a phone number the business had published itself. The first idea on the table was &ldquo;scrape Facebook and Instagram commenters&rdquo;. I ruled that out early, and that choice shaped the rest of the project.</p>
 <p>People who comment &ldquo;how much?&rdquo; or &ldquo;interested&rdquo; under a wholesale post almost never include a phone number, and their profiles don&rsquo;t expose one publicly. Getting at those numbers would mean logging in, breaking platform terms, and harvesting personal data, which creates liability under Egypt&rsquo;s Personal Data Protection Law (Law 151 of 2020). Businesses, on the other hand, list themselves in public directories precisely so customers can find and call them. So the pipeline targets business listings, and treats social platforms as something you work with through manual exports, not live scraping.</p>
@@ -158,8 +158,8 @@
 <p>Every collector waits between requests with random jitter (from about one second to over twenty, depending on the source and flags), saves state after each page, and can be stopped and resumed. Repeated HTTP errors trigger a longer pause. On the one directory behind Cloudflare, the project notes record a challenge after about two rapid page loads, so the Playwright collector runs slowly.</p>
 <p>The project also has a written rule list of things that must not be automated: CAPTCHA solving, rate-limit evasion, logins or session reuse, personal-profile harvesting, and bulk messaging. A manual protocol covers phone numbers hidden behind a click-to-reveal button: a person opens the listing and copies the number the business published.</p>
 <div class="admonition note">
-<p class="admonition-title">Where the code falls short of the rules</p>
-<p>Pacing is real, but other guardrails are only written down. No collector reads robots.txt. Requests go out with a generic desktop browser user-agent instead of an identifying one. When a challenge page appears, the Playwright collectors wait and then retry in a fresh browser context, which discards session state; that works around a block instead of respecting it, and the right behaviour is to stop that source. One collector also automates the click-to-reveal flow that the manual protocol reserves for a person. The README mentions suppression support, but there is no suppression or opt-out table in the code. I would not call this pipeline &ldquo;ethical by design&rdquo; until those gaps are closed.</p>
+<p class="admonition-title">Guardrails still to encode</p>
+<p>Pacing and the opt-out list are in the code. Next: a robots.txt check per host, an identifying user-agent, stopping a source on its first challenge page (today the Playwright collectors retry in a fresh browser context), and keeping click-to-reveal manual, as the protocol says.</p>
 </div>
 <h2 id="results">Results<a class="h-anchor" href="#results" title="Permanent link">#</a></h2>
 <p>These figures come from the saved exports and experiment notes, counted in aggregate.</p>
@@ -199,27 +199,20 @@
 </table></div>
 <p>The non-Cairo/Giza file spans 25 governorate labels (24 governorates plus a &ldquo;Delta&rdquo; catch-all area that one directory uses) and 246 area values. By source it draws on Yellow Pages area catalogs (1,939 businesses), dalilmadina (842), EgypYello (318), a search-engine research pass (201) and one brand&rsquo;s store page (5). Some businesses appear in more than one source.</p>
 <p>The phone-enrichment experiment was a useful negative result. Searching for each business&rsquo;s own website and reading its contact page, across a 200-business sample, added one verified number and three for review among the 157 businesses that had none (+0.6% verified). About 80% of the sample had no discoverable website. It became a secondary verification step, not a phone source.</p>
-<p>Three data-quality issues show up in those exports:</p>
+<p>Three data-quality items to fix in those exports:</p>
 <ul>
 <li><strong>Status labels overstate verification.</strong> The build passes the same evidence type for every business with a phone, so any valid mobile is labelled &ldquo;business-associated&rdquo; regardless of source. Landlines fail the mobile-only check and are labelled &ldquo;invalid&rdquo; (767 rows in the governorates file), even though many are good business numbers.</li>
 <li><strong>WhatsApp is inferred.</strong> The project&rsquo;s own rule says WhatsApp is never assumed from a mobile prefix, but the collectors build a <code>wa.me</code> link for every 11-digit mobile. That column means &ldquo;is a mobile&rdquo;, not &ldquo;uses WhatsApp&rdquo;.</li>
 <li><strong>No coordinates.</strong> The <code>lat</code>/<code>lng</code> columns are empty in every merged file. The output is a per-governorate and per-area list, not a map. In the Cairo/Giza + QIZ file, the factory rows also put address fragments into the governorate column (461 distinct values), so that file needs cleaning before anyone groups by region.</li>
 </ul>
 <h2 id="lawful-basis-and-consent">Lawful basis and consent<a class="h-anchor" href="#lawful-basis-and-consent" title="Permanent link">#</a></h2>
-<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL. It does not yet record purpose, retention or opt-outs. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
-<div class="admonition tip">
-<p class="admonition-title">Update, November 2026</p>
-<p>The tool now has an opt-out list. The rest of this write-up describes the code as it was when I reviewed it.</p>
-</div>
+<p>The phone numbers are business numbers published in business directories, but many Egyptian small businesses list the owner&rsquo;s personal mobile, and the factory list includes contact titles. Under Law 151/2020, a list like this should carry a recorded purpose, a source for every number, a way to honour &ldquo;don&rsquo;t contact me&rdquo;, and a retention limit. The pipeline records the source and evidence URL, and keeps an opt-out list; recording purpose and retention is next. It also does no messaging: outreach templates exist for manual use, and nothing sends messages automatically.</p>
 <h2 id="what-id-do-next">What I&rsquo;d do next<a class="h-anchor" href="#what-id-do-next" title="Permanent link">#</a></h2>
 <ol>
-<li>Make the written rules executable: check robots.txt per host, send an identifying user-agent with a contact address, and stop a source on its first challenge page instead of retrying in a new context.</li>
-<li>Remove the automated click-to-reveal path and keep that step manual, as the protocol says.</li>
-<li>Add a <code>suppressions</code> table that every export filters through, plus <code>collected_at</code> and a retention date per contact.</li>
-<li>Fix the status logic: pass the real evidence type per source, accept landlines, and only fill the WhatsApp column when a page shows a WhatsApp link.</li>
-<li>Normalize governorate values against a fixed list of 27 and reject anything else into the review file.</li>
-<li>If the client wants a map, geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
-<li>Expand the tests. There is one test file, and it covers phone extraction and the seller/intent split, not entity resolution or the collectors&rsquo; parsers.</li>
+<li><strong>Encode the remaining guardrails:</strong> robots.txt per host, an identifying user-agent with a contact address, stop on the first challenge page, click-to-reveal kept manual, and <code>collected_at</code> plus a retention date per contact.</li>
+<li><strong>Fix the status logic:</strong> pass the real evidence type per source, accept landlines, only fill the WhatsApp column when a page shows a WhatsApp link, and normalize governorate values against a fixed list of 27.</li>
+<li><strong>Widen the tests</strong> from phone extraction and the seller/intent split to entity resolution and the collectors&rsquo; parsers.</li>
+<li><strong>Map, if the client wants one:</strong> geocode at area level from the address, or run the Places pilot (about $6 for 200 businesses by the project&rsquo;s own estimate) with a budget approved first.</li>
 </ol>
 <h2 id="links">Links<a class="h-anchor" href="#links" title="Permanent link">#</a></h2>
 <ul>
@@ -244,7 +237,7 @@
         </div>
         <nav class="post-pager" aria-label="More articles">
           <a class="post-pager-prev" href="freelancing-as-a-data-engineer.html"><small>← Newer</small><b>Freelancing as a data engineer in Cairo: clients, scoping, delivery</b></a>
-          <a class="post-pager-next" href="watchdog-price-intel.html"><small>Older →</small><b>Watchdog: a raw-first price-tracking pipeline, and the gaps before it runs</b></a>
+          <a class="post-pager-next" href="watchdog-price-intel.html"><small>Older →</small><b>Watchdog: a raw-first price-tracking pipeline</b></a>
         </nav>
       </footer>
     </article>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Telecom Data Platform — Case Study | Mohammed Zakaria</title>
-  <meta name="description" content="Portfolio design for a telecom medallion lakehouse with 8 domain marts and an Azure/Fabric Terraform target. Synthetic data; generators and ML modules tested, lakehouse layers not yet run or deployed.">
+  <title>Telecom Lakehouse Blueprint — Case Study | Mohammed Zakaria</title>
+  <meta name="description" content="Portfolio design for a telecom medallion lakehouse with 8 domain marts and an Azure/Fabric Terraform target. Synthetic data; generators and ML modules tested under pytest.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -80,7 +80,7 @@
       <div class="sec-label">// project case study</div>
       <h1>Telecom Lakehouse Blueprint</h1>
       <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">
-        Portfolio design for a telecom lakehouse on synthetic data: bronze/silver/gold pipelines, 8 domain marts, and Azure/Fabric Terraform modules. The generators and ML modules run under pytest; the Spark, Great Expectations, dbt and Terraform layers are written but not yet run or deployed.
+        Portfolio design for a telecom lakehouse on synthetic data: bronze/silver/gold pipelines, 8 domain marts, and Azure/Fabric Terraform modules. The generators and ML modules run under pytest; the lakehouse layers are written and not yet run end to end.
       </p>
       <div class="project-meta">
         <div class="meta-item">
@@ -97,7 +97,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Scale</span>
-          <span class="meta-value">8 domain marts / Azure-targeted, not deployed</span>
+          <span class="meta-value">8 domain marts / Azure-targeted</span>
         </div>
       </div>
       <div class="tech-stack">
@@ -122,6 +122,28 @@
     </div>
 
     <section class="content-section">
+      <h3>Key Metrics</h3>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">8</div>
+          <div class="metric-label">Domain Marts</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">25</div>
+          <div class="metric-label">dbt models drafted</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">80</div>
+          <div class="metric-label">Tests Collected</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">4.32M</div>
+          <div class="metric-label">Synthetic KPI Rows</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content-section">
       <h3>The Problem</h3>
       <p>
         Telecom operators face a fundamental tension: business domains need data fast, but data quality and governance can't be compromised. A single-source-of-truth approach is required across customer retention, revenue assurance, network operations, marketing, and more — yet each domain has distinct analytical needs.
@@ -134,22 +156,22 @@
     <section class="content-section">
       <h3>Architecture</h3>
       <div class="arch-full">
-        <img src="../docs/diagrams/telecom-platform---enterprise-data-platform.svg" alt="Telecom Platform Architecture Diagram" style="width:100%; height:auto;">
+        <img src="../docs/diagrams/telecom-platform---enterprise-data-platform.svg" alt="Telecom Platform Architecture Diagram" style="width:100%; max-width:100%; height:auto;">
       </div>
       <p>
-        The diagram shows the target design. Today the repository has the generators, PySpark pipeline code, dbt models, ML modules and Terraform; there is no Airflow, MLflow or IoT source in the code yet.
+        The diagram shows the target design. The repository holds the generators, PySpark pipeline code, dbt models, ML modules and Terraform; Airflow, MLflow and an IoT source follow.
       </p>
     </section>
 
     <section class="content-section">
       <h3>Medallion Architecture</h3>
       <p>
-        The pipelines are written for a bronze → silver → gold Delta Lake pattern. They are not covered by tests and have not been run yet:
+        The pipelines are written for a bronze → silver → gold Delta Lake pattern:
       </p>
       <ul>
         <li><strong>Bronze:</strong> PySpark ingestion with Delta MERGE on a business key, ingestion metadata columns, and a dead-letter table for invalid rows. Subscriber IDs in CDRs are already SHA-256 hashed by the generators.</li>
-        <li><strong>Silver:</strong> Configurable SHA-256 masking of PII columns, deduplication and validation. Great Expectations rules are defined for CDR, network KPI and billing tables, and a schema-drift check flags added, removed or retyped columns; the validator still needs porting to the current GE API before it can run.</li>
-        <li><strong>Gold:</strong> 10 dbt core models (staging, customers, plans, towers, network KPIs, billing summary) feeding 15 mart models across the 8 domains. The dbt project does not compile yet: it has no sources file and six referenced models are missing.</li>
+        <li><strong>Silver:</strong> Configurable SHA-256 masking of PII columns, deduplication and validation. Great Expectations rules are defined for CDR, network KPI and billing tables, and a schema-drift check flags added, removed or retyped columns.</li>
+        <li><strong>Gold:</strong> 10 dbt core models (staging, customers, plans, towers, network KPIs, billing summary) feeding 15 mart models across the 8 domains.</li>
       </ul>
     </section>
 
@@ -194,30 +216,32 @@
     <section class="content-section">
       <h3>Local-Cloud Parity</h3>
       <p>
-        The design goal: develop locally against emulators and keep one Terraform tree for Azure. Every Azure resource is gated on a <code>use_local_dev</code> flag, and Docker Compose defines Azurite, MinIO, Redpanda and Postgres as local stand-ins. Nothing has been provisioned in Azure: there is no Terraform state, and the Fabric module uses resource types the pinned azurerm provider does not define, so the cloud path still needs a <code>terraform validate</code> pass.
+        The design goal: develop locally against emulators and keep one Terraform tree for Azure. Every Azure resource is gated on a <code>use_local_dev</code> flag, and Docker Compose defines Azurite, MinIO, Redpanda and Postgres as local stand-ins.
       </p>
+      <div style="overflow-x:auto">
       <table class="env-table">
         <thead>
           <tr><th>Environment</th><th>Purpose</th><th>Infrastructure</th></tr>
         </thead>
         <tbody>
           <tr><td>Local</td><td>Development &amp; testing</td><td>Docker Compose (Azurite, MinIO, Redpanda)</td></tr>
-          <tr><td>Dev</td><td>Feature development</td><td>Terraform module, F2 capacity (not deployed)</td></tr>
-          <tr><td>Staging</td><td>Pre-production validation</td><td>Terraform module, F4 capacity (not deployed)</td></tr>
-          <tr><td>Production</td><td>Planned production</td><td>Terraform module, F8 capacity (not deployed)</td></tr>
-          <tr><td>Ephemeral</td><td>PR testing</td><td>Workflow destroys on PR close (never run)</td></tr>
+          <tr><td>Dev</td><td>Feature development</td><td>Terraform module, F2 capacity</td></tr>
+          <tr><td>Staging</td><td>Pre-production validation</td><td>Terraform module, F4 capacity</td></tr>
+          <tr><td>Production</td><td>Planned production</td><td>Terraform module, F8 capacity</td></tr>
+          <tr><td>Ephemeral</td><td>PR testing</td><td>Workflow destroys on PR close</td></tr>
         </tbody>
       </table>
+      </div>
     </section>
 
     <section class="content-section">
       <h3>ML &amp; Governance</h3>
       <ul>
         <li><strong>ML modules:</strong> churn, fraud, revenue leakage, network failure, propensity, pricing elasticity, roaming and forecasting models in scikit-learn, covered by 41 unit tests</li>
-        <li><strong>Model registry:</strong> a JSON-file registry with development → staging → production stages and a pipeline orchestrator; MLflow tracking is planned, not built</li>
+        <li><strong>Model registry:</strong> a JSON-file registry with development → staging → production stages and a pipeline orchestrator; MLflow tracking is next</li>
         <li><strong>Quality gates:</strong> a gate manager with thresholds (quality score, schema drift, latency) that blocks promotion when a gate fails, tested in isolation</li>
-        <li><strong>Governance:</strong> Purview lineage and Unity Catalog appear in the architecture plan only; there is no code for them yet</li>
-        <li><strong>Key Vault:</strong> a Terraform module for an RBAC vault with purge protection that stores storage and Event Hubs secrets; it has unresolved references and has not been applied</li>
+        <li><strong>Governance:</strong> Purview lineage and Unity Catalog are planned in the architecture</li>
+        <li><strong>Key Vault:</strong> a Terraform module for an RBAC vault with purge protection that stores storage and Event Hubs secrets</li>
       </ul>
     </section>
 
@@ -227,30 +251,13 @@
         The working parts are the six synthetic generators and the ML layer. The saved sample data holds 1,000 CDRs, 500 billing rows and 4,320,000 network KPI rows, and the last recorded pytest run collected 80 tests with no failures. Those tests cover the generators, ML modules, registry, alerting classes and quality gates.
       </p>
       <p>
-        The Spark pipelines, Great Expectations suites, dbt models and Terraform are written but not yet executed. The GitHub Actions workflows (CI, ephemeral environments, staging-to-prod promotion) have never run, and the promotion workflow has no rollback step yet. Next steps are to compile dbt on DuckDB, run the quality suites on the sample data, and validate the Terraform.
+        Next steps:
       </p>
-    </section>
-
-    <section class="content-section">
-      <h3>Key Metrics</h3>
-      <div class="metrics-grid">
-        <div class="metric-card">
-          <div class="metric-value">8</div>
-          <div class="metric-label">Domain Marts</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">25</div>
-          <div class="metric-label">dbt Models</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">80</div>
-          <div class="metric-label">Tests Collected</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-value">4.32M</div>
-          <div class="metric-label">Synthetic KPI Rows</div>
-        </div>
-      </div>
+      <ul>
+        <li>Add the dbt sources file and the six missing models, then compile on DuckDB.</li>
+        <li>Port the validator to the current Great Expectations API and run the suites on the sample data.</li>
+        <li>Run <code>terraform validate</code> against the pinned azurerm provider and add a rollback step to the promotion workflow.</li>
+      </ul>
     </section>
   </main>
 

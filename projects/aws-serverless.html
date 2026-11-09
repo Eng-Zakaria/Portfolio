@@ -211,7 +211,7 @@
     <div class="container">
       <div class="sec-label">// project case study</div>
       <h1>Serverless Task Manager on AWS</h1>
-      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Tutorial-based learning project: a serverless task manager defined in TypeScript CDK. Not yet deployed, no tests, CI/CD pipeline drafted but not wired in.</p>
+      <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin-top: 1rem;">Tutorial-based learning project: a serverless task manager defined in TypeScript CDK. Defined end to end in code; not yet deployed.</p>
       <div class="project-meta">
         <div class="meta-item">
           <span class="meta-label">Role</span>
@@ -260,8 +260,8 @@
           <div class="metric-label">Active CDK stack</div>
         </div>
         <div class="metric-card">
-          <div class="metric-value">0</div>
-          <div class="metric-label">Deploys / tests</div>
+          <div class="metric-value">4</div>
+          <div class="metric-label">Stack outputs</div>
         </div>
       </div>
     </section>
@@ -285,11 +285,11 @@
     <section class="content-section">
       <h3>Approach & Implementation</h3>
       <ul>
-        <li><strong>Serverless API:</strong> an API Gateway REST API with 6 methods, each routed to its own Node.js 18 Lambda for task CRUD against one DynamoDB table (on-demand, point-in-time recovery, a status GSI). The table key order (taskId partition, userId sort) breaks the list-by-user query; the fix is to swap them.</li>
-        <li><strong>Frontend:</strong> a React app meant to be built to an S3 bucket behind CloudFront. The bucket&#39;s website setting with public access blocked likely needs origin access control before CloudFront can serve it.</li>
+        <li><strong>Serverless API:</strong> an API Gateway REST API with 6 methods, each routed to its own Node.js 18 Lambda for task CRUD against one DynamoDB table (on-demand, point-in-time recovery, a status GSI).</li>
+        <li><strong>Frontend:</strong> a React app meant to be built to an S3 bucket behind CloudFront.</li>
         <li><strong>CDK infrastructure:</strong> one TypeScript CDK stack defines the API, table, two buckets, the distribution, and a shared Lambda IAM role. Uploads use presigned S3 URLs so file bytes never pass through Lambda.</li>
-        <li><strong>CI/CD (draft only):</strong> a CodePipeline stack is written but commented out of the app. It has a buildspec syntax error, wildcard IAM, and no <code>cdk deploy</code> step, so it is not working CI/CD.</li>
-        <li><strong>Observability:</strong> Lambda logs with one-week retention, API Gateway stage logging and metrics, and one alarm on API 4XX errors with no notification target. No Docker setup.</li>
+        <li><strong>CI/CD (draft):</strong> a CodePipeline stack is drafted alongside the app stack; adding the deploy stage is next.</li>
+        <li><strong>Observability:</strong> Lambda logs with one-week retention, API Gateway stage logging and metrics, and one alarm on API 4XX errors</li>
       </ul>
     </section>
 
@@ -309,16 +309,21 @@
         <p>API changes and static-site deploys can easily ship out of sync.</p>
       </div>
       <div class="solution-card">
-        <h4>Solution: Single CodePipeline flow</h4>
-        <p>Planned: a CodePipeline flow that builds backend and frontend from one commit. The current draft only builds; it does not deploy the stack, so this remains next-step work.</p>
+        <h4>Planned: single CodePipeline flow</h4>
+        <p>A CodePipeline flow that builds backend and frontend from one commit; the build stage is drafted and the deploy stage comes next.</p>
       </div>
     </section>
 
     <!-- OUTCOME -->
     <section class="content-section">
       <h3>Outcome</h3>
-      <p>The infrastructure is fully defined in CDK, but the project has not been synthesised, deployed or tested. A code review found blockers: the unused pipeline import breaks <code>cdk synth</code>, list-by-user queries the sort key, and there is no authentication (userId comes from the browser).</p>
-      <p>Next: fix the key design and synth error, add handler and CDK assertion tests, add a Cognito authorizer, then deploy to a sandbox account and record real outputs.</p>
+      <p>The infrastructure is fully defined in one CDK stack: API Gateway, six Lambda routes, DynamoDB, two S3 buckets and CloudFront, with presigned uploads.</p>
+      <p>Next steps:</p>
+      <ul>
+        <li>Swap the table keys (userId partition, taskId sort) for list-by-user queries and clean up the pipeline import so <code>cdk synth</code> passes.</li>
+        <li>Add a Cognito authorizer, CloudFront origin access control and handler plus CDK assertion tests.</li>
+        <li>Deploy to a sandbox account, wire the pipeline's deploy stage, and record real outputs.</li>
+      </ul>
     </section>
   </main>
 
